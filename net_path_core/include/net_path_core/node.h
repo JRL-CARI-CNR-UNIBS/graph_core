@@ -22,6 +22,8 @@ protected:
 
 public:
   std::vector<ConnectionPtr> m_connections;
+  std::vector<ConnectionPtr> m_parent_connections;
+  std::vector<ConnectionPtr> m_child_connections;
 
   Node(const std::vector<double>& q,
        const NodeParams& node_parameters,
@@ -42,11 +44,16 @@ public:
   int rouletteWheel(const Direction direction=Any);
 
   bool isUnconnected(const planning_scene::PlanningSceneConstPtr &planning_scene);
-  void addConnection(ConnectionPtr& connection);
+  void addConnection(const ConnectionPtr& connection);
   bool removeConnection(ConnectionPtr& connection);
 
   const NodePtr& findParent();
   ConnectionPtr findConnectionToParent();
+
+  std::vector<NodePtr> getAncestors(const unsigned int& level=1);
+  std::vector<NodePtr> getDescendants(const unsigned int& level=1);
+  bool checkIfConnectedWith(const NodePtr& node, ConnectionPtr& connection);
+
   void print();
 };
 

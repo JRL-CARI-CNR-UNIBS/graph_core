@@ -88,7 +88,7 @@ double squareDistance(const std::vector<double> &q1, const std::vector<double> &
   return square_length;
 }
 
-std::vector<std::vector<double>> intermediatePoints(const std::vector<double> &q1, const std::vector<double> &q2, const double& distance_step)
+std::vector<std::vector<double>> intermediatePoints(const std::vector<double> &q1, const std::vector<double> &q2, const std::vector<double> &unscaling, const double& distance_step)
 {
   assert(distance_step>0);
   std::vector<std::vector<double>> output;
@@ -97,11 +97,12 @@ std::vector<std::vector<double>> intermediatePoints(const std::vector<double> &q
     return output;
   unsigned int npnt=std::ceil(distance/distance_step);
 
+
   for (unsigned int ipnt=1;ipnt<npnt;ipnt++)
   {
     std::vector<double> q(q1.size());
-    for (size_t idx=0;idx<q1.size();idx++)
-      q.at(idx)=q1.at(idx)+(q2.at(idx)-q1.at(idx))*((double)ipnt)/((double)npnt);
+    for (size_t i_dof=0;i_dof<q1.size();i_dof++)
+      q.at(i_dof)=q1.at(i_dof)+unscaling.at(i_dof)*(q2.at(i_dof)-q1.at(i_dof))*((double)ipnt)/((double)npnt);
 
     output.push_back(q);
   }
