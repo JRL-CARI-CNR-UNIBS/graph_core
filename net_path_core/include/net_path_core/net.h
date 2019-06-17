@@ -32,6 +32,8 @@ protected:
   std::vector<TreePtr> m_goal_trees;
   double m_best_cost;
   double m_estimated_cost;
+  double m_utopia_cost;
+  std::map<NodePtr,double> m_utopia_costs;
   Path m_best_path;
 
   std::random_device m_rd;
@@ -42,13 +44,12 @@ protected:
   ConnectionParam m_conn_params;
 
 
-  const planning_scene::PlanningSceneConstPtr m_planning_scene;
+  planning_scene::PlanningSceneConstPtr m_planning_scene;
 
   NodePtr searchClosestNode(const std::vector<double>& q);
   NodePtr addNodeToTheGrid(const std::vector<double>& q);
   NodePtr addNodeToTheGrid(const std::vector<double>& q, const NodePtr& closest_node);
   Path addSubGridToTheGrid(const std::vector<std::vector<double>>& q, const NodePtr& closest_node);
-  bool addNodeToTheClosestNodeOfTheTree(const std::vector<double>& q, std::vector<NodePtr>& tree);
 
   double getPathDistance(const Path& path, const NodePtr& node);
 
@@ -58,30 +59,33 @@ protected:
 
   std::vector<double> sample(const NodePtr& endnode);
   std::vector<std::vector<double> > getSamples(const NodePtr& endnode, const unsigned int& number_of_samples=1);
-  bool addTree(const NodePtr& end_node, Path& new_path);
+
+
 
 public:
   Net(const unsigned int& dof,
       const std::string& group_name,
       const planning_scene::PlanningSceneConstPtr &planning_scene,
-      const std::vector<double> scaling);
+      const std::vector<double> scaling,
+      const std::vector<double> lb,
+      const std::vector<double> ub);
 
   // sampling algorithms
   bool runRRTConnect();
   //net methods
   unsigned int getNodeNumber(){return m_nodes.size();}
-  void print();
   bool isSolutionFound();
-  bool isWrong();
   double getBestCost(){return m_best_cost;}
 
+  void setPlanningScene ( const planning_scene::PlanningSceneConstPtr& planning_scene )
+  {
+    m_planning_scene=planning_scene;
+  }
   // nodes generations
   virtual void generateNodesFromStartAndEndPoints(const std::vector<double>& start_point, const std::vector<std::vector<double>>& end_points);
   virtual void generateNodesFromEllipsoid(const int& number_of_nodes);
-  void generateNodesFromGrid(const int &points_per_dimension);
 
   // path
-  virtual void curvilinearPath();
   virtual Path warpPath(const unsigned int& number_of_trials, const Path& path);
   virtual bool warpPath2(const unsigned int& number_of_trials);
   virtual Path splitPath(const unsigned int& number_of_trials, const Path& path);
@@ -108,11 +112,9 @@ public:
   const Path& getBestPathRef();
   std::vector<std::vector<double>> getBestPath();
   std::vector<std::vector<double>> getPath(const Path& path);
-  Path simplifyIntermidiatePoint(const Path& path);
   void printBestPath();
   void printPath(const Path& path);
 
-//  bool runLocalSearch();
   Path pruningPath(Path path);
 
 

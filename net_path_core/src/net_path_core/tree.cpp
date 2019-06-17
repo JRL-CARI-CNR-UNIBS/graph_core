@@ -95,18 +95,19 @@ bool Tree::extendFromNode(const NodePtr& n, const NodePtr starting_node, NodePtr
   }
 
   double distance=std::sqrt(squareDistance(starting_node->getJoints(),n->getJoints()));
-  if (!minExpansionControl(distance))
-    return false;
+
+  if (m_expansion_control)
+    if (!minExpansionControl(distance))
+      return false;
 
   const std::vector<double>& start_point=starting_node->getJoints();
   unsigned int n_pnts=std::ceil(distance/m_max_length);
-  if (!m_connect_mode)
-    n_pnts=1;
 
   NodePtr new_node;
 
   for (unsigned int ipnt=1;ipnt<=n_pnts;ipnt++)
   {
+
     if (ipnt<n_pnts)
     {
       std::vector<double> qstep(n->getJoints().size());
@@ -121,25 +122,34 @@ bool Tree::extendFromNode(const NodePtr& n, const NodePtr starting_node, NodePtr
     {
       new_node=n;
     }
+
+
     if (new_node->isInCollision(m_planning_scene))
     {
       break;
     }
-    new_node->computeHeuristic(m_end_nodes);
 
     new_conn=std::make_shared<Connection>(last_add_node,new_node,m_connection_parameters);
     if (m_direction==Direction::Backward)
       new_conn->flipDirection();
 
-//    if (!transitionTest(new_conn))
-//    {
-//      break;
-//    }
+    if (m_transition_test)
+    {
+      new_node->computeHeuristic(m_end_nodes);
+      if (!transitionTest(new_conn))
+      {
+        break;
+      }
+    }
+
     if (new_conn->isInCollision(m_planning_scene))
     {
       break;
     }
     last_add_node=new_node;
+
+    if (!m_connect_mode)
+      break;
 
   }
 
@@ -150,14 +160,8 @@ bool Tree::extendFromNode(const NodePtr& n, const NodePtr starting_node, NodePtr
   new_conn=std::make_shared<Connection>(starting_node,last_add_node,m_connection_parameters);
   if (m_direction==Direction::Backward)
     new_conn->flipDirection();
-//  if (new_conn->isInCollision(m_planning_scene))
-//  {
-//    ROS_FATAL("non dovrebbe essere in collisione");
-//  }
   new_conn->forceNotCollision();
-
-  starting_node->addConnection(new_conn);
-  last_add_node->addConnection(new_conn);
+  new_conn->registerConnection();
 
   m_tree_nodes.push_back(last_add_node);
   m_tree_connections.push_back(new_conn);
@@ -218,7 +222,6 @@ bool Tree::getPathToNode(const NodePtr &n, Path &path) const
     branch.push_back(actual_connection);
     actual_node=actual_connection->getOtherNode(actual_node);
   }
-
 
   for (unsigned int idx=0;idx<branch.size();idx++)
   {
@@ -293,7 +296,6 @@ bool Tree::addSubTree(const TreePtr& subtree)
   return true;
 }
 
-
 bool Tree::minExpansionControl(const double& dist)
 {
 
@@ -351,6 +353,11 @@ bool Tree::transitionTest(const ConnectionPtr &conn)
 
 bool Tree::tryConnectWith(const NodePtr &n)
 {
+  if (std::find(m_tree_nodes.begin(),m_tree_nodes.end(),n)!=m_tree_nodes.end())
+  {
+    ROS_ERROR("the node cannot be part on the tree");
+    return false;
+  }
   for (NodePtr& node: m_tree_nodes)
   {
     if (squareDistance(node->getJoints(),n->getJoints())>m_max_square_length)
@@ -362,13 +369,13 @@ bool Tree::tryConnectWith(const NodePtr &n)
     else
       conn=std::make_shared<Connection>(n,node,m_connection_parameters);
 
+
     if (conn->isInCollision(m_planning_scene))
       continue;
 
-    node->addConnection(conn);
-    n->addConnection(conn);
+    conn->registerConnection();
     m_tree_nodes.push_back(n);
-    ROS_FATAL("connesso");
+    m_tree_connections.push_back(conn);
     return true;
   }
   return false;

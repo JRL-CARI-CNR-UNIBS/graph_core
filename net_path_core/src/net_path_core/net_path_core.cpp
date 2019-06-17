@@ -60,14 +60,24 @@ Eigen::VectorXd computeEllipsoid(const std::vector<double> &p1,
 
   if (cost<std::numeric_limits<double>::infinity())
   {
-    major_semiaxis=cost*0.5;
-    minor_semiaxis=std::sqrt(std::pow(cost,2.0)-std::pow(min_dist,2.0))*0.5;
+    if (cost<min_dist)
+    {
+      major_semiaxis=0.5*min_dist;
+      minor_semiaxis=0;
+    }
+    else
+    {
+      major_semiaxis=cost*0.5;
+      minor_semiaxis=std::sqrt(std::pow(cost,2.0)-std::pow(min_dist,2.0))*0.5;
+    }
   }
   else
   {
     major_semiaxis=min_dist*40;
     minor_semiaxis=min_dist*40;
   }
+
+
 
   Eigen::VectorXd semiaxes(p1.size());
   semiaxes.setConstant(minor_semiaxis);

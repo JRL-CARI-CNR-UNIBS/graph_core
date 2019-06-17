@@ -18,7 +18,6 @@ protected:
   bool m_is_collision_checked;
   bool m_is_in_collision;
   double m_collision_probability;
-  virtual void checkCollision(const planning_scene::PlanningSceneConstPtr& planning_scene);
   virtual void checkCollisionNew(const planning_scene::PlanningSceneConstPtr& planning_scene);
   virtual bool checkCollisionIteration(const planning_scene::PlanningSceneConstPtr& planning_scene,
                                        const std::vector<double>& q1,
@@ -47,7 +46,7 @@ public:
   const double& getPheromone() const {return m_pheromone;}
   void print();
   bool isMember(const NodePtr& node){return (m_parent==node || m_child==node);}
-  void getNodes(NodePtr& node1, NodePtr& node2);
+  void getNodes(NodePtr& parent, NodePtr& child);
   const NodePtr& getParent(){return m_parent;}
   const NodePtr& getChild(){return m_child;}
 

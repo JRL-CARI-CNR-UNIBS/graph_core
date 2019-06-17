@@ -37,7 +37,7 @@ typedef std::shared_ptr<Node> NodePtr;
 typedef std::shared_ptr<Connection> ConnectionPtr;
 typedef std::shared_ptr<Tree> TreePtr;
 typedef std::vector<std::shared_ptr<Connection>> Path;
-enum Direction {Any, Forward, Backward};
+enum Direction {Forward, Backward};
 
 }
 

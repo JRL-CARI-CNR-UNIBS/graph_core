@@ -12,7 +12,7 @@ class Node: public std::enable_shared_from_this<Node>
 protected:
   double m_heuristic;
   std::vector<double> m_q;
-  double m_square_length;
+
   bool m_is_collision_checked;
   bool m_is_in_collision;
   virtual void checkCollision(const planning_scene::PlanningSceneConstPtr& planning_scene);
@@ -36,19 +36,13 @@ public:
   const std::vector<double>& getJoints() const {return m_q;}
   const bool& isCollisionChecked(){return m_is_collision_checked;}
   bool isInCollision(const planning_scene::PlanningSceneConstPtr &planning_scene);
-  virtual NodePtr createConnections(const double& max_distance,
-                                 const double& min_distance,
-                                 const std::vector<NodePtr>& actual_nodes,
-                                 unsigned int& connections);
 
-  int rouletteWheel(const Direction direction=Any);
+
+  int rouletteWheel(const Direction direction=Forward);
 
   bool isUnconnected(const planning_scene::PlanningSceneConstPtr &planning_scene);
   void addConnection(const ConnectionPtr& connection);
   bool removeConnection(ConnectionPtr& connection);
-
-  const NodePtr& findParent();
-  ConnectionPtr findConnectionToParent();
 
   std::vector<NodePtr> getAncestors(const unsigned int& level=1);
   std::vector<NodePtr> getDescendants(const unsigned int& level=1);

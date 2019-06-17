@@ -23,11 +23,17 @@ protected:
   double m_max_length;
   Direction m_direction;
 
-  double m_frontier_threshold=3;
+  bool m_transition_test=false;
+  bool m_expansion_control=true;
+
+  bool m_connect_mode=false;
+  double m_frontier_threshold=1;
+
+//  bool m_connect_mode=true;
+//  double m_frontier_threshold=3;
   double m_frontier_ratio=0.1;
   unsigned int m_non_frontier_count=1;
   unsigned int m_frontier_count=1;
-  bool m_connect_mode=true;
   double m_temperature=10;
   double m_temperature_rate=1.05;
   double m_max_cost=0;
