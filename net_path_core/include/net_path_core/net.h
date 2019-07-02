@@ -90,6 +90,8 @@ public:
   virtual bool warpPath2(const unsigned int& number_of_trials);
   virtual Path splitPath(const unsigned int& number_of_trials, const Path& path);
   virtual bool splitPath2(const unsigned int& number_of_trials);
+  virtual Path localSearch(const unsigned int& number_of_trials, const Path& path);
+
   // node removal functions
   unsigned int removeUnconnectedNodes();
   unsigned int removeLowPheromoneConnections(const unsigned int& number_of_nodes_to_check);

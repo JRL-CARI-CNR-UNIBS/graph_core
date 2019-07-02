@@ -1353,6 +1353,10 @@ double Net::getPathDistance(const Path &path, const NodePtr &node)
   return distance;
 }
 
+Path Net::localSearch(const unsigned int& number_of_trials, const Path& path)
+{
+
+}
 
 }
 

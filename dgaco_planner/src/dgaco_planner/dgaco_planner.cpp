@@ -172,6 +172,10 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
     return false;
   }
 
+  // ===============================
+  // BEGINNING OF THE IMPORTANT PART
+  // ===============================
+
   ROS_DEBUG("generate start and stop grid");
   m_net->generateNodesFromStartAndEndPoints(start_point,end_points);
 
@@ -224,7 +228,6 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
     }
 
     m_net->warpPath2(20);
-//    m_net->splitPath2(5);
 
     if (refinement)
     {
@@ -251,33 +254,28 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
         if (m_net->runAntCycle(n_ants))
         {
           m_net->warpPath2(20);
-//          m_net->splitPath2(20);
         }
 
         m_net->evaporatePheromone();
         m_net->distributePheromone(1);
 
+        m_net->removeLowPheromoneConnections(m_net->getNodeNumber()*1);
 
+        removed_node=0;
+        do
+        {
+          rem=m_net->removeUnconnectedNodes();
+          removed_node+=rem;
+        }
+        while (rem>0);
 
-          m_net->removeLowPheromoneConnections(m_net->getNodeNumber()*1);
+        unsigned int add_node_number=0;
+        if (m_net->getNodeNumber()<number_of_nodes)
+          add_node_number=number_of_nodes-m_net->getNodeNumber();
 
+        m_net->generateNodesFromEllipsoid(add_node_number);
 
-          removed_node=0;
-          do
-          {
-            rem=m_net->removeUnconnectedNodes();
-            removed_node+=rem;
-          }
-          while (rem>0);
-
-          unsigned int add_node_number=0;
-          if (m_net->getNodeNumber()<number_of_nodes)
-            add_node_number=number_of_nodes-m_net->getNodeNumber();
-
-          m_net->generateNodesFromEllipsoid(add_node_number);
-
-          m_net->updateNodeHeuristic();
-
+        m_net->updateNodeHeuristic();
 
         if (m_net->getBestCost()<(last_cost*0.9999))
         {
