@@ -31,6 +31,7 @@ public:
   std::shared_ptr<ha_planner::Node> pointer(){return shared_from_this();}
 
   virtual void computeHeuristic(const std::vector<NodePtr>& end_points);
+  void setHeuristic(const double& heuristic){m_heuristic=heuristic;};
   const unsigned int getConnectionsNumber(){return m_connections.size();}
   const double& getHeuristic(){return m_heuristic;}
   const std::vector<double>& getJoints() const {return m_q;}

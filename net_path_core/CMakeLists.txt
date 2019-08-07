@@ -5,11 +5,12 @@ add_compile_options(-std=c++11 -funroll-loops -Wall -Ofast)
 set(CMAKE_BUILD_TYPE Debug)
 
 find_package(catkin REQUIRED COMPONENTS
-  roscpp moveit_ros_planning moveit_core actionlib moveit_ros_planning_interface)
+  roscpp moveit_ros_planning moveit_core actionlib moveit_ros_planning_interface rosdyn_core)
+
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES net_path_core
- CATKIN_DEPENDS roscpp moveit_ros_planning moveit_core actionlib moveit_ros_planning_interface
+ CATKIN_DEPENDS roscpp moveit_ros_planning moveit_core actionlib moveit_ros_planning_interface rosdyn_core
  DEPENDS 
 )
 include_directories(
