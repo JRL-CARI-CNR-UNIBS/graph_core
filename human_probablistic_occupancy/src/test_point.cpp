@@ -6,12 +6,12 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "test_point_from_robot");
   ros::NodeHandle nh;
-  ros::NodeHandle pnh(~);
+  ros::NodeHandle pnh("~");
   ros::AsyncSpinner spinner(4);
   spinner.start();
 
   filters::SelfFilter<pcl::PointXYZ> filter(pnh);
 
-  filter.
+//  filter.
   return 0;
 }
