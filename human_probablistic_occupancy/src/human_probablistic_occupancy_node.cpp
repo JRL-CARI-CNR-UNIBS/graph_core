@@ -54,6 +54,10 @@ int main(int argc, char **argv)
 
     t+=st;
     lp.sleep();
+    if (t>5)
+      break;
   }
+
+  grid.toYaml(nh);
   return 0;
 }

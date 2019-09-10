@@ -1,19 +1,20 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(human_probablistic_occupancy)
 
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++14 -funroll-loops -Wall -Ofast)
+set(CMAKE_BUILD_TYPE Release)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
-  subscription_notifier rosdyn_core robot_self_filter
+  subscription_notifier rosdyn_core name_sorting
 )
 find_package( Eigen3 REQUIRED )
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES human_probablistic_occupancy
-  CATKIN_DEPENDS roscpp sensor_msgs rosdyn_core subscription_notifier robot_self_filter
+  CATKIN_DEPENDS roscpp sensor_msgs rosdyn_core subscription_notifier name_sorting
   DEPENDS EIGEN3
 )
 include_directories(

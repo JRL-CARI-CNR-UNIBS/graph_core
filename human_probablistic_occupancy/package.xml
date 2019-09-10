@@ -58,7 +58,8 @@
 
 <depend>subscription_notifier</depend>
 <depend>rosdyn_core</depend>
-<depend>robot_self_filter</depend>
+<depend>name_sorting</depend>
+
 
 
   <!-- The export tag contains other, unspecified, tags -->
