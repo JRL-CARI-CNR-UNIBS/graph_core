@@ -100,6 +100,17 @@ int main(int argc, char **argv)
   double cost;
   double rrt_cost=net.getBestCost();
 
+  for (unsigned int idx=0;idx<20;idx++)
+  {
+    rrt_cost=net.getBestCost();
+    ros::Time t0local=ros::Time::now();
+    net.localSearch2(2);
+    ros::Time t1local=ros::Time::now();
+    double local_cost=net.getBestCost();
+    ROS_DEBUG("local search in %f second,\nlocal cost=%f->%f ",(t1local-t0local).toSec(),rrt_cost,local_cost);
+  }
+  return 0;
+
   // run local optimizer
   ros::Time t1w=ros::Time::now();
   net.warpPath2(20);
@@ -173,6 +184,7 @@ int main(int argc, char **argv)
       // if new path is found, run local optimization
       net.warpPath2(20);
       net.splitPath2(20);
+      net.localSearch2(2);
     }
 
     // distribute pheromon on the good node
@@ -219,9 +231,11 @@ int main(int argc, char **argv)
       break;
   }
   ros::Time t1alg=ros::Time::now();
+  double aco_cost=net.getBestCost();
+
+
 
   // Print results
-  double aco_cost=net.getBestCost();
   ROS_DEBUG("\nrrt cost=%f\nlocal=%f\naco cost=%f",rrt_cost,local_best_cost,aco_cost);
   ROS_DEBUG("RRTConnect in %f second",(t2rrt-t1rrt).toSec());
   ROS_DEBUG("Warping and splitting in %f second",(t2w-t1w).toSec());

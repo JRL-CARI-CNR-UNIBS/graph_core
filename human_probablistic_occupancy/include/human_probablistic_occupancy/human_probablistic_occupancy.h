@@ -55,7 +55,11 @@ namespace human_occupancy
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     OccupancyFilter(const rosdyn::ChainPtr& chain, const OccupancyGridPtr& grid, const ros::NodeHandle& nh);
     double occupancy(const Eigen::VectorXd& q);
+    geometry_msgs::PoseArray getTestPoints(const Eigen::VectorXd& q);
   };
+
+
+  typedef std::shared_ptr<human_occupancy::OccupancyFilter> OccupancyFilterPtr;
 }
 
 #endif

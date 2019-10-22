@@ -2,7 +2,7 @@
 #define net_path_net_201901040910
 
 #include <net_path_core/net_path_core.h>
-
+#include <human_probablistic_occupancy/human_probablistic_occupancy.h>
 namespace ha_planner
 {
 
@@ -35,6 +35,7 @@ protected:
   double m_utopia_cost;
   std::map<NodePtr,double> m_utopia_costs;
   Path m_best_path;
+  Eigen::VectorXd m_unscaling;
 
   std::random_device m_rd;
   std::mt19937 m_gen;
@@ -43,7 +44,7 @@ protected:
   NodeParams m_node_params;
   ConnectionParam m_conn_params;
 
-
+  human_occupancy::OccupancyFilterPtr m_human_filter;
   planning_scene::PlanningSceneConstPtr m_planning_scene;
 
   NodePtr searchClosestNode(const std::vector<double>& q);
@@ -60,7 +61,7 @@ protected:
   std::vector<double> sample(const NodePtr& endnode);
   std::vector<std::vector<double> > getSamples(const NodePtr& endnode, const unsigned int& number_of_samples=1);
 
-
+  void computeOccupancy(NodePtr& node);
 
 public:
   Net(const unsigned int& dof,
@@ -77,6 +78,9 @@ public:
   bool isSolutionFound();
   double getBestCost(){return m_best_cost;}
 
+  void setHumanFilter(const human_occupancy::OccupancyFilterPtr& human_filter){m_human_filter=human_filter;}
+  void setOccupancyWeigth(const double& w){m_conn_params.weigth=w;}
+
   void setPlanningScene ( const planning_scene::PlanningSceneConstPtr& planning_scene )
   {
     m_planning_scene=planning_scene;
@@ -84,6 +88,8 @@ public:
   // nodes generations
   virtual void generateNodesFromStartAndEndPoints(const std::vector<double>& start_point, const std::vector<std::vector<double>>& end_points);
   virtual void generateNodesFromEllipsoid(const int& number_of_nodes);
+  virtual void computeNodeCost();
+
 
   // path
   virtual Path warpPath(const unsigned int& number_of_trials, const Path& path);
@@ -91,6 +97,8 @@ public:
   virtual Path splitPath(const unsigned int& number_of_trials, const Path& path);
   virtual bool splitPath2(const unsigned int& number_of_trials);
   virtual Path localSearch(const unsigned int& number_of_trials, const Path& path);
+  virtual bool localSearch2(const unsigned int& number_of_trials);
+  virtual Path dividePath(const Path& path, const double& desired_distance);
 
   // node removal functions
   unsigned int removeUnconnectedNodes();

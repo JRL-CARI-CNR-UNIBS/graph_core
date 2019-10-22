@@ -63,6 +63,12 @@ bool Connection::isInCollision(const planning_scene::PlanningSceneConstPtr &plan
   return m_is_in_collision;
 }
 
+double Connection::getLength()
+{
+  double length=m_square_length*(1+m_params.weigth*m_child->getCost());
+  return length;
+}
+
 void Connection::checkCollisionNew(const planning_scene::PlanningSceneConstPtr& planning_scene)
 {
   std::vector<double> q1=m_parent->getJoints();

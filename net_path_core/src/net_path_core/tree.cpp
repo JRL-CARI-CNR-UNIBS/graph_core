@@ -22,12 +22,20 @@ Tree::Tree(const NodePtr &root_node,
   m_tree_nodes.push_back(root_node);
   m_max_length=std::sqrt(m_max_square_length);
   m_frontier_threshold=0.05*m_max_length;
+
+  m_dof=root_node->getJoints().size();
+  m_unscaling.resize(m_dof);
+  for (unsigned int idx=0;idx<m_dof;idx++)
+  {
+    m_unscaling(idx)=1.0/m_connection_parameters.scaling.at(idx);
+  }
 }
 
 // return true if all the nodes to q are added, false if there was a collision in the middle
 bool Tree::createAndExtend(const std::vector<double> &q, NodePtr& last_add_node)
 {
   NodePtr goal_node=std::make_shared<Node>(q,m_node_parameters,m_connection_parameters);
+  computeOccupancy(goal_node);
   if (!extend(goal_node,last_add_node))
     return false;
 
@@ -58,6 +66,7 @@ bool Tree::extend(const NodePtr& n, NodePtr& last_add_node)
 bool Tree::createAndExtendFromNode(const std::vector<double>& q, const NodePtr starting_node, NodePtr &last_add_node)
 {
   NodePtr goal_node=std::make_shared<Node>(q,m_node_parameters,m_connection_parameters);
+  computeOccupancy(goal_node);
   if (!extendFromNode(goal_node,starting_node,last_add_node))
     return false;
 
@@ -117,6 +126,7 @@ bool Tree::extendFromNode(const NodePtr& n, const NodePtr starting_node, NodePtr
       }
 
       new_node=std::make_shared<Node>(qstep,m_node_parameters,m_connection_parameters);
+      computeOccupancy(new_node);
     }
     else
     {
@@ -316,9 +326,9 @@ bool Tree::minExpansionControl(const double& dist)
 
 bool Tree::transitionTest(const ConnectionPtr &conn)
 {
-  double parent_cost=1.0/conn->getParent()->getHeuristic();
+  double parent_cost=conn->getParent()->getCost();
 
-  double child_cost=1.0/conn->getChild()->getHeuristic();
+  double child_cost=conn->getChild()->getCost();
 
   m_max_cost=std::max(m_max_cost,parent_cost);
   m_max_cost=std::max(m_max_cost,child_cost);
@@ -382,5 +392,15 @@ bool Tree::tryConnectWith(const NodePtr &n)
 }
 
 
+void Tree::computeOccupancy(NodePtr& node)
+{
+
+  if (m_human_filter && node)
+  {
+    Eigen::Map<const Eigen::VectorXd> q(node->getJoints().data(),m_dof);
+    node->setCost(m_human_filter->occupancy(q*m_unscaling));
+  }
+
+}
 }
 

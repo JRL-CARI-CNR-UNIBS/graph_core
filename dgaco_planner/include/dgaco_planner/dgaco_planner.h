@@ -35,6 +35,8 @@ protected:
   //planning_scene::PlanningSceneConstPtr pl
   ros::NodeHandle m_nh;
 
+  human_occupancy::OccupancyFilterPtr m_human_filter;
+
   bool m_stop=false;
   std::shared_ptr<Net> m_net;
   unsigned int m_dof;
@@ -51,7 +53,7 @@ protected:
   bool refinement=true;
   double rrt_time=0.8;
   double max_time=1.5;
-
+  double occupancy_weigth;
 };
 
 }

@@ -6,6 +6,7 @@
 #include <moveit/planning_scene/planning_scene.h>
 #include <random>
 
+#define ROS_PROTO(...) ROS_LOG(::ros::console::levels::Fatal, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
 
 namespace ha_planner
 {
@@ -28,14 +29,24 @@ struct ConnectionParam
   double checking_collision_distance;
   std::vector<double> scaling;
   std::vector<double> unscaling;
+  double weigth=1;
+};
+struct ParticleParam
+{
+  double c_l=1; //weigth of local best
+  double c_g=1; //weigth of global best
+  double w=1;   //particle mass
+  unsigned int dof; // number of degree of freedom
 };
 
 class Node;
 class Connection;
+class Particle;
 class Tree;
 typedef std::shared_ptr<Node> NodePtr;
 typedef std::shared_ptr<Connection> ConnectionPtr;
 typedef std::shared_ptr<Tree> TreePtr;
+typedef std::shared_ptr<Particle> ParticlePtr;
 typedef std::vector<std::shared_ptr<Connection>> Path;
 enum Direction {Forward, Backward};
 
@@ -44,5 +55,6 @@ enum Direction {Forward, Backward};
 #include<net_path_core/node.h>
 #include <net_path_core/connection.h>
 #include <net_path_core/tree.h>
+#include<net_path_core/particle.h>
 #include <net_path_core/net.h>
 #endif

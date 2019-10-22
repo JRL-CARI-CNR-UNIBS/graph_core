@@ -40,7 +40,7 @@ public:
   void forceCollision(){m_is_collision_checked=true;m_is_in_collision=true;}
 
   const NodePtr& getOtherNode(const NodePtr& node);
-  const double& getLength(){return m_square_length;}
+  double getLength();
   double getHeuristic();
   void updatePheromone(const double& new_pheromone);
   const double& getPheromone() const {return m_pheromone;}

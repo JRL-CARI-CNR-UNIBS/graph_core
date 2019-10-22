@@ -42,6 +42,12 @@ target_link_libraries(test_point
   ${catkin_LIBRARIES}
 )
 
+add_executable(simulate_occupancy src/simulate_occupancy.cpp)
+add_dependencies(simulate_occupancy ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(simulate_occupancy
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
  install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

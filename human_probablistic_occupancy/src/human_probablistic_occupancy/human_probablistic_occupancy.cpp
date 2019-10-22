@@ -1,5 +1,7 @@
 #include <human_probablistic_occupancy/human_probablistic_occupancy.h>
 #include <rosparam_utilities/rosparam_utilities.h>
+#include <eigen_conversions/eigen_msg.h>
+
 namespace human_occupancy {
 
 
@@ -62,7 +64,7 @@ OccupancyGrid::OccupancyGrid(const Eigen::Vector3d& x_min, const Eigen::Vector3d
   m_occupancy.setZero();
   m_npnt=npnt;
   m_frames=0;
-  m_max_frames_before_iir_filtering=12.5*2;
+  m_max_frames_before_iir_filtering=12.5*5;
 }
 
 OccupancyGrid::OccupancyGrid(ros::NodeHandle &nh)
@@ -314,9 +316,14 @@ OccupancyFilter::OccupancyFilter(const rosdyn::ChainPtr &chain, const OccupancyG
   }
   m_link_names=m_chain->getLinksName();
   unsigned int npnts=0;
-  for (const auto& link_points: m_test_points)
+
+
+  for (unsigned int il=0;il<m_link_names.size();il++)
   {
-    npnts+=link_points.second.size();
+    if ( m_test_points.find(m_link_names.at(il)) != m_test_points.end() )
+    {
+      npnts+=m_test_points.at(m_link_names.at(il)).size();
+    }
   }
   m_points.resize(npnts);
 }
@@ -338,5 +345,40 @@ double OccupancyFilter::occupancy(const Eigen::VectorXd &q)
     }
   }
   return m_grid->totalOccupancy(m_points);
+}
+
+geometry_msgs::PoseArray OccupancyFilter::getTestPoints(const Eigen::VectorXd &q)
+{
+  unsigned ipnt=0;
+  m_transformations=m_chain->getTransformations(q);
+  for (unsigned int il=0;il<m_transformations.size();il++)
+  {
+    if ( m_test_points.find(m_link_names.at(il)) != m_test_points.end() )
+    {
+      const Eigen::Affine3d& t= m_transformations.at(il);
+      const auto& pnts= m_test_points.at(m_link_names.at(il));
+      for (unsigned int ip=0;ip<pnts.size();ip++)
+      {
+
+        m_points.at(ipnt++)=t*pnts.at(ip);
+      }
+    }
+  }
+  geometry_msgs::PoseArray msg;
+  msg.header.frame_id="world";
+  msg.header.stamp=ros::Time::now();
+  for (unsigned int idx=0;idx<m_points.size();idx++)
+  {
+    geometry_msgs::Pose pose;
+    pose.orientation.x=0;
+    pose.orientation.y=0;
+    pose.orientation.z=0;
+    pose.orientation.w=1;
+    pose.position.x=m_points.at(idx)(0);
+    pose.position.y=m_points.at(idx)(1);
+    pose.position.z=m_points.at(idx)(2);
+    msg.poses.push_back(pose);
+  }
+  return msg;
 }
 }

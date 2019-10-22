@@ -2,6 +2,7 @@
 #define tree_path_net_20190504
 
 #include <net_path_core/net_path_core.h>
+#include <human_probablistic_occupancy/human_probablistic_occupancy.h>
 
 namespace ha_planner
 {
@@ -23,7 +24,7 @@ protected:
   double m_max_length;
   Direction m_direction;
 
-  bool m_transition_test=false;
+  bool m_transition_test=true;
   bool m_expansion_control=true;
 
   bool m_connect_mode=false;
@@ -40,6 +41,10 @@ protected:
   double m_min_cost=1e6;
 
   std::vector<NodePtr>& m_end_nodes;
+
+  Eigen::VectorXd m_unscaling;
+  human_occupancy::OccupancyFilterPtr m_human_filter;
+  void computeOccupancy(NodePtr& node);
 public:
   Tree(const NodePtr& root_node,
         const NodeParams& node_parameters,
@@ -51,6 +56,7 @@ public:
 
 //  ~Tree();
 
+  void setHumanFilter(const human_occupancy::OccupancyFilterPtr& human_filter){m_human_filter=human_filter;}
   bool createAndExtend(const std::vector<double>& q, NodePtr& last_add_node);
   bool extend(const NodePtr& n, NodePtr& last_add_node);
 

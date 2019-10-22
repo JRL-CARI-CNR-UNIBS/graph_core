@@ -58,6 +58,7 @@
   <depend>actionlib</depend>
   <depend>moveit_ros_planning_interface</depend>
   <depend>rosdyn_core</depend>
+  <depend>human_probablistic_occupancy</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

@@ -11,6 +11,7 @@ class Node: public std::enable_shared_from_this<Node>
 
 protected:
   double m_heuristic;
+  double m_cost=0;
   std::vector<double> m_q;
 
   bool m_is_collision_checked;
@@ -31,9 +32,13 @@ public:
   std::shared_ptr<ha_planner::Node> pointer(){return shared_from_this();}
 
   virtual void computeHeuristic(const std::vector<NodePtr>& end_points);
-  void setHeuristic(const double& heuristic){m_heuristic=heuristic;};
   const unsigned int getConnectionsNumber(){return m_connections.size();}
+
+  void setHeuristic(const double& heuristic){m_heuristic=heuristic;};
   const double& getHeuristic(){return m_heuristic;}
+
+  void setCost(const double& cost){m_cost=cost;};
+  double getCost(){return m_cost;}
   const std::vector<double>& getJoints() const {return m_q;}
   const bool& isCollisionChecked(){return m_is_collision_checked;}
   bool isInCollision(const planning_scene::PlanningSceneConstPtr &planning_scene);
