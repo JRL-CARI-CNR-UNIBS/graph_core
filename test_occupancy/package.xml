@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>test_occupancy</name>
+  <version>0.0.0</version>
+  <description>The test_occupancy package</description>
+
+  <maintainer email="manuel.beschi@stiima.cnr.it">Manuel Beschi</maintainer>
+  <license>BSD</license>
+
+   <author email="manuel.beschi@stiima.cnr.it">Manuel Beschi</author>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>human_probablistic_occupancy</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_export_depend>human_probablistic_occupancy</build_export_depend>
+  <build_export_depend>roscpp</build_export_depend>
+  <exec_depend>human_probablistic_occupancy</exec_depend>
+  <exec_depend>roscpp</exec_depend>
+  <depend>moveit_core</depend>
+  <depend>moveit_ros_planning_interface</depend>
+
+
+  <export>
+  </export>
+</package>
