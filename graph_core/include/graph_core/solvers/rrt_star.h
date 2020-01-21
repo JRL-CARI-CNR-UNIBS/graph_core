@@ -26,32 +26,26 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/graph_core.h>
 
-namespace ha_planner {
+#include <graph_core/solvers/rrt_connect.h>
 
-class Path
+namespace pathplan {
+
+class RRTStar: public RRTConnect
 {
 protected:
-  std::vector<ConnectionPtr> m_connections;
-  double cost=std::numeric_limits<double>::infinity();
-
+  double r_rewire_;
 public:
-  Path(){}
-  Path(const std::vector<ConnectionPtr> connections);
+RRTStar(const MetricsPtr& metrics,
+           const CollisionCheckerPtr& checker,
+           const SamplerPtr& sampler):
+  RRTConnect(metrics,checker,sampler){}
 
-  // path
-  virtual bool warpPath(const unsigned int& number_of_trials);
-  virtual bool splitPath(const unsigned int& number_of_trials);
-  virtual bool localSearch(const unsigned int& number_of_trials);
-  virtual void dividePath(const double& desired_distance);
+virtual bool config(const ros::NodeHandle& nh);
+virtual bool addGoal(const NodePtr &goal_node);
+virtual bool addStartTree(const TreePtr& start_tree);
+virtual bool update(PathPtr& solution);
+virtual bool solve(PathPtr &solution, const unsigned int& max_iter);
 
-  double computePathCost();
-  bool isCollisionFree();
-  std::vector<std::vector<double>> getPathPoint();
-  void printPath();
-  void pruningPath();
-  virtual const double& getCost();
 };
-
 }

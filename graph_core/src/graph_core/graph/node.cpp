@@ -1,0 +1,129 @@
+/*
+Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of the <organization> nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+#include <graph_core/graph/node.h>
+
+namespace pathplan {
+
+Node::Node(const Eigen::VectorXd &configuration)
+{
+  configuration_=configuration;
+  ndof_=configuration_.size();
+}
+
+void Node::addParentConnection(const ConnectionPtr &connection)
+{
+  assert(connection->getChild()==pointer());
+  parent_connections_.push_back(connection);
+}
+
+
+void Node::addChildConnection(const ConnectionPtr &connection)
+{
+  assert(connection->getParent()==pointer());
+  child_connections_.push_back(connection);
+}
+void Node::remoteParentConnection(const ConnectionPtr &connection)
+{
+  std::vector<ConnectionPtr>::iterator it=std::find(parent_connections_.begin(),parent_connections_.end(),connection);
+  if (it==parent_connections_.end())
+  {
+    ROS_FATAL("connection is not in the parent vector");
+//    throw std::invalid_argument("connection is not in the parent vector");
+  }
+  else
+    parent_connections_.erase(it);
+}
+
+void Node::remoteChildConnection(const ConnectionPtr &connection)
+{
+  std::vector<ConnectionPtr>::iterator it=std::find(child_connections_.begin(),child_connections_.end(),connection);
+  if (it==child_connections_.end())
+  {
+    ROS_FATAL("connection is not in the child vector");
+  //  throw std::invalid_argument("connection is not in the child vector");
+  }
+  else
+  {
+    child_connections_.erase(it);
+  }
+}
+
+void Node::disconnect()
+{
+  for (ConnectionPtr& conn: parent_connections_)
+  {
+    if (conn)
+      if (conn->getParent())
+        conn->getParent()->remoteChildConnection(conn);
+  }
+  for (ConnectionPtr& conn: child_connections_)
+  {
+    if (conn)
+      if (conn->getChild())
+        conn->getChild()->remoteParentConnection(conn);
+  }
+
+}
+
+Node::~Node()
+{
+  disconnect();
+}
+
+std::vector<NodePtr> Node::getChildren() const
+{
+  std::vector<NodePtr> children;
+  for( const ConnectionPtr& conn: child_connections_)
+  {
+    children.push_back(conn->getChild());
+  }
+  return children;
+}
+
+std::vector<NodePtr> Node::getParents() const
+{
+  std::vector<NodePtr> parents;
+  for( const ConnectionPtr& conn: parent_connections_)
+  {
+    parents.push_back(conn->getParent());
+  }
+  return parents;
+}
+
+
+
+std::ostream& operator<<(std::ostream& os, const Node& node)
+{
+  os << "configuration = " << node.configuration_.transpose() << std::endl;
+  os << "parent connections = " << node.parent_connections_.size() << std::endl;
+  os << "child connections = " << node.child_connections_.size() << std::endl;
+
+  return os;
+}
+
+}

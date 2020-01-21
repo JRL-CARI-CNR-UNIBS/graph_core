@@ -26,13 +26,53 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/problem.h>
+#include <graph_core/graph/connection.h>
 
-namespace ha_planner {
-class Solver
+namespace pathplan {
+
+Connection::Connection(const NodePtr &parent, const NodePtr &child):
+  parent_(parent),
+  child_(child)
 {
-  ProblemPtr m_pb;
-public:
-  Solver(const ProblemPtr& pb);
-};
+}
+
+void Connection::add()
+{
+  valid=true;
+  parent_->addChildConnection(pointer());
+  child_->addParentConnection(pointer());
+}
+void Connection::remove()
+{
+  if (!valid)
+    return;
+
+  valid=false;
+  if (parent_)
+  {
+    parent_->remoteChildConnection(pointer());
+  }
+  else
+    ROS_FATAL("parent already destroied");
+
+  if (child_)
+  {
+    child_->remoteParentConnection(pointer());
+  }
+  else
+    ROS_FATAL("child already destroied");
+
+}
+Connection::~Connection()
+{
+}
+
+std::ostream& operator<<(std::ostream& os, const Connection& connection)
+{
+  os << connection.parent_->getConfiguration().transpose() << " -->" << std::endl;
+  os << "-->" << connection.child_->getConfiguration().transpose() << std::endl;
+
+  return os;
+}
+
 }

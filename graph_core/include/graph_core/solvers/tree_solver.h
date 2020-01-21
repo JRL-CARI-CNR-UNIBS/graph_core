@@ -26,52 +26,42 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/graph_core.h>
-#include <graph_core/graph.h>
-#include <graph_core/path.h>
-#include <graph_core/tree.h>
-#include <random>
+#include <graph_core/graph/tree.h>
+#include <graph_core/graph/path.h>
+#include <graph_core/collision_checker.h>
+#include <graph_core/metrics.h>
+#include <graph_core/sampler.h>
+#include <ros/ros.h>
+namespace pathplan {
 
-namespace ha_planner {
 
-class Problem
+class TreeSolver;
+typedef std::shared_ptr<TreeSolver> TreeSolverPtr;
+class TreeSolver: public std::enable_shared_from_this<TreeSolver>
 {
 protected:
-  double m_estimated_cost;
-  double m_utopia_cost;
-  double m_tolerance=1e-6;
-  PathPtr m_best_path;
-
-  GraphPtr m_graph;
-  NodeVct m_start_nodes;
-  NodeVct m_end_nodes;
-  std::vector<TreePtr> m_goal_trees;
-  std::vector<TreePtr> m_start_trees;
-
-  std::vector<Combination> m_combinations;
-  std::map<Combination,PathPtr> m_best_path_per_combination;
-  std::map<Combination,double> m_utopia_cost_per_combination;
-  std::map<Combination,Eigen::MatrixXd> m_rot_matrix;
-
-
-  std::random_device m_rd;
-  std::mt19937 m_gen;
-  std::uniform_real_distribution<double> m_ud;
-
-
-  virtual std::vector<double> sample(const Combination& combination);
-  bool IsASolution(const PathPtr& path, Combination& combination);
-
+  MetricsPtr metrics_;
+  CollisionCheckerPtr checker_;
+  SamplerPtr sampler_;
+  bool solved_=false;
+  bool init_=false;
+  double cost_;
+protected:
+  virtual bool setProblem(){};
 public:
-  Problem(const GraphPtr& graph);
-
-  virtual void generateNodesFromStartAndEndPoints(const std::vector<std::vector<double>>& start_points,
-                                                  const std::vector<std::vector<double>>& end_points);
-
-
-  bool solved();
-  double getBestCost(){return m_best_path->getCost();}
-  bool storeIfImproveCost(const PathPtr& path);
+  TreeSolver(const MetricsPtr& metrics,
+             const CollisionCheckerPtr& checker,
+             const SamplerPtr& sampler):
+    metrics_(metrics),
+    checker_(checker),
+    sampler_(sampler)
+  {
+    cost_=std::numeric_limits<double>::infinity();
+  }
+  virtual bool config(const ros::NodeHandle& nh){};
+  virtual bool update(PathPtr& solution)=0;
+  virtual bool solve(PathPtr& solution, const unsigned int& max_iter=100);
+  virtual bool addStart(const NodePtr& start_node)=0;
+  virtual bool addGoal(const NodePtr& goal_node)=0;
 };
-
 }

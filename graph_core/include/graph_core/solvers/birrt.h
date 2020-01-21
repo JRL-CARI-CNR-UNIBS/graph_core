@@ -26,61 +26,25 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/graph_core.h>
-#include <graph_core/node.h>
-#include <graph_core/connection.h>
-namespace ha_planner
-{
+#include <graph_core/solvers/rrt_connect.h>
 
-class Graph
+namespace pathplan {
+
+class BiRRT: public RRTConnect
 {
 protected:
-
-  std::vector<NodePtr> m_nodes;
-  unsigned int m_dof;
-
-  std::vector<double> m_lb;
-  std::vector<double> m_ub;
-  Eigen::VectorXd m_unscaling;
-  NodeParams m_node_params;
-  planning_scene::PlanningSceneConstPtr m_planning_scene;
-
-
-  friend Problem;
+  bool extend_=false;
+  TreePtr goal_tree_;
 public:
-  Graph(const unsigned int& dof,
-      const std::string& group_name,
-      const planning_scene::PlanningSceneConstPtr &planning_scene,
-      const std::vector<double> scaling,
-      const std::vector<double> lb,
-      const std::vector<double> ub);
+BiRRT(const MetricsPtr& metrics,
+           const CollisionCheckerPtr& checker,
+           const SamplerPtr& sampler):
+  RRTConnect(metrics,checker,sampler){}
 
-  NodePtr searchClosestNode(const std::vector<double>& q);
-  NodePtr addNode(const std::vector<double>& q);
-  NodePtr addChildNode(const NodePtr& parent_node, const std::vector<double>& q);
-  NodePtr addParentNode(const NodePtr& child_node, const std::vector<double>& q);
-  NodePtr addConnectedNode(const NodePtr& node, const std::vector<double>& q, Direction dir);
-  ConnectionPtr addConnection(const NodePtr& parent, const NodePtr& child);
+virtual bool config(const ros::NodeHandle& nh);
 
-  bool checkNodeCollision(const NodePtr& node);
-  bool checkConnectionCollision(const ConnectionPtr& conn);
-  void removeNodeWithConnections(NodePtr& node);
-  void removeConnection(ConnectionPtr& conn);
+virtual bool addGoal(const NodePtr &goal_node);
+virtual bool update(PathPtr& solution);
 
-  unsigned int getNodeNumber()
-  {
-    return m_nodes.size();
-  }
-
-  void setPlanningScene( const planning_scene::PlanningSceneConstPtr& planning_scene )
-  {
-    m_planning_scene=planning_scene;
-  }
-
-  // node removal functions
-  unsigned int removeUnconnectedNodes();
 };
-
-
 }
-

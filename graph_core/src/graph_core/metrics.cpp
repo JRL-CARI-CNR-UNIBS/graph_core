@@ -1,4 +1,3 @@
-#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -26,43 +25,10 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <graph_core/metrics.h>
 
 
-#include <ros/ros.h>
-
-#define GRAPH_TEST(...) ROS_LOG(::ros::console::levels::Fatal, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
-
-namespace ha_planner
-{
-
-struct NodeParams
-{
-  std::string group_name;
-  std::vector<double> scaling;
-  std::vector<double> unscaling;
-  double checking_collision_distance;
-  double weigth=1;
-};
-
-class Node;
-class Connection;
-class Path;
-class Tree;
-class Graph;
-class Problem;
-class Solver;
-
-typedef std::shared_ptr<Node> NodePtr;
-typedef std::shared_ptr<Connection> ConnectionPtr;
-typedef std::shared_ptr<Tree> TreePtr;
-typedef std::shared_ptr<Path> PathPtr;
-typedef std::shared_ptr<Graph> GraphPtr;
-typedef std::shared_ptr<Problem> ProblemPtr;
-typedef std::shared_ptr<Solver> SolverPtr;
-typedef std::vector<NodePtr> NodeVct;
-typedef std::vector<ConnectionPtr> ConnectionVct;
-typedef std::pair<NodePtr,NodePtr> Combination;
-enum Direction {Forward, Backward};
+namespace pathplan {
 
 
 }

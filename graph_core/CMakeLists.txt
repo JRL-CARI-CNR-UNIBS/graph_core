@@ -20,20 +20,39 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   )
 add_library(${PROJECT_NAME}
-  src/${PROJECT_NAME}/utils.cpp
-  src/${PROJECT_NAME}/node.cpp
-  src/${PROJECT_NAME}/connection.cpp
-  src/${PROJECT_NAME}/path.cpp
-  src/${PROJECT_NAME}/graph.cpp
-  src/${PROJECT_NAME}/solver.cpp
-  src/${PROJECT_NAME}/problem.cpp
+  src/${PROJECT_NAME}/metrics.cpp
+  src/${PROJECT_NAME}/sampler.cpp
+  src/${PROJECT_NAME}/util.cpp
+  src/${PROJECT_NAME}/collision_checker.cpp
+  src/${PROJECT_NAME}/graph/node.cpp
+  src/${PROJECT_NAME}/graph/connection.cpp
+  src/${PROJECT_NAME}/graph/tree.cpp
+  src/${PROJECT_NAME}/graph/path.cpp
+  src/${PROJECT_NAME}/solvers/tree_solver.cpp
+  src/${PROJECT_NAME}/solvers/rrt_connect.cpp
+  src/${PROJECT_NAME}/solvers/birrt.cpp
+  src/${PROJECT_NAME}/solvers/rrt_star.cpp
   )
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-install(PROGRAMS
-  scripts/my_python_script
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-  )
+add_executable(       test_classes src/test/test_classes.cpp)
+add_dependencies(     test_classes ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_classes
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
+add_executable(       test_tree src/test/test_tree.cpp)
+add_dependencies(     test_tree ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_tree
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
+#install(PROGRAMS
+#  scripts/my_python_script
+#  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+#  )
 
 install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

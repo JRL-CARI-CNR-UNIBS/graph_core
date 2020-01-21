@@ -26,27 +26,72 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-
 #include <ros/ros.h>
-#include <memory>
-#include <moveit/planning_scene/planning_scene.h>
-#include <random>
+#include <eigen3/Eigen/Core>
 
-namespace ha_planner
+namespace pathplan {
+
+class CollisionChecker
 {
+  double min_distance_=0.01;
+public:
+  CollisionChecker(const double& min_distance=0.01):
+    min_distance_(min_distance)
+  {
 
-Eigen::MatrixXd computeRotationMatrix(const std::vector<double>& p1, const std::vector<double>&  p2);
-Eigen::VectorXd computeEllipsoid(const std::vector<double>& p1, const std::vector<double>&  p2, const double& cost);
-double squareDistance(const std::vector<double>& q1, const std::vector<double>& q2);
-double distance(const std::vector<double>& q1, const std::vector<double>& q2);
+  }
 
-std::vector<double> multiply(const std::vector<double>& q, const std::vector<double>& factor);
+  // collision check: true if it is valid
+  virtual bool check(const Eigen::VectorXd& configuration)
+  {
+    return true;
+  }
 
-std::vector<std::vector<double>> interpolate(const std::vector<double> &q1, const std::vector<double> &q2, const double& distance_step);
+  bool checkPath(const Eigen::VectorXd &configuration1, const Eigen::VectorXd &configuration2)
+  {
+    Eigen::VectorXd conf;
+    return checkPath(configuration1,configuration2,conf);
+  }
 
+  bool checkPath(const Eigen::VectorXd& configuration1,
+                         const Eigen::VectorXd& configuration2,
+                         Eigen::VectorXd& conf)
+  {
+    if (!check(configuration1))
+      return false;
+    if (!check(configuration2))
+      return false;
+
+    double dist=(configuration2-configuration1).norm();
+    unsigned int npnt=std::ceil(dist/min_distance_);
+    if (npnt>1)
+    {
+      Eigen::VectorXd step=(configuration2-configuration1)/npnt;
+      for (unsigned int ipnt=1;ipnt<npnt;ipnt++)
+      {
+        conf=configuration1+step*ipnt;
+        if (!check(conf))
+        {
+          // return last feasible configuration
+          conf=configuration1+step*(ipnt-1);
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+};
+
+typedef std::shared_ptr<CollisionChecker> CollisionCheckerPtr;
+
+class Cube3dCollisionChecker: public CollisionChecker
+{
+public:
+  virtual bool check(const Eigen::VectorXd& configuration)
+  {
+    return configuration.cwiseAbs().maxCoeff()>1;
+  }
+};
 
 
 }
-
-

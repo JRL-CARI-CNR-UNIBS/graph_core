@@ -1,4 +1,3 @@
-#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -25,13 +24,47 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+#include <graph_core/util.h>
+
+namespace pathplan {
 
 
-namespace ha_planner {
-
-class Tree
+Eigen::MatrixXd computeRotationMatrix(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2)
 {
-public:
-  Tree(const NodePtr& root, const Direction dir);
-};
+  assert(x1.size()==x2.size());
+  unsigned int dof=x1.size();
+  Eigen::MatrixXd rot_matrix(dof,dof);
+  rot_matrix.setIdentity();
+  Eigen::VectorXd main_versor =(x1-x2)/(x1-x2).norm();
+
+  bool is_standard_base=false;
+  for (unsigned int ic=0;ic<rot_matrix.cols();ic++)
+  {
+    if (std::abs(main_versor.dot(rot_matrix.col(ic)))>0.999)
+    {
+      is_standard_base=true;
+      // rot_matrix is already orthonormal, put this direction as first
+      Eigen::VectorXd tmp=rot_matrix.col(ic);
+      rot_matrix.col(ic)=rot_matrix.col(0);
+      rot_matrix.col(0)=tmp;
+      break;
+    }
+  }
+
+  if (!is_standard_base)
+  {
+    rot_matrix.col(0)=main_versor;
+    // orthonormalization
+    for (unsigned int ic=1;ic<rot_matrix.cols();ic++)
+    {
+      for (unsigned int il=0;il<ic;il++)
+      {
+        rot_matrix.col(ic)-= (rot_matrix.col(ic).dot(rot_matrix.col(il)))*rot_matrix.col(il);
+      }
+      rot_matrix.col(ic)/=rot_matrix.col(ic).norm();
+    }
+  }
+  return rot_matrix;
+}
+
 }

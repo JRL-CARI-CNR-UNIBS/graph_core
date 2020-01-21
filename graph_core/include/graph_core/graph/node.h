@@ -26,55 +26,41 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <eigen3/Eigen/Core>
+#include <ros/ros.h>
+#include <graph_core/util.h>
+#include <graph_core/graph/connection.h>
 
-#include <graph_core/graph_core.h>
-#include <graph_core/utils.h>
-#include <graph_core/connection.h>
+namespace pathplan {
 
-namespace ha_planner
-{
 
 class Node: public std::enable_shared_from_this<Node>
 {
-
 protected:
-  double m_cost=0;
-  std::vector<double> m_q;
-
-  bool m_is_collision_checked;
-  bool m_is_in_collision;
-  //reference member is not stored in memory, but you need to use it carefully: life cycle is not automatically managed. In this library there are no issues because Nodes and Connections are members of a Net.
-  const NodeParams& m_params;
+  Eigen::VectorXd configuration_;
+  unsigned int ndof_;
+public:
+  std::vector<ConnectionPtr> parent_connections_;
+  std::vector<ConnectionPtr> child_connections_;
 
 public:
-  std::vector<ConnectionPtr> m_connections;
-  std::vector<ConnectionPtr> m_parent_connections;
-  std::vector<ConnectionPtr> m_child_connections;
+Node(const Eigen::VectorXd& configuration);
+NodePtr pointer(){return shared_from_this();}
+void addParentConnection(const ConnectionPtr& connection);
+void addChildConnection(const ConnectionPtr& connection);
+std::vector<NodePtr> getChildren() const;
+std::vector<NodePtr> getParents() const;
 
-  Node(const std::vector<double>& q,
-       const NodeParams& node_parameters);
-  std::shared_ptr<ha_planner::Node> pointer(){return shared_from_this();}
+void disconnect();
+void remoteParentConnection(const ConnectionPtr& connection);
+void remoteChildConnection(const ConnectionPtr& connection);
+const Eigen::VectorXd& getConfiguration(){return configuration_;}
+~Node();
 
-  const unsigned int getConnectionsNumber(){return m_connections.size();}
+friend std::ostream& operator<<(std::ostream& os, const Node& path);
 
-  void setCost(const double& cost){m_cost=cost;};
-  double getCost(){return m_cost;}
-
-  std::vector<double> getJoints();
-  const std::vector<double>& getScaledJoints() const {return m_q;}
-  const bool& isCollisionChecked(){return m_is_collision_checked;}
-  bool isInCollision(const planning_scene::PlanningSceneConstPtr &planning_scene);
-
-  bool isUnconnected(const planning_scene::PlanningSceneConstPtr &planning_scene);
-  void addConnection(const ConnectionPtr& connection);
-  bool removeConnection(ConnectionPtr& connection);
-
-  std::vector<NodePtr> getParents();
-  std::vector<NodePtr> getChilds();
-  bool checkIfConnectedWith(const NodePtr& node, ConnectionPtr& connection);
-
-  void print();
 };
 
-}
+std::ostream& operator<<(std::ostream& os, const Node& node);
 
+}
