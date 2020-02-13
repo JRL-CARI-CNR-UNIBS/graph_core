@@ -40,7 +40,7 @@ protected:
   Direction direction_;
   double max_distance_;
   double tolerance_=1e-6;
-
+  unsigned int maximum_nodes_=1000; // legare il massimo numero di punti al volume????
   CollisionCheckerPtr checker_;
   MetricsPtr metrics_;
 
@@ -89,6 +89,10 @@ public:
 
   bool isInTree(const NodePtr& node);
   bool isInTree(const NodePtr& node, std::vector<NodePtr>::iterator& it);
+  unsigned int getNumberOfNodes()const{return nodes_.size();}
+
+  void purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds=true);
+  bool purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
 };
 
 typedef std::shared_ptr<Tree> TreePtr;

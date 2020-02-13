@@ -6,7 +6,7 @@
 #include <moveit/planning_scene/planning_scene.h>
 #include <random>
 
-#define ROS_PROTO(...) ROS_LOG(::ros::console::levels::Fatal, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
+#define ROS_PROTO(...) ROS_LOG(::ros::console::levels::Info, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
 
 namespace ha_planner
 {

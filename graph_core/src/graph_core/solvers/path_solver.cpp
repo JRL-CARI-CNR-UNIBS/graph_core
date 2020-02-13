@@ -1,4 +1,3 @@
-#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -26,36 +25,84 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/solvers/tree_solver.h>
+#include <graph_core/solvers/path_solver.h>
 
-namespace pathplan
+namespace pathplan {
+
+PathLocalOptimizer::PathLocalOptimizer(const CollisionCheckerPtr &checker, const MetricsPtr &metrics):
+  checker_(checker),
+  metrics_(metrics)
 {
 
-class RRTConnect: public TreeSolver
+}
+void PathLocalOptimizer::config(ros::NodeHandle &nh)
 {
-protected:
-  TreePtr start_tree_;
-  NodePtr goal_node_;
-  double max_distance_;
-  double utopia_;
-  PathPtr solution_;
-  virtual bool setProblem();
+  max_stall_gen_=10;
+  stall_gen_=0;
+}
 
-public:
-  RRTConnect(const MetricsPtr& metrics,
-             const CollisionCheckerPtr& checker,
-             const SamplerPtr& sampler):
-    TreeSolver(metrics,checker,sampler){}
-  virtual bool config(const ros::NodeHandle& nh);
+void PathLocalOptimizer::setPath(const PathPtr &path)
+{
+  assert(path);
+  solved_=false;
+  stall_gen_=0;
+  path_=path;
+}
 
-  virtual bool addStart(const NodePtr& start_node);
-  virtual bool addStartTree(const TreePtr& start_tree);
-  virtual bool addGoal(const NodePtr& goal_node);
+bool PathLocalOptimizer::step(PathPtr& solution)
+{
+  solution=path_;
 
-  TreePtr getStartTree() const {return start_tree_;}
+  if (solved_)
+    return true;
 
-  virtual bool update(PathPtr& solution);
+  double cost=path_->cost();
 
-};
+  bool solved=!path_->warp();
+  solved=!path_->slipParent() && solved;
+  solved=!path_->slipChild() && solved;
+
+  if (cost<=(1.001*path_->cost()))
+  {
+    if (stall_gen_==0)
+    {
+      ROS_FATAL("simplify path");
+      if (!path_->simplify())
+      {
+        stall_gen_++;
+      }
+      else
+      {
+        solved=false;
+      }
+    }
+    else
+    {
+      stall_gen_++;
+    }
+  }
+  else
+    stall_gen_=0;
+  solved_=solved || (stall_gen_>=max_stall_gen_);
+  return solved;
+
+}
+
+bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iteration)
+{
+  unsigned int iter=0;
+  solution=path_;
+  while (iter++<max_iteration)
+  {
+    if (solved_)
+    {
+      ROS_FATAL("solved in %u iterations",iter);
+      return true;
+    }
+    step(solution);
+  }
+  return solved_;
+}
+
 
 }

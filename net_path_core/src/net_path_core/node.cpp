@@ -2,7 +2,8 @@
 
 namespace ha_planner {
 
-Node::Node(const std::vector<double>& q, const NodeParams& node_parameters):
+Node::Node(const std::vector<double>& q, const NodeParams& node_parameters,
+           const ConnectionParam& connection_parameters):
   m_params(node_parameters),
   m_conn_params(connection_parameters)
 {

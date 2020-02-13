@@ -22,7 +22,9 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/metrics.cpp
   src/${PROJECT_NAME}/sampler.cpp
+  src/${PROJECT_NAME}/local_informed_sampler.cpp
   src/${PROJECT_NAME}/util.cpp
+  src/${PROJECT_NAME}/moveit_collision_checker.cpp
   src/${PROJECT_NAME}/collision_checker.cpp
   src/${PROJECT_NAME}/graph/node.cpp
   src/${PROJECT_NAME}/graph/connection.cpp
@@ -32,6 +34,7 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/solvers/rrt_connect.cpp
   src/${PROJECT_NAME}/solvers/birrt.cpp
   src/${PROJECT_NAME}/solvers/rrt_star.cpp
+  src/${PROJECT_NAME}/solvers/path_solver.cpp
   )
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
@@ -45,6 +48,14 @@ target_link_libraries(test_classes
 add_executable(       test_tree src/test/test_tree.cpp)
 add_dependencies(     test_tree ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(test_tree
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
+
+add_executable(       test_moveit src/test/test_moveit.cpp)
+add_dependencies(     test_moveit ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_moveit
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )

@@ -202,7 +202,7 @@ bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire)
   }
   NodePtr new_node;
   if (!extend(configuration,new_node))
-     return false;
+    return false;
 
   std::vector<NodePtr> near_nodes=near(new_node,r_rewire);
   NodePtr nearest_node=new_node->getParents().at(0);
@@ -276,7 +276,9 @@ std::vector<NodePtr> Tree::near(const NodePtr &node, const double &r_rewire)
   {
     double dist=(n->getConfiguration()-node->getConfiguration()).norm();
     if (dist<r_rewire)
+    {
       nodes.push_back(n);
+    }
   }
   return nodes;
 }
@@ -288,16 +290,18 @@ double Tree::costToNode( NodePtr node)
   {
     while (node!=root_)
     {
+      if (node->parent_connections_.size()!=1)
+      {
+        ROS_ERROR("a node of forward-direction tree should have exactly a parent");
+        ROS_FATAL_STREAM("node=\n"<<*node);
+        assert(0);
+      }
+
       if (node->parent_connections_.at(0)->getParent()==node)
       {
         ROS_FATAL_STREAM("node=\n"<<*node);
         ROS_FATAL_STREAM("to parent\n"<<*(node->parent_connections_.at(0)));
         ROS_FATAL("connection between the same node");
-        assert(0);
-      }
-      if (node->parent_connections_.size()!=1)
-      {
-        ROS_ERROR("a node of forward-direction tree should have only a parent");
         assert(0);
       }
       cost+=node->parent_connections_.at(0)->getCost();
@@ -422,6 +426,100 @@ bool Tree::isInTree(const NodePtr &node,std::vector<NodePtr>::iterator& it)
 {
   it=std::find(nodes_.begin(),nodes_.end(),node);
   return it!=nodes_.end();
+}
+
+
+void Tree::purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds)
+{
+  if (nodes_.size()<maximum_nodes_)
+    return;
+  unsigned int nodes_to_remove=nodes_.size()-maximum_nodes_;
+
+  unsigned int removed_nodes=0;
+  unsigned int idx=0;
+  while (idx<nodes_.size())
+  {
+    if (std::find(white_list.begin(),white_list.end(),nodes_.at(idx))!=white_list.end())
+    {
+      idx++;
+      continue;
+    }
+    if (check_bounds && !sampler->inBounds(nodes_.at(idx)->getConfiguration()))
+    {
+      // in realtà andrebbero rimossi nodo e seguaci !!!!!
+      purgeFromHere(nodes_.at(idx),white_list,removed_nodes);
+      continue;
+      //      if ((direction_==Forward  && nodes_.at(idx)->child_connections_.size()==0 ) ||
+      //          (direction_==Backward && nodes_.at(idx)->parent_connections_.size()==0))
+      //      {
+
+      //        removed_nodes++;
+      //        nodes_.at(idx)->disconnect();
+      //        nodes_.erase(nodes_.begin()+idx);
+      //        continue;
+      //      }
+    }
+
+
+    if (nodes_to_remove<removed_nodes)
+      break;
+    if ((direction_==Forward  && nodes_.at(idx)->child_connections_.size()==0 ) ||
+        (direction_==Backward && nodes_.at(idx)->parent_connections_.size()==0))
+    {
+      removed_nodes++;
+      nodes_.at(idx)->disconnect();
+      nodes_.erase(nodes_.begin()+idx);
+      continue;
+    }
+
+    idx++;
+
+  }
+
+
+
+}
+
+
+bool Tree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes)
+{
+  if (std::find(white_list.begin(),white_list.end(),node)!=white_list.end())
+    return false;
+
+
+  std::vector<NodePtr> successors;
+
+  if (direction_==Forward)
+    successors=node->getChildren();
+  else
+    successors=node->getParents();
+
+  do
+  {
+    for (NodePtr& n: successors)
+    {
+
+      if (!purgeFromHere(n,white_list,removed_nodes))
+        return false;
+
+    }
+
+    if (direction_==Forward)
+      successors=node->getChildren();
+    else
+      successors=node->getParents();
+
+  }
+  while (successors.size()>0);
+
+  std::vector<NodePtr>::iterator it=std::find(nodes_.begin(),nodes_.end(),node);
+  node->disconnect();
+  if(it<nodes_.end())
+  {
+    nodes_.erase(it);
+    removed_nodes++;
+  }
+  return true;
 }
 
 }

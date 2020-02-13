@@ -27,3 +27,39 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
+#include <graph_core/collision_checker.h>
+#include <moveit/planning_scene/planning_scene.h>
+
+namespace pathplan {
+
+class MoveitCollisionChecker: public CollisionChecker
+{
+protected:
+  planning_scene::PlanningSceneConstPtr planning_scene_;
+  collision_detection::CollisionRequest req_;
+  collision_detection::CollisionResult res_;
+  robot_state::RobotStatePtr state_;
+  std::string group_name_;
+
+
+public:
+  MoveitCollisionChecker(const planning_scene::PlanningSceneConstPtr planning_scene,
+                         const std::string& group_name,
+                         const double& min_distance=0.01):
+    CollisionChecker(min_distance),
+    planning_scene_(planning_scene),
+    group_name_(group_name)
+  {
+    state_=std::make_shared<robot_state::RobotState>(planning_scene_->getCurrentState());
+
+  }
+
+  virtual bool check(const Eigen::VectorXd& configuration)
+  {
+    state_->setJointGroupPositions(group_name_,configuration);
+    planning_scene_->checkCollision(req_, res_, *state_);
+    return !res_.collision;
+  }
+
+};
+}

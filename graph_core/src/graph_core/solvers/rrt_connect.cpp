@@ -51,6 +51,16 @@ bool RRTConnect::addStart(const NodePtr &start_node)
   return true;
 }
 
+bool RRTConnect::addStartTree(const TreePtr &start_tree)
+{
+  assert(start_tree);
+  start_tree_=start_tree;
+  solved_=false;
+
+  setProblem();
+  return true;
+}
+
 bool RRTConnect::setProblem()
 {
   if (!start_tree_)

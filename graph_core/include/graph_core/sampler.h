@@ -102,8 +102,10 @@ public:
 //    compute matrix;
   }
 
-  Eigen::VectorXd sample();
+  virtual Eigen::VectorXd sample();
   void setCost(const double& cost);
+
+  virtual bool inBounds(const Eigen::VectorXd& q);
 
 };
 

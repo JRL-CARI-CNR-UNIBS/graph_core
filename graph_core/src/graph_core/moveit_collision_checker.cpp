@@ -1,4 +1,3 @@
-#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -26,36 +25,11 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/solvers/tree_solver.h>
 
-namespace pathplan
-{
 
-class RRTConnect: public TreeSolver
-{
-protected:
-  TreePtr start_tree_;
-  NodePtr goal_node_;
-  double max_distance_;
-  double utopia_;
-  PathPtr solution_;
-  virtual bool setProblem();
+#include <graph_core/moveit_collision_checker.h>
 
-public:
-  RRTConnect(const MetricsPtr& metrics,
-             const CollisionCheckerPtr& checker,
-             const SamplerPtr& sampler):
-    TreeSolver(metrics,checker,sampler){}
-  virtual bool config(const ros::NodeHandle& nh);
 
-  virtual bool addStart(const NodePtr& start_node);
-  virtual bool addStartTree(const TreePtr& start_tree);
-  virtual bool addGoal(const NodePtr& goal_node);
-
-  TreePtr getStartTree() const {return start_tree_;}
-
-  virtual bool update(PathPtr& solution);
-
-};
+namespace pathplan {
 
 }

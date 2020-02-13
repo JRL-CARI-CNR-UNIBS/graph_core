@@ -93,7 +93,7 @@ bool Path::bisection(const unsigned int &connection_idx,
   double cost=conn12->getCost()+conn23->getCost();
 
   unsigned int iter=0;
-  while (iter++<100 & (max_distance+min_distance)>min_length)
+  while (iter++<100 & (max_distance+min_distance)>min_length_)
   {
     double distance=0.5*(max_distance+min_distance);
     Eigen::VectorXd p=center+direction*distance;
@@ -245,6 +245,53 @@ bool Path::spiral()
   return std::any_of(change_spiral_.cbegin(), change_spiral_.cend(), [](bool i){ return !i;});
 
 }
+
+bool Path::simplify()
+{
+  bool simplified;
+  unsigned int ic=1;
+  while (ic<connections_.size())
+  {
+    double dist=(connections_.at(ic)->getParent()->getConfiguration()-connections_.at(ic)->getChild()->getConfiguration()).norm();
+    if (dist>min_length_)
+    {
+      ic++;
+      continue;
+    }
+    if (checker_->checkPath(connections_.at(ic-1)->getParent()->getConfiguration(),
+                            connections_.at(ic)->getChild()->getConfiguration()))
+    {
+      simplified=true;
+      double cost=metrics_->cost(connections_.at(ic-1)->getParent(),
+                                 connections_.at(ic)->getChild());
+      ConnectionPtr conn=std::make_shared<Connection>(connections_.at(ic-1)->getParent(),
+                                                      connections_.at(ic)->getChild());
+      conn->setCost(cost);
+      conn->add();
+      connections_.at(ic)->remove();
+      connections_.erase(connections_.begin()+(ic-1),connections_.begin()+ic+1);
+      connections_.insert(connections_.begin()+(ic-1),conn);
+
+      change_warp_.erase(change_warp_.begin()+ic);
+      change_warp_.at(ic-1)=1;
+      change_slip_parent_.erase(change_slip_parent_.begin()+ic);
+      change_slip_parent_.at(ic-1)=1;
+      change_slip_child_.erase(change_slip_child_.begin()+ic);
+      change_slip_child_.at(ic-1)=1;
+
+      #ifndef NO_SPIRAL
+      change_spiral_.erase(change_spiral_.begin()+ic);
+      change_spiral_.begin()+(ic-1)=1;
+      #endif
+    }
+    else
+      ic++;
+
+  }
+
+  return simplified;
+}
+
 #endif
 std::ostream& operator<<(std::ostream& os, const Path& path)
 {

@@ -43,7 +43,7 @@ protected:
   MetricsPtr metrics_;
   CollisionCheckerPtr checker_;
   double cost_;
-  double min_length=0.01;
+  double min_length_=0.01;
 
   std::vector<bool> change_warp_;
   std::vector<bool> change_slip_parent_;
@@ -68,6 +68,10 @@ public:
   std::vector<ConnectionPtr> getConnectionToNode(const NodePtr& node);
   PathPtr resample(const double& distance);
 
+  std::vector<ConnectionPtr> getConnections()const{return connections_;}
+  bool simplify();
+
+  // return true if improve
   bool warp();
   bool slipChild();
   bool slipParent();

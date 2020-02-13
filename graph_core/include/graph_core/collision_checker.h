@@ -28,11 +28,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/ros.h>
 #include <eigen3/Eigen/Core>
-
 namespace pathplan {
 
 class CollisionChecker
 {
+protected:
   double min_distance_=0.01;
 public:
   CollisionChecker(const double& min_distance=0.01):

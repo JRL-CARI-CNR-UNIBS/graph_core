@@ -178,7 +178,7 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
   for (unsigned int iGoal=0;iGoal<request_.goal_constraints.size();iGoal++)
   {
     moveit_msgs::Constraints goal=request_.goal_constraints.at(iGoal);
-    ROS_DEBUG("Processing goal %u",iGoal++);
+    ROS_INFO("Processing goal %u",iGoal++);
 
     std::vector<double> final_configuration( goal.joint_constraints.size() );
 
@@ -190,7 +190,7 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
     end_state.copyJointGroupPositions(group_,final_configuration);
 
 
-    ROS_DEBUG("check collision on goal %u",iGoal);
+    ROS_FATAL("check collision on goal %u",iGoal);
 
     if (planning_scene_->isStateColliding(end_state,request_.group_name))
     {
@@ -238,7 +238,7 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
     ROS_DEBUG("run RRT algorithms");
     last_cost=m_net->getBestCost();
     stall_gen=0;
-
+    ROS_FATAL("Best cost %f",last_cost);
     for (unsigned int idx=0;idx<20000;idx++)
     {
       ros::WallTime act_time = ros::WallTime::now();
@@ -275,6 +275,7 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
 
     if (m_net->getBestCost()>=std::numeric_limits<double>::infinity())
     {
+      ROS_ERROR("no solutions found");
       res.error_code_.val=moveit_msgs::MoveItErrorCodes::PLANNING_FAILED;
       return false;
     }

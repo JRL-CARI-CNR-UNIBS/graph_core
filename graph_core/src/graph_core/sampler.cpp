@@ -49,8 +49,13 @@ Eigen::VectorXd InformedSampler::sample()
 
       bool in_of_bounds=true;
       for (unsigned int iax=0;iax<ndof_;iax++)
+      {
         if (q(iax)>upper_bound_(iax) || q(iax)<lower_bound_(iax))
+        {
           in_of_bounds=false;
+          break;
+        }
+      }
       if (in_of_bounds)
         return q;
     }
@@ -59,12 +64,32 @@ Eigen::VectorXd InformedSampler::sample()
   }
 }
 
+bool InformedSampler::inBounds(const Eigen::VectorXd& q)
+{
+  for (unsigned int iax=0;iax<ndof_;iax++)
+  {
+    if (q(iax)>upper_bound_(iax) || q(iax)<lower_bound_(iax))
+    {
+      return false;
+    }
+  }
+  if (inf_cost_)
+    return true;
+  else
+    return ((q-start_configuration_).norm()+(q-stop_configuration_).norm())<cost_;
+
+}
+
 void InformedSampler::setCost(const double &cost)
 {
   cost_=cost;
   inf_cost_= cost_>=std::numeric_limits<double>::infinity();
 
-
+  if (cost_<focii_distance_)
+  {
+    ROS_WARN("cost is %f, focci distance is %f",cost_,focii_distance_);
+    cost_=focii_distance_;
+  }
   assert(cost_>=focii_distance_);
   max_radius_=0.5*cost;
   min_radius_=0.5*std::sqrt(std::pow(cost,2)-std::pow(focii_distance_,2));

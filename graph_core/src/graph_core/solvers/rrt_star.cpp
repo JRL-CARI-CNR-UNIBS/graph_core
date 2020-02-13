@@ -40,6 +40,7 @@ bool RRTStar::addStartTree(const TreePtr &start_tree)
     utopia_=(goal_node_->getConfiguration()-start_tree_->getRoot()->getConfiguration()).norm();
     init_=true;
     solution_=std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_),metrics_,checker_);
+    cost_=solution_->cost();
   }
   else
     init_=false;
@@ -57,6 +58,7 @@ bool RRTStar::addGoal(const NodePtr &goal_node)
     init_=true;
 
     solution_=std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_),metrics_,checker_);
+    cost_=solution_->cost();
 
   }
   else
@@ -74,15 +76,23 @@ bool RRTStar::update(PathPtr& solution)
 {
   if (!init_)
     return false;
+  ROS_FATAL("cost=%f,utopia=%f",cost_,utopia_);
   if (cost_<=1.003*utopia_)
     return true;
 
+  double cost=solution_->cost();
+  r_rewire_=cost_*0.1;
   bool improved= start_tree_->rewire(sampler_->sample(),r_rewire_);
 
   if (improved)
   {
+    if (start_tree_->costToNode(goal_node_)>=(cost-1e-8))
+      return false;
+
     solution_=std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_),metrics_,checker_);
     cost_=solution_->cost();
+
+    ROS_FATAL("%e",solution_->cost()-cost);
     sampler_->setCost(cost_);
   }
   solution=solution_;

@@ -87,6 +87,8 @@ void Node::disconnect()
       if (conn->getChild())
         conn->getChild()->remoteParentConnection(conn);
   }
+  child_connections_.clear();
+  parent_connections_.clear();
 
 }
 

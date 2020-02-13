@@ -26,35 +26,36 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/solvers/tree_solver.h>
+#include <graph_core/graph/path.h>
+#include <graph_core/collision_checker.h>
+#include <graph_core/metrics.h>
+#include <ros/ros.h>
 
-namespace pathplan
+namespace pathplan {
+
+class PathLocalOptimizer;
+typedef std::shared_ptr<PathLocalOptimizer> PathLocalOptimizerPtr;
+
+class PathLocalOptimizer: public std::enable_shared_from_this<PathLocalOptimizer>
 {
 
-class RRTConnect: public TreeSolver
-{
 protected:
-  TreePtr start_tree_;
-  NodePtr goal_node_;
-  double max_distance_;
-  double utopia_;
-  PathPtr solution_;
-  virtual bool setProblem();
-
+  CollisionCheckerPtr checker_;
+  MetricsPtr metrics_;
+  PathPtr path_;
+  bool solved_=false;
+  ros::NodeHandle nh_;
+  unsigned int max_stall_gen_=10;
+  unsigned int stall_gen_=0;
 public:
-  RRTConnect(const MetricsPtr& metrics,
-             const CollisionCheckerPtr& checker,
-             const SamplerPtr& sampler):
-    TreeSolver(metrics,checker,sampler){}
-  virtual bool config(const ros::NodeHandle& nh);
+  PathLocalOptimizer(const CollisionCheckerPtr& checker,
+                     const MetricsPtr& metrics);
+  void setPath(const PathPtr& path);
+  void config(ros::NodeHandle& nh);
+  bool step(PathPtr& solution);
+  bool solve(PathPtr& solution,
+      const unsigned int& max_iteration=100);
 
-  virtual bool addStart(const NodePtr& start_node);
-  virtual bool addStartTree(const TreePtr& start_tree);
-  virtual bool addGoal(const NodePtr& goal_node);
-
-  TreePtr getStartTree() const {return start_tree_;}
-
-  virtual bool update(PathPtr& solution);
 
 };
 
