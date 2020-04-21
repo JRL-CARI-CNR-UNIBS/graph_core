@@ -6,7 +6,7 @@
 #include <moveit/planning_scene/planning_scene.h>
 #include <random>
 
-#define ROS_PROTO(...) ROS_LOG(::ros::console::levels::Info, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
+#define ROS_PROTO(...) ROS_LOG(::ros::console::levels::Debug, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
 
 namespace ha_planner
 {
@@ -29,7 +29,7 @@ struct ConnectionParam
   double checking_collision_distance;
   std::vector<double> scaling;
   std::vector<double> unscaling;
-  double weigth=1;
+  double weight=1;
 };
 struct ParticleParam
 {

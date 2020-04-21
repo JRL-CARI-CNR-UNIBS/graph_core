@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>dirrt_star</name>
+  <version>0.0.0</version>
+  <description>The dirrt_star package</description>
+
+  <maintainer email="manuel.beschi@stiima.cnr.it">Manuel Beschi</maintainer>
+  <license>BSD</license>
+ <!-- <url type="website">http://wiki.ros.org/dirrt_star</url> -->
+  <author email="manuel.beschi@stiima.cnr.it">Manuel Beschi</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>graph_core</build_depend>
+  <build_depend>moveit_core</build_depend>
+  <build_depend>moveit_ros_planning</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_export_depend>graph_core</build_export_depend>
+  <build_export_depend>moveit_core</build_export_depend>
+  <build_export_depend>moveit_ros_planning</build_export_depend>
+  <build_export_depend>roscpp</build_export_depend>
+  <exec_depend>graph_core</exec_depend>
+  <exec_depend>moveit_core</exec_depend>
+  <exec_depend>moveit_ros_planning</exec_depend>
+  <exec_depend>roscpp</exec_depend>
+
+
+  <export>
+    <moveit_core plugin="${prefix}/plugin.xml"/>
+  </export>
+</package>

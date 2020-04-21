@@ -48,6 +48,7 @@ protected:
   unsigned int max_stall_gen_=10;
   unsigned int stall_gen_=0;
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   PathLocalOptimizer(const CollisionCheckerPtr& checker,
                      const MetricsPtr& metrics);
   void setPath(const PathPtr& path);

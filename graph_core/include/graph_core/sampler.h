@@ -61,6 +61,7 @@ protected:
 
 
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   InformedSampler(const Eigen::VectorXd& start_configuration,
                   const Eigen::VectorXd& stop_configuration,
                   const Eigen::VectorXd& lower_bound,
@@ -106,6 +107,7 @@ public:
   void setCost(const double& cost);
 
   virtual bool inBounds(const Eigen::VectorXd& q);
+  virtual bool collapse(){return focii_distance_>=cost_;}
 
 };
 

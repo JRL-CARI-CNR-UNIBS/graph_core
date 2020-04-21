@@ -18,7 +18,7 @@ int main(int argc, char **argv)
   x_min.setConstant(-3);
   x_max.setConstant(3);
   human_occupancy::OccupancyGrid grid(x_min,x_max,npnt);
-
+  grid.getFromParam(nh);
   double t=0;
   double st=1./12.5;
   ros::Rate lp(1./st);
@@ -26,18 +26,18 @@ int main(int argc, char **argv)
 
   while (ros::ok())
   {
-    if (meas_sub.isANewDataAvailable())
-    {
-      grid.update(meas_sub.getData());
-    }
+//    if (meas_sub.isANewDataAvailable())
+//    {
+//      grid.update(meas_sub.getData());
+//    }
     pc_pub.publish(grid.toPointCloud());
 
     t+=st;
     lp.sleep();
-    if (t>5)
-      break;
+//    if (t>5)
+//      break;
   }
 
-  grid.toYaml(nh);
+//  grid.toYaml(nh);
   return 0;
 }

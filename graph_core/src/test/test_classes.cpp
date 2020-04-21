@@ -3,6 +3,7 @@
 #include <graph_core/graph/node.h>
 #include <graph_core/graph/path.h>
 #include <graph_core/graph/tree.h>
+#include <graph_core/occupancy_metrics.h>
 
 int main(int argc, char **argv)
 {
@@ -27,6 +28,33 @@ int main(int argc, char **argv)
   pathplan::MetricsPtr metrics=std::make_shared<pathplan::Metrics>();
   ROS_INFO_STREAM("distance between configurations = " << metrics->cost(n1->getConfiguration(),n2->getConfiguration()));
   ROS_INFO_STREAM("distance between nodes = " << metrics->cost(n1,n2));
+
+  ROS_INFO("Test occupancy metrics.");
+  pathplan::MetricsPtr occupancy_metrics =std::make_shared<pathplan::OccupancyMetrics>(nh);
+  Eigen::VectorXd oconf1(7);
+  oconf1.setConstant(0);
+  Eigen::VectorXd oconf2(7);
+
+  double metrics_time=0;
+  double occ_metrics_time=0;
+  int runs=10000;
+  for (int idx=0;idx<runs;idx++)
+  {
+    oconf2.setRandom();
+    ros::WallTime t1=ros::WallTime::now();
+    double length=occupancy_metrics->Metrics::cost(oconf1,oconf2);
+    ros::WallTime t2=ros::WallTime::now();
+    double cost=occupancy_metrics->cost(oconf1,oconf2);
+    ros::WallTime t3=ros::WallTime::now();
+    metrics_time+=(t2-t1).toSec();
+    occ_metrics_time+=(t3-t2).toSec();
+
+    ROS_INFO_STREAM_THROTTLE(1,"distance between configurations = " << length);
+    ROS_INFO_STREAM_THROTTLE(1,"cost between configurations = " << cost);
+  }
+  ROS_INFO(" (average in %d runs) metrics time = %f [us], occupancy metrics time= %f [us]",runs,1.0e6*metrics_time/runs,1.0e6*occ_metrics_time/runs);
+
+
 
   ROS_INFO("Test Collision");
   pathplan::CollisionCheckerPtr checker=std::make_shared<pathplan::Cube3dCollisionChecker>();

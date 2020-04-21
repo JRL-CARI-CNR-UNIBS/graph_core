@@ -51,22 +51,30 @@ void PathLocalOptimizer::setPath(const PathPtr &path)
 
 bool PathLocalOptimizer::step(PathPtr& solution)
 {
+  if (!path_)
+    return false;
   solution=path_;
 
+  bool improved=false;
   if (solved_)
-    return true;
+    return false;
 
   double cost=path_->cost();
 
+  ros::Time t1=ros::Time::now();
   bool solved=!path_->warp();
-  solved=!path_->slipParent() && solved;
-  solved=!path_->slipChild() && solved;
+  PATH_COMMENT("warp needs %f seconds",(ros::Time::now()-t1).toSec());
+//  t1=ros::Time::now();
+//  solved=!path_->slipParent() && solved;
+//  PATH_COMMENT("slipParent needs %f seconds",(ros::Time::now()-t1).toSec());
+//  t1=ros::Time::now();
+//  solved=!path_->slipChild() && solved;
+//  PATH_COMMENT("slipChild needs %f seconds",(ros::Time::now()-t1).toSec());
 
   if (cost<=(1.001*path_->cost()))
   {
     if (stall_gen_==0)
     {
-      ROS_FATAL("simplify path");
       if (!path_->simplify())
       {
         stall_gen_++;
@@ -82,9 +90,12 @@ bool PathLocalOptimizer::step(PathPtr& solution)
     }
   }
   else
+  {
+    improved=true;
     stall_gen_=0;
+  }
   solved_=solved || (stall_gen_>=max_stall_gen_);
-  return solved;
+  return improved;
 
 }
 

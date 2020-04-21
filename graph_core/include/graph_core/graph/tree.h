@@ -48,6 +48,7 @@ protected:
 
 
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Tree(const NodePtr& root,
        const Direction& direction,
        const double& max_distance,
@@ -55,7 +56,7 @@ public:
        const MetricsPtr& metrics);
 
   const NodePtr& getRoot(){return root_;}
-  void addNode(const NodePtr& node);
+  void addNode(const NodePtr& node, const bool& check_if_present=true);
   bool tryExtend(const Eigen::VectorXd& configuration,
                  Eigen::VectorXd& next_configuration,
                  NodePtr& closest_node);

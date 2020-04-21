@@ -35,6 +35,7 @@ class CollisionChecker
 protected:
   double min_distance_=0.01;
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   CollisionChecker(const double& min_distance=0.01):
     min_distance_(min_distance)
   {
@@ -47,11 +48,13 @@ public:
     return true;
   }
 
+  /*
   bool checkPath(const Eigen::VectorXd &configuration1, const Eigen::VectorXd &configuration2)
   {
     Eigen::VectorXd conf;
     return checkPath(configuration1,configuration2,conf);
   }
+  */
 
   bool checkPath(const Eigen::VectorXd& configuration1,
                          const Eigen::VectorXd& configuration2,
@@ -80,6 +83,38 @@ public:
     }
     return true;
   }
+
+  bool checkPath(const Eigen::VectorXd& configuration1,
+                 const Eigen::VectorXd& configuration2)
+  {
+    if (!check(configuration1))
+      return false;
+    if (!check(configuration2))
+      return false;
+
+    double distance=(configuration2-configuration1).norm();
+    if (distance<min_distance_)
+      return true;
+
+    Eigen::VectorXd conf;
+    double n=2;
+    while (distance>n*min_distance_)
+    {
+      for (double idx=1;idx<n;idx+=2)
+      {
+        conf=configuration1+(configuration2-configuration1)*idx/n;
+        if (!check(conf))
+        {
+          return false;
+        }
+
+      }
+      n*=2;
+    }
+
+    return true;
+  }
+
 };
 
 typedef std::shared_ptr<CollisionChecker> CollisionCheckerPtr;

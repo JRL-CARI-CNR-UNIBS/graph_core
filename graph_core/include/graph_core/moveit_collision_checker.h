@@ -43,6 +43,7 @@ protected:
 
 
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   MoveitCollisionChecker(const planning_scene::PlanningSceneConstPtr planning_scene,
                          const std::string& group_name,
                          const double& min_distance=0.01):
@@ -56,9 +57,17 @@ public:
 
   virtual bool check(const Eigen::VectorXd& configuration)
   {
+
+    *state_ = planning_scene_->getCurrentState();
     state_->setJointGroupPositions(group_name_,configuration);
-    planning_scene_->checkCollision(req_, res_, *state_);
-    return !res_.collision;
+    if (!state_->satisfiesBounds())
+    {
+      ROS_FATAL("Out of bound");
+      return false;
+    }
+    state_->updateCollisionBodyTransforms();
+    return planning_scene_->isStateValid(*state_);
+
   }
 
 };

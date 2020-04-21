@@ -62,6 +62,7 @@ DgacoPlanner::DgacoPlanner ( const std::string& name,
     {
       m_lb.at(idx)=bounds.min_position_;
       m_ub.at(idx)=bounds.max_position_;
+      ROS_FATAL("joint name =%s, bound = [%f, %f]",joint_names_.at(idx).c_str(),m_lb.at(idx),m_ub.at(idx));
     }
     double vmax=100;
     if (bounds.velocity_bounded_)
@@ -84,10 +85,10 @@ DgacoPlanner::DgacoPlanner ( const std::string& name,
     ROS_WARN_STREAM(name+ "/tool_frame is not defined");
   }
 
-  if (!m_nh.getParam(name+ "/occupancy_weigth",occupancy_weigth))
+  if (!m_nh.getParam(name+ "/occupancy_weight",occupancy_weight))
   {
-    occupancy_weigth=10;
-    ROS_WARN_STREAM(name+ "/occupancy_weigth is not defined");
+    occupancy_weight=10;
+    ROS_WARN_STREAM(name+ "/occupancy_weight is not defined");
   }
   Eigen::Vector3d grav;
   grav << 0, 0, -9.806;
@@ -143,24 +144,38 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
 {
   ros::WallTime start_time = ros::WallTime::now();
   m_net=std::make_shared<Net>(m_dof,group_,planning_scene_,m_scaling,m_lb,m_ub);
+  ROS_PROTO("Set human filter");
   m_net->setHumanFilter(m_human_filter);
-  m_net->setOccupancyWeigth(occupancy_weigth);
+  ROS_PROTO("Set human filter weight");
+  m_net->setOccupancyWeight(occupancy_weight);
   // initializing response
   res.description_.resize(1,"");
   res.processing_time_.resize(1);
   res.error_code_.val = moveit_msgs::MoveItErrorCodes::SUCCESS;
   
   bool success = false;
-  
   bool planning_success=false;
+
+  ROS_PROTO("Insert start state");
   moveit::core::RobotState start_state(robot_model_);
   moveit::core::robotStateMsgToRobotState(request_.start_state,start_state);
   if (request_.start_state.joint_state.position.size()==0)
     start_state=planning_scene_->getCurrentState();
   else
     moveit::core::robotStateMsgToRobotState(request_.start_state,start_state);
-
   start_state.update();
+  start_state.updateCollisionBodyTransforms();
+
+  ROS_PROTO("check feasibility");
+  if (!start_state.satisfiesBounds())
+  {
+    ROS_ERROR("Start point is out of bound");
+    res.error_code_.val=moveit_msgs::MoveItErrorCodes::START_STATE_VIOLATES_PATH_CONSTRAINTS;
+    return false;
+  }
+
+  ROS_PROTO("check collision");
+
   if (planning_scene_->isStateColliding(start_state,request_.group_name))
   {
     ROS_ERROR("Start point is in collision");
@@ -168,8 +183,10 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
     return false;
   }
 
+
   std::vector<double> start_point;
   start_state.copyJointGroupPositions(group_,start_point);
+
   std::map<double,moveit_msgs::Constraints> ordered_goals;
   
   std::vector<std::vector<double>> end_points;
@@ -177,8 +194,8 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
   // computing minimum time
   for (unsigned int iGoal=0;iGoal<request_.goal_constraints.size();iGoal++)
   {
+    ROS_PROTO("Check goal %u",iGoal);
     moveit_msgs::Constraints goal=request_.goal_constraints.at(iGoal);
-    ROS_INFO("Processing goal %u",iGoal++);
 
     std::vector<double> final_configuration( goal.joint_constraints.size() );
 
@@ -189,20 +206,33 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
     }
     end_state.copyJointGroupPositions(group_,final_configuration);
 
-
-    ROS_FATAL("check collision on goal %u",iGoal);
+    bool feasible=true;
+    for (unsigned int idof=0;idof<m_dof;idof++)
+    {
+      if ( (final_configuration.at(idof)<m_lb.at(idof)) || (final_configuration.at(idof)>m_ub.at(idof)))
+      {
+        ROS_WARN("final_configuration is out of bound");
+        feasible=false;
+        break;
+      }
+    }
+    if (!feasible)
+      continue;
 
     if (planning_scene_->isStateColliding(end_state,request_.group_name))
     {
-      ROS_WARN("goal %u is in collision",iGoal);
+      ROS_DEBUG("goal %u is in collision",iGoal);
       continue;
     }
+
+    ROS_PROTO("Insert goal state");
 
     end_points.push_back(final_configuration);
 
   }
   if (end_points.size()==0)
   {
+    ROS_ERROR("No valid goals");
     res.error_code_.val=moveit_msgs::MoveItErrorCodes::GOAL_IN_COLLISION;
     return false;
   }
@@ -211,7 +241,7 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
   // BEGINNING OF THE IMPORTANT PART
   // ===============================
 
-  ROS_DEBUG("generate start and stop grid");
+  ROS_PROTO("generate start and stop grid");
   m_net->generateNodesFromStartAndEndPoints(start_point,end_points);
 
   double cost=m_net->getBestCost();
@@ -235,10 +265,10 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
 //  }
   else
   {
-    ROS_DEBUG("run RRT algorithms");
+    ROS_PROTO("run RRT algorithms");
     last_cost=m_net->getBestCost();
     stall_gen=0;
-    ROS_FATAL("Best cost %f",last_cost);
+
     for (unsigned int idx=0;idx<20000;idx++)
     {
       ros::WallTime act_time = ros::WallTime::now();
@@ -254,7 +284,7 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
       }
       catch (std::exception& e)
       {
-        ROS_FATAL("what? %s, iteration = %u", e.what(),idx);
+        ROS_ERROR("what? %s, iteration = %u", e.what(),idx);
         res.error_code_.val = moveit_msgs::MoveItErrorCodes::FAILURE;
       }
       cost=m_net->getBestCost();
@@ -280,7 +310,9 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
       return false;
     }
     m_net->warpPath2(20);
-    m_net->localSearch2(4);
+    m_net->searchBall2(20);
+
+//    m_net->localSearch2(4);
   }
 
 
@@ -292,75 +324,96 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
       ROS_PROTO("cost without occupancy %f",m_net->getBestCost());
       m_net->computeNodeCost();
       ROS_PROTO("cost with occupancy %f",m_net->getBestCost());
-      m_net->localSearch2(20);
-      ROS_PROTO("cost with occupancy %f after local search",m_net->getBestCost());
-    }
-    unsigned int removed_node=0;
-    unsigned int rem;
-    do
-    {
-      rem=m_net->removeUnconnectedNodes();
-      removed_node+=rem;
-    }
-    while (rem>0);
+//      m_net->localSearch2(20);
+//      ROS_PROTO("cost with occupancy %f after local search",m_net->getBestCost());
 
-    m_net->updateNodeHeuristic();
-    unsigned int itrial=0;
-    stall_gen=0;
-    last_cost=m_net->getBestCost();
-    for (itrial=0;itrial<0/*2000*/;itrial++)
-    {
-
-      ros::WallTime act_time = ros::WallTime::now();
-      if ((act_time-start_time).toSec()>max_time)
-        break;
-
-      if (m_net->runAntCycle(n_ants))
+      unsigned int stall_gen=0;
+      while (ros::ok())
       {
+        ros::Time t0=ros::Time::now();
+
+        bool flag1=m_net->searchBall2(20);
+        bool flag2=false;
+        if (flag1)
+        {
+          flag2=m_net->warpPath2(5);
+          m_net->divide(0.5);
+        }
+        if (!flag2)
+          stall_gen++;
+        ros::Time t1=ros::Time::now();
+        ROS_PROTO("cost with occupancy %f after searchBall (%f seconds)",m_net->getBestCost(),(t1-t0).toSec());
+        ros::WallTime act_time= ros::WallTime::now();
+        if ((act_time-start_time).toSec()>max_time)
+          break;
+        if (stall_gen>=max_stall_gen)
+          break;
+      }
+    }
+//    unsigned int removed_node=0;
+//    unsigned int rem;
+//    do
+//    {
+//      rem=m_net->removeUnconnectedNodes();
+//      removed_node+=rem;
+//    }
+//    while (rem>0);
+
+//    m_net->updateNodeHeuristic();
+//    unsigned int itrial=0;
+//    stall_gen=0;
+//    last_cost=m_net->getBestCost();
+//    for (itrial=0;itrial<0/*2000*/;itrial++)
+//    {
+
+//      ros::WallTime act_time = ros::WallTime::now();
+//      if ((act_time-start_time).toSec()>max_time)
+//        break;
+
+//      if (m_net->runAntCycle(n_ants))
+//      {
 //        m_net->warpPath2(20);
-        m_net->localSearch2(2);
-      }
+//        m_net->localSearch2(2);
+//      }
 
-      m_net->evaporatePheromone();
-      m_net->distributePheromone(1);
+//      m_net->evaporatePheromone();
+//      m_net->distributePheromone(1);
 
-      m_net->removeLowPheromoneConnections(m_net->getNodeNumber()*1);
+//      m_net->removeLowPheromoneConnections(m_net->getNodeNumber()*1);
 
-      removed_node=0;
-      do
-      {
-        rem=m_net->removeUnconnectedNodes();
-        removed_node+=rem;
-      }
-      while (rem>0);
+//      removed_node=0;
+//      do
+//      {
+//        rem=m_net->removeUnconnectedNodes();
+//        removed_node+=rem;
+//      }
+//      while (rem>0);
 
-      unsigned int add_node_number=0;
-      if (m_net->getNodeNumber()<number_of_nodes)
-        add_node_number=number_of_nodes-m_net->getNodeNumber();
+//      unsigned int add_node_number=0;
+//      if (m_net->getNodeNumber()<number_of_nodes)
+//        add_node_number=number_of_nodes-m_net->getNodeNumber();
 
-      m_net->generateNodesFromEllipsoid(add_node_number);
+//      m_net->generateNodesFromEllipsoid(add_node_number);
 
-      m_net->updateNodeHeuristic();
+//      m_net->updateNodeHeuristic();
 
-      if (m_net->getBestCost()<(last_cost*0.9999))
-      {
-        stall_gen=0;
-        last_cost=m_net->getBestCost();
-      }
-      else
-      {
-        stall_gen++;
-      }
+//      if (m_net->getBestCost()<(last_cost*0.9999))
+//      {
+//        stall_gen=0;
+//        last_cost=m_net->getBestCost();
+//      }
+//      else
+//      {
+//        stall_gen++;
+//      }
 
-      if (stall_gen>=max_stall_gen)
-        break;
-    }
+//      if (stall_gen>=max_stall_gen)
+//        break;
+//    }
   }
 
-
-  m_net->localSearch2(4);
-  //m_net->pruningPath(m_net->getBestPathRef());
-//  m_net->warpPath2(20);
+  if ((m_net->getBestCost()>1e-6))
+    m_net->localSearch2(4);
 
   std::vector<std::vector<double>> waypoints=m_net->getBestPath();
   ROS_PROTO("opt cost with occupancy %f",m_net->getBestCost());

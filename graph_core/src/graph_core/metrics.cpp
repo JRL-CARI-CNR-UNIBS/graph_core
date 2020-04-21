@@ -30,5 +30,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan {
 
+Metrics::Metrics()
+{
+
+}
+
+double Metrics::cost(const NodePtr& node1,
+                     const NodePtr& node2)
+{
+  return Metrics::cost(node1->getConfiguration(),node2->getConfiguration());
+}
+
+
+double Metrics::cost(const Eigen::VectorXd& configuration1,
+                     const Eigen::VectorXd& configuration2)
+{
+  return (configuration1-configuration2).norm();
+}
+
 
 }

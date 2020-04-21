@@ -68,6 +68,7 @@
   <exec_depend>roscpp</exec_depend>
   <exec_depend>rosdyn_core</exec_depend>
 
+  <depend>human_probablistic_occupancy</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

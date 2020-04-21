@@ -51,8 +51,10 @@ void Node::checkCollision(const planning_scene::PlanningSceneConstPtr &planning_
 
   robot_state::RobotState state = planning_scene->getCurrentState();
   state.setJointGroupPositions(m_params.group_name,q);
-  planning_scene->checkCollision(req, res, state);
-  m_is_in_collision=res.collision;
+  state.updateCollisionBodyTransforms();
+  m_is_in_collision=!planning_scene->isStateValid(state);
+//  planning_scene->checkCollision(req, res, state);
+//  m_is_in_collision=res.collision;
 
 }
 

@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(graph_core)
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++14 -funroll-loops -Wall -Ofast)
+set(CMAKE_BUILD_TYPE Release)
+
 find_package(catkin REQUIRED COMPONENTS
   actionlib
   moveit_core
@@ -8,11 +10,12 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_ros_planning_interface
   roscpp
   rosdyn_core
+  human_probablistic_occupancy
   )
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES graph_core
-  CATKIN_DEPENDS actionlib moveit_core moveit_ros_planning moveit_ros_planning_interface roscpp rosdyn_core
+  CATKIN_DEPENDS actionlib moveit_core moveit_ros_planning moveit_ros_planning_interface roscpp rosdyn_core human_probablistic_occupancy
   DEPENDS
   )
 include_directories(
@@ -21,6 +24,7 @@ include_directories(
   )
 add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/metrics.cpp
+  src/${PROJECT_NAME}/occupancy_metrics.cpp
   src/${PROJECT_NAME}/sampler.cpp
   src/${PROJECT_NAME}/local_informed_sampler.cpp
   src/${PROJECT_NAME}/util.cpp

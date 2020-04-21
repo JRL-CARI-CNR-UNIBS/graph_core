@@ -36,6 +36,7 @@ class RRTStar: public RRTConnect
 protected:
   double r_rewire_;
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 RRTStar(const MetricsPtr& metrics,
            const CollisionCheckerPtr& checker,
            const SamplerPtr& sampler):

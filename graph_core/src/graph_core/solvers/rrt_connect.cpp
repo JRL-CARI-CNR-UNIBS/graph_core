@@ -32,7 +32,8 @@ namespace pathplan
 
 bool RRTConnect::config(const ros::NodeHandle& nh)
 {
-  max_distance_=0.4;
+  max_distance_=1;
+  return true;
 }
 
 bool RRTConnect::addGoal(const NodePtr &goal_node)
@@ -74,25 +75,36 @@ bool RRTConnect::setProblem()
   if (start_tree_->connectToNode(goal_node_,new_node))
   {
     solution_=std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_),metrics_,checker_);
+    solution_->setTree(start_tree_);
+
     cost_=solution_->cost();
     sampler_->setCost(cost_);
     start_tree_->addNode(goal_node_);
     solved_=true;
-    ROS_FATAL_STREAM("A direct solution is found\n"<<*solution_);
+    PATH_COMMENT_STREAM("A direct solution is found\n"<<*solution_);
   }
   else
   {
     cost_=std::numeric_limits<double>::infinity();
   }
+  return true;
 }
 
 bool RRTConnect::update(PathPtr &solution)
 {
+  PATH_COMMENT("RRTConnect::update");
+
   if (solved_)
   {
+    PATH_COMMENT("already found a solution");
     solution=solution_;
     return true;
   }
+
+  if (sampler_->collapse())
+    return false;
+
+
   NodePtr new_node;
   if (start_tree_->connect(sampler_->sample(),new_node))
   {
@@ -105,6 +117,7 @@ bool RRTConnect::update(PathPtr &solution)
         conn->setCost(metrics_->cost(new_node,goal_node_));
         conn->add();
         solution_=std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_),metrics_,checker_);
+        solution_->setTree(start_tree_);
         start_tree_->addNode(goal_node_);
         cost_=solution_->cost();
         sampler_->setCost(cost_);
@@ -114,6 +127,7 @@ bool RRTConnect::update(PathPtr &solution)
       }
     }
   }
+  return false;
 
 }
 

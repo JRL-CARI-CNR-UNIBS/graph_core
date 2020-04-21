@@ -23,39 +23,39 @@ int main(int argc, char **argv)
   ros::Rate lp(1./st);
 
   std::vector<double> center(3);
-  double radius;
   if (!nh.getParam("occ_center",center))
   {
     center.at(0)=1;
     center.at(1)=2;
     center.at(2)=1;
   }
-  radius=0.5;
+
+  std::vector<double> radius(3,0.4);
   if (!nh.getParam("occ_radius",radius))
   {
-    radius=0.5;
+    ROS_WARN("occ_radius not found");
   }
 
   bool store=true;
   double varying=0;
   while (ros::ok())
   {
-    double tmp_radius=(0.9+0.1*varying)*radius;
-    varying+=0.5*st;
-    if (varying>1)
-      varying=0;
+//    double tmp_radius=(0.9+0.1*varying)*radius;
+//    varying+=0.5*st;
+//    if (varying>1)
+//      varying=0;
 
     geometry_msgs::PoseArray array;
-    for (double r=0;r<=tmp_radius;r+=0.05*tmp_radius)
+    for (double r=0;r<=1;r+=0.05)
     {
       for (double a1=0;a1<2*M_PI;a1+=0.05*M_PI)
       {
         for (double a2=0;a2<M_PI;a2+=0.05*M_PI)
         {
           geometry_msgs::Pose pose;
-          pose.position.x=center.at(0)+r*std::sin(a1)*std::cos(a2);
-          pose.position.y=center.at(1)+r*std::sin(a1)*std::sin(a2);
-          pose.position.z=center.at(2)+r*std::cos(a1);
+          pose.position.x=center.at(0)+r*radius.at(0)*std::sin(a1)*std::cos(a2);
+          pose.position.y=center.at(1)+r*radius.at(1)*std::sin(a1)*std::sin(a2);
+          pose.position.z=center.at(2)+r*radius.at(2)*std::cos(a1);
           array.poses.push_back(pose);
         }
       }
@@ -66,12 +66,13 @@ int main(int argc, char **argv)
 
     t+=st;
     lp.sleep();
-    if (t>5 && store)
+    if (std::fmod(t,5.0)<st)
     {
+      ROS_INFO("save param");
       grid.toYaml(nh);
-      store=false;;
     }
   }
 
+//  grid.toYaml(nh);
   return 0;
 }

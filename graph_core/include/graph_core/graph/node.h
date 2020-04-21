@@ -44,6 +44,7 @@ public:
   std::vector<ConnectionPtr> child_connections_;
 
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 Node(const Eigen::VectorXd& configuration);
 NodePtr pointer(){return shared_from_this();}
 void addParentConnection(const ConnectionPtr& connection);

@@ -57,6 +57,16 @@ Path::Path(std::vector<ConnectionPtr> connections,
 
 }
 
+
+double Path::computeEuclideanNorm()
+{
+  double euclidean_norm=0;
+
+  for (const ConnectionPtr& conn: connections_)
+    euclidean_norm+=conn->norm();
+  return euclidean_norm;
+}
+
 void Path::computeCost()
 {
   cost_=0;
@@ -93,10 +103,17 @@ bool Path::bisection(const unsigned int &connection_idx,
   double cost=conn12->getCost()+conn23->getCost();
 
   unsigned int iter=0;
-  while (iter++<100 & (max_distance+min_distance)>min_length_)
+  double distance;
+
+  while (iter++<5 & (max_distance-min_distance)>min_length_)
   {
-    double distance=0.5*(max_distance+min_distance);
+    if (iter>0)
+      distance=0.5*(max_distance+min_distance);
+    else
+      distance=min_distance;
+
     Eigen::VectorXd p=center+direction*distance;
+    assert(p.size()==center.size());
     double cost_pn=metrics_->cost(parent->getConfiguration(),p);
     double cost_nc=metrics_->cost(p,child->getConfiguration());
     double cost_n=cost_pn+cost_nc;
@@ -125,6 +142,10 @@ bool Path::bisection(const unsigned int &connection_idx,
     conn23->setCost(cost_nc);
     conn12->add();
     conn23->add();
+
+    if (tree_)
+      tree_->addNode(n,false);
+
 
 
   }
@@ -245,15 +266,45 @@ bool Path::spiral()
   return std::any_of(change_spiral_.cbegin(), change_spiral_.cend(), [](bool i){ return !i;});
 
 }
+#endif
+bool Path::resample(const double &distance)
+{
+  bool resampled=false;
+  unsigned int ic=0;
+  while (ic<connections_.size())
+  {
+    if (connections_.at(ic)->norm()<=distance)
+      continue;
 
-bool Path::simplify()
+    ROS_ERROR("still unimplemented");
+    resampled=true;
+  }
+
+  return resampled;
+
+}
+
+std::vector<Eigen::VectorXd> Path::getWaypoints()
+{
+  std::vector<Eigen::VectorXd> wp;
+  if (connections_.size()==0)
+    return wp;
+
+  wp.push_back(connections_.at(0)->getParent()->getConfiguration());
+  for (const ConnectionPtr& conn: connections_)
+    wp.push_back(conn->getChild()->getConfiguration());
+
+  return wp;
+}
+
+bool Path::simplify(const double& distance)
 {
   bool simplified;
   unsigned int ic=1;
   while (ic<connections_.size())
   {
     double dist=(connections_.at(ic)->getParent()->getConfiguration()-connections_.at(ic)->getChild()->getConfiguration()).norm();
-    if (dist>min_length_)
+    if (dist>distance)
     {
       ic++;
       continue;
@@ -292,7 +343,7 @@ bool Path::simplify()
   return simplified;
 }
 
-#endif
+
 std::ostream& operator<<(std::ostream& os, const Path& path)
 {
   os << "cost = " << path.cost_ << std::endl;

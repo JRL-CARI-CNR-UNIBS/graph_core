@@ -53,7 +53,7 @@ protected:
   bool refinement=true;
   double rrt_time=0.8;
   double max_time=1.5;
-  double occupancy_weigth;
+  double occupancy_weight;
 };
 
 }

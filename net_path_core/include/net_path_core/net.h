@@ -79,7 +79,7 @@ public:
   double getBestCost(){return m_best_cost;}
 
   void setHumanFilter(const human_occupancy::OccupancyFilterPtr& human_filter){m_human_filter=human_filter;}
-  void setOccupancyWeigth(const double& w){m_conn_params.weigth=w;}
+  void setOccupancyWeight(const double& w){m_conn_params.weight=w;}
 
   void setPlanningScene ( const planning_scene::PlanningSceneConstPtr& planning_scene )
   {
@@ -98,6 +98,8 @@ public:
   virtual bool splitPath2(const unsigned int& number_of_trials);
   virtual Path localSearch(const unsigned int& number_of_trials, const Path& path);
   virtual bool localSearch2(const unsigned int& number_of_trials);
+  virtual Path searchBall(const unsigned int& number_of_trials, const Path& path);
+  virtual bool searchBall2(const unsigned int& number_of_trials);
   virtual Path dividePath(const Path& path, const double& desired_distance);
 
   // node removal functions
@@ -117,6 +119,7 @@ public:
   bool checkIfImproveCost(const Path& path);
   bool checkIfImproveCost(const Path& path, const double& cost);
 
+  void divide(const double& segment_length);
   double computePathCost(const Path& path);
   bool isCollisionFree(const Path& path);
   const Path& getBestPathRef();

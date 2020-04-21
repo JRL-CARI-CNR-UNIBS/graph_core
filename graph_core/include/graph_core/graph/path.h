@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/util.h>
 #include <graph_core/metrics.h>
 #include <graph_core/collision_checker.h>
+#include <graph_core/graph/tree.h>
 
 #define NO_SPIRAL
 
@@ -43,7 +44,8 @@ protected:
   MetricsPtr metrics_;
   CollisionCheckerPtr checker_;
   double cost_;
-  double min_length_=0.01;
+  double min_length_=0.04;
+  TreePtr tree_;
 
   std::vector<bool> change_warp_;
   std::vector<bool> change_slip_parent_;
@@ -60,16 +62,21 @@ protected:
 
   void computeCost();
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Path(std::vector<ConnectionPtr> connections, const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
   const double& cost(){return cost_;}
 
   NodePtr findCloserNode(const Eigen::VectorXd& configuration);
   std::vector<ConnectionPtr> getConnectionFromNode(const NodePtr& node);
   std::vector<ConnectionPtr> getConnectionToNode(const NodePtr& node);
-  PathPtr resample(const double& distance);
+  bool resample(const double& distance);
+  double computeEuclideanNorm();
+
+  std::vector<Eigen::VectorXd> getWaypoints();
+  void setTree(const TreePtr& tree){tree_=tree;}
 
   std::vector<ConnectionPtr> getConnections()const{return connections_;}
-  bool simplify();
+  bool simplify(const double& distance=0.02);
 
   // return true if improve
   bool warp();

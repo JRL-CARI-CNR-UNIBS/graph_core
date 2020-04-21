@@ -32,32 +32,23 @@ namespace pathplan
 {
 
 
-class Metrics;
-typedef std::shared_ptr<Metrics> MetricsPtr;
 
 // Euclidean metrics
 class Metrics
 {
 public:
-  Metrics()
-  {
-
-  }
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  Metrics();
 
   virtual double cost(const NodePtr& node1,
-              const NodePtr& node2)
-  {
-    return cost(node1->getConfiguration(),node2->getConfiguration());
-  }
+                      const NodePtr& node2);
 
 
   virtual double cost(const Eigen::VectorXd& configuration1,
-                      const Eigen::VectorXd& configuration2)
-  {
-    return (configuration1-configuration2).norm();
-  }
+                      const Eigen::VectorXd& configuration2);
 
 
 };
+typedef std::shared_ptr<Metrics> MetricsPtr;
 
 }

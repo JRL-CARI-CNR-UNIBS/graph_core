@@ -214,6 +214,7 @@ void OccupancyGrid::toYaml(ros::NodeHandle& nh)
   pnh.setParam("max_frames_before_iir_filtering",m_max_frames_before_iir_filtering);
 
   system("rosparam dump occupancy.yaml /occupancy");
+  pnh.setParam("reference_frame",m_reference_frame);
 
 }
 

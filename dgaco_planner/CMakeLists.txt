@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(dgaco_planner)
 
 add_compile_options(-std=c++11 -funroll-loops -Wall -Ofast)
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
 find_package(catkin REQUIRED COMPONENTS
   moveit_core

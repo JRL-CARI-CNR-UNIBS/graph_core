@@ -26,27 +26,55 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/solvers/rrt_connect.h>
+#include <graph_core/metrics.h>
+#include <human_probablistic_occupancy/human_probablistic_occupancy.h>
+namespace pathplan
+{
 
-namespace pathplan {
 
-class BiRRT: public RRTConnect
+
+// Euclidean metrics
+class OccupancyMetrics: public Metrics
 {
 protected:
-  bool extend_=false;
-  TreePtr goal_tree_;
+  human_occupancy::OccupancyFilterPtr filter_;
+  double step_=0.1;
+  double weight_=1;
+  ros::NodeHandle nh_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-BiRRT(const MetricsPtr& metrics,
-           const CollisionCheckerPtr& checker,
-           const SamplerPtr& sampler):
-  RRTConnect(metrics,checker,sampler){}
+  OccupancyMetrics(ros::NodeHandle& nh);
 
-virtual bool config(const ros::NodeHandle& nh);
+  /*
+   *
+   * length total length between configurations
+   * step_ checking distance
+   * nsteps number of checking steps
+   * d=length/nsteps distance between checking steps
+   * occupancy(i) occupancy at the checking step i
+   *
+   * cost between checking steps i and i+1
+   * cost(i) = length*(1+0.5*weigth_*(occupancy(i)+occupancy(i+1))
+   *
+   * cost(0)   = d*(1+0.5*weigth_*(occupancy(0)  +occupancy(1))
+   * cost(1)   = d*(1+0.5*weigth_*(occupancy(1)  +occupancy(2))
+   * cost(2)   = d*(1+0.5*weigth_*(occupancy(2)  +occupancy(3))
+   * ....
+   * cost(n-1) = d*(1+0.5*weigth_*(occupancy(n-1)+occupancy(n))
+   *
+   * total_cost = sum(cost(i))  with i=0,...,n-1
+   * total_cost= d*nsteps+ d*weigth*(0.5*occupancy(0)+occupancy(1)+occupancy(2)+...+occupancy(n-1)+0.5*occupancy(n))
+   * total_cost= length+ d*weigth*(0.5*occupancy(0)+occupancy(1)+occupancy(2)+...+occupancy(n-1)+0.5*occupancy(n))
+   *
+   */
+  virtual double cost(const Eigen::VectorXd& configuration1,
+                      const Eigen::VectorXd& configuration2);
 
-virtual bool addGoal(const NodePtr &goal_node);
-virtual bool update(PathPtr& solution);
+  virtual double cost(const NodePtr& node1,
+                      const NodePtr& node2);
+
 
 };
+typedef std::shared_ptr<OccupancyMetrics> OccupancyMetricsPtr;
 
 }

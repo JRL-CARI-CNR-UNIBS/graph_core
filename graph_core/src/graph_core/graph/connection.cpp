@@ -34,6 +34,7 @@ Connection::Connection(const NodePtr &parent, const NodePtr &child):
   parent_(parent),
   child_(child)
 {
+  euclidean_norm_=(child->getConfiguration()-parent->getConfiguration()).norm();
 }
 
 void Connection::add()

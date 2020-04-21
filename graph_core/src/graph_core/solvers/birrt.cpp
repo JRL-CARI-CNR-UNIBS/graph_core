@@ -33,8 +33,9 @@ namespace pathplan
 
 bool BiRRT::config(const ros::NodeHandle &nh)
 {
-  RRTConnect::config(nh);
   extend_=false;
+  return RRTConnect::config(nh);
+
 }
 bool BiRRT::addGoal(const NodePtr &goal_node)
 {
@@ -45,12 +46,19 @@ bool BiRRT::addGoal(const NodePtr &goal_node)
 
 bool BiRRT::update(PathPtr &solution)
 {
+  PATH_COMMENT("RRTConnect::update");
   if (solved_)
   {
+    PATH_COMMENT("alreay find a solution");
     solution=solution_;
     return true;
   }
 
+  if (sampler_->collapse())
+  {
+    PATH_COMMENT("collapsed");
+    return false;
+  }
   NodePtr new_start_node,new_goal_node;
   bool add_to_start,add_to_goal;
 
@@ -83,6 +91,7 @@ bool BiRRT::update(PathPtr &solution)
     start_tree_->addBranch(goal_subpath);
 
     solution_=std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_),metrics_,checker_);
+    solution_->setTree(start_tree_);
     cost_=solution_->cost();
     sampler_->setCost(cost_);
     solution=solution_;
@@ -90,5 +99,6 @@ bool BiRRT::update(PathPtr &solution)
     return true;
 
   }
+  return false;
 }
 }

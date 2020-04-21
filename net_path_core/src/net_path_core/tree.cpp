@@ -46,7 +46,6 @@ bool Tree::createAndExtend(const std::vector<double> &q, NodePtr& last_add_node)
 
 bool Tree::extend(const NodePtr& n, NodePtr& last_add_node)
 {
-
   // find closest node in the tree
   double min_distance=std::numeric_limits<double>::infinity();
   NodePtr closest_node;
@@ -398,7 +397,7 @@ void Tree::computeOccupancy(NodePtr& node)
   if (m_human_filter && node)
   {
     Eigen::Map<const Eigen::VectorXd> q(node->getJoints().data(),m_dof);
-    node->setCost(m_human_filter->occupancy(q*m_unscaling));
+    node->setCost(m_human_filter->occupancy(q.cwiseProduct(m_unscaling)));
   }
 
 }

@@ -43,4 +43,10 @@ bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter)
   }
   return false;
 }
+
+bool TreeSolver::setSolution(const PathPtr &solution)
+{
+  solution_=solution;
+  solution_->setTree(start_tree_);
+}
 }

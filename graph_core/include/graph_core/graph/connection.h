@@ -37,8 +37,9 @@ protected:
   NodePtr child_;
   double cost_;
   bool valid=false;
-
+  double euclidean_norm_;
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Connection(const NodePtr& parent, const NodePtr& child);
   ConnectionPtr pointer(){return shared_from_this();}
   void add();
@@ -46,6 +47,7 @@ public:
 
   void setCost(const double& cost){cost_=cost;}
   const double& getCost(){return cost_;}
+  double norm(){return euclidean_norm_;}
   const NodePtr& getParent() const{return parent_;}
   const NodePtr& getChild() const{return child_;}
 

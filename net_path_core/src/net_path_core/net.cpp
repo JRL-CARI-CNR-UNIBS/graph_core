@@ -36,7 +36,7 @@ Net::Net(const unsigned int& dof,
   m_conn_params.checking_collision_distance=0.06;
   m_conn_params.scaling=scaling;
   m_conn_params.unscaling.resize(scaling.size());
-  m_conn_params.weigth=50;
+  m_conn_params.weight=50;
 
   if (scaling.size()!=m_dof)
     ROS_ERROR("scaling dimension are wrong (%zu instead of %u)",scaling.size(),m_dof);
@@ -122,7 +122,8 @@ Path Net::warpPath(const unsigned int& number_of_trials, const Path& path)
         for (unsigned idof=0;idof<m_dof;idof++)
           p.at(idof)=p2new(idof);
         NodePtr new_node=addNodeToTheGrid(p,node);
-
+        if (m_human_filter)
+          computeOccupancy(new_node);
         ConnectionPtr conn_12;
         if (!new_node->checkIfConnectedWith(path.at(idx)->getParent(),conn_12))
           ROS_ERROR("Thes nodes should be connected");
@@ -425,7 +426,7 @@ void Net::generateNodesFromStartAndEndPoints(const std::vector<double> &start_po
 
     if (utopia<m_conn_params.checking_collision_distance)
     {
-      ROS_DEBUG("start and end points are almost the same");
+      ROS_PROTO("start and end points are almost the same");
       ConnectionPtr conn=std::make_shared<Connection>(m_start_node,end_node,m_conn_params);
       conn->registerConnection();
       Path path;
@@ -449,10 +450,11 @@ void Net::generateNodesFromStartAndEndPoints(const std::vector<double> &start_po
     NodePtr last_node_add_to_start_tree;
     if (m_utopia_costs.at(m_end_nodes.at(idx))<5*m_best_cost)
     {
+      ROS_PROTO("try direct connection");
       bool full_added_to_start_tree=m_start_tree->extend(m_end_nodes.at(idx),last_node_add_to_start_tree);
       if (!full_added_to_start_tree)
       {
-        ROS_DEBUG("no direct connection between start and end goal");
+        ROS_PROTO("no direct connection between start and end goal");
         NodePtr last_node_add_to_goal_tree;
         if (last_node_add_to_start_tree)
           m_goal_trees.at(idx)->extend(last_node_add_to_start_tree,last_node_add_to_goal_tree);
@@ -462,7 +464,7 @@ void Net::generateNodesFromStartAndEndPoints(const std::vector<double> &start_po
       }
       else
       {
-        ROS_INFO("direct connection between start and end goal");
+        ROS_PROTO("direct connection between start and end goal");
         Path path;
         if (!m_start_tree->getPathToNode(m_end_nodes.at(idx),path))
         {
@@ -493,15 +495,27 @@ void Net::generateNodesFromStartAndEndPoints(const std::vector<double> &start_po
 
 }
 
+void Net::divide(const double& segment_length)
+{
+  m_best_path=dividePath(m_best_path,segment_length);
+  for (const NodePtr& n: m_end_nodes)
+  {
+    m_best_path_per_goal.at(n).second=dividePath(m_best_path_per_goal.at(n).second,segment_length);
+    std::pair<double,Path> new_cost(computePathCost(m_best_path_per_goal.at(n).second),m_best_path_per_goal.at(n).second);
+    m_best_path_per_goal.at(n)=new_cost;
+  }
+  m_best_cost=computePathCost(m_best_path);
+
+}
 void Net::computeNodeCost()
 {
   if (m_human_filter)
   {
-    ROS_PROTO("divide path");
-    m_best_path=dividePath(m_best_path,m_min_length*2);
+    ROS_FATAL("divide path");
+    m_best_path=dividePath(m_best_path,m_min_length*5);
     for (const NodePtr& n: m_end_nodes)
     {
-      m_best_path_per_goal.at(n).second=dividePath(m_best_path_per_goal.at(n).second,m_min_length*2);
+      m_best_path_per_goal.at(n).second=dividePath(m_best_path_per_goal.at(n).second,m_min_length*5);
     }
 
     ROS_PROTO("recomputing cost");
@@ -1601,6 +1615,80 @@ bool Net::localSearch2(const unsigned int& number_of_trials)
   return m_best_cost<old_cost;
 }
 
+
+Path Net::searchBall(const unsigned int& number_of_trials, const Path& path)
+{
+  double new_cost=computePathCost(path);
+   Path best_path=path;
+
+  for (unsigned int i_trial=0;i_trial<number_of_trials;i_trial++)
+  {
+
+    for (unsigned int idx=0;idx<(path.size()-1);idx++)
+    {
+      Path new_path=  best_path;
+
+      NodePtr node1=best_path.at(idx)->getParent();
+      NodePtr node2=best_path.at(idx)->getChild();
+      NodePtr node3=best_path.at(idx+1)->getChild();
+
+      Eigen::Map<const Eigen::VectorXd> p1(node1->getJoints().data(),m_dof);
+      Eigen::Map<const Eigen::VectorXd> p2(node2->getJoints().data(),m_dof);
+      Eigen::Map<const Eigen::VectorXd> p3(node3->getJoints().data(),m_dof);
+      if ((best_path.at(idx)->getLength()+best_path.at(idx+1)->getLength())<1.01*(p3-p1).norm())
+      {
+        ROS_FATAL("trial=%u,idx=%u : skip length=%f, distance=%f",i_trial,idx,(best_path.at(idx)->getLength()+best_path.at(idx+1)->getLength()),(p3-p1).norm());
+        continue;
+      }
+      double radius=std::min(best_path.at(idx)->getLength(),best_path.at(idx+1)->getLength());
+      Eigen::VectorXd p2new  = p2;
+
+
+      Eigen::VectorXd ball(m_dof);
+      ball.setRandom().normalize();
+//      ball*=std::pow(m_ud(m_gen),1.0/(double)m_dof)*radius;
+      double act_radius=(m_ud(m_gen)*0.999+0.001)*radius;
+
+      for (unsigned int iter=0;iter<100;iter++)
+      {
+        p2new+=ball*act_radius;
+//        act_radius=0.995*act_radius+0.005*radius;
+        act_radius*=1.01;
+        std::vector<double> p(m_dof,0);
+        for (unsigned idof=0;idof<m_dof;idof++)
+          p.at(idof)=p2new(idof);
+        NodePtr new_node=addNodeToTheGrid(p,node2);
+        if (m_human_filter)
+          computeOccupancy(new_node);
+
+
+        ConnectionPtr conn_12_new;
+        if (!new_node->checkIfConnectedWith(node1,conn_12_new))
+          ROS_ERROR("Thes nodes should be connected");
+        ConnectionPtr conn_23_new;
+        if (!new_node->checkIfConnectedWith(node3,conn_23_new))
+          ROS_ERROR("Thes nodes should be connected");
+        new_path.at(idx)=conn_12_new;
+        new_path.at(idx+1)=conn_23_new;
+        new_cost=computePathCost(new_path);
+        if (storeIfImproveCost(new_path,new_cost))
+          best_path=new_path;
+        else
+          break;
+        ROS_FATAL("trial=%u,idx=%u,iter=%u : New cost = %f, best=%f",i_trial,idx,iter,new_cost,m_best_cost);
+      }
+    }
+  }
+
+  return best_path;
+}
+
+bool Net::searchBall2(const unsigned int& number_of_trials)
+{
+  double old_cost=m_best_cost;
+  searchBall(number_of_trials,m_best_path);
+  return m_best_cost<old_cost;
+}
 Path Net::dividePath(const Path &path, const double& desired_distance)
 {
   Path new_path;
@@ -1636,11 +1724,15 @@ Path Net::dividePath(const Path &path, const double& desired_distance)
       {
         new_node=second_node;
       }
-      assert(new_node->isInCollision(m_planning_scene));
+      if (new_node->isInCollision(m_planning_scene))
+      {
+        ROS_ERROR("it shoud not be in collision");
+        assert(!new_node->isInCollision(m_planning_scene));
+      }
 
       ConnectionPtr new_conn=std::make_shared<Connection>(last_add_node,new_node,m_conn_params);
       new_conn->registerConnection();
-      assert(new_conn->isInCollision(m_planning_scene));
+      assert(!new_conn->isInCollision(m_planning_scene));
       last_add_node=new_node;
       new_path.push_back(new_conn);
     }
@@ -1658,7 +1750,7 @@ void Net::computeOccupancy(NodePtr& node)
   if (m_human_filter)
   {
     Eigen::Map<const Eigen::VectorXd> q(node->getJoints().data(),m_dof);
-    node->setCost(m_human_filter->occupancy(q*m_unscaling));;
+    node->setCost(m_human_filter->occupancy(q.cwiseProduct(m_unscaling)));;
   }
 }
 }

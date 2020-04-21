@@ -34,14 +34,13 @@ namespace pathplan
 class RRTConnect: public TreeSolver
 {
 protected:
-  TreePtr start_tree_;
   NodePtr goal_node_;
   double max_distance_;
   double utopia_;
-  PathPtr solution_;
   virtual bool setProblem();
 
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   RRTConnect(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
              const SamplerPtr& sampler):
@@ -52,7 +51,6 @@ public:
   virtual bool addStartTree(const TreePtr& start_tree);
   virtual bool addGoal(const NodePtr& goal_node);
 
-  TreePtr getStartTree() const {return start_tree_;}
 
   virtual bool update(PathPtr& solution);
 

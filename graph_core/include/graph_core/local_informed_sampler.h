@@ -34,7 +34,7 @@ namespace pathplan {
 
 
 
-class LocalInformedSampler: InformedSampler
+class LocalInformedSampler: public InformedSampler
 {
 protected:
   std::vector<Eigen::VectorXd,Eigen::aligned_allocator<Eigen::VectorXd>> centers_;
@@ -42,6 +42,7 @@ protected:
 
   std::uniform_int_distribution<> id_;
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   LocalInformedSampler(const Eigen::VectorXd& start_configuration,
                   const Eigen::VectorXd& stop_configuration,
                   const Eigen::VectorXd& lower_bound,
@@ -54,11 +55,20 @@ public:
 
   void addBall(const Eigen::VectorXd& center, const double& radius)
   {
+    if (center.size()!=start_configuration_.size())
+    {
+      ROS_INFO("center size=%zu, start configuration =%zu",center.size(),start_configuration_.size());
+    }
     assert(center.size()==start_configuration_.size());
     centers_.push_back(center);
     radii_.push_back(radius);
-    id_=std::uniform_int_distribution<>(0,centers_.size());
+    id_=std::uniform_int_distribution<>(0,centers_.size()-1);
+  }
 
+  void clearBalls()
+  {
+    centers_.clear();
+    radii_.clear();
   }
 
   virtual Eigen::VectorXd sample();
@@ -66,6 +76,6 @@ public:
 };
 
 
-typedef std::shared_ptr<LocalInformedSampler> LocalSamplerPtr;
+typedef std::shared_ptr<LocalInformedSampler> LocalInformedSamplerPtr;
 
 }

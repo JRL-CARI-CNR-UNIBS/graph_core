@@ -40,7 +40,6 @@ Eigen::VectorXd LocalInformedSampler::sample()
   for (int itrial=0;itrial<100;itrial++)
   {
     unsigned int iball=id_(gen_);
-    ROS_FATAL("Pick random index %u of %zu",iball,centers_.size());
     Eigen::VectorXd ball(ndof_);
 
     for (int iter=0;iter<100;iter++)

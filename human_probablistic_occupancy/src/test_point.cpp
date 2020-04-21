@@ -13,7 +13,7 @@ int main(int argc, char **argv)
   urdf::Model model;
   model.initParam("robot_description");
   std::string base_frame = "world";
-  std::string tool_frame = "ur10_tool0";
+  std::string tool_frame = "tip";
 
   Eigen::Vector3d grav;
   grav << 0, 0, -9.806;

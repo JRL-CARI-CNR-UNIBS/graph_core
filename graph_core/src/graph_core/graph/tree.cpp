@@ -202,8 +202,9 @@ bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire)
   }
   NodePtr new_node;
   if (!extend(configuration,new_node))
+  {
     return false;
-
+  }
   std::vector<NodePtr> near_nodes=near(new_node,r_rewire);
   NodePtr nearest_node=new_node->getParents().at(0);
   double cost_to_new=costToNode(new_node);
@@ -361,9 +362,9 @@ std::vector<ConnectionPtr> Tree::getConnectionToNode(NodePtr node)
   return connections;
 }
 
-void Tree::addNode(const NodePtr& node)
+void Tree::addNode(const NodePtr& node, const bool& check_if_present)
 {
-  if (!isInTree(node))
+  if (!check_if_present || !isInTree(node))
     nodes_.push_back(node);
 }
 bool Tree::keepOnlyThisBranch(const std::vector<ConnectionPtr>& connections)
@@ -446,18 +447,8 @@ void Tree::purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& whi
     }
     if (check_bounds && !sampler->inBounds(nodes_.at(idx)->getConfiguration()))
     {
-      // in realtà andrebbero rimossi nodo e seguaci !!!!!
       purgeFromHere(nodes_.at(idx),white_list,removed_nodes);
       continue;
-      //      if ((direction_==Forward  && nodes_.at(idx)->child_connections_.size()==0 ) ||
-      //          (direction_==Backward && nodes_.at(idx)->parent_connections_.size()==0))
-      //      {
-
-      //        removed_nodes++;
-      //        nodes_.at(idx)->disconnect();
-      //        nodes_.erase(nodes_.begin()+idx);
-      //        continue;
-      //      }
     }
 
 

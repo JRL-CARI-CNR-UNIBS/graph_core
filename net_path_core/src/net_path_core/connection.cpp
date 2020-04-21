@@ -65,7 +65,7 @@ bool Connection::isInCollision(const planning_scene::PlanningSceneConstPtr &plan
 
 double Connection::getLength()
 {
-  double length=m_square_length*(1+m_params.weigth*m_child->getCost());
+  double length=std::sqrt(m_square_length)*(1+m_params.weight*m_child->getCost());
   return length;
 }
 
@@ -100,12 +100,35 @@ bool Connection::checkCollisionIteration(const planning_scene::PlanningSceneCons
         below_check_distance=false;
   }
 
+
   state.setJointGroupPositions(m_params.group_name,qi);
+  state.updateCollisionBodyTransforms();
+
+//  if (!planning_scene->isStateValid(state));
+//    return true;
   collision_detection::CollisionRequest req;
   collision_detection::CollisionResult res;
   planning_scene->checkCollision(req, res, state);
   if (res.collision)
     return true;
+
+    if (!planning_scene->isStateValid(state))
+    {
+      ROS_ERROR("Sometimes wrong, analyzing...");
+      if (planning_scene->isStateColliding(state))
+        ROS_ERROR("state in collision");
+      else
+        ROS_INFO("state not in collision");
+      if (!planning_scene->isStateFeasible(state))
+        ROS_ERROR("path is not feasible");
+      else
+        ROS_INFO("path is feasible");
+      static const moveit_msgs::Constraints emp_constraints;
+      if (!planning_scene->isStateConstrained(state,emp_constraints))
+        ROS_ERROR("path is out of constraints");
+      else
+        ROS_INFO("path is constrained");
+    }
 
   if (!below_check_distance)
     return checkCollisionIteration(planning_scene,q1,qi,state) || checkCollisionIteration(planning_scene,qi,q2,state);

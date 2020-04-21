@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.8.3)
 project(net_path_core)
 #add_compile_options(-std=c++11)
 add_compile_options(-std=c++11 -funroll-loops -Wall -Ofast)
-#set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_BUILD_TYPE DEBUG)
+set(CMAKE_BUILD_TYPE Release)
+#set(CMAKE_BUILD_TYPE DEBUG)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp moveit_ros_planning moveit_core actionlib moveit_ros_planning_interface rosdyn_core human_probablistic_occupancy)

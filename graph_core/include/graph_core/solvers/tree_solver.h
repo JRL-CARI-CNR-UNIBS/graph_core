@@ -40,14 +40,18 @@ typedef std::shared_ptr<TreeSolver> TreeSolverPtr;
 class TreeSolver: public std::enable_shared_from_this<TreeSolver>
 {
 protected:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   MetricsPtr metrics_;
   CollisionCheckerPtr checker_;
   SamplerPtr sampler_;
   bool solved_=false;
   bool init_=false;
   double cost_;
+  TreePtr start_tree_;
+  PathPtr solution_;
+
 protected:
-  virtual bool setProblem(){};
+  virtual bool setProblem(){return false;}
 public:
   TreeSolver(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
@@ -58,13 +62,17 @@ public:
   {
     cost_=std::numeric_limits<double>::infinity();
   }
-  virtual bool config(const ros::NodeHandle& nh){};
+  virtual bool config(const ros::NodeHandle& nh){return false;}
   virtual bool update(PathPtr& solution)=0;
   virtual bool solve(PathPtr& solution, const unsigned int& max_iter=100);
   virtual bool addStart(const NodePtr& start_node)=0;
   virtual bool addGoal(const NodePtr& goal_node)=0;
   const bool& solved()const{return solved_;}
   const double& cost()const{return cost_;}
+  virtual bool setSolution(const PathPtr &solution);
+  TreePtr getStartTree() const {return start_tree_;}
+
+  void setSampler(const SamplerPtr& sampler){sampler_=sampler;}
 
 };
 }
