@@ -251,7 +251,7 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
 
   if (m_net->getBestCost()<1e-6)
   {
-    ROS_INFO("already on goal");
+    ROS_DEBUG("already on goal");
     ROS_DEBUG("direct path");
     res.error_code_.val=moveit_msgs::MoveItErrorCodes::SUCCESS;
     last_cost=m_net->getBestCost();
