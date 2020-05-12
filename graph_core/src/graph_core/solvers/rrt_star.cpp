@@ -83,9 +83,21 @@ bool RRTStar::update(PathPtr& solution)
   if (cost_<=1.003*utopia_)
     return true;
 
+  return update(sampler_->sample(),solution);
+
+}
+
+
+bool RRTStar::update(const Eigen::VectorXd& point,PathPtr& solution)
+{
+  if (!init_)
+    return false;
+  if (cost_<=1.003*utopia_)
+    return true;
+
   double cost=solution_->cost();
   r_rewire_=cost_*0.1;
-  bool improved= start_tree_->rewire(sampler_->sample(),r_rewire_);
+  bool improved= start_tree_->rewire(point,r_rewire_);
 
   if (improved)
   {
@@ -97,12 +109,13 @@ bool RRTStar::update(PathPtr& solution)
 
     cost_=solution_->cost();
 
-    ROS_FATAL("%e",solution_->cost()-cost);
+
     sampler_->setCost(cost_);
   }
   solution=solution_;
   return improved;
 }
+
 
 bool RRTStar::solve(PathPtr &solution, const unsigned int& max_iter)
 {

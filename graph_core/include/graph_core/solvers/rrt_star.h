@@ -47,6 +47,7 @@ virtual bool addGoal(const NodePtr &goal_node);
 virtual bool addStartTree(const TreePtr& start_tree);
 virtual bool update(PathPtr& solution);
 virtual bool solve(PathPtr &solution, const unsigned int& max_iter);
+  virtual bool update(const Eigen::VectorXd& point,PathPtr& solution);
 
 };
 }

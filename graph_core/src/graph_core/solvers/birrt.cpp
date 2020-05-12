@@ -59,10 +59,28 @@ bool BiRRT::update(PathPtr &solution)
     PATH_COMMENT("collapsed");
     return false;
   }
+
+
+  Eigen::VectorXd configuration=sampler_->sample();
+
+  return update(configuration,solution);
+}
+
+bool BiRRT::update(const Eigen::VectorXd& point, PathPtr& solution)
+{
+  PATH_COMMENT("RRTConnect::update");
+  if (solved_)
+  {
+    PATH_COMMENT("alreay find a solution");
+    solution=solution_;
+    return true;
+  }
+
+
   NodePtr new_start_node,new_goal_node;
   bool add_to_start,add_to_goal;
 
-  Eigen::VectorXd configuration=sampler_->sample();
+  Eigen::VectorXd configuration=point;
   if (extend_)
     add_to_start=start_tree_->extend(configuration,new_start_node);
   else
@@ -101,4 +119,5 @@ bool BiRRT::update(PathPtr &solution)
   }
   return false;
 }
+
 }

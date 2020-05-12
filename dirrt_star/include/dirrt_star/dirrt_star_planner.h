@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/solvers/path_solver.h>
 #include <graph_core/metrics.h>
 #include <graph_core/moveit_collision_checker.h>
+#include <rosparam_utilities/rosparam_utilities.h>
 
 #define COMMENT(...) ROS_LOG(::ros::console::levels::Fatal, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
 
@@ -73,6 +74,7 @@ protected:
   Eigen::VectorXd m_lb;
   Eigen::VectorXd m_ub;
   std::string group_;
+  bool m_preload_path;
 
   pathplan::MetricsPtr metrics;
   pathplan::CollisionCheckerPtr checker;

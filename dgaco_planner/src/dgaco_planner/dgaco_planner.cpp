@@ -218,10 +218,12 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
     }
     if (!feasible)
       continue;
+    end_state.updateCollisionBodyTransforms();
+
 
     if (planning_scene_->isStateColliding(end_state,request_.group_name))
     {
-      ROS_DEBUG("goal %u is in collision",iGoal);
+      ROS_WARN("goal %u is in collision",iGoal);
       continue;
     }
 

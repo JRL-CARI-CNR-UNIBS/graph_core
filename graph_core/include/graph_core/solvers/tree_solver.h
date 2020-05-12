@@ -64,6 +64,7 @@ public:
   }
   virtual bool config(const ros::NodeHandle& nh){return false;}
   virtual bool update(PathPtr& solution)=0;
+  virtual bool update(const Eigen::VectorXd& point,PathPtr& solution)=0;
   virtual bool solve(PathPtr& solution, const unsigned int& max_iter=100);
   virtual bool addStart(const NodePtr& start_node)=0;
   virtual bool addGoal(const NodePtr& goal_node)=0;

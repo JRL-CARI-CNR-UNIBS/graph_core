@@ -104,9 +104,24 @@ bool RRTConnect::update(PathPtr &solution)
   if (sampler_->collapse())
     return false;
 
+  return update(sampler_->sample(),solution);
+}
+
+bool RRTConnect::update(const Eigen::VectorXd& point,PathPtr &solution)
+{
+  PATH_COMMENT("RRTConnect::update");
+
+  if (solved_)
+  {
+    PATH_COMMENT("already found a solution");
+    solution=solution_;
+    return true;
+  }
+
+
 
   NodePtr new_node;
-  if (start_tree_->connect(sampler_->sample(),new_node))
+  if (start_tree_->connect(point,new_node))
   {
 
     if ((new_node->getConfiguration()-goal_node_->getConfiguration()).norm()<max_distance_)
@@ -130,6 +145,8 @@ bool RRTConnect::update(PathPtr &solution)
   return false;
 
 }
+
+
 
 }
 

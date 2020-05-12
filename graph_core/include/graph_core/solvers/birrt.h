@@ -46,6 +46,7 @@ virtual bool config(const ros::NodeHandle& nh);
 
 virtual bool addGoal(const NodePtr &goal_node);
 virtual bool update(PathPtr& solution);
+virtual bool update(const Eigen::VectorXd& point,PathPtr& solution);
 
 };
 

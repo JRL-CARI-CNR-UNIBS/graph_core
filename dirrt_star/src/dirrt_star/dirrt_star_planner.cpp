@@ -195,6 +195,34 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
     path_solver->config(m_nh);
     local_solvers.push_back(path_solver);
 
+
+    if (m_preload_path)
+    {
+      std::vector<std::vector<double>> preload_path;
+      if (rosparam_utilities::getParamMatrix(m_nh,"/dirrt_preload_path",preload_path))
+      {
+        double ball;
+        if (m_nh.getParam("/dirrt_preload_path_ball",ball))
+        {
+          Eigen::VectorXd preload_point(final_configuration.size());
+          for (unsigned int ipoint=0;ipoint<preload_path.size();ipoint)
+          {
+            if (preload_path.at(ipoint).size() == final_configuration.size())
+            {
+              for (unsigned iax=0;iax<final_configuration.size();iax++)
+                preload_point(iax)=preload_path.at(ipoint).at(iax);
+              pathplan::PathPtr solution;
+              if (solver->update(preload_point,solution))
+                break;
+            }
+            else
+            {
+              ROS_WARN("preload point has wrong dimensions");
+            }
+          }
+        }
+      }
+    }
   }
 
   if (goal_nodes.size()==0)
