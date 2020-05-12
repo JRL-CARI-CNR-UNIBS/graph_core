@@ -223,7 +223,7 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
 
     if (planning_scene_->isStateColliding(end_state,request_.group_name))
     {
-      ROS_WARN("goal %u is in collision",iGoal);
+      ROS_DEBUG("goal %u is in collision",iGoal);
       continue;
     }
 
@@ -234,7 +234,7 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
   }
   if (end_points.size()==0)
   {
-    ROS_ERROR("No valid goals");
+    ROS_ERROR("No valid goals (all %zu goals are invalid)",request_.goal_constraints.size());
     res.error_code_.val=moveit_msgs::MoveItErrorCodes::GOAL_IN_COLLISION;
     return false;
   }
