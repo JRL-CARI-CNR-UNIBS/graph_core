@@ -32,7 +32,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PATH_COMMENT(...) ROS_LOG(::ros::console::levels::Fatal, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
 #define PATH_COMMENT_STREAM(...) ROS_LOG_STREAM(::ros::console::levels::Fatal, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
 
-namespace pathplan {
+namespace pathplan
+{
 
 enum Direction {Forward, Backward};
 

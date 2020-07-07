@@ -29,7 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/rrt_connect.h>
 
-namespace pathplan {
+namespace pathplan
+{
 
 class RRTStar: public RRTConnect
 {
@@ -37,17 +38,17 @@ protected:
   double r_rewire_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-RRTStar(const MetricsPtr& metrics,
-           const CollisionCheckerPtr& checker,
-           const SamplerPtr& sampler):
-  RRTConnect(metrics,checker,sampler){}
+  RRTStar(const MetricsPtr& metrics,
+          const CollisionCheckerPtr& checker,
+          const SamplerPtr& sampler):
+    RRTConnect(metrics, checker, sampler) {}
 
-virtual bool config(const ros::NodeHandle& nh);
-virtual bool addGoal(const NodePtr &goal_node);
-virtual bool addStartTree(const TreePtr& start_tree);
-virtual bool update(PathPtr& solution);
-virtual bool solve(PathPtr &solution, const unsigned int& max_iter);
-  virtual bool update(const Eigen::VectorXd& point,PathPtr& solution);
+  virtual bool config(const ros::NodeHandle& nh);
+  virtual bool addGoal(const NodePtr &goal_node);
+  virtual bool addStartTree(const TreePtr& start_tree);
+  virtual bool update(PathPtr& solution);
+  virtual bool solve(PathPtr &solution, const unsigned int& max_iter);
+  virtual bool update(const Eigen::VectorXd& point, PathPtr& solution);
 
 };
 }

@@ -28,47 +28,48 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/sampler.h>
 
-namespace pathplan {
+namespace pathplan
+{
 
 
 Eigen::VectorXd InformedSampler::sample()
 {
   if (inf_cost_)
   {
-    return center_bound_+Eigen::MatrixXd::Random(ndof_,1).cwiseProduct(bound_width_);
+    return center_bound_ + Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(bound_width_);
   }
   else
   {
     Eigen::VectorXd ball(ndof_);
-    for (int iter=0;iter<100;iter++)
+    for (int iter = 0; iter < 100; iter++)
     {
       ball.setRandom();
-      ball*=std::pow(ud_(gen_),1.0/(double)ndof_)/ball.norm();
+      ball *= std::pow(ud_(gen_), 1.0 / (double)ndof_) / ball.norm();
 
-      Eigen::VectorXd q=rot_matrix_*ellipse_axis_.asDiagonal()*ball+ellipse_center_;
+      Eigen::VectorXd q = rot_matrix_ * ellipse_axis_.asDiagonal() * ball + ellipse_center_;
 
-      bool in_of_bounds=true;
-      for (unsigned int iax=0;iax<ndof_;iax++)
+      bool in_of_bounds = true;
+      for (unsigned int iax = 0; iax < ndof_; iax++)
       {
-        if (q(iax)>upper_bound_(iax) || q(iax)<lower_bound_(iax))
+        if (q(iax) > upper_bound_(iax) || q(iax) < lower_bound_(iax))
         {
-          in_of_bounds=false;
+          in_of_bounds = false;
           break;
         }
       }
       if (in_of_bounds)
         return q;
     }
-    ROS_WARN_THROTTLE(0.1,"unable to find a feasible point in the ellipse");
-    return center_bound_+Eigen::MatrixXd::Random(ndof_,1).cwiseProduct(bound_width_);
+    ROS_WARN_THROTTLE(0.1, "unable to find a feasible point in the ellipse");
+    return center_bound_ + Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(bound_width_);
   }
 }
 
 bool InformedSampler::inBounds(const Eigen::VectorXd& q)
 {
-  for (unsigned int iax=0;iax<ndof_;iax++)
+  for (unsigned int iax = 0; iax < ndof_; iax++)
   {
-    if (q(iax)>upper_bound_(iax) || q(iax)<lower_bound_(iax))
+    if (q(iax) > upper_bound_(iax) || q(iax) < lower_bound_(iax))
     {
       return false;
     }
@@ -76,24 +77,24 @@ bool InformedSampler::inBounds(const Eigen::VectorXd& q)
   if (inf_cost_)
     return true;
   else
-    return ((q-start_configuration_).norm()+(q-stop_configuration_).norm())<cost_;
+    return ((q - start_configuration_).norm() + (q - stop_configuration_).norm()) < cost_;
 
 }
 
 void InformedSampler::setCost(const double &cost)
 {
-  cost_=cost;
-  inf_cost_= cost_>=std::numeric_limits<double>::infinity();
+  cost_ = cost;
+  inf_cost_ = cost_ >= std::numeric_limits<double>::infinity();
 
-  if (cost_<focii_distance_)
+  if (cost_ < focii_distance_)
   {
-    ROS_WARN("cost is %f, focci distance is %f",cost_,focii_distance_);
-    cost_=focii_distance_;
+    ROS_WARN("cost is %f, focci distance is %f", cost_, focii_distance_);
+    cost_ = focii_distance_;
   }
-  assert(cost_>=focii_distance_);
-  max_radius_=0.5*cost;
-  min_radius_=0.5*std::sqrt(std::pow(cost,2)-std::pow(focii_distance_,2));
+  assert(cost_ >= focii_distance_);
+  max_radius_ = 0.5 * cost;
+  min_radius_ = 0.5 * std::sqrt(std::pow(cost, 2) - std::pow(focii_distance_, 2));
   ellipse_axis_.setConstant(min_radius_);
-  ellipse_axis_(0)=max_radius_;
+  ellipse_axis_(0) = max_radius_;
 }
 }

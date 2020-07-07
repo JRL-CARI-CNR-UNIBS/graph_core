@@ -32,22 +32,22 @@ namespace pathplan
 
 bool RRTConnect::config(const ros::NodeHandle& nh)
 {
-  max_distance_=1;
+  max_distance_ = 1;
   return true;
 }
 
 bool RRTConnect::addGoal(const NodePtr &goal_node)
 {
-  solved_=false;
-  goal_node_=goal_node;
+  solved_ = false;
+  goal_node_ = goal_node;
   setProblem();
   return true;
 }
 
 bool RRTConnect::addStart(const NodePtr &start_node)
 {
-  solved_=false;
-  start_tree_=std::make_shared<Tree>(start_node,Forward,max_distance_,checker_,metrics_);
+  solved_ = false;
+  start_tree_ = std::make_shared<Tree>(start_node, Forward, max_distance_, checker_, metrics_);
   setProblem();
   return true;
 }
@@ -55,8 +55,8 @@ bool RRTConnect::addStart(const NodePtr &start_node)
 bool RRTConnect::addStartTree(const TreePtr &start_tree)
 {
   assert(start_tree);
-  start_tree_=start_tree;
-  solved_=false;
+  start_tree_ = start_tree;
+  solved_ = false;
 
   setProblem();
   return true;
@@ -69,23 +69,23 @@ bool RRTConnect::setProblem()
   if (!goal_node_)
     return false;
 
-  utopia_=(goal_node_->getConfiguration()-start_tree_->getRoot()->getConfiguration()).norm();
-  init_=true;
+  utopia_ = (goal_node_->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
+  init_ = true;
   NodePtr new_node;
-  if (start_tree_->connectToNode(goal_node_,new_node))
+  if (start_tree_->connectToNode(goal_node_, new_node))
   {
-    solution_=std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_),metrics_,checker_);
+    solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
 
-    cost_=solution_->cost();
+    cost_ = solution_->cost();
     sampler_->setCost(cost_);
     start_tree_->addNode(goal_node_);
-    solved_=true;
-    PATH_COMMENT_STREAM("A direct solution is found\n"<<*solution_);
+    solved_ = true;
+    PATH_COMMENT_STREAM("A direct solution is found\n" << *solution_);
   }
   else
   {
-    cost_=std::numeric_limits<double>::infinity();
+    cost_ = std::numeric_limits<double>::infinity();
   }
   return true;
 }
@@ -97,47 +97,47 @@ bool RRTConnect::update(PathPtr &solution)
   if (solved_)
   {
     PATH_COMMENT("already found a solution");
-    solution=solution_;
+    solution = solution_;
     return true;
   }
 
   if (sampler_->collapse())
     return false;
 
-  return update(sampler_->sample(),solution);
+  return update(sampler_->sample(), solution);
 }
 
-bool RRTConnect::update(const Eigen::VectorXd& point,PathPtr &solution)
+bool RRTConnect::update(const Eigen::VectorXd& point, PathPtr &solution)
 {
   PATH_COMMENT("RRTConnect::update");
 
   if (solved_)
   {
     PATH_COMMENT("already found a solution");
-    solution=solution_;
+    solution = solution_;
     return true;
   }
 
 
 
   NodePtr new_node;
-  if (start_tree_->connect(point,new_node))
+  if (start_tree_->connect(point, new_node))
   {
 
-    if ((new_node->getConfiguration()-goal_node_->getConfiguration()).norm()<max_distance_)
+    if ((new_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
     {
-      if (checker_->checkPath(new_node->getConfiguration(),goal_node_->getConfiguration()))
+      if (checker_->checkPath(new_node->getConfiguration(), goal_node_->getConfiguration()))
       {
-        ConnectionPtr conn=std::make_shared<Connection>(new_node,goal_node_);
-        conn->setCost(metrics_->cost(new_node,goal_node_));
+        ConnectionPtr conn = std::make_shared<Connection>(new_node, goal_node_);
+        conn->setCost(metrics_->cost(new_node, goal_node_));
         conn->add();
-        solution_=std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_),metrics_,checker_);
+        solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
         solution_->setTree(start_tree_);
         start_tree_->addNode(goal_node_);
-        cost_=solution_->cost();
+        cost_ = solution_->cost();
         sampler_->setCost(cost_);
-        solution=solution_;
-        solved_=true;
+        solution = solution_;
+        solved_ = true;
         return true;
       }
     }

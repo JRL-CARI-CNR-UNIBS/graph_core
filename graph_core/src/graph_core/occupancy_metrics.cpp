@@ -28,7 +28,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/occupancy_metrics.h>
 
 
-namespace pathplan {
+namespace pathplan
+{
 OccupancyMetrics::OccupancyMetrics(ros::NodeHandle& nh):
   nh_(nh),
   Metrics()
@@ -38,57 +39,57 @@ OccupancyMetrics::OccupancyMetrics(ros::NodeHandle& nh):
   model.initParam("robot_description");
   std::string base_frame = "world";
   std::string tool_frame = "tip";
-  if (!nh_.getParam("base_frame",base_frame))
+  if (!nh_.getParam("base_frame", base_frame))
   {
-    ROS_ERROR("%s/base_frame not defined",nh_.getNamespace().c_str());
+    ROS_ERROR("%s/base_frame not defined", nh_.getNamespace().c_str());
   }
-  if (!nh_.getParam("tool_frame",tool_frame))
+  if (!nh_.getParam("tool_frame", tool_frame))
   {
-    ROS_ERROR("%s/tool_frame not defined",nh_.getNamespace().c_str());
+    ROS_ERROR("%s/tool_frame not defined", nh_.getNamespace().c_str());
   }
-  if (!nh_.getParam("weight",weight_))
+  if (!nh_.getParam("weight", weight_))
   {
-    ROS_ERROR("%s/weight not defined",nh_.getNamespace().c_str());
+    ROS_ERROR("%s/weight not defined", nh_.getNamespace().c_str());
   }
-  if (!nh_.getParam("computation_step",step_))
+  if (!nh_.getParam("computation_step", step_))
   {
-    ROS_ERROR("%s/computation_step not defined",nh_.getNamespace().c_str());
+    ROS_ERROR("%s/computation_step not defined", nh_.getNamespace().c_str());
   }
 
   Eigen::Vector3d grav;
   grav << 0, 0, -9.806;
 
-  rosdyn::ChainPtr chain=rosdyn::createChain(model, base_frame,tool_frame,grav);
-  human_occupancy::OccupancyGridPtr grid=std::make_shared<human_occupancy::OccupancyGrid>(nh);
-  filter_=std::make_shared<human_occupancy::OccupancyFilter>(chain,grid,nh_);
+  rosdyn::ChainPtr chain = rosdyn::createChain(model, base_frame, tool_frame, grav);
+  human_occupancy::OccupancyGridPtr grid = std::make_shared<human_occupancy::OccupancyGrid>(nh);
+  filter_ = std::make_shared<human_occupancy::OccupancyFilter>(chain, grid, nh_);
 }
 
 
 double OccupancyMetrics::cost(const NodePtr& node1,
-                     const NodePtr& node2)
+                              const NodePtr& node2)
 {
-  return cost(node1->getConfiguration(),node2->getConfiguration());
+  return cost(node1->getConfiguration(), node2->getConfiguration());
 }
 
 double OccupancyMetrics::cost(const Eigen::VectorXd& configuration1,
-                    const Eigen::VectorXd& configuration2)
+                              const Eigen::VectorXd& configuration2)
 {
-  double length=(configuration1-configuration2).norm();
-  if (length<1e-6)
+  double length = (configuration1 - configuration2).norm();
+  if (length < 1e-6)
     return length;
 
-  double cost=length;
-  unsigned int nsteps=std::ceil(length/step_);
-  double inv_nsteps=1.0/nsteps;
-  double distance=length/nsteps;
-  for (unsigned int istep=0;istep<=nsteps;istep++)
+  double cost = length;
+  unsigned int nsteps = std::ceil(length / step_);
+  double inv_nsteps = 1.0 / nsteps;
+  double distance = length / nsteps;
+  for (unsigned int istep = 0; istep <= nsteps; istep++)
   {
-    Eigen::VectorXd q=configuration1+(configuration2-configuration1)*inv_nsteps*istep;
-    double occupancy=filter_->occupancy(q);
-    if (istep==0 || istep==nsteps)
-      cost+=0.5*occupancy*weight_*distance;
+    Eigen::VectorXd q = configuration1 + (configuration2 - configuration1) * inv_nsteps * istep;
+    double occupancy = filter_->occupancy(q);
+    if (istep == 0 || istep == nsteps)
+      cost += 0.5 * occupancy * weight_ * distance;
     else
-      cost+=occupancy*weight_*distance;
+      cost += occupancy * weight_ * distance;
   }
 
   return cost;

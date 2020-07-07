@@ -28,18 +28,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/connection.h>
 
-namespace pathplan {
+namespace pathplan
+{
 
 Connection::Connection(const NodePtr &parent, const NodePtr &child):
   parent_(parent),
   child_(child)
 {
-  euclidean_norm_=(child->getConfiguration()-parent->getConfiguration()).norm();
+  euclidean_norm_ = (child->getConfiguration() - parent->getConfiguration()).norm();
 }
 
 void Connection::add()
 {
-  valid=true;
+  valid = true;
   parent_->addChildConnection(pointer());
   child_->addParentConnection(pointer());
 }
@@ -48,7 +49,7 @@ void Connection::remove()
   if (!valid)
     return;
 
-  valid=false;
+  valid = false;
   if (parent_)
   {
     parent_->remoteChildConnection(pointer());

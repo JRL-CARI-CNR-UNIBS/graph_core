@@ -27,24 +27,25 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/rrt_star.h>
 
-namespace pathplan {
+namespace pathplan
+{
 
 bool RRTStar::addStartTree(const TreePtr &start_tree)
 {
   assert(start_tree);
-  start_tree_=start_tree;
+  start_tree_ = start_tree;
 
 
   if (goal_node_)
   {
-    utopia_=(goal_node_->getConfiguration()-start_tree_->getRoot()->getConfiguration()).norm();
-    init_=true;
-    solution_=std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_),metrics_,checker_);
+    utopia_ = (goal_node_->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
+    init_ = true;
+    solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
-    cost_=solution_->cost();
+    cost_ = solution_->cost();
   }
   else
-    init_=false;
+    init_ = false;
 
   return true;
 }
@@ -52,27 +53,27 @@ bool RRTStar::addStartTree(const TreePtr &start_tree)
 
 bool RRTStar::addGoal(const NodePtr &goal_node)
 {
-  solved_=false;
-  goal_node_=goal_node;
+  solved_ = false;
+  goal_node_ = goal_node;
 
   if (start_tree_)
   {
-    utopia_=(goal_node_->getConfiguration()-start_tree_->getRoot()->getConfiguration()).norm();
-    init_=true;
+    utopia_ = (goal_node_->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
+    init_ = true;
 
-    solution_=std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_),metrics_,checker_);
+    solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
-    cost_=solution_->cost();
+    cost_ = solution_->cost();
 
   }
   else
-    init_=false;
+    init_ = false;
   return true;
 }
 bool RRTStar::config(const ros::NodeHandle& nh)
 {
-  r_rewire_=1;
-  solved_=true;
+  r_rewire_ = 1;
+  solved_ = true;
   return true;
 }
 
@@ -80,53 +81,53 @@ bool RRTStar::update(PathPtr& solution)
 {
   if (!init_)
     return false;
-  if (cost_<=1.003*utopia_)
+  if (cost_ <= 1.003 * utopia_)
     return true;
 
-  return update(sampler_->sample(),solution);
+  return update(sampler_->sample(), solution);
 
 }
 
 
-bool RRTStar::update(const Eigen::VectorXd& point,PathPtr& solution)
+bool RRTStar::update(const Eigen::VectorXd& point, PathPtr& solution)
 {
   if (!init_)
     return false;
-  if (cost_<=1.003*utopia_)
+  if (cost_ <= 1.003 * utopia_)
     return true;
 
-  double cost=solution_->cost();
-  r_rewire_=cost_*0.1;
-  bool improved= start_tree_->rewire(point,r_rewire_);
+  double cost = solution_->cost();
+  r_rewire_ = cost_ * 0.1;
+  bool improved = start_tree_->rewire(point, r_rewire_);
 
   if (improved)
   {
-    if (start_tree_->costToNode(goal_node_)>=(cost-1e-8))
+    if (start_tree_->costToNode(goal_node_) >= (cost - 1e-8))
       return false;
 
-    solution_=std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_),metrics_,checker_);
+    solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
 
-    cost_=solution_->cost();
+    cost_ = solution_->cost();
 
 
     sampler_->setCost(cost_);
   }
-  solution=solution_;
+  solution = solution_;
   return improved;
 }
 
 
 bool RRTStar::solve(PathPtr &solution, const unsigned int& max_iter)
 {
-  bool improved=false;
-  for (unsigned int iter=0;iter<max_iter;iter++)
+  bool improved = false;
+  for (unsigned int iter = 0; iter < max_iter; iter++)
   {
     if (update(solution))
     {
-      ROS_DEBUG("Improved in %u iterations",iter);
-      solved_=true;
-      improved=true;
+      ROS_DEBUG("Improved in %u iterations", iter);
+      solved_ = true;
+      improved = true;
     }
   }
   return improved;

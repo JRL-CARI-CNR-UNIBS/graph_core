@@ -28,31 +28,32 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/local_informed_sampler.h>
 
-namespace pathplan {
+namespace pathplan
+{
 
 Eigen::VectorXd LocalInformedSampler::sample()
 {
-  if (radii_.size()==0)
+  if (radii_.size() == 0)
     return InformedSampler::sample();
 
 
-  bool flag=true;
-  for (int itrial=0;itrial<100;itrial++)
+  bool flag = true;
+  for (int itrial = 0; itrial < 100; itrial++)
   {
-    unsigned int iball=id_(gen_);
+    unsigned int iball = id_(gen_);
     Eigen::VectorXd ball(ndof_);
 
-    for (int iter=0;iter<100;iter++)
+    for (int iter = 0; iter < 100; iter++)
     {
       ball.setRandom();
-      ball*=std::pow(ud_(gen_),1.0/(double)ndof_)/ball.norm();
-      Eigen::VectorXd q=radii_.at(iball)*ball+centers_.at(iball);
+      ball *= std::pow(ud_(gen_), 1.0 / (double)ndof_) / ball.norm();
+      Eigen::VectorXd q = radii_.at(iball) * ball + centers_.at(iball);
       if (InformedSampler::inBounds(q))
         return q;
     }
   }
-  ROS_WARN_THROTTLE(0.1,"unable to find a feasible point in the radius");
-  return center_bound_+Eigen::MatrixXd::Random(ndof_,1).cwiseProduct(bound_width_);
+  ROS_WARN_THROTTLE(0.1, "unable to find a feasible point in the radius");
+  return center_bound_ + Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(bound_width_);
 
 }
 }

@@ -28,15 +28,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/ros.h>
 #include <eigen3/Eigen/Core>
-namespace pathplan {
+namespace pathplan
+{
 
 class CollisionChecker
 {
 protected:
-  double min_distance_=0.01;
+  double min_distance_ = 0.01;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  CollisionChecker(const double& min_distance=0.01):
+  CollisionChecker(const double& min_distance = 0.01):
     min_distance_(min_distance)
   {
 
@@ -57,26 +58,26 @@ public:
   */
 
   bool checkPath(const Eigen::VectorXd& configuration1,
-                         const Eigen::VectorXd& configuration2,
-                         Eigen::VectorXd& conf)
+                 const Eigen::VectorXd& configuration2,
+                 Eigen::VectorXd& conf)
   {
     if (!check(configuration1))
       return false;
     if (!check(configuration2))
       return false;
 
-    double dist=(configuration2-configuration1).norm();
-    unsigned int npnt=std::ceil(dist/min_distance_);
-    if (npnt>1)
+    double dist = (configuration2 - configuration1).norm();
+    unsigned int npnt = std::ceil(dist / min_distance_);
+    if (npnt > 1)
     {
-      Eigen::VectorXd step=(configuration2-configuration1)/npnt;
-      for (unsigned int ipnt=1;ipnt<npnt;ipnt++)
+      Eigen::VectorXd step = (configuration2 - configuration1) / npnt;
+      for (unsigned int ipnt = 1; ipnt < npnt; ipnt++)
       {
-        conf=configuration1+step*ipnt;
+        conf = configuration1 + step * ipnt;
         if (!check(conf))
         {
           // return last feasible configuration
-          conf=configuration1+step*(ipnt-1);
+          conf = configuration1 + step * (ipnt - 1);
           return false;
         }
       }
@@ -92,24 +93,24 @@ public:
     if (!check(configuration2))
       return false;
 
-    double distance=(configuration2-configuration1).norm();
-    if (distance<min_distance_)
+    double distance = (configuration2 - configuration1).norm();
+    if (distance < min_distance_)
       return true;
 
     Eigen::VectorXd conf;
-    double n=2;
-    while (distance>n*min_distance_)
+    double n = 2;
+    while (distance > n * min_distance_)
     {
-      for (double idx=1;idx<n;idx+=2)
+      for (double idx = 1; idx < n; idx += 2)
       {
-        conf=configuration1+(configuration2-configuration1)*idx/n;
+        conf = configuration1 + (configuration2 - configuration1) * idx / n;
         if (!check(conf))
         {
           return false;
         }
 
       }
-      n*=2;
+      n *= 2;
     }
 
     return true;
@@ -124,7 +125,7 @@ class Cube3dCollisionChecker: public CollisionChecker
 public:
   virtual bool check(const Eigen::VectorXd& configuration)
   {
-    return configuration.cwiseAbs().maxCoeff()>1;
+    return configuration.cwiseAbs().maxCoeff() > 1;
   }
 };
 

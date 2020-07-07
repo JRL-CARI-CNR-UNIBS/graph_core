@@ -44,14 +44,14 @@ public:
   RRTConnect(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
              const SamplerPtr& sampler):
-    TreeSolver(metrics,checker,sampler){}
+    TreeSolver(metrics, checker, sampler) {}
   virtual bool config(const ros::NodeHandle& nh);
 
   virtual bool addStart(const NodePtr& start_node);
   virtual bool addStartTree(const TreePtr& start_tree);
   virtual bool addGoal(const NodePtr& goal_node);
 
-  virtual bool update(const Eigen::VectorXd& point,PathPtr& solution);
+  virtual bool update(const Eigen::VectorXd& point, PathPtr& solution);
 
   virtual bool update(PathPtr& solution);
 

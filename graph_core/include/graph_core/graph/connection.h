@@ -29,27 +29,46 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/util.h>
 #include <graph_core/graph/node.h>
-namespace pathplan {
+namespace pathplan
+{
 class Connection : public std::enable_shared_from_this<Connection>
 {
 protected:
   NodePtr parent_;
   NodePtr child_;
   double cost_;
-  bool valid=false;
+  bool valid = false;
   double euclidean_norm_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Connection(const NodePtr& parent, const NodePtr& child);
-  ConnectionPtr pointer(){return shared_from_this();}
+  ConnectionPtr pointer()
+  {
+    return shared_from_this();
+  }
   void add();
   void remove();
 
-  void setCost(const double& cost){cost_=cost;}
-  const double& getCost(){return cost_;}
-  double norm(){return euclidean_norm_;}
-  const NodePtr& getParent() const{return parent_;}
-  const NodePtr& getChild() const{return child_;}
+  void setCost(const double& cost)
+  {
+    cost_ = cost;
+  }
+  const double& getCost()
+  {
+    return cost_;
+  }
+  double norm()
+  {
+    return euclidean_norm_;
+  }
+  const NodePtr& getParent() const
+  {
+    return parent_;
+  }
+  const NodePtr& getChild() const
+  {
+    return child_;
+  }
 
 
   friend std::ostream& operator<<(std::ostream& os, const Connection& connection);

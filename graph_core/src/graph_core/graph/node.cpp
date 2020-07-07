@@ -27,30 +27,31 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/node.h>
 
-namespace pathplan {
+namespace pathplan
+{
 
 Node::Node(const Eigen::VectorXd &configuration)
 {
-  configuration_=configuration;
-  ndof_=configuration_.size();
+  configuration_ = configuration;
+  ndof_ = configuration_.size();
 }
 
 void Node::addParentConnection(const ConnectionPtr &connection)
 {
-  assert(connection->getChild()==pointer());
+  assert(connection->getChild() == pointer());
   parent_connections_.push_back(connection);
 }
 
 
 void Node::addChildConnection(const ConnectionPtr &connection)
 {
-  assert(connection->getParent()==pointer());
+  assert(connection->getParent() == pointer());
   child_connections_.push_back(connection);
 }
 void Node::remoteParentConnection(const ConnectionPtr &connection)
 {
-  std::vector<ConnectionPtr>::iterator it=std::find(parent_connections_.begin(),parent_connections_.end(),connection);
-  if (it==parent_connections_.end())
+  std::vector<ConnectionPtr>::iterator it = std::find(parent_connections_.begin(), parent_connections_.end(), connection);
+  if (it == parent_connections_.end())
   {
     ROS_FATAL("connection is not in the parent vector");
 //    throw std::invalid_argument("connection is not in the parent vector");
@@ -61,11 +62,11 @@ void Node::remoteParentConnection(const ConnectionPtr &connection)
 
 void Node::remoteChildConnection(const ConnectionPtr &connection)
 {
-  std::vector<ConnectionPtr>::iterator it=std::find(child_connections_.begin(),child_connections_.end(),connection);
-  if (it==child_connections_.end())
+  std::vector<ConnectionPtr>::iterator it = std::find(child_connections_.begin(), child_connections_.end(), connection);
+  if (it == child_connections_.end())
   {
     ROS_FATAL("connection is not in the child vector");
-  //  throw std::invalid_argument("connection is not in the child vector");
+    //  throw std::invalid_argument("connection is not in the child vector");
   }
   else
   {
@@ -75,13 +76,13 @@ void Node::remoteChildConnection(const ConnectionPtr &connection)
 
 void Node::disconnect()
 {
-  for (ConnectionPtr& conn: parent_connections_)
+  for (ConnectionPtr& conn : parent_connections_)
   {
     if (conn)
       if (conn->getParent())
         conn->getParent()->remoteChildConnection(conn);
   }
-  for (ConnectionPtr& conn: child_connections_)
+  for (ConnectionPtr& conn : child_connections_)
   {
     if (conn)
       if (conn->getChild())
@@ -100,7 +101,7 @@ Node::~Node()
 std::vector<NodePtr> Node::getChildren() const
 {
   std::vector<NodePtr> children;
-  for( const ConnectionPtr& conn: child_connections_)
+  for (const ConnectionPtr& conn : child_connections_)
   {
     children.push_back(conn->getChild());
   }
@@ -110,7 +111,7 @@ std::vector<NodePtr> Node::getChildren() const
 std::vector<NodePtr> Node::getParents() const
 {
   std::vector<NodePtr> parents;
-  for( const ConnectionPtr& conn: parent_connections_)
+  for (const ConnectionPtr& conn : parent_connections_)
   {
     parents.push_back(conn->getParent());
   }

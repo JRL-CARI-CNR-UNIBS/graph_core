@@ -32,7 +32,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/metrics.h>
 #include <graph_core/sampler.h>
 #include <ros/ros.h>
-namespace pathplan {
+namespace pathplan
+{
 
 
 class TreeSolver;
@@ -44,14 +45,17 @@ protected:
   MetricsPtr metrics_;
   CollisionCheckerPtr checker_;
   SamplerPtr sampler_;
-  bool solved_=false;
-  bool init_=false;
+  bool solved_ = false;
+  bool init_ = false;
   double cost_;
   TreePtr start_tree_;
   PathPtr solution_;
 
 protected:
-  virtual bool setProblem(){return false;}
+  virtual bool setProblem()
+  {
+    return false;
+  }
 public:
   TreeSolver(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
@@ -60,20 +64,35 @@ public:
     checker_(checker),
     sampler_(sampler)
   {
-    cost_=std::numeric_limits<double>::infinity();
+    cost_ = std::numeric_limits<double>::infinity();
   }
-  virtual bool config(const ros::NodeHandle& nh){return false;}
-  virtual bool update(PathPtr& solution)=0;
-  virtual bool update(const Eigen::VectorXd& point,PathPtr& solution)=0;
-  virtual bool solve(PathPtr& solution, const unsigned int& max_iter=100);
-  virtual bool addStart(const NodePtr& start_node)=0;
-  virtual bool addGoal(const NodePtr& goal_node)=0;
-  const bool& solved()const{return solved_;}
-  const double& cost()const{return cost_;}
+  virtual bool config(const ros::NodeHandle& nh)
+  {
+    return false;
+  }
+  virtual bool update(PathPtr& solution) = 0;
+  virtual bool update(const Eigen::VectorXd& point, PathPtr& solution) = 0;
+  virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100);
+  virtual bool addStart(const NodePtr& start_node) = 0;
+  virtual bool addGoal(const NodePtr& goal_node) = 0;
+  const bool& solved()const
+  {
+    return solved_;
+  }
+  const double& cost()const
+  {
+    return cost_;
+  }
   virtual bool setSolution(const PathPtr &solution);
-  TreePtr getStartTree() const {return start_tree_;}
+  TreePtr getStartTree() const
+  {
+    return start_tree_;
+  }
 
-  void setSampler(const SamplerPtr& sampler){sampler_=sampler;}
+  void setSampler(const SamplerPtr& sampler)
+  {
+    sampler_ = sampler;
+  }
 
 };
 }

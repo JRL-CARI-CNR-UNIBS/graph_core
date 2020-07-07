@@ -28,25 +28,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/rrt_connect.h>
 
-namespace pathplan {
+namespace pathplan
+{
 
 class BiRRT: public RRTConnect
 {
 protected:
-  bool extend_=false;
+  bool extend_ = false;
   TreePtr goal_tree_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-BiRRT(const MetricsPtr& metrics,
-           const CollisionCheckerPtr& checker,
-           const SamplerPtr& sampler):
-  RRTConnect(metrics,checker,sampler){}
+  BiRRT(const MetricsPtr& metrics,
+        const CollisionCheckerPtr& checker,
+        const SamplerPtr& sampler):
+    RRTConnect(metrics, checker, sampler) {}
 
-virtual bool config(const ros::NodeHandle& nh);
+  virtual bool config(const ros::NodeHandle& nh);
 
-virtual bool addGoal(const NodePtr &goal_node);
-virtual bool update(PathPtr& solution);
-virtual bool update(const Eigen::VectorXd& point,PathPtr& solution);
+  virtual bool addGoal(const NodePtr &goal_node);
+  virtual bool update(PathPtr& solution);
+  virtual bool update(const Eigen::VectorXd& point, PathPtr& solution);
 
 };
 

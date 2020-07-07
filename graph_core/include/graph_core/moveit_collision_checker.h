@@ -30,7 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/collision_checker.h>
 #include <moveit/planning_scene/planning_scene.h>
 
-namespace pathplan {
+namespace pathplan
+{
 
 class MoveitCollisionChecker: public CollisionChecker
 {
@@ -46,12 +47,12 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   MoveitCollisionChecker(const planning_scene::PlanningSceneConstPtr planning_scene,
                          const std::string& group_name,
-                         const double& min_distance=0.01):
+                         const double& min_distance = 0.01):
     CollisionChecker(min_distance),
     planning_scene_(planning_scene),
     group_name_(group_name)
   {
-    state_=std::make_shared<robot_state::RobotState>(planning_scene_->getCurrentState());
+    state_ = std::make_shared<robot_state::RobotState>(planning_scene_->getCurrentState());
 
   }
 
@@ -59,7 +60,7 @@ public:
   {
 
     *state_ = planning_scene_->getCurrentState();
-    state_->setJointGroupPositions(group_name_,configuration);
+    state_->setJointGroupPositions(group_name_, configuration);
     if (!state_->satisfiesBounds())
     {
       ROS_FATAL("Out of bound");

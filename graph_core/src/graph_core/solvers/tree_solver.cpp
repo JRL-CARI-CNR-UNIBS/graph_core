@@ -32,12 +32,12 @@ namespace pathplan
 
 bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter)
 {
-  for (unsigned int iter=0;iter<max_iter;iter++)
+  for (unsigned int iter = 0; iter < max_iter; iter++)
   {
     if (update(solution))
     {
-      ROS_INFO("Solved in %u iterations",iter);
-      solved_=true;
+      ROS_INFO("Solved in %u iterations", iter);
+      solved_ = true;
       return true;
     }
   }
@@ -46,7 +46,7 @@ bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter)
 
 bool TreeSolver::setSolution(const PathPtr &solution)
 {
-  solution_=solution;
+  solution_ = solution;
   solution_->setTree(start_tree_);
 }
 }

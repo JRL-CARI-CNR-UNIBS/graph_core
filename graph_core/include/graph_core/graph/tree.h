@@ -31,7 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/sampler.h>
 #include <graph_core/metrics.h>
 
-namespace pathplan {
+namespace pathplan
+{
 
 class Tree: public std::enable_shared_from_this<Tree>
 {
@@ -39,8 +40,8 @@ protected:
   NodePtr root_;
   Direction direction_;
   double max_distance_;
-  double tolerance_=1e-6;
-  unsigned int maximum_nodes_=1000; // legare il massimo numero di punti al volume????
+  double tolerance_ = 1e-6;
+  unsigned int maximum_nodes_ = 1000; // legare il massimo numero di punti al volume????
   CollisionCheckerPtr checker_;
   MetricsPtr metrics_;
 
@@ -55,8 +56,11 @@ public:
        const CollisionCheckerPtr& checker,
        const MetricsPtr& metrics);
 
-  const NodePtr& getRoot(){return root_;}
-  void addNode(const NodePtr& node, const bool& check_if_present=true);
+  const NodePtr& getRoot()
+  {
+    return root_;
+  }
+  void addNode(const NodePtr& node, const bool& check_if_present = true);
   bool tryExtend(const Eigen::VectorXd& configuration,
                  Eigen::VectorXd& next_configuration,
                  NodePtr& closest_node);
@@ -68,7 +72,7 @@ public:
                     NodePtr& new_node);
 
   bool connect(const Eigen::VectorXd& configuration,
-              NodePtr& new_node);
+               NodePtr& new_node);
 
   bool connectToNode(const NodePtr& node,
                      NodePtr& new_node);
@@ -90,9 +94,12 @@ public:
 
   bool isInTree(const NodePtr& node);
   bool isInTree(const NodePtr& node, std::vector<NodePtr>::iterator& it);
-  unsigned int getNumberOfNodes()const{return nodes_.size();}
+  unsigned int getNumberOfNodes()const
+  {
+    return nodes_.size();
+  }
 
-  void purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds=true);
+  void purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds = true);
   bool purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
 };
 

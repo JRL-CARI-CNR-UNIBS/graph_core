@@ -27,7 +27,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/path_solver.h>
 
-namespace pathplan {
+namespace pathplan
+{
 
 PathLocalOptimizer::PathLocalOptimizer(const CollisionCheckerPtr &checker, const MetricsPtr &metrics):
   checker_(checker),
@@ -37,33 +38,33 @@ PathLocalOptimizer::PathLocalOptimizer(const CollisionCheckerPtr &checker, const
 }
 void PathLocalOptimizer::config(ros::NodeHandle &nh)
 {
-  max_stall_gen_=10;
-  stall_gen_=0;
+  max_stall_gen_ = 10;
+  stall_gen_ = 0;
 }
 
 void PathLocalOptimizer::setPath(const PathPtr &path)
 {
   assert(path);
-  solved_=false;
-  stall_gen_=0;
-  path_=path;
+  solved_ = false;
+  stall_gen_ = 0;
+  path_ = path;
 }
 
 bool PathLocalOptimizer::step(PathPtr& solution)
 {
   if (!path_)
     return false;
-  solution=path_;
+  solution = path_;
 
-  bool improved=false;
+  bool improved = false;
   if (solved_)
     return false;
 
-  double cost=path_->cost();
+  double cost = path_->cost();
 
-  ros::Time t1=ros::Time::now();
-  bool solved=!path_->warp();
-  PATH_COMMENT("warp needs %f seconds",(ros::Time::now()-t1).toSec());
+  ros::Time t1 = ros::Time::now();
+  bool solved = !path_->warp();
+  PATH_COMMENT("warp needs %f seconds", (ros::Time::now() - t1).toSec());
 //  t1=ros::Time::now();
 //  solved=!path_->slipParent() && solved;
 //  PATH_COMMENT("slipParent needs %f seconds",(ros::Time::now()-t1).toSec());
@@ -71,9 +72,9 @@ bool PathLocalOptimizer::step(PathPtr& solution)
 //  solved=!path_->slipChild() && solved;
 //  PATH_COMMENT("slipChild needs %f seconds",(ros::Time::now()-t1).toSec());
 
-  if (cost<=(1.001*path_->cost()))
+  if (cost <= (1.001 * path_->cost()))
   {
-    if (stall_gen_==0)
+    if (stall_gen_ == 0)
     {
       if (!path_->simplify())
       {
@@ -81,7 +82,7 @@ bool PathLocalOptimizer::step(PathPtr& solution)
       }
       else
       {
-        solved=false;
+        solved = false;
       }
     }
     else
@@ -91,23 +92,23 @@ bool PathLocalOptimizer::step(PathPtr& solution)
   }
   else
   {
-    improved=true;
-    stall_gen_=0;
+    improved = true;
+    stall_gen_ = 0;
   }
-  solved_=solved || (stall_gen_>=max_stall_gen_);
+  solved_ = solved || (stall_gen_ >= max_stall_gen_);
   return improved;
 
 }
 
 bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iteration)
 {
-  unsigned int iter=0;
-  solution=path_;
-  while (iter++<max_iteration)
+  unsigned int iter = 0;
+  solution = path_;
+  while (iter++ < max_iteration)
   {
     if (solved_)
     {
-      ROS_FATAL("solved in %u iterations",iter);
+      ROS_FATAL("solved in %u iterations", iter);
       return true;
     }
     step(solution);

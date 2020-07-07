@@ -33,13 +33,13 @@ namespace pathplan
 
 bool BiRRT::config(const ros::NodeHandle &nh)
 {
-  extend_=false;
+  extend_ = false;
   return RRTConnect::config(nh);
 
 }
 bool BiRRT::addGoal(const NodePtr &goal_node)
 {
-  goal_tree_=std::make_shared<Tree>(goal_node,Backward,max_distance_,checker_,metrics_);
+  goal_tree_ = std::make_shared<Tree>(goal_node, Backward, max_distance_, checker_, metrics_);
   RRTConnect::addGoal(goal_node);
   return true;
 }
@@ -50,7 +50,7 @@ bool BiRRT::update(PathPtr &solution)
   if (solved_)
   {
     PATH_COMMENT("alreay find a solution");
-    solution=solution_;
+    solution = solution_;
     return true;
   }
 
@@ -61,9 +61,9 @@ bool BiRRT::update(PathPtr &solution)
   }
 
 
-  Eigen::VectorXd configuration=sampler_->sample();
+  Eigen::VectorXd configuration = sampler_->sample();
 
-  return update(configuration,solution);
+  return update(configuration, solution);
 }
 
 bool BiRRT::update(const Eigen::VectorXd& point, PathPtr& solution)
@@ -72,48 +72,48 @@ bool BiRRT::update(const Eigen::VectorXd& point, PathPtr& solution)
   if (solved_)
   {
     PATH_COMMENT("alreay find a solution");
-    solution=solution_;
+    solution = solution_;
     return true;
   }
 
 
-  NodePtr new_start_node,new_goal_node;
-  bool add_to_start,add_to_goal;
+  NodePtr new_start_node, new_goal_node;
+  bool add_to_start, add_to_goal;
 
-  Eigen::VectorXd configuration=point;
+  Eigen::VectorXd configuration = point;
   if (extend_)
-    add_to_start=start_tree_->extend(configuration,new_start_node);
+    add_to_start = start_tree_->extend(configuration, new_start_node);
   else
-    add_to_start=start_tree_->connect(configuration,new_start_node);
+    add_to_start = start_tree_->connect(configuration, new_start_node);
 
 
   if (add_to_start)
   {
     if (extend_)
-      add_to_goal=goal_tree_->extendToNode(new_start_node,new_goal_node);
+      add_to_goal = goal_tree_->extendToNode(new_start_node, new_goal_node);
     else
-      add_to_goal=goal_tree_->connectToNode(new_start_node,new_goal_node);
+      add_to_goal = goal_tree_->connectToNode(new_start_node, new_goal_node);
   }
   else
   {
     if (extend_)
-      add_to_goal=goal_tree_->extend(configuration,new_goal_node);
+      add_to_goal = goal_tree_->extend(configuration, new_goal_node);
     else
-      add_to_goal=goal_tree_->connect(configuration,new_goal_node);
+      add_to_goal = goal_tree_->connect(configuration, new_goal_node);
   }
 
-  if (add_to_start && add_to_goal && new_goal_node==new_start_node)
+  if (add_to_start && add_to_goal && new_goal_node == new_start_node)
   {
-    std::vector<ConnectionPtr> goal_subpath=goal_tree_->getConnectionToNode(new_goal_node);
+    std::vector<ConnectionPtr> goal_subpath = goal_tree_->getConnectionToNode(new_goal_node);
     goal_tree_->keepOnlyThisBranch(goal_subpath);
     start_tree_->addBranch(goal_subpath);
 
-    solution_=std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_),metrics_,checker_);
+    solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
-    cost_=solution_->cost();
+    cost_ = solution_->cost();
     sampler_->setCost(cost_);
-    solution=solution_;
-    solved_=true;
+    solution = solution_;
+    solved_ = true;
     return true;
 
   }

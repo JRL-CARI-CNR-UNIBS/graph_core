@@ -33,7 +33,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define NO_SPIRAL
 
-namespace pathplan {
+namespace pathplan
+{
 
 class Path;
 typedef std::shared_ptr<Path> PathPtr;
@@ -44,15 +45,15 @@ protected:
   MetricsPtr metrics_;
   CollisionCheckerPtr checker_;
   double cost_;
-  double min_length_=0.04;
+  double min_length_ = 0.04;
   TreePtr tree_;
 
   std::vector<bool> change_warp_;
   std::vector<bool> change_slip_parent_;
   std::vector<bool> change_slip_child_;
-  #ifdef NO_SPIRAL
+#ifdef NO_SPIRAL
   std::vector<bool> change_spiral_;
-  #endif
+#endif
   void setChanged(const unsigned int& connection_idx);
   bool bisection(const unsigned int& connection_idx,
                  const Eigen::VectorXd& center,
@@ -64,28 +65,38 @@ protected:
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Path(std::vector<ConnectionPtr> connections, const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
-  const double& cost(){return cost_;}
+  const double& cost()
+  {
+    return cost_;
+  }
 
   NodePtr findCloserNode(const Eigen::VectorXd& configuration);
   std::vector<ConnectionPtr> getConnectionFromNode(const NodePtr& node);
   std::vector<ConnectionPtr> getConnectionToNode(const NodePtr& node);
   bool resample(const double& distance);
   double computeEuclideanNorm();
+  Eigen::VectorXd pointOnCurvilinearAbscissa(const double& abscissa);
 
   std::vector<Eigen::VectorXd> getWaypoints();
-  void setTree(const TreePtr& tree){tree_=tree;}
+  void setTree(const TreePtr& tree)
+  {
+    tree_ = tree;
+  }
 
-  std::vector<ConnectionPtr> getConnections()const{return connections_;}
-  bool simplify(const double& distance=0.02);
+  std::vector<ConnectionPtr> getConnections()const
+  {
+    return connections_;
+  }
+  bool simplify(const double& distance = 0.02);
 
   // return true if improve
   bool warp();
   bool slipChild();
   bool slipParent();
 
-  #ifdef NO_SPIRAL
+#ifdef NO_SPIRAL
   bool spiral();
-  #endif
+#endif
   friend std::ostream& operator<<(std::ostream& os, const Path& path);
 };
 

@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/moveit_collision_checker.h>
 
 
-namespace pathplan {
+namespace pathplan
+{
 
 }

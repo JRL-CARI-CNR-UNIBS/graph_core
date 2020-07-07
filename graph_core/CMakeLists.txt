@@ -27,6 +27,7 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/occupancy_metrics.cpp
   src/${PROJECT_NAME}/sampler.cpp
   src/${PROJECT_NAME}/local_informed_sampler.cpp
+  src/${PROJECT_NAME}/tube_informed_sampler.cpp
   src/${PROJECT_NAME}/util.cpp
   src/${PROJECT_NAME}/moveit_collision_checker.cpp
   src/${PROJECT_NAME}/collision_checker.cpp

@@ -31,7 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/metrics.h>
 #include <ros/ros.h>
 
-namespace pathplan {
+namespace pathplan
+{
 
 class PathLocalOptimizer;
 typedef std::shared_ptr<PathLocalOptimizer> PathLocalOptimizerPtr;
@@ -43,10 +44,10 @@ protected:
   CollisionCheckerPtr checker_;
   MetricsPtr metrics_;
   PathPtr path_;
-  bool solved_=false;
+  bool solved_ = false;
   ros::NodeHandle nh_;
-  unsigned int max_stall_gen_=10;
-  unsigned int stall_gen_=0;
+  unsigned int max_stall_gen_ = 10;
+  unsigned int stall_gen_ = 0;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   PathLocalOptimizer(const CollisionCheckerPtr& checker,
@@ -55,7 +56,7 @@ public:
   void config(ros::NodeHandle& nh);
   bool step(PathPtr& solution);
   bool solve(PathPtr& solution,
-      const unsigned int& max_iteration=100);
+             const unsigned int& max_iteration = 100);
 
 
 };

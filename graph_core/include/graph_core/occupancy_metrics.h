@@ -38,8 +38,8 @@ class OccupancyMetrics: public Metrics
 {
 protected:
   human_occupancy::OccupancyFilterPtr filter_;
-  double step_=0.1;
-  double weight_=1;
+  double step_ = 0.1;
+  double weight_ = 1;
   ros::NodeHandle nh_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

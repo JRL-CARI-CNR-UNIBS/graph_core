@@ -31,7 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/util.h>
 #include <graph_core/graph/connection.h>
 
-namespace pathplan {
+namespace pathplan
+{
 
 
 class Node: public std::enable_shared_from_this<Node>
@@ -45,20 +46,26 @@ public:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-Node(const Eigen::VectorXd& configuration);
-NodePtr pointer(){return shared_from_this();}
-void addParentConnection(const ConnectionPtr& connection);
-void addChildConnection(const ConnectionPtr& connection);
-std::vector<NodePtr> getChildren() const;
-std::vector<NodePtr> getParents() const;
+  Node(const Eigen::VectorXd& configuration);
+  NodePtr pointer()
+  {
+    return shared_from_this();
+  }
+  void addParentConnection(const ConnectionPtr& connection);
+  void addChildConnection(const ConnectionPtr& connection);
+  std::vector<NodePtr> getChildren() const;
+  std::vector<NodePtr> getParents() const;
 
-void disconnect();
-void remoteParentConnection(const ConnectionPtr& connection);
-void remoteChildConnection(const ConnectionPtr& connection);
-const Eigen::VectorXd& getConfiguration(){return configuration_;}
-~Node();
+  void disconnect();
+  void remoteParentConnection(const ConnectionPtr& connection);
+  void remoteChildConnection(const ConnectionPtr& connection);
+  const Eigen::VectorXd& getConfiguration()
+  {
+    return configuration_;
+  }
+  ~Node();
 
-friend std::ostream& operator<<(std::ostream& os, const Node& path);
+  friend std::ostream& operator<<(std::ostream& os, const Node& path);
 
 };
 
