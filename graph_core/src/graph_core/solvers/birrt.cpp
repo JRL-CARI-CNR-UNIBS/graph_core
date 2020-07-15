@@ -115,6 +115,62 @@ bool BiRRT::update(const Eigen::VectorXd& point, PathPtr& solution)
     solution = solution_;
     solved_ = true;
     return true;
+  }
+  return false;
+}
+
+void BiRRT::clean()
+{
+  goal_tree_->keepOnlyThisBranch(solution_->getConnections());
+}
+
+
+bool BiRRT::update(const NodePtr& n, PathPtr& solution)
+{
+  PATH_COMMENT("RRTConnect::update");
+  if (solved_)
+  {
+    PATH_COMMENT("alreay find a solution");
+    solution = solution_;
+    return true;
+  }
+
+  NodePtr new_start_node, new_goal_node;
+  bool add_to_start, add_to_goal;
+  if (extend_)
+    add_to_start = start_tree_->extendToNode(n, new_start_node);
+  else
+    add_to_start = start_tree_->connectToNode(n, new_start_node);
+
+
+  if (add_to_start)
+  {
+    if (extend_)
+      add_to_goal = goal_tree_->extendToNode(new_start_node, new_goal_node);
+    else
+      add_to_goal = goal_tree_->connectToNode(new_start_node, new_goal_node);
+  }
+  else
+  {
+    if (extend_)
+      add_to_goal = goal_tree_->extendToNode(n, new_goal_node);
+    else
+      add_to_goal = goal_tree_->connectToNode(n, new_goal_node);
+  }
+
+  if (add_to_start && add_to_goal && new_goal_node == new_start_node)
+  {
+    std::vector<ConnectionPtr> goal_subpath = goal_tree_->getConnectionToNode(new_goal_node);
+    goal_tree_->keepOnlyThisBranch(goal_subpath);
+    start_tree_->addBranch(goal_subpath);
+
+    solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
+    solution_->setTree(start_tree_);
+    cost_ = solution_->cost();
+    sampler_->setCost(cost_);
+    solution = solution_;
+    solved_ = true;
+    return true;
 
   }
   return false;

@@ -83,7 +83,7 @@ DIRRTStar::DIRRTStar ( const std::string& name,
   if (!planning_scene_)
     ROS_ERROR("No planning scene available");
 
-
+  m_preload_path=true;
   COMMENT("created DIRRTStar");
 
 }
@@ -149,10 +149,12 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
 
   std::vector<pathplan::NodePtr> goal_nodes;
   std::vector<pathplan::SamplerPtr> samplers;
+  std::vector<pathplan::TubeInformedSamplerPtr> tube_samplers;
   std::vector<pathplan::TreeSolverPtr> solvers;
   std::vector<bool> found_solution;
   std::vector<pathplan::PathLocalOptimizerPtr> local_solvers;
 
+  bool found_a_solution=false;
 
   // computing minimum time
   for (unsigned int iGoal=0;iGoal<request_.goal_constraints.size();iGoal++)
@@ -178,8 +180,13 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
     }
     COMMENT("goal is valid");
 
-    samplers.push_back(std::make_shared<pathplan::InformedSampler>(start_conf,final_configuration,m_lb,m_ub));
+    pathplan::TubeInformedSamplerPtr tube_sampler = std::make_shared<pathplan::TubeInformedSampler>(start_conf, final_configuration, m_lb, m_ub);
+    if (m_preload_path)
+      samplers.push_back(tube_sampler);
+    else
+      samplers.push_back(std::make_shared<pathplan::InformedSampler>(start_conf,final_configuration,m_lb,m_ub));
 
+    tube_samplers.push_back(tube_sampler);
     pathplan::NodePtr goal_node=std::make_shared<pathplan::Node>(final_configuration);
     goal_nodes.push_back(goal_node);
 
@@ -199,26 +206,70 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
     if (m_preload_path)
     {
       std::vector<std::vector<double>> preload_path;
-      if (rosparam_utilities::getParamMatrix(m_nh,"/dirrt_preload_path",preload_path))
+      if (rosparam_utilities::getParamMatrix(m_nh,"/preload_path",preload_path))
       {
-        double ball;
-        if (m_nh.getParam("/dirrt_preload_path_ball",ball))
+        double radius;
+        if (m_nh.getParam("/preload_radius",radius))
         {
+          pathplan::TreePtr tree=solver->getStartTree();
+          pathplan::NodePtr parent_node=tree->getRoot();
+          pathplan::PathPtr solution;
+          std::vector<ConnectionPtr> connections;
+
+          tube_sampler->setPath(preload_path);
+          tube_sampler->setRadius(radius);
+          tube_sampler->setLocalBias(0.5);
+
           Eigen::VectorXd preload_point(final_configuration.size());
-          for (unsigned int ipoint=0;ipoint<preload_path.size();ipoint)
+          for (unsigned int ipoint=0;ipoint<preload_path.size();ipoint++)
           {
+            ROS_INFO("point %u of %zu",ipoint,preload_path.size());
             if (preload_path.at(ipoint).size() == final_configuration.size())
             {
               for (unsigned iax=0;iax<final_configuration.size();iax++)
                 preload_point(iax)=preload_path.at(ipoint).at(iax);
-              pathplan::PathPtr solution;
-              if (solver->update(preload_point,solution))
+              if ((preload_point-start_conf).norm()<1e-6)
+                continue;
+
+
+              if (checker->checkPath(parent_node->getConfiguration(),preload_point))
+              {
+                ROS_INFO("point %u can be connected to start",ipoint);
+
+
+                pathplan::NodePtr child_node=std::make_shared<pathplan::Node>(preload_point);
+                pathplan::ConnectionPtr conn=std::make_shared<pathplan::Connection>(parent_node,child_node);
+                conn->setCost(metrics->cost(parent_node,child_node));
+                conn->add();
+                connections.push_back(conn);
+                parent_node=child_node;
+
+              }
+              else
+              {
+                ROS_INFO("preload path is in collision");
                 break;
+              }
+
             }
             else
             {
               ROS_WARN("preload point has wrong dimensions");
             }
+          }
+
+
+          if (checker->checkPath(parent_node->getConfiguration(),goal_node->getConfiguration()))
+          {
+            pathplan::ConnectionPtr conn=std::make_shared<pathplan::Connection>(parent_node,goal_node);
+            conn->setCost(metrics->cost(parent_node,goal_node));
+            conn->add();
+            connections.push_back(conn);
+            solution = std::make_shared<pathplan::Path>(connections, metrics, checker);
+            solution->setTree(tree);
+            solver->setSolution(solution,true);
+            ROS_INFO("preload path is feasible!");
+            break;
           }
         }
       }
@@ -238,8 +289,9 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
   // ===============================
 
   // searching initial solutions
-  bool found_a_solution=false;
-  int max_iter_rrt=100;
+  int max_iter_rrt=10000;
+  int stall_gen=0;
+  int max_stall_gen=100;
   pathplan::PathPtr solution;
   pathplan::PathPtr best_solution;
   for (int idx=0;idx<max_iter_rrt;idx++)
@@ -255,6 +307,7 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
     //    COMMENT("Iteration %u",idx);
     for (unsigned int isolver=0;isolver<solvers.size();isolver++)
     {
+
       ros::Time t1=ros::Time::now();
 
       pathplan::TreeSolverPtr solver= solvers.at(isolver);
@@ -262,6 +315,7 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
 
       if (solver->update(solution))
       {
+
         bool improved=false;
         COMMENT("Find a solution");
         if (!found_solution.at(isolver))
@@ -273,10 +327,10 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
           solvers.at(isolver)=opt_solver;
           found_solution.at(isolver)=true;
         }
+
         if (!found_a_solution)
         {
           COMMENT("it is the first one. cost=%f",solution->cost());
-
           improved=true;
           found_a_solution=true;
         }
@@ -284,7 +338,6 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
         {
           COMMENT("it improves the actual best solution. cost=%f",solution->cost());
           improved=true;
-
         }
         local_solvers.at(isolver)->setPath(solution);
 
@@ -297,7 +350,7 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
       }
 
       COMMENT("graph solver needs %f seconds",(ros::Time::now()-t1).toSec());
-    }
+     }
 
     if (1)
     {
@@ -317,11 +370,20 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
             best_solution=solution;
             for (pathplan::SamplerPtr& sampler: samplers)
               sampler->setCost(solution->cost());
+            if (m_preload_path)
+              tube_samplers.at(isolver)->setPath(solution);
+
           }
 
         }
         COMMENT("path solver needs %f seconds",(ros::Time::now()-t1).toSec());
       }
+    }
+
+    if (found_a_solution)
+    {
+      if (stall_gen++>=max_stall_gen)
+        break;
     }
   }
 

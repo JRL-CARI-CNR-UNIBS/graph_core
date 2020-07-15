@@ -47,8 +47,9 @@ public:
   virtual bool addGoal(const NodePtr &goal_node);
   virtual bool addStartTree(const TreePtr& start_tree);
   virtual bool update(PathPtr& solution);
-  virtual bool solve(PathPtr &solution, const unsigned int& max_iter);
+  virtual bool solve(PathPtr &solution, const unsigned int& max_iter=100);
   virtual bool update(const Eigen::VectorXd& point, PathPtr& solution);
+  virtual bool update(const NodePtr& n, PathPtr& solution);
 
 };
 }

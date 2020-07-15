@@ -38,6 +38,7 @@ protected:
   double max_distance_;
   double utopia_;
   virtual bool setProblem();
+  virtual void clean(){}
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -52,8 +53,10 @@ public:
   virtual bool addGoal(const NodePtr& goal_node);
 
   virtual bool update(const Eigen::VectorXd& point, PathPtr& solution);
+  virtual bool update(const NodePtr& n, PathPtr& solution);
 
   virtual bool update(PathPtr& solution);
+
 
 };
 

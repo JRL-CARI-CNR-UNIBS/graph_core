@@ -33,10 +33,16 @@ namespace pathplan
 
 Eigen::VectorXd TubeInformedSampler::sample()
 {
+   if (ud_(gen_)>local_bias_)
+    return InformedSampler::sample();
+
+  if (length_<=0)
+    return InformedSampler::sample();
+
   for (int itrial = 0; itrial < 100; itrial++)
   {
     double abscissa = ud_(gen_) * length_;
-    Eigen::VectorXd center = path_->pointOnCurvilinearAbscissa(abscissa);
+    Eigen::VectorXd center = pointOnCurvilinearAbscissa(abscissa);
     Eigen::VectorXd ball(ndof_);
     ball.setRandom();
     ball *= std::pow(ud_(gen_), 1.0 / (double)ndof_) / ball.norm();
@@ -45,6 +51,78 @@ Eigen::VectorXd TubeInformedSampler::sample()
       return q;
   }
   return InformedSampler::sample();
+}
+
+bool TubeInformedSampler::setPath(const PathPtr &path)
+{
+  return setPath(path->getWaypoints());
+}
+
+bool TubeInformedSampler::setPath(const std::vector<Eigen::VectorXd>&  path)
+{
+  if (path.size()==0)
+    return false;
+
+  path_=path;
+  partial_length_.resize(path.size(),0);
+  for (size_t idx=1;idx<path.size();idx++)
+  {
+    partial_length_.at(idx)=partial_length_.at(idx-1)+(path.at(idx)-path.at(idx-1)).norm();
+  }
+  length_=partial_length_.back();
+  return length_>0;
+}
+
+bool TubeInformedSampler::setPath(const std::vector<std::vector<double>>& path)
+{
+  std::vector<Eigen::VectorXd> eigen_path(path.size());
+  for (size_t idx=0;idx<path.size();idx++)
+  {
+    eigen_path.at(idx).resize(path.at(idx).size());
+    for (unsigned iax=0;iax<path.at(idx).size();iax++)
+      eigen_path.at(idx)(iax)=path.at(idx).at(iax);
+  }
+  return setPath(eigen_path);
+}
+
+bool TubeInformedSampler::setRadius(const double &radius)
+{
+  if (radius<=0)
+  {
+    ROS_WARN("Radius should be positive");
+    return false;
+  }
+  radius_=radius;
+  return true;
+}
+
+bool TubeInformedSampler::setLocalBias(const double& local_bias)
+{
+  if ((local_bias<0) || (local_bias>1))
+  {
+    ROS_WARN("Local bias should be between 0-1");
+    return false;
+  }
+  local_bias_=local_bias;
+  return true;
+}
+
+Eigen::VectorXd TubeInformedSampler::pointOnCurvilinearAbscissa(const double& abscissa)
+{
+  if (abscissa <= 0)
+    return path_.at(0);
+  else if (abscissa>=length_)
+    return path_.back();
+
+  for (size_t idx=1;idx<path_.size();idx++)
+  {
+    if ( partial_length_.at(idx) > abscissa)
+    {
+      double ratio = (abscissa - partial_length_.at(idx-1)) /(partial_length_.at(idx) - partial_length_.at(idx-1));
+      return path_.at(idx-1) + ratio * (path_.at(idx) - path_.at(idx-1));
+    }
+  }
+  return path_.back();
 }
 
 }  // namespace pathplan

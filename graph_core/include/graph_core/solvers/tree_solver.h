@@ -56,6 +56,8 @@ protected:
   {
     return false;
   }
+  virtual void clean(){}
+
 public:
   TreeSolver(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
@@ -72,6 +74,8 @@ public:
   }
   virtual bool update(PathPtr& solution) = 0;
   virtual bool update(const Eigen::VectorXd& point, PathPtr& solution) = 0;
+  virtual bool update(const NodePtr& n, PathPtr& solution)=0;
+
   virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100);
   virtual bool addStart(const NodePtr& start_node) = 0;
   virtual bool addGoal(const NodePtr& goal_node) = 0;
@@ -83,7 +87,7 @@ public:
   {
     return cost_;
   }
-  virtual bool setSolution(const PathPtr &solution);
+  virtual bool setSolution(const PathPtr &solution, const bool& solved=false);
   TreePtr getStartTree() const
   {
     return start_tree_;
@@ -93,6 +97,7 @@ public:
   {
     sampler_ = sampler;
   }
+
 
 };
 }

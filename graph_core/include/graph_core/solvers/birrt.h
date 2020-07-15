@@ -36,6 +36,7 @@ class BiRRT: public RRTConnect
 protected:
   bool extend_ = false;
   TreePtr goal_tree_;
+  virtual void clean();
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   BiRRT(const MetricsPtr& metrics,
@@ -48,6 +49,7 @@ public:
   virtual bool addGoal(const NodePtr &goal_node);
   virtual bool update(PathPtr& solution);
   virtual bool update(const Eigen::VectorXd& point, PathPtr& solution);
+  virtual bool update(const NodePtr& n, PathPtr& solution);
 
 };
 

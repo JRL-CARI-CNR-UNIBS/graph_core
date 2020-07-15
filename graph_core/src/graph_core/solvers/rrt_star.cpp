@@ -118,6 +118,34 @@ bool RRTStar::update(const Eigen::VectorXd& point, PathPtr& solution)
 }
 
 
+bool RRTStar::update(const NodePtr& n, PathPtr& solution)
+{
+  if (!init_)
+    return false;
+  if (cost_ <= 1.003 * utopia_)
+    return true;
+
+  double cost = solution_->cost();
+  r_rewire_ = cost_ * 0.1;
+  bool improved = start_tree_->rewireToNode(n, r_rewire_);
+
+  if (improved)
+  {
+    if (start_tree_->costToNode(goal_node_) >= (cost - 1e-8))
+      return false;
+
+    solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
+    solution_->setTree(start_tree_);
+
+    cost_ = solution_->cost();
+
+
+    sampler_->setCost(cost_);
+  }
+  solution = solution_;
+  return improved;
+}
+
 bool RRTStar::solve(PathPtr &solution, const unsigned int& max_iter)
 {
   bool improved = false;

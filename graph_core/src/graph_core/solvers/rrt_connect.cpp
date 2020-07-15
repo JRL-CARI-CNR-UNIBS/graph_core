@@ -147,6 +147,44 @@ bool RRTConnect::update(const Eigen::VectorXd& point, PathPtr &solution)
 }
 
 
+bool RRTConnect::update(const NodePtr& n, PathPtr &solution)
+{
+  PATH_COMMENT("RRTConnect::update");
+
+  if (solved_)
+  {
+    PATH_COMMENT("already found a solution");
+    solution = solution_;
+    return true;
+  }
+
+  NodePtr new_node;
+  if (start_tree_->connectToNode(n, new_node))
+  {
+
+    if ((new_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
+    {
+      if (checker_->checkPath(new_node->getConfiguration(), goal_node_->getConfiguration()))
+      {
+        ConnectionPtr conn = std::make_shared<Connection>(new_node, goal_node_);
+        conn->setCost(metrics_->cost(new_node, goal_node_));
+        conn->add();
+        solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
+        solution_->setTree(start_tree_);
+        start_tree_->addNode(goal_node_);
+        cost_ = solution_->cost();
+        sampler_->setCost(cost_);
+        solution = solution_;
+        solved_ = true;
+        return true;
+      }
+    }
+  }
+  return false;
+
+}
+
+
 
 }
 

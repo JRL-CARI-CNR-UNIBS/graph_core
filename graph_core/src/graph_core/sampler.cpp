@@ -60,7 +60,7 @@ Eigen::VectorXd InformedSampler::sample()
       if (in_of_bounds)
         return q;
     }
-    ROS_WARN_THROTTLE(0.1, "unable to find a feasible point in the ellipse");
+    ROS_DEBUG_THROTTLE(0.1, "unable to find a feasible point in the ellipse");
     return center_bound_ + Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(bound_width_);
   }
 }

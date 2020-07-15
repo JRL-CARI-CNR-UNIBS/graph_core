@@ -30,17 +30,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/sampler.h>
 #include <graph_core/graph/path.h>
 
-namespace pathplan
-{
+namespace pathplan {
 
 
 
 class TubeInformedSampler: public InformedSampler
 {
 protected:
-  pathplan::PathPtr path_;
+  std::vector<Eigen::VectorXd>  path_;
+  std::vector<double> partial_length_;
   double radius_;
   double length_;
+  double local_bias_=1;
 
   std::uniform_int_distribution<> id_;
 public:
@@ -48,22 +49,23 @@ public:
   TubeInformedSampler(const Eigen::VectorXd& start_configuration,
                       const Eigen::VectorXd& stop_configuration,
                       const Eigen::VectorXd& lower_bound,
-                      const Eigen::VectorXd& upper_bound,
-                      const pathplan::PathPtr& path,
-                      const double& radius):
-    InformedSampler(start_configuration, stop_configuration, lower_bound, upper_bound, path->cost()),
-    path_(path),
-    radius_(radius)
+                      const Eigen::VectorXd& upper_bound):
+    InformedSampler(start_configuration,stop_configuration,lower_bound,upper_bound)
   {
-    length_ = path_->computeEuclideanNorm();
+    length_ = 0;
+    radius_=0;
   }
 
-
+  bool setPath(const pathplan::PathPtr& path);
+  bool setPath(const std::vector<Eigen::VectorXd>& path);
+  bool setPath(const std::vector<std::vector<double>>& path);
+  bool setRadius(const double& radius);
+  bool setLocalBias(const double& local_bias);
+  Eigen::VectorXd pointOnCurvilinearAbscissa(const double& abscissa);
   virtual Eigen::VectorXd sample();
-
 };
 
 
-typedef std::shared_ptr<TubeInformedSampler> TubeInformedSampler4Ptr;
+typedef std::shared_ptr<TubeInformedSampler> TubeInformedSamplerPtr;
 
-}
+}    // namespace pathplan

@@ -65,6 +65,14 @@ target_link_libraries(test_moveit
   ${catkin_LIBRARIES}
 )
 
+
+add_executable(       test_tube_sampling src/test/test_tube_sampling.cpp)
+add_dependencies(     test_tube_sampling ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_tube_sampling
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
 #install(PROGRAMS
 #  scripts/my_python_script
 #  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

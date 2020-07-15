@@ -80,6 +80,9 @@ public:
   bool rewire(const Eigen::VectorXd& configuration,
               double r_rewire);
 
+  bool rewireToNode(const NodePtr& n,
+              double r_rewire);
+
   NodePtr findClosestNode(const Eigen::VectorXd& configuration);
 
   double costToNode(NodePtr node);
@@ -99,7 +102,7 @@ public:
     return nodes_.size();
   }
 
-  void purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds = true);
+  unsigned int purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds = true);
   bool purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
 };
 
