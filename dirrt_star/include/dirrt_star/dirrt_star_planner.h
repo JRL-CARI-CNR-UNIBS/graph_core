@@ -68,6 +68,8 @@ protected:
   //planning_scene::PlanningSceneConstPtr pl
   ros::NodeHandle m_nh;
 
+  ros::WallDuration m_max_planning_time;
+  ros::WallDuration m_max_refining_time;
 
   unsigned int m_dof;
   std::vector<std::string> joint_names_;
