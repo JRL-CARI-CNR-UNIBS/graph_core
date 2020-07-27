@@ -76,7 +76,8 @@ protected:
   Eigen::VectorXd m_lb;
   Eigen::VectorXd m_ub;
   std::string group_;
-  bool m_preload_path;
+  bool m_tube_sampler;
+  bool m_path_optimization;
 
   pathplan::MetricsPtr metrics;
   pathplan::CollisionCheckerPtr checker;

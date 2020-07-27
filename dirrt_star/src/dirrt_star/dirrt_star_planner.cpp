@@ -84,7 +84,6 @@ DIRRTStar::DIRRTStar ( const std::string& name,
   if (!planning_scene_)
     ROS_ERROR("No planning scene available");
 
-  m_preload_path=true;
   COMMENT("created DIRRTStar");
 
   double refining_time=0;
@@ -95,6 +94,20 @@ DIRRTStar::DIRRTStar ( const std::string& name,
   }
   m_max_refining_time=ros::WallDuration(refining_time);
   m_max_planning_time=ros::WallDuration(60);
+
+
+  if (!m_nh.getParam("path_optimization",m_path_optimization))
+  {
+    ROS_DEBUG("refining_time is not set, default: false");
+    m_path_optimization=false;
+  }
+  if (!m_nh.getParam("tube_sampler",m_tube_sampler))
+  {
+    ROS_DEBUG("refining_time is not set, default: false");
+    m_tube_sampler=false;
+  }
+
+
 }
 
 void DIRRTStar::setPlanningScene ( const planning_scene::PlanningSceneConstPtr& planning_scene )
@@ -196,7 +209,7 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
     COMMENT("goal is valid");
 
     pathplan::TubeInformedSamplerPtr tube_sampler = std::make_shared<pathplan::TubeInformedSampler>(start_conf, final_configuration, m_lb, m_ub);
-    if (m_preload_path)
+    if (m_tube_sampler)
       samplers.push_back(tube_sampler);
     else
       samplers.push_back(std::make_shared<pathplan::InformedSampler>(start_conf,final_configuration,m_lb,m_ub));
@@ -218,15 +231,16 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
     local_solvers.push_back(path_solver);
 
 
-    if (m_preload_path)
+    if (m_tube_sampler)
     {
 
       std::vector<std::vector<double>> preload_path;
-      if (rosparam_utilities::getParamMatrix(m_nh,"/preload_path",preload_path))
+      double radius;
+      if (m_nh.getParam("/preload_radius",radius))
       {
-        double radius;
-        if (m_nh.getParam("/preload_radius",radius))
+        if (rosparam_utilities::getParamMatrix(m_nh,"/preload_path",preload_path))
         {
+
           pathplan::TreePtr tree=solver->getStartTree();
           pathplan::NodePtr parent_node=tree->getRoot();
           pathplan::PathPtr solution;
@@ -325,18 +339,13 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
     {
       break;
     }
-    //    COMMENT("Iteration %u",idx);
+
     for (unsigned int isolver=0;isolver<solvers.size();isolver++)
     {
-
-      ros::Time t1=ros::Time::now();
-
       pathplan::TreeSolverPtr solver= solvers.at(isolver);
-      //      COMMENT("test goal %u",isolver);
-
+      ROS_INFO_THROTTLE(1,"number of nodes %u",solver->getStartTree()->getNumberOfNodes());
       if (solver->update(solution))
       {
-
         bool improved=false;
         COMMENT("Find a solution");
         if (!found_solution.at(isolver))
@@ -361,8 +370,8 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
           COMMENT("it improves the actual best solution. cost=%f",solution->cost());
           improved=true;
         }
-        local_solvers.at(isolver)->setPath(solution);
-
+        if (m_tube_sampler)
+          local_solvers.at(isolver)->setPath(solution);
         if (improved)
         {
           best_solution=solution;
@@ -370,37 +379,34 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
             sampler->setCost(solution->cost());
         }
       }
+    }
 
-      COMMENT("graph solver needs %f seconds",(ros::Time::now()-t1).toSec());
-     }
-
-    if (1)
+    if (m_path_optimization)
     {
       for (unsigned int isolver=0;isolver<solvers.size();isolver++)
       {
-        //      COMMENT("local test goal %u",isolver);
-
         std::shared_ptr<pathplan::PathLocalOptimizer> path_solver=local_solvers.at(isolver);
         ros::Time t1=ros::Time::now();
         if (path_solver->step(solution))
         {
           COMMENT("Improved solution %u, cost=%f",isolver,solution->cost());
           solvers.at(isolver)->setSolution(solution);
+          if (m_tube_sampler)
+            tube_samplers.at(isolver)->setPath(solution);
+
           if (solution->cost()<=best_solution->cost())
           {
             COMMENT("it improves the actual best solution");
             best_solution=solution;
             for (pathplan::SamplerPtr& sampler: samplers)
               sampler->setCost(solution->cost());
-            if (m_preload_path)
-              tube_samplers.at(isolver)->setPath(solution);
-
           }
 
         }
         COMMENT("path solver needs %f seconds",(ros::Time::now()-t1).toSec());
       }
     }
+
 
 
   }
