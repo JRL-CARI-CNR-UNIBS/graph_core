@@ -170,7 +170,11 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
     m_is_running=false;
     return false;
   }
-  if (planning_scene_->isStateColliding(start_state,request_.group_name))
+  Eigen::VectorXd start_conf;
+  start_state.copyJointGroupPositions(group_,start_conf);
+
+
+  if (!checker->check(start_conf))
   {
     ROS_ERROR("Start point is in collision");
     res.error_code_.val=moveit_msgs::MoveItErrorCodes::START_STATE_IN_COLLISION;
@@ -179,8 +183,6 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
   }
 
 
-  Eigen::VectorXd start_conf;
-  start_state.copyJointGroupPositions(group_,start_conf);
   std::map<double,moveit_msgs::Constraints> ordered_goals;
 
   pathplan::NodePtr start_node=std::make_shared<pathplan::Node>(start_conf);
@@ -216,7 +218,7 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
       ROS_FATAL("goal %dt is  Out of bound",iGoal);
       continue;
     }
-    if (planning_scene_->isStateColliding(end_state,request_.group_name))
+    if (!checker->check(final_configuration))
     {
       ROS_WARN("goal %u is in collision",iGoal);
       continue;
