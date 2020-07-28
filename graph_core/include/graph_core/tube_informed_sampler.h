@@ -43,9 +43,9 @@ protected:
   double length_;
   double local_bias_=1;
 
-  double probability_tube_;
-  double probability_not_tube_;
-  double probability_;
+  double probability_tube_=0.5;
+  double probability_not_tube_=0.5;
+  double probability_=0.5;
 
   std::uniform_int_distribution<> id_;
 public:

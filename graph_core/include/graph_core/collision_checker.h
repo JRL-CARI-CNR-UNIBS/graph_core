@@ -101,6 +101,7 @@ public:
     double n = 2;
     while (distance > n * min_distance_)
     {
+      ROS_INFO("distance=%f, divisioni=%f",distance,n);
       for (double idx = 1; idx < n; idx += 2)
       {
         conf = configuration1 + (configuration2 - configuration1) * idx / n;

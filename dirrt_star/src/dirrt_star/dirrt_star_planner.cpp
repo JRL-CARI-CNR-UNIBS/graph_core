@@ -268,9 +268,9 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
           if (!solver->solved())
           {
             Eigen::VectorXd preload_point(final_configuration.size());
-            ROS_INFO_STREAM("start = <<" << start_conf.transpose());
-            ROS_INFO_STREAM("root = <<" << parent_node->getConfiguration().transpose());
-            ROS_INFO_STREAM("goal = <<" << final_configuration.transpose());
+            ROS_INFO_STREAM("start = " << start_conf.transpose());
+            ROS_INFO_STREAM("root = " << parent_node->getConfiguration().transpose());
+            ROS_INFO_STREAM("goal = " << final_configuration.transpose());
             for (unsigned int ipoint=0;ipoint<preload_path.size();ipoint++)
             {
               ROS_INFO("point %u of %zu",ipoint,preload_path.size());
@@ -281,8 +281,8 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
                   preload_point(iax)=preload_path.at(ipoint).at(iax);
                 if ((preload_point-start_conf).norm()<1e-6)
                   continue;
-                ROS_INFO_STREAM("parent = <<" << parent_node->getConfiguration().transpose());
-                ROS_INFO_STREAM("preload_point= <<" << preload_point.transpose());
+                ROS_INFO_STREAM("parent = " << parent_node->getConfiguration().transpose());
+                ROS_INFO_STREAM("preload_point= " << preload_point.transpose());
 
                 if (checker->checkPath(parent_node->getConfiguration(),preload_point))
                 {
