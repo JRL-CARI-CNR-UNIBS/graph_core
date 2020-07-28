@@ -89,10 +89,15 @@ public:
                  const Eigen::VectorXd& configuration2)
   {
     if (!check(configuration1))
+    {
+      ROS_INFO("configuration1 is in collision");
       return false;
+    }
     if (!check(configuration2))
+    {
+      ROS_INFO("configuration2 is in collision");
       return false;
-
+    }
     double distance = (configuration2 - configuration1).norm();
     if (distance < min_distance_)
       return true;
