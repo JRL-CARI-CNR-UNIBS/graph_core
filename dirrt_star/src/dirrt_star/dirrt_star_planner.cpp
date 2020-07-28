@@ -361,6 +361,8 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
       ROS_INFO_THROTTLE(1,"number of nodes %u",solver->getStartTree()->getNumberOfNodes());
       if (solver->update(solution))
       {
+        ROS_INFO_THROTTLE(1,"trovata una soluzione");
+
         bool improved=false;
         COMMENT("Find a solution");
         if (!found_solution.at(isolver))
