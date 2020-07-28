@@ -43,6 +43,10 @@ protected:
   double length_;
   double local_bias_=1;
 
+  double probability_tube_;
+  double probability_not_tube_;
+  double probability_;
+
   std::uniform_int_distribution<> id_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
