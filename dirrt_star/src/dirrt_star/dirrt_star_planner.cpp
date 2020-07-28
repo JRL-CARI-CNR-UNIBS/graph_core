@@ -161,6 +161,15 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
     moveit::core::robotStateMsgToRobotState(request_.start_state,start_state);
 
   start_state.update();
+  start_state.updateCollisionBodyTransforms();
+
+  if (!start_state.satisfiesBounds())
+  {
+    ROS_FATAL("Start point is  Out of bound");
+    res.error_code_.val=moveit_msgs::MoveItErrorCodes::START_STATE_IN_COLLISION;
+    m_is_running=false;
+    return false;
+  }
   if (planning_scene_->isStateColliding(start_state,request_.group_name))
   {
     ROS_ERROR("Start point is in collision");
@@ -168,6 +177,7 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
     m_is_running=false;
     return false;
   }
+
 
   Eigen::VectorXd start_conf;
   start_state.copyJointGroupPositions(group_,start_conf);
@@ -199,8 +209,13 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
     }
     end_state.copyJointGroupPositions(group_,final_configuration);
 
-
+    end_state.updateCollisionBodyTransforms();
     COMMENT("check collision on goal %u",iGoal);
+    if (!start_state.satisfiesBounds())
+    {
+      ROS_FATAL("goal %dt is  Out of bound",iGoal);
+      continue;
+    }
     if (planning_scene_->isStateColliding(end_state,request_.group_name))
     {
       ROS_WARN("goal %u is in collision",iGoal);
