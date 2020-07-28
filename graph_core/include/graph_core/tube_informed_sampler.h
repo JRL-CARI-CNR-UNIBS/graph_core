@@ -41,7 +41,7 @@ protected:
   std::vector<double> partial_length_;
   double radius_;
   double length_;
-  double local_bias_=1;
+  double local_bias_=0.8;
 
   double probability_tube_=0.5;
   double probability_not_tube_=0.5;
