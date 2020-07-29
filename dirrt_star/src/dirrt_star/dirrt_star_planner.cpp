@@ -200,7 +200,7 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
     col_req.contacts = true;
 
     ROS_FATAL("provo forzando la collision matrix");
-    planning_scene_->checkCollision(col_req,col_res,start_state,planning_scene_->getAllowedCollisionMatrix());
+    planning_scene_->checkCollision(col_req,col_res,start_state,planning_scene_->getAllowedCollisionMatrixNonConst());
     if (col_res.collision)
     {
       ROS_ERROR("Start state is colliding +++");
