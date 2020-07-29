@@ -204,7 +204,7 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
       ROS_ERROR("Start state is colliding +++");
       for (const  std::pair<std::pair<std::string, std::string>, std::vector<collision_detection::Contact> >& contact: col_res.contacts)
       {
-        ROS_ERROR("contact between %s and %s",contact.first.first,contact.first.second);
+        ROS_ERROR("contact between %s and %s",contact.first.first.c_str(),contact.first.second.c_str());
       }
     }
     res.error_code_.val=moveit_msgs::MoveItErrorCodes::START_STATE_IN_COLLISION;
