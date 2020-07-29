@@ -198,15 +198,6 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
     }
 
     col_req.contacts = true;
-    planning_scene_->checkCollision(col_req,col_res,start_state);
-    if (col_res.collision)
-    {
-      ROS_ERROR("Start state is colliding +++");
-      for (const  std::pair<std::pair<std::string, std::string>, std::vector<collision_detection::Contact> >& contact: col_res.contacts)
-      {
-        ROS_ERROR("contact between %s and %s",contact.first.first.c_str(),contact.first.second.c_str());
-      }
-    }
 
     ROS_FATAL("provo forzando la collision matrix");
     planning_scene_->checkCollision(col_req,col_res,start_state,planning_scene_->getAllowedCollisionMatrix());
@@ -218,6 +209,20 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
         ROS_ERROR("contact between %s and %s",contact.first.first.c_str(),contact.first.second.c_str());
       }
     }
+
+
+    ROS_FATAL("cambio ordine");
+    planning_scene_->checkCollision(col_req,col_res,start_state);
+    if (col_res.collision)
+    {
+      ROS_ERROR("Start state is colliding +++");
+      for (const  std::pair<std::pair<std::string, std::string>, std::vector<collision_detection::Contact> >& contact: col_res.contacts)
+      {
+        ROS_ERROR("contact between %s and %s",contact.first.first.c_str(),contact.first.second.c_str());
+      }
+    }
+
+
 
     col_req.group_name=group_;
     ROS_FATAL("provo forzando il gruppo");
