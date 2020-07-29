@@ -219,6 +219,18 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
       }
     }
 
+    col_req.group_name=group_;
+    ROS_FATAL("provo forzando il gruppo");
+    planning_scene_->checkCollision(col_req,col_res,start_state,planning_scene_->getAllowedCollisionMatrix());
+    if (col_res.collision)
+    {
+      ROS_ERROR("Start state is colliding +++");
+      for (const  std::pair<std::pair<std::string, std::string>, std::vector<collision_detection::Contact> >& contact: col_res.contacts)
+      {
+        ROS_ERROR("contact between %s and %s",contact.first.first.c_str(),contact.first.second.c_str());
+      }
+    }
+
     res.error_code_.val=moveit_msgs::MoveItErrorCodes::START_STATE_IN_COLLISION;
     m_is_running=false;
     return false;
