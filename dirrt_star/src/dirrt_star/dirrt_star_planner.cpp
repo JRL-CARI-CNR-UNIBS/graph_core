@@ -177,6 +177,36 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
   if (!checker->check(start_conf))
   {
     ROS_ERROR("Start point is in collision");
+
+    start_state.update();
+    start_state.updateCollisionBodyTransforms();
+
+    if (!planning_scene_->isStateColliding(start_state))
+    {
+      ROS_ERROR("Start state is colliding");
+    }
+    if (!planning_scene_->isStateValid(start_state))
+    {
+      ROS_ERROR("Start state is not valid");
+    }
+    collision_detection::CollisionRequest col_req;
+    collision_detection::CollisionResult col_res;
+    planning_scene_->checkCollision(col_req,col_res,start_state);
+    if (col_res.collision)
+    {
+      ROS_ERROR("Start state is colliding");
+    }
+
+    col_req.contacts = true;
+    planning_scene_->checkCollision(col_req,col_res,start_state);
+    if (col_res.collision)
+    {
+      ROS_ERROR("Start state is colliding +++");
+      for (const  std::pair<std::pair<std::string, std::string>, std::vector<collision_detection::Contact> >& contact: col_res.contacts)
+      {
+        ROS_ERROR("contact between %s and %s",contact.first.first,contact.first.second);
+      }
+    }
     res.error_code_.val=moveit_msgs::MoveItErrorCodes::START_STATE_IN_COLLISION;
     m_is_running=false;
     return false;
