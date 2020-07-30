@@ -232,14 +232,34 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
 
     end_state.updateCollisionBodyTransforms();
     COMMENT("check collision on goal %u",iGoal);
-    if (!start_state.satisfiesBounds())
-    {
-      ROS_FATAL("goal %dt is  Out of bound",iGoal);
-      continue;
-    }
+
     if (!checker->check(final_configuration))
     {
       ROS_WARN("goal %u is in collision",iGoal);
+
+      if (request_.goal_constraints.size()<5)
+      {
+
+        if (!end_state.satisfiesBounds())
+        {
+          ROS_ERROR_STREAM("End state: " << final_configuration.transpose()<<" is  Out of bound");
+        }
+
+        collision_detection::CollisionRequest col_req;
+        collision_detection::CollisionResult col_res;
+        col_req.contacts = true;
+        col_req.group_name=group_;
+        planning_scene_->checkCollision(col_req,col_res,end_state);
+        if (col_res.collision)
+        {
+          ROS_ERROR_STREAM("End state: " << final_configuration.transpose()<<" is colliding");
+          for (const  std::pair<std::pair<std::string, std::string>, std::vector<collision_detection::Contact> >& contact: col_res.contacts)
+          {
+            ROS_ERROR("contact between %s and %s",contact.first.first.c_str(),contact.first.second.c_str());
+          }
+        }
+      }
+
       continue;
     }
     COMMENT("goal is valid");
