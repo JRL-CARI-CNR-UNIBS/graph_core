@@ -90,12 +90,10 @@ public:
   {
     if (!check(configuration1))
     {
-      ROS_INFO("configuration1 is in collision");
       return false;
     }
     if (!check(configuration2))
     {
-      ROS_INFO("configuration2 is in collision");
       return false;
     }
     double distance = (configuration2 - configuration1).norm();
@@ -106,7 +104,6 @@ public:
     double n = 2;
     while (distance > n * min_distance_)
     {
-      ROS_INFO("distance=%f, divisioni=%f",distance,n);
       for (double idx = 1; idx < n; idx += 2)
       {
         conf = configuration1 + (configuration2 - configuration1) * idx / n;

@@ -169,7 +169,6 @@ bool Tree::connect(const Eigen::VectorXd &configuration, NodePtr &new_node)
     success = extend(configuration, tmp_node);
     if (success)
     {
-      ROS_INFO_THROTTLE(1,"connesso un punto");
       new_node = tmp_node;
       if ((new_node->getConfiguration() - configuration).norm() < tolerance_)
         return true;

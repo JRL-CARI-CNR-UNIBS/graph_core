@@ -151,6 +151,9 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
   ros::WallTime refine_time = ros::WallTime::now();
   m_is_running=true;
 
+  planning_scene::PlanningScenePtr ptr=planning_scene::PlanningScene::clone(planning_scene_);
+  checker=std::make_shared<pathplan::MoveitCollisionChecker>(ptr,group_,collision_distance);
+
 
 
   moveit::core::RobotState start_state(robot_model_);
@@ -178,40 +181,10 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
   {
     ROS_ERROR("Start point is in collision");
 
-    start_state.update();
-    start_state.updateCollisionBodyTransforms();
-
-    if (planning_scene_->isStateColliding(start_state))
-    {
-      ROS_ERROR("Start state is colliding");
-    }
-    if (!planning_scene_->isStateValid(start_state))
-    {
-      ROS_ERROR("Start state is not valid");
-    }
     collision_detection::CollisionRequest col_req;
     collision_detection::CollisionResult col_res;
-    planning_scene_->checkCollision(col_req,col_res,start_state);
-    if (col_res.collision)
-    {
-      ROS_ERROR("Start state is colliding");
-    }
-
     col_req.contacts = true;
-
-    ROS_FATAL("provo forzando la collision matrix");
-    planning_scene_->checkCollision(col_req,col_res,start_state,planning_scene_->getAllowedCollisionMatrix());
-    if (col_res.collision)
-    {
-      ROS_ERROR("Start state is colliding +++");
-      for (const  std::pair<std::pair<std::string, std::string>, std::vector<collision_detection::Contact> >& contact: col_res.contacts)
-      {
-        ROS_ERROR("contact between %s and %s",contact.first.first.c_str(),contact.first.second.c_str());
-      }
-    }
-
-
-    ROS_FATAL("cambio ordine");
+    col_req.group_name=group_;
     planning_scene_->checkCollision(col_req,col_res,start_state);
     if (col_res.collision)
     {
@@ -222,19 +195,6 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
       }
     }
 
-
-
-    col_req.group_name=group_;
-    ROS_FATAL("provo forzando il gruppo");
-    planning_scene_->checkCollision(col_req,col_res,start_state,planning_scene_->getAllowedCollisionMatrix());
-    if (col_res.collision)
-    {
-      ROS_ERROR("Start state is colliding +++");
-      for (const  std::pair<std::pair<std::string, std::string>, std::vector<collision_detection::Contact> >& contact: col_res.contacts)
-      {
-        ROS_ERROR("contact between %s and %s",contact.first.first.c_str(),contact.first.second.c_str());
-      }
-    }
 
     res.error_code_.val=moveit_msgs::MoveItErrorCodes::START_STATE_IN_COLLISION;
     m_is_running=false;
@@ -329,27 +289,17 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
           if (!solver->solved())
           {
             Eigen::VectorXd preload_point(final_configuration.size());
-            ROS_INFO_STREAM("start = " << start_conf.transpose());
-            ROS_INFO_STREAM("root = " << parent_node->getConfiguration().transpose());
-            ROS_INFO_STREAM("goal = " << final_configuration.transpose());
             for (unsigned int ipoint=0;ipoint<preload_path.size();ipoint++)
             {
-              ROS_INFO("point %u of %zu",ipoint,preload_path.size());
-
               if (preload_path.at(ipoint).size() == final_configuration.size())
               {
                 for (unsigned iax=0;iax<final_configuration.size();iax++)
                   preload_point(iax)=preload_path.at(ipoint).at(iax);
                 if ((preload_point-start_conf).norm()<1e-6)
                   continue;
-                ROS_INFO_STREAM("parent = " << parent_node->getConfiguration().transpose());
-                ROS_INFO_STREAM("preload_point= " << preload_point.transpose());
 
                 if (checker->checkPath(parent_node->getConfiguration(),preload_point))
                 {
-                  ROS_INFO("point %u can be connected to start",ipoint);
-
-
                   pathplan::NodePtr child_node=std::make_shared<pathplan::Node>(preload_point);
                   pathplan::ConnectionPtr conn=std::make_shared<pathplan::Connection>(parent_node,child_node);
                   conn->setCost(metrics->cost(parent_node,child_node));
@@ -407,7 +357,7 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
   pathplan::PathPtr solution;
 
   pathplan::PathPtr best_solution;
-  while((ros::WallTime::now()-start_time)<m_max_planning_time)
+    while((ros::WallTime::now()-start_time)<m_max_planning_time)
   {
     if (m_stop)
     {
@@ -424,13 +374,10 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
     for (unsigned int isolver=0;isolver<solvers.size();isolver++)
     {
       pathplan::TreeSolverPtr solver= solvers.at(isolver);
-      ROS_INFO_THROTTLE(1,"number of nodes %u",solver->getStartTree()->getNumberOfNodes());
       if (solver->update(solution))
       {
-        ROS_INFO_THROTTLE(1,"trovata una soluzione");
 
         bool improved=false;
-        COMMENT("Find a solution");
         if (!found_solution.at(isolver))
         {
           std::shared_ptr<pathplan::RRTStar> opt_solver=std::make_shared<pathplan::RRTStar>(metrics,checker,samplers.at(isolver));
@@ -463,7 +410,6 @@ bool DIRRTStar::solve ( planning_interface::MotionPlanDetailedResponse& res )
         }
       }
     }
-
     if (m_path_optimization)
     {
       for (unsigned int isolver=0;isolver<solvers.size();isolver++)

@@ -67,7 +67,7 @@ public:
       return false;
     }
     state_->updateCollisionBodyTransforms();
-    return planning_scene_->isStateValid(*state_);
+    return planning_scene_->isStateValid(*state_,group_name_);
 
   }
 
