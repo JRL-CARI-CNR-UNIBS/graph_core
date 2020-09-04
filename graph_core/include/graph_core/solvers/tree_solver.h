@@ -50,7 +50,7 @@ protected:
   double cost_;
   TreePtr start_tree_;
   PathPtr solution_;
-
+  unsigned int dof_;
 protected:
   virtual bool setProblem()
   {

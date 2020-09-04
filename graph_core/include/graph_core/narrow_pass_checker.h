@@ -1,3 +1,4 @@
+#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -26,24 +27,40 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include <graph_core/tube_informed_sampler.h>
+#include <graph_core/collision_checker.h>
+#include <moveit/planning_scene/planning_scene.h>
 
-namespace pathplan {
-
-Eigen::VectorXd TubeInformedSampler::sample()
+namespace pathplan
 {
-  for (int itrial=0;itrial<100;itrial++)
-  {
-  double abscissa=ud_(gen_)*length_;
-  Eigen::VectorXd center=path_->pointOnCurvilinearAbscissa(abscissa);
-  Eigen::VectorXd ball(ndof_);
-  ball.setRandom();
-  ball*=std::pow(ud_(gen_),1.0/(double)ndof_)/ball.norm();
-  Eigen::VectorXd q=radius_*ball+center;
-  if (InformedSampler::inBounds(q))
-    return q;
-  }
-  return InformedSampler::sample();
-}
 
-}  // namespace pathplan
+class NarrowPassChecker: public CollisionChecker
+{
+protected:
+  double hole_radius_;
+  double cilinder_radius_;
+  double cilinder_width_;
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  NarrowPassChecker(const double& hole_radius, const double& cilinder_radius, const double cilinder_width):
+    hole_radius_(hole_radius),
+    cilinder_radius_(cilinder_radius),
+    cilinder_width_(cilinder_width)
+  {
+  }
+
+  virtual bool check(const Eigen::VectorXd& configuration)
+  {
+    if (std::abs(configuration(0))>=cilinder_width_*0.5)
+      return true;
+
+    Eigen::VectorXd sub_conf=configuration.tail(configuration.size()-1);
+    if (sub_conf.norm()>=cilinder_radius_)
+      return true;
+
+//    sub_conf(1)-=2*hole_radius_;
+    double x=sub_conf.norm();
+    return (x<=hole_radius_);
+  }
+
+};
+}

@@ -57,7 +57,9 @@ void Node::remoteParentConnection(const ConnectionPtr &connection)
 //    throw std::invalid_argument("connection is not in the parent vector");
   }
   else
-    parent_connections_.erase(it);
+  {
+   parent_connections_.erase(it);
+  }
 }
 
 void Node::remoteChildConnection(const ConnectionPtr &connection)
@@ -101,8 +103,12 @@ Node::~Node()
 std::vector<NodePtr> Node::getChildren() const
 {
   std::vector<NodePtr> children;
+  if (child_connections_.size()==0)
+    return children;
+
   for (const ConnectionPtr& conn : child_connections_)
   {
+    assert(conn);
     children.push_back(conn->getChild());
   }
   return children;

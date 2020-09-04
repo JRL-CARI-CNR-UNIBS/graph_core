@@ -47,6 +47,10 @@ protected:
 
   std::vector<NodePtr> nodes_;
 
+  void purgeNodeOutsideEllipsoid(NodePtr& node,
+                                         const SamplerPtr& sampler,
+                                         const std::vector<NodePtr>& white_list,
+                                         unsigned int& removed_nodes);
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -102,8 +106,11 @@ public:
     return nodes_.size();
   }
 
+  unsigned int purgeNodesOutsideEllipsoid(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list);
   unsigned int purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds = true);
   bool purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
+
+  const double& getMaximumDistance() const {return max_distance_;}
 };
 
 typedef std::shared_ptr<Tree> TreePtr;

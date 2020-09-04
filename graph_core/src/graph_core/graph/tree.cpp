@@ -373,14 +373,14 @@ double Tree::costToNode(NodePtr node)
     {
       if (node->parent_connections_.size() != 1)
       {
-        ROS_ERROR("a node of forward-direction tree should have exactly a parent");
+        ROS_ERROR("a node of forward-direction tree should have exactly a parent. node %u has 0",node.get());
         ROS_FATAL_STREAM("node=\n" << *node);
-        assert(0);
+        return std::numeric_limits<double>::infinity();
       }
 
       if (node->parent_connections_.at(0)->getParent() == node)
       {
-        ROS_FATAL_STREAM("node=\n" << *node);
+        ROS_FATAL_STREAM("node "<< node.get() <<"=\n" << *node);
         ROS_FATAL_STREAM("to parent\n" << * (node->parent_connections_.at(0)));
         ROS_FATAL("connection between the same node");
         assert(0);
@@ -396,7 +396,7 @@ double Tree::costToNode(NodePtr node)
     {
       if (node->child_connections_.size() != 1)
       {
-        ROS_ERROR("a node of backward-direction tree should have only a child");
+        ROS_ERROR("a node of backward-direction tree should have only a child. node %u has 0",node.get());
         assert(0);
       }
       cost += node->child_connections_.at(0)->getCost();
@@ -509,6 +509,48 @@ bool Tree::isInTree(const NodePtr &node, std::vector<NodePtr>::iterator& it)
   return it != nodes_.end();
 }
 
+unsigned int Tree::purgeNodesOutsideEllipsoid(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list)
+{
+  if (nodes_.size() < maximum_nodes_)
+    return 0;
+  unsigned int removed_nodes = 0;
+
+  purgeNodeOutsideEllipsoid(root_,sampler,white_list,removed_nodes);
+  return removed_nodes;
+}
+
+void Tree::purgeNodeOutsideEllipsoid(NodePtr& node,
+                                     const SamplerPtr& sampler,
+                                     const std::vector<NodePtr>& white_list,
+                                     unsigned int& removed_nodes)
+{
+  assert(node);
+
+  // check if it is in the admissible informed set
+  if (sampler->inBounds(node->getConfiguration()))
+  {
+    // if node is inside the admissible set, check its successors
+    std::vector<NodePtr> successors;
+    if (direction_ == Forward)
+      successors = node->getChildren();
+    else
+      successors = node->getParents();
+
+    for (NodePtr& n : successors)
+    {
+      assert(n.get()!=node.get());
+      purgeNodeOutsideEllipsoid(n,sampler,white_list,removed_nodes);
+    }
+  }
+  else
+  {
+    // if node is outside the admissible set, remove it and its successors if they are not in the white list.
+    if (std::find(white_list.begin(), white_list.end(), node) != white_list.end())
+      return;
+    purgeFromHere(node, white_list, removed_nodes);
+  }
+  return;
+}
 
 unsigned int Tree::purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds)
 {
@@ -553,8 +595,7 @@ bool Tree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, 
 {
   if (std::find(white_list.begin(), white_list.end(), node) != white_list.end())
     return false;
-
-
+  assert(node);
   std::vector<NodePtr> successors;
 
   if (direction_ == Forward)
@@ -562,30 +603,34 @@ bool Tree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, 
   else
     successors = node->getParents();
 
-  do
+
+//  ROS_INFO("%u,successors = %zu, removed nodes %u, nodes = %zu",node.get(),successors.size(),removed_nodes,nodes_.size());
+  for (NodePtr& n : successors)
   {
-    for (NodePtr& n : successors)
+    //      assert(n.get()!=node.get());
+    if (n.get()==node.get())
     {
-
-      if (!purgeFromHere(n, white_list, removed_nodes))
-        return false;
-
+      ROS_ERROR("tree error, change to assert");
+      successors.clear();
+      continue;
     }
-
-    if (direction_ == Forward)
-      successors = node->getChildren();
-    else
-      successors = node->getParents();
-
+    if (!purgeFromHere(n,white_list,removed_nodes))
+      return false;
   }
-  while (successors.size() > 0);
 
-  std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
-  node->disconnect();
-  if (it < nodes_.end())
+  if (node)
   {
-    nodes_.erase(it);
-    removed_nodes++;
+    std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
+    node->disconnect();
+    if (it < nodes_.end())
+    {
+      nodes_.erase(it);
+      removed_nodes++;
+    }
+  }
+  else
+  {
+    ROS_ERROR("node do not exist anymore");
   }
   return true;
 }

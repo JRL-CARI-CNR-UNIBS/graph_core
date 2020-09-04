@@ -55,6 +55,7 @@ protected:
   Eigen::MatrixXd rot_matrix_;
   double focii_distance_;
   bool inf_cost_;
+  double specific_volume_; // ndof-th root of volume of the hyperellipsoid divided by the volume of unit sphere
 
   std::random_device rd_;
   std::mt19937 gen_;
@@ -101,7 +102,6 @@ public:
     }
     else
       inf_cost_ = true;
-//    compute matrix;
   }
 
   virtual Eigen::VectorXd sample();
@@ -113,9 +113,14 @@ public:
     return focii_distance_ >= cost_;
   }
 
+  virtual double getSpecificVolume();
+
+  virtual void sampleImproved(){}
+
+  const unsigned int& getDimension()const {return ndof_;}
 };
 
 
 typedef std::shared_ptr<InformedSampler> SamplerPtr;
 
-}
+}  // namespace pathplan

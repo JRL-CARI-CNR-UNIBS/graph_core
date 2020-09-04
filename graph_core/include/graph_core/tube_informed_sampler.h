@@ -43,11 +43,8 @@ protected:
   double length_;
   double local_bias_=0.8;
 
-  double probability_tube_=0.5;
-  double probability_not_tube_=0.5;
-  double probability_=0.5;
 
-  std::uniform_int_distribution<> id_;
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   TubeInformedSampler(const Eigen::VectorXd& start_configuration,

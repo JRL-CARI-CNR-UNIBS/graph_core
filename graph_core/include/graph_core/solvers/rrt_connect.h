@@ -30,6 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
+class RRTConnect;
+typedef std::shared_ptr<RRTConnect> RRTConnectPtr;
 
 class RRTConnect: public TreeSolver
 {

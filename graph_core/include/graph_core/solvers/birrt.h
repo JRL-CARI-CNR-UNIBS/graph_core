@@ -31,6 +31,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
+class BiRRT;
+typedef std::shared_ptr<BiRRT> BiRRTPtr;
+
+
 class BiRRT: public RRTConnect
 {
 protected:

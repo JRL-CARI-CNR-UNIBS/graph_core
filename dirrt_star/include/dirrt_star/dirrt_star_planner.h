@@ -39,6 +39,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rosparam_utilities/rosparam_utilities.h>
 #define COMMENT(...) ROS_LOG(::ros::console::levels::Debug, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
 
+
+#include <fstream>
+#include <iostream>
+
+
 namespace pathplan {
 namespace dirrt_star {
 
@@ -78,13 +83,20 @@ protected:
   std::string group_;
   bool m_tube_sampler;
   bool m_path_optimization;
+  double m_forgetting_factor=0.99;
+  double m_minimum_success_rate=1e-12;
 
   pathplan::MetricsPtr metrics;
   pathplan::CollisionCheckerPtr checker;
 
+  std::mt19937 m_gen;
+  std::uniform_real_distribution<double> m_ud;
+
   double collision_distance=0.04;
   bool m_is_running=false;
   bool m_stop=false;
+
+
 };
 
 }

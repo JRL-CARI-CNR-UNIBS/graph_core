@@ -35,7 +35,7 @@ namespace pathplan
 class RRTStar: public RRTConnect
 {
 protected:
-  double r_rewire_;
+  double r_rewire_factor_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   RRTStar(const MetricsPtr& metrics,

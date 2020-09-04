@@ -96,5 +96,25 @@ void InformedSampler::setCost(const double &cost)
   min_radius_ = 0.5 * std::sqrt(std::pow(cost, 2) - std::pow(focii_distance_, 2));
   ellipse_axis_.setConstant(min_radius_);
   ellipse_axis_(0) = max_radius_;
+
+  if (inf_cost_)
+  {
+    specific_volume_=std::tgamma(ndof_*0.5+1)/std::pow(M_PI,ndof_*0.5);  // inverse of the volume of unit ball
+
+    for (unsigned int idx=0;idx<ndof_;idx++)
+    {
+      specific_volume_*=(upper_bound_(idx)-lower_bound_(idx));
+    }
+  }
+  else
+    specific_volume_=max_radius_*std::pow(min_radius_,ndof_-1);
+
+  specific_volume_=std::pow(specific_volume_,1./ndof_);
 }
+
+double InformedSampler::getSpecificVolume()
+{
+  return specific_volume_;
+}
+
 }

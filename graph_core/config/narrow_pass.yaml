@@ -1,0 +1,6 @@
+cylinder_radius: 1
+cylinder_width: 1
+max_dof: 10
+measures_ratio: 0.1
+trials: 20
+

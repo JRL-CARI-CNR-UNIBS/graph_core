@@ -30,6 +30,7 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/tube_informed_sampler.cpp
   src/${PROJECT_NAME}/util.cpp
   src/${PROJECT_NAME}/moveit_collision_checker.cpp
+  src/${PROJECT_NAME}/narrow_pass_checker.cpp
   src/${PROJECT_NAME}/collision_checker.cpp
   src/${PROJECT_NAME}/graph/node.cpp
   src/${PROJECT_NAME}/graph/connection.cpp
@@ -72,6 +73,15 @@ target_link_libraries(test_tube_sampling
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
+
+
+add_executable(       narrow_pass_test src/test/narrow_pass_test.cpp)
+add_dependencies(     narrow_pass_test ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(narrow_pass_test
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
 
 #install(PROGRAMS
 #  scripts/my_python_script
