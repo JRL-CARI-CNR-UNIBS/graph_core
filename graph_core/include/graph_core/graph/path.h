@@ -71,8 +71,8 @@ public:
   }
 
   NodePtr findCloserNode(const Eigen::VectorXd& configuration);
-  std::vector<ConnectionPtr> getConnectionFromNode(const NodePtr& node);
-  std::vector<ConnectionPtr> getConnectionToNode(const NodePtr& node);
+  PathPtr getSubpathFromNode(const NodePtr& node);//std::vector<ConnectionPtr> getConnectionFromNode(const NodePtr& node);
+  PathPtr getSubpathToNode(const NodePtr& node);//std::vector<ConnectionPtr> getConnectionToNode(const NodePtr& node);
   bool resample(const double& distance);
   double computeEuclideanNorm();
   Eigen::VectorXd pointOnCurvilinearAbscissa(const double& abscissa);
