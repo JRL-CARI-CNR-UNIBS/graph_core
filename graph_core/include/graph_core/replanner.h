@@ -4,9 +4,14 @@
 #include <eigen3/Eigen/Core>
 #include <ros/ros.h>
 #include <graph_core/util.h>
+#include <graph_core/graph/tree.h>
 #include <graph_core/graph/path.h>
+#include <graph_core/graph/connection.h>
+#include <graph_core/graph/node.h>
 #include <graph_core/metrics.h>
 #include <graph_core/solvers/tree_solver.h>
+#include <graph_core/solvers/path_solver.h>
+#include <graph_core/collision_checker.h>
 
 namespace pathplan
 {
@@ -25,6 +30,11 @@ namespace pathplan
             std::vector<NodePtr> examined_nodes_;          // node considered during the replanning
             std::vector<NodePtr> nodes_set_;               // set of available nodes
             TreeSolverPtr solver_;                         // solver
+            MetricsPtr metrics_;
+            CollisionCheckerPtr checker_;
+            Eigen::VectorXd lb_;
+            Eigen::VectorXd ub_;
+
 
             //time_first_sol
             //time_replanning
@@ -49,7 +59,7 @@ namespace pathplan
                 return shared_from_this();
             }
 
-            bool pathSwitch(const NodePtr& node, const bool& succ_node, const MetricsPtr& metrics, const CollisionCheckerPtr& checker, Eigen::VectorXd& lb, Eigen::VectorXd& ub, PathPtr& new_path, PathPtr& subpath_from_path2, int& connected2path_number);
+            bool pathSwitch(const NodePtr& node, const bool& succ_node, PathPtr& new_path, PathPtr& subpath_from_path2, int& connected2path_number);
             bool informedOnlineReplanning(const int& informed, const bool& succ_node);
 
     };
