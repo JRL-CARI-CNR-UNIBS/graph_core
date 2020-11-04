@@ -1,28 +1,33 @@
 #include "graph_core/replanner.h"
 
-namespace pathplan{
+namespace pathplan
+{
     Replanner::Replanner()
     {
         //ctor
     }
 
-    replanner::~Replanner()
-    {
-        //dtor
-    }
 
-    bool pathSwitch(const NodePtr& node, const bool& succ_node, PathPtr& new_path, PathPtr& subpath_from_path2, int& connected2path_number)
+    bool Replanner::pathSwitch(const NodePtr &node,
+                               const bool &succ_node,
+                               const MetricsPtr &metrics,
+                               const CollisionCheckerPtr &checker,
+                               Eigen::VectorXd &lb,
+                               Eigen::VectorXd &ub,
+                               PathPtr &new_path,
+                               PathPtr &subpath_from_path2,
+                               int &connected2path_number)
     {
         // Identifying the subpath of current_path starting from node
         NodePtr path1_node = node;
         PathPtr path1_node2goal = current_path_->getSubpathFromNode(path1_node);
         double subpath1_cost = path1_node2goal->cost();
 
-        double path_cost = subpath_cost;
+        double path_cost = subpath1_cost;
 
         for(unsigned int j = 0; j< admissible_other_paths_.size(); j++)//for(const PathPtr& path2 : admissible_other_paths_)
         {
-            PathPtr& path2 = admissible_other_paths_[j];
+            PathPtr path2 = admissible_other_paths_[j];
 
             //Finding the closest node
             std::vector<NodePtr> path2_node_vector;
@@ -65,14 +70,14 @@ namespace pathplan{
 
                     pathplan::SamplerPtr sampler = std::make_shared<pathplan::InformedSampler>(path1_node_fake->getConfiguration(), path2_node_fake->getConfiguration(), lb, ub, diff_subpath_cost); //the ellipsoide determined by diff_subpath_cost is used. Outside from this elipsoid, the nodes create a connecting_path not convenient
 
-                    pathplan::BiRRT solver(metrics, checker, sampler);
+                    solver_->setSampler(sampler);
                     //solver.config(nh);  //CHIEDI e chiedi max distance se va usata e opt_type nell'ottimizzazione
-                    solver.addStart(path1_node_fake);
-                    solver.addGoal(path2_node_fake);
+                    solver_->addStart(path1_node_fake);
+                    solver_->addGoal(path2_node_fake);
 
                     PathPtr connecting_path;
 
-                    if (solver.solve(connecting_path, 1000))
+                    if (solver_->solve(connecting_path, 1000))
                     {
                         PathLocalOptimizer path_solver(checker, metrics); //chiedi
                         //path_solver.config(nh);
@@ -110,17 +115,16 @@ namespace pathplan{
                                ConnectionPtr conn1 = std::make_shared<Connection>(path1_node,path2_node);
                                conn1->setCost(conn1_cost);
 
-                               connecting_path_conn.clear();
                                connecting_path_conn.push_back(conn1);  //connecting_path_conn = conn1;
 
                             }
 
-                            path1_node_fake.disconnect();
-                            path2_node_fake.disconnect();
+                            path1_node_fake->disconnect();
+                            path2_node_fake->disconnect();
 
                             std::vector<ConnectionPtr> new_path_conn;
 
-                            for(unsigned int z = 1; z < connecting_path_conn.size(); z++)  // /////
+                            for(unsigned int z = 1; z < connecting_path_conn.size(); z++)  // ///// append
                             {
                                 new_path_conn.push_back(connecting_path_conn[z]);
                             }

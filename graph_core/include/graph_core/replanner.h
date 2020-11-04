@@ -4,7 +4,9 @@
 #include <eigen3/Eigen/Core>
 #include <ros/ros.h>
 #include <graph_core/util.h>
-#include <graph_core/graph/connection.h>
+#include <graph_core/graph/path.h>
+#include <graph_core/metrics.h>
+#include <graph_core/solvers/tree_solver.h>
 
 namespace pathplan
 {
@@ -22,15 +24,16 @@ namespace pathplan
             std::vector<PathPtr> admissible_other_paths_;  // available paths
             std::vector<NodePtr> examined_nodes_;          // node considered during the replanning
             std::vector<NodePtr> nodes_set_;               // set of available nodes
+            TreeSolverPtr solver_;                         // solver
 
             //time_first_sol
             //time_replanning
 
+
         public:
             EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-            replanner();
-            virtual ~replanner();
+            Replanner();
 
             PathPtr getReplannedPath()
             {
