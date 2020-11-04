@@ -70,7 +70,13 @@ public:
     return cost_;
   }
 
+  PathPtr pointer()
+  {
+    return shared_from_this();
+  }
+
   NodePtr findCloserNode(const Eigen::VectorXd& configuration);
+  NodePtr findCloserNode(const NodePtr& node);
   PathPtr getSubpathFromNode(const NodePtr& node);//std::vector<ConnectionPtr> getConnectionFromNode(const NodePtr& node);
   PathPtr getSubpathToNode(const NodePtr& node);//std::vector<ConnectionPtr> getConnectionToNode(const NodePtr& node);
   bool resample(const double& distance);

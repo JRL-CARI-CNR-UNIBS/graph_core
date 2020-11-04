@@ -43,7 +43,14 @@ namespace pathplan
         public:
             EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-            Replanner();
+            Replanner(Eigen::VectorXd& current_configuration,
+                      PathPtr& current_path,
+                      std::vector<PathPtr>& other_paths,
+                      const TreeSolverPtr& solver,
+                      const MetricsPtr& metrics,
+                      const CollisionCheckerPtr& checker,
+                      const Eigen::VectorXd& lb,
+                      const Eigen::VectorXd& ub);
 
             PathPtr getReplannedPath()
             {

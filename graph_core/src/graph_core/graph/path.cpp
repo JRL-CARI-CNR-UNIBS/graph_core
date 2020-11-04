@@ -330,6 +330,95 @@ std::vector<Eigen::VectorXd> Path::getWaypoints()
   return wp;
 }
 
+NodePtr Path::findCloserNode(const Eigen::VectorXd& configuration)
+{
+    if(connections_.size()<1)
+    {
+        assert(0);     //DA VEDERE
+    }
+
+    std::vector<Eigen::VectorXd> wp = this->getWaypoints();
+    double min_dist = std::numeric_limits<double>::infinity();
+    int i_closer = 0;
+
+    double dist;
+    for(unsigned int idx=0; idx<wp.size(); idx++)
+    {
+      dist =  (wp[idx]-configuration).squaredNorm();
+      if(dist<min_dist)
+      {
+          min_dist = dist;
+          i_closer = idx;
+      }
+    }
+
+    NodePtr closest_node;
+
+    if(i_closer == 0)
+    {
+        closest_node = connections_.front()->getParent();
+        return closest_node;
+    }
+
+    closest_node = connections_[i_closer -1]->getChild();
+    return closest_node;
+}
+
+NodePtr Path::findCloserNode(const NodePtr& node)
+{
+    Eigen::VectorXd configuration = node->getConfiguration();
+
+    NodePtr closest_node = findCloserNode(configuration);
+
+    return closest_node;
+}
+
+PathPtr Path::getSubpathToNode(const NodePtr& node)
+{
+    if((node->getConfiguration()-connections_.front()->getParent()->getConfiguration()).norm()<1e-06)
+    {
+        assert(0);   //DA VEDERE
+    }
+
+    PathPtr subpath;
+    for(unsigned int idx=0; idx<connections_.size(); idx++)
+    {
+        if((node->getConfiguration()-connections_[idx]->getChild()->getConfiguration()).norm()<1e-06)
+        {
+          std::vector<ConnectionPtr> conn;
+          conn.assign(connections_.begin(), connections_.begin()+idx+1); // to save the idx+1 connections
+
+          subpath = std::make_shared<Path>(conn, metrics_,checker_);
+          return subpath;
+        }
+    }
+
+    assert(0);  //DA VEDERE
+}
+
+PathPtr Path::getSubpathFromNode(const NodePtr& node)
+{
+    if((node->getConfiguration()-connections_.front()->getParent()->getConfiguration()).norm()<1e-06)
+    {
+        return this->pointer();
+    }
+
+    PathPtr subpath;
+    for(unsigned int idx=0; idx<connections_.size(); idx++)
+    {
+        if((node->getConfiguration()-connections_[idx]->getChild()->getConfiguration()).norm()<1e-06)
+        {
+          std::vector<ConnectionPtr> conn;
+          conn.assign(connections_.begin()+2, connections_.end());
+
+          subpath = std::make_shared<Path>(conn, metrics_,checker_);
+          return subpath;
+        }
+    }
+
+    assert(0);  //DA VEDERE
+}
+
 bool Path::simplify(const double& distance)
 {
   bool simplified;

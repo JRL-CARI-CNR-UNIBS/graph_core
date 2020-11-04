@@ -2,9 +2,23 @@
 
 namespace pathplan
 {
-    Replanner::Replanner()
+    Replanner::Replanner(Eigen::VectorXd& current_configuration,
+                         PathPtr& current_path,
+                         std::vector<PathPtr>& other_paths,
+                         const TreeSolverPtr& solver,
+                         const MetricsPtr& metrics,
+                         const CollisionCheckerPtr& checker,
+                         const Eigen::VectorXd& lb,
+                         const Eigen::VectorXd& ub)
     {
-        //ctor
+        current_configuration_ = current_configuration;
+        current_path_ = current_path;
+        other_paths_ = other_paths;
+        solver_ = solver;
+        metrics_ = metrics;
+        checker_ = checker;
+        lb_ = lb;
+        ub_ = ub;
     }
 
 
