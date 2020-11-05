@@ -75,6 +75,8 @@ public:
     return shared_from_this();
   }
 
+  NodePtr actualNode(const Eigen::VectorXd& configuration, int &idx);
+  int findConnection(const Eigen::VectorXd& configuration);
   NodePtr findCloserNode(const Eigen::VectorXd& configuration);
   NodePtr findCloserNode(const NodePtr& node);
   PathPtr getSubpathFromNode(const NodePtr& node);//std::vector<ConnectionPtr> getConnectionFromNode(const NodePtr& node);
@@ -93,6 +95,12 @@ public:
   {
     return connections_;
   }
+
+  void setConnections(const std::vector<ConnectionPtr>& conn)
+  {
+     connections_ = conn;
+  }
+
   bool simplify(const double& distance = 0.02);
 
   // return true if improve

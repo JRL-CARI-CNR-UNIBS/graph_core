@@ -34,6 +34,25 @@ Node::Node(const Eigen::VectorXd &configuration)
 {
   configuration_ = configuration;
   ndof_ = configuration_.size();
+  analyzed_ = 0;
+}
+
+void Node::setAnalyzed(const bool &analyzed)
+{
+    analyzed_ = analyzed;
+}
+bool Node::getAnalyzed()
+{
+    return analyzed_;
+}
+
+void Node::setNonOptimal(const bool &nonOptimal)
+{
+    nonOptimal_ = nonOptimal;
+}
+bool Node::getNonOptimal()
+{
+    return nonOptimal_;
 }
 
 void Node::addParentConnection(const ConnectionPtr &connection)

@@ -12,6 +12,7 @@
 #include <graph_core/solvers/tree_solver.h>
 #include <graph_core/solvers/path_solver.h>
 #include <graph_core/collision_checker.h>
+#include <time.h>
 
 namespace pathplan
 {
@@ -28,16 +29,13 @@ namespace pathplan
             std::vector<PathPtr> other_paths_;             // initial available paths
             std::vector<PathPtr> admissible_other_paths_;  // available paths
             std::vector<NodePtr> examined_nodes_;          // node considered during the replanning
-            std::vector<NodePtr> nodes_set_;               // set of available nodes
             TreeSolverPtr solver_;                         // solver
             MetricsPtr metrics_;
             CollisionCheckerPtr checker_;
             Eigen::VectorXd lb_;
             Eigen::VectorXd ub_;
-
-
-            //time_first_sol
-            //time_replanning
+            clock_t time_first_sol_;
+            clock_t time_replanning_;
 
 
         public:
@@ -66,7 +64,7 @@ namespace pathplan
                 return shared_from_this();
             }
 
-            bool pathSwitch(const NodePtr& node, const bool& succ_node, PathPtr& new_path, PathPtr& subpath_from_path2, int& connected2path_number);
+            bool pathSwitch(const PathPtr& current_path, const NodePtr& node, const bool& succ_node, PathPtr &new_path, PathPtr &subpath_from_path2, int &connected2path_number);
             bool informedOnlineReplanning(const int& informed, const bool& succ_node);
 
     };

@@ -330,6 +330,65 @@ std::vector<Eigen::VectorXd> Path::getWaypoints()
   return wp;
 }
 
+int Path::findConnection(const Eigen::VectorXd& configuration)
+{
+    int idx = -1;
+
+    Eigen::VectorXd parent;
+    Eigen::VectorXd child;
+
+    double dist, dist1, dist2;
+
+    for(unsigned int i=0; i<connections_.size(); i++)
+    {
+        parent = connections_.at(i)->getParent()->getConfiguration();
+        child =  connections_.at(i)->getChild()->getConfiguration();
+
+        dist = (parent-child).norm();
+        dist1 = (parent - configuration).norm();
+        dist2 = (configuration-child).norm();
+
+        if(abs(dist-dist1-dist2)<1e-06)
+        {
+            idx = i;
+            return idx;
+        }
+
+    }
+
+    return idx;
+}
+
+NodePtr Path::actualNode(const Eigen::VectorXd& configuration, int &idx)
+{
+    idx = this->findConnection(configuration); //the connectiong of the robot current configuration
+
+    if(idx >= 0)
+    {
+        NodePtr parent = this->getConnections().at(idx)->getParent();
+        NodePtr child = this->getConnections().at(idx)->getChild();
+
+        NodePtr actual_node;
+        if((parent->getConfiguration()-configuration).norm()<1e-06) //if the current conf is too close to the parent or to the child, it is approximated with the parent/child
+        {
+            actual_node = parent;
+        }
+        else if((child->getConfiguration()-configuration).norm()<1e-06)
+        {
+            actual_node = child;
+        }
+        else
+        {
+            actual_node = std::make_shared<Node>(configuration);
+        }
+
+        return actual_node;
+
+    }
+
+    assert(0);
+}
+
 NodePtr Path::findCloserNode(const Eigen::VectorXd& configuration)
 {
     if(connections_.size()<1)
@@ -344,7 +403,7 @@ NodePtr Path::findCloserNode(const Eigen::VectorXd& configuration)
     double dist;
     for(unsigned int idx=0; idx<wp.size(); idx++)
     {
-      dist =  (wp[idx]-configuration).squaredNorm();
+      dist =  (wp[idx]-configuration).norm();
       if(dist<min_dist)
       {
           min_dist = dist;
