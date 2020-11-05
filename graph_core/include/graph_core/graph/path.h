@@ -61,7 +61,6 @@ protected:
                  double max_distance,
                  double min_distance);
 
-  void computeCost();
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Path(std::vector<ConnectionPtr> connections, const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
@@ -75,6 +74,7 @@ public:
     return shared_from_this();
   }
 
+  void computeCost();   //ERA PRIVATA, MI SERVE PUBBLICA, CHIEDI
   NodePtr actualNode(const Eigen::VectorXd& configuration, int &idx);
   int findConnection(const Eigen::VectorXd& configuration);
   NodePtr findCloserNode(const Eigen::VectorXd& configuration);

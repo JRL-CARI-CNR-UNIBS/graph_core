@@ -236,12 +236,12 @@ namespace pathplan
             node = actual_node;
 
             double cost_parent = metrics_->cost(parent->getConfiguration(), node->getConfiguration());
-            ConnectionPtr conn_parent = Connection(parent, node);
+            ConnectionPtr conn_parent = std::make_shared<Connection>(parent, node);
             conn_parent->setCost(cost_parent);
             conn_parent->add();  //devo disconnettere la connessione precedente?
 
             double cost_child = std::numeric_limits<double>::infinity();
-            ConnectionPtr conn_child = Connection(node,child);
+            ConnectionPtr conn_child = std::make_shared<Connection>(node,child);
             conn_child->setCost(cost_child);
             conn_child->add();
 
@@ -268,7 +268,7 @@ namespace pathplan
         {
             node = child;
             actual_node_conn_cost = metrics_->cost(actual_node,node);
-            actual_node_conn = Connection(actual_node,node);
+            actual_node_conn = std::make_shared<Connection>(actual_node,node);
             actual_node_conn->setCost(actual_node_conn_cost);
             actual_node_conn->add();
 
@@ -334,13 +334,13 @@ namespace pathplan
                       {
                           if(confirmed_connected2path_number<other_paths_.size()-1)
                           {
-                              admissible_other_paths_.insert(admissible_other_paths_.begin(),reset_other_paths_.begin(),reset_other_paths_.begin()+confirmed_connected2path_number-1);
+                              admissible_other_paths_.insert(admissible_other_paths_.begin(),reset_other_paths.begin(),reset_other_paths.begin()+confirmed_connected2path_number-1);
                               admissible_other_paths_.push_back(confirmed_subpath_from_path2->getSubpathFromNode(confirmed_subpath_from_path2->getConnections().at(n)->getParent()));
-                              admissible_other_paths_.insert(admissible_other_paths_.end(),reset_other_paths_.begin()+confirmed_connected2path_number+1,reset_other_paths_.end());
+                              admissible_other_paths_.insert(admissible_other_paths_.end(),reset_other_paths.begin()+confirmed_connected2path_number+1,reset_other_paths.end());
                           }
                           else
                           {
-                              admissible_other_paths_.insert(admissible_other_paths_.begin(),reset_other_paths_.begin(),reset_other_paths_.begin()+confirmed_connected2path_number-1);
+                              admissible_other_paths_.insert(admissible_other_paths_.begin(),reset_other_paths.begin(),reset_other_paths.begin()+confirmed_connected2path_number-1);
                               admissible_other_paths_.push_back(confirmed_subpath_from_path2->getSubpathFromNode(confirmed_subpath_from_path2->getConnections().at(n)->getParent()));
                           }
 
@@ -348,7 +348,7 @@ namespace pathplan
                       }
                       else
                       {
-                          admissible_other_paths_ = reset_other_paths_;  //if informed == 1 there are "n" while iterations unnecessary..you should correct it
+                          admissible_other_paths_ = reset_other_paths;  //if informed == 1 there are "n" while iterations unnecessary..you should correct it
                           n = n-1;
                       }
                   }
@@ -437,7 +437,7 @@ namespace pathplan
                         }
 
                         path1_node_vector = support;
-                        subpath1 = replanned_path->getSubpathFromNode(node)
+                        subpath1 = replanned_path->getSubpathFromNode(node);
                     }
 
                 }
