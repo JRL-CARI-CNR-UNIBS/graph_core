@@ -62,7 +62,7 @@ DgacoPlanner::DgacoPlanner ( const std::string& name,
     {
       m_lb.at(idx)=bounds.min_position_;
       m_ub.at(idx)=bounds.max_position_;
-      ROS_FATAL("joint name =%s, bound = [%f, %f]",joint_names_.at(idx).c_str(),m_lb.at(idx),m_ub.at(idx));
+      ROS_DEBUG("joint name =%s, bound = [%f, %f]",joint_names_.at(idx).c_str(),m_lb.at(idx),m_ub.at(idx));
     }
     double vmax=100;
     if (bounds.velocity_bounded_)
@@ -142,8 +142,10 @@ void DgacoPlanner::clear()
 
 bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
 {
+  planning_scene::PlanningScenePtr planning_scene=planning_scene::PlanningScene::clone(planning_scene_);
+
   ros::WallTime start_time = ros::WallTime::now();
-  m_net=std::make_shared<Net>(m_dof,group_,planning_scene_,m_scaling,m_lb,m_ub);
+  m_net=std::make_shared<Net>(m_dof,group_,planning_scene,m_scaling,m_lb,m_ub);
   ROS_PROTO("Set human filter");
   m_net->setHumanFilter(m_human_filter);
   ROS_PROTO("Set human filter weight");
@@ -160,7 +162,7 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
   moveit::core::RobotState start_state(robot_model_);
   moveit::core::robotStateMsgToRobotState(request_.start_state,start_state);
   if (request_.start_state.joint_state.position.size()==0)
-    start_state=planning_scene_->getCurrentState();
+    start_state=planning_scene->getCurrentState();
   else
     moveit::core::robotStateMsgToRobotState(request_.start_state,start_state);
   start_state.update();
@@ -175,14 +177,12 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
   }
 
   ROS_PROTO("check collision");
-
-  if (planning_scene_->isStateColliding(start_state,request_.group_name))
+  if (planning_scene->isStateColliding(start_state,request_.group_name))
   {
     ROS_ERROR("Start point is in collision");
     res.error_code_.val=moveit_msgs::MoveItErrorCodes::START_STATE_IN_COLLISION;
     return false;
   }
-
 
   std::vector<double> start_point;
   start_state.copyJointGroupPositions(group_,start_point);
@@ -199,7 +199,8 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
 
     std::vector<double> final_configuration( goal.joint_constraints.size() );
 
-    moveit::core::RobotState end_state(robot_model_);
+    moveit::core::RobotState end_state(planning_scene->getCurrentState());
+
     for (auto c: goal.joint_constraints)
     {
       end_state.setJointPositions(c.joint_name,&c.position);
@@ -218,14 +219,15 @@ bool DgacoPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
     }
     if (!feasible)
       continue;
+
+
     end_state.updateCollisionBodyTransforms();
-
-
-    if (planning_scene_->isStateColliding(end_state,request_.group_name))
+    if (planning_scene->isStateColliding(end_state,request_.group_name))
     {
       ROS_DEBUG("goal %u is in collision",iGoal);
       continue;
     }
+
 
     ROS_PROTO("Insert goal state");
 

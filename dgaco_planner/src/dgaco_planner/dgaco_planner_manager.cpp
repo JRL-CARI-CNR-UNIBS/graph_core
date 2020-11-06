@@ -12,7 +12,7 @@ bool DgacoPlannerManager::initialize(const moveit::core::RobotModelConstPtr& mod
   m_nh.getParam("group_names_map",planner_map);
   for (std::pair<std::string,std::string> p: planner_map)
   {
-    ROS_FATAL("Group name = %s, planner name: %s",p.second.c_str(),p.first.c_str());
+    ROS_DEBUG("Group name = %s, planner name: %s",p.second.c_str(),p.first.c_str());
     std::shared_ptr<DgacoPlanner> ptr(new DgacoPlanner(ns+"/"+p.first,p.second,model));
     m_planners.insert(std::pair<std::string,std::shared_ptr<ha_planner::DgacoPlanner>>(p.second,ptr));
 
