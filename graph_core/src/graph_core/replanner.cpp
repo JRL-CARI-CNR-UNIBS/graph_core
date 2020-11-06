@@ -21,6 +21,56 @@ namespace pathplan
         ub_ = ub;
     }
 
+    std::vector<PathPtr>  Replanner::addAdmissibleCurrentPath(const int& idx_current_connection, PathPtr& admissible_current_path)
+    {
+        std::vector<PathPtr> reset_other_paths;
+
+        if(current_path_->cost() == std::numeric_limits<double>::infinity())  //if the path is obstructed by an obstacle, the connection obstructed cost is infinte
+        {
+            int z = current_path_->getConnections().size()-1;
+
+            while(z>idx_current_connection) //to find the savable part of current_path, the subpath after the connection obstruced by the obstacle
+            {
+                if(current_path_->getConnections().at(z)->getCost() == std::numeric_limits<double>::infinity())
+                {
+                    if(z == current_path_->getConnections().size()-1)
+                    {
+                        admissible_current_path = NULL; //there are no connections between the obstacle and the goal
+                    }
+                    else
+                    {
+                        admissible_current_path = current_path_->getSubpathFromNode(current_path_->getConnections().at(z)->getChild());
+                    }
+
+                    z = -1;
+                }
+                else
+                {
+                    z = z-1;
+                }
+            }
+
+            if(admissible_current_path != NULL)
+            {
+                // adding the savable subpath of the current_path to the set of available paths
+                reset_other_paths.push_back(admissible_current_path);
+                reset_other_paths.insert(reset_other_paths.end(),other_paths_.begin(),other_paths_.end());
+            }
+            else
+            {
+                reset_other_paths = other_paths_;
+            }
+        }
+        else
+        {
+            reset_other_paths = other_paths_;
+
+        }
+
+        return reset_other_paths;
+
+    }
+
 
     bool Replanner::pathSwitch(const PathPtr &current_path,
                                const NodePtr &node,
@@ -35,7 +85,6 @@ namespace pathplan
         double subpath1_cost = path1_node2goal->cost();
 
         double path_cost = subpath1_cost;
-
         double success = 0;
 
         for(unsigned int j = 0; j< admissible_other_paths_.size(); j++)
@@ -53,12 +102,12 @@ namespace pathplan
                 path2_node_vector.push_back(path_support->findCloserNode(path1_node->getConfiguration()));
             }
 
-            if(succ_node == 1)
+            if(succ_node)
             {
                 std::vector<ConnectionPtr> path2_conn = path2->getConnections();
                 for(unsigned int t = 0; t < path2_conn.size(); t++) //the GOAL is not considered as a node to which directly connecting the path
                 {
-                    if((path2_conn.at(t)->getParent()->getConfiguration()-path2_node_vector.back()->getConfiguration()).norm() > 0.001 && (path2_conn.at(t)->getParent()->getConfiguration() != path2_node_vector.front()->getConfiguration())) //when some nodes are too close to each other, only one of them is considered
+                    if((path2_conn.at(t)->getParent()->getConfiguration()-path2_node_vector.back()->getConfiguration()).norm() > 1e-03 && (path2_conn.at(t)->getParent()->getConfiguration() != path2_node_vector.front()->getConfiguration())) //when some nodes are too close to each other, only one of them is considered
                     {
                         path2_node_vector.push_back(path2_conn[t]->getParent());
                     }
@@ -79,8 +128,8 @@ namespace pathplan
                     NodePtr path1_node_fake = std::make_shared<Node>(path1_node->getConfiguration());
                     NodePtr path2_node_fake = std::make_shared<Node>(path2_node->getConfiguration());
 
-                    SamplerPtr sampler = std::make_shared<InformedSampler>(path1_node_fake->getConfiguration(), path2_node_fake->getConfiguration(), lb_, ub_); //the ellipsoide determined by diff_subpath_cost is used. Outside from this elipsoid, the nodes create a connecting_path not convenient
-                    sampler->setCost(diff_subpath_cost);
+                    SamplerPtr sampler = std::make_shared<InformedSampler>(path1_node_fake->getConfiguration(), path2_node_fake->getConfiguration(), lb_, ub_,diff_subpath_cost); //the ellipsoide determined by diff_subpath_cost is used. Outside from this elipsoid, the nodes create a connecting_path not convenient
+                    //sampler->setCost(diff_subpath_cost);
 
                     solver_->setSampler(sampler);
                     solver_->addStart(path1_node_fake);
@@ -157,9 +206,13 @@ namespace pathplan
 
     bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_node)
     {
-        clock_t tic;
-        clock_t toc;
-        tic = clock();
+        std::chrono::high_resolution_clock::time_point tic = std::chrono::high_resolution_clock::now();
+        std::chrono::high_resolution_clock::time_point toc;
+        std::chrono::duration<double> time_span;
+
+        const std::chrono::seconds MAX_TIME(30); //seconds
+        const std::chrono::seconds TIME_LIMIT(25); //seconds
+        const int CONT_LIMIT = 5;
 
         PathPtr new_path;
         PathPtr replanned_path;
@@ -182,48 +235,12 @@ namespace pathplan
         int connected2path_number;
         PathPtr subpath1;
         std::vector<ConnectionPtr> subpath1_conn;
-        std::vector<NodePtr> support;
+        PathPtr admissible_current_path = NULL;
+
 
         int idx;
         NodePtr actual_node = current_path_->actualNode(current_configuration_,idx);
-
-        if(current_path_->cost() == std::numeric_limits<double>::infinity())  //if the path is obstructed by an obstacle, the connection obstructed cost is infinte
-        {
-            int z = current_path_->getConnections().size()-1;
-            PathPtr admissible_current_path = NULL;
-
-            while(z>idx) //to find the savable part of current_path, the subpath after the connection obstruced by the obstacle
-            {
-                if(current_path_->getConnections().at(z)->getCost() == std::numeric_limits<double>::infinity())
-                {
-                    if(z == current_path_->getConnections().size()-1)
-                    {
-                        admissible_current_path = NULL; //there are no connections between the obstacle and the goal
-                    }
-                    else
-                    {
-                        admissible_current_path = current_path_->getSubpathFromNode(current_path_->getConnections().at(z)->getChild());
-                    }
-
-                    z = -1;
-                }
-                else
-                {
-                    z = z-1;
-                }
-            }
-
-            if(admissible_current_path != NULL)
-            {
-                // adding the savable subpath of the current_path to the set of available paths
-                reset_other_paths.push_back(admissible_current_path);
-                reset_other_paths.insert(reset_other_paths.end(),other_paths_.begin(),other_paths_.end());
-            }
-            else
-            {
-                reset_other_paths = other_paths_;
-            }
-        }
+        reset_other_paths = addAdmissibleCurrentPath(idx, admissible_current_path);
 
         NodePtr node;
         NodePtr parent = current_path_->getConnections().at(idx)->getParent();
@@ -328,11 +345,9 @@ namespace pathplan
                           flag_other_paths = 0;
                       }
 
-                      //admissible_other_paths_.clear();
-
                       if(path1_node_vector.at(j)->getConfiguration() == confirmed_subpath_from_path2->getConnections().at(n)->getParent()->getConfiguration()) // if the node analyzed is on the subpath2..(it happens only if informed == 2)
                       {
-                          if(confirmed_connected2path_number<other_paths_.size()-1)
+                          if(confirmed_connected2path_number<admissible_other_paths_.size()-1)
                           {
                               admissible_other_paths_.insert(admissible_other_paths_.begin(),reset_other_paths.begin(),reset_other_paths.begin()+confirmed_connected2path_number-1);
                               admissible_other_paths_.push_back(confirmed_subpath_from_path2->getSubpathFromNode(confirmed_subpath_from_path2->getConnections().at(n)->getParent()));
@@ -363,15 +378,15 @@ namespace pathplan
             }
 
             path1_node_vector.at(j)->setAnalyzed(1);  //to set as ANALYZED the node just analyzed. In this way, it will not be analyzed again in this replanning procedure
-            examined_nodes_.push_back(path1_node_vector.at(j));
+            examined_nodes_.push_back(path1_node_vector.at(j));   //Quando lo resetto?
 
-            if(solved == 1)
+            if(solved)
             {
                 PathPtr path;
                 PathPtr subpath;
                 std::vector<ConnectionPtr> path_conn;
 
-                if(available_nodes == 1) //calculating the cost of the replanned path found
+                if(available_nodes) //calculating the cost of the replanned path found
                 {
                     if(j>0)
                     {
@@ -398,8 +413,9 @@ namespace pathplan
                 if(path->cost()<replanned_path_cost) //if the cost of the new solution found is better than the cost of the best solution found so far
                 {
                     if(first_sol)
-                    {
-                        time_first_sol_ = (clock()-tic)/CLOCKS_PER_SEC;
+
+                    {   toc = std::chrono::high_resolution_clock::now();
+                        time_first_sol_ = std::chrono::duration_cast<std::chrono::duration<double>>(toc - tic);
                         first_sol = 0;  //0 when the time of the first solution found has been already saved
                     }
 
@@ -423,8 +439,8 @@ namespace pathplan
 
                     if(informed == 2 && available_nodes == 1)
                     {
-                        support.clear();
-                        support.insert(support.begin(),path1_node_vector.begin(),path1_node_vector.begin()+j); //the nodes before the "j+1 th" surely have not yet been analyzed
+                        std::vector<NodePtr> support;
+                        support.insert(support.begin(),path1_node_vector.begin(),path1_node_vector.begin()+j-1); //the nodes before the "j-th" surely have not yet been analyzed
 
                         for(unsigned int r=0; r<new_path->getConnections().size(); r++)
                         {
@@ -441,14 +457,17 @@ namespace pathplan
                     }
 
                 }
-                toc = (clock()-tic)/CLOCKS_PER_SEC;
-                if(toc>30)
+
+                toc = std::chrono::high_resolution_clock::now();
+                time_span = std::chrono::duration_cast<std::chrono::duration<double>>(toc - tic);
+
+                if(time_span>MAX_TIME)
                 {
                     j = -1;
                 }
                 else
                 {
-                    if(toc>25 && cont >= 5)
+                    if(time_span>TIME_LIMIT && cont >= CONT_LIMIT)
                     {
                         j = -1;
                     }
@@ -485,7 +504,9 @@ namespace pathplan
             replanned_paths_vector_ = replanned_path_vector;
         }
 
-        time_replanning_ = (clock()-tic)/CLOCKS_PER_SEC;
+        toc = std::chrono::high_resolution_clock::now();
+        time_replanning_ = std::chrono::duration_cast<std::chrono::duration<double>>(toc - tic);
+
         return success;
 
     }

@@ -12,7 +12,7 @@
 #include <graph_core/solvers/tree_solver.h>
 #include <graph_core/solvers/path_solver.h>
 #include <graph_core/collision_checker.h>
-#include <time.h>
+#include <chrono>
 
 namespace pathplan
 {
@@ -34,8 +34,8 @@ namespace pathplan
             CollisionCheckerPtr checker_;
             Eigen::VectorXd lb_;
             Eigen::VectorXd ub_;
-            clock_t time_first_sol_;
-            clock_t time_replanning_;
+            std::chrono::duration<double> time_first_sol_;
+            std::chrono::duration<double> time_replanning_;
 
 
         public:
@@ -64,6 +64,7 @@ namespace pathplan
                 return shared_from_this();
             }
 
+            std::vector<PathPtr> addAdmissibleCurrentPath(const int& current_connection, PathPtr& admissible_current_path);
             bool pathSwitch(const PathPtr& current_path, const NodePtr& node, const bool& succ_node, PathPtr &new_path, PathPtr &subpath_from_path2, int &connected2path_number);
             bool informedOnlineReplanning(const int& informed, const bool& succ_node);
 
