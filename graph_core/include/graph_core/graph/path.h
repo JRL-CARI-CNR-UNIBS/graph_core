@@ -54,6 +54,7 @@ protected:
 #ifdef NO_SPIRAL
   std::vector<bool> change_spiral_;
 #endif
+  void computeCost();
   void setChanged(const unsigned int& connection_idx);
   bool bisection(const unsigned int& connection_idx,
                  const Eigen::VectorXd& center,
@@ -74,13 +75,16 @@ public:
     return shared_from_this();
   }
 
-  void computeCost();   //ERA PRIVATA, MI SERVE PUBBLICA, CHIEDI
-  NodePtr actualNode(const Eigen::VectorXd& configuration, int &idx);
-  int findConnection(const Eigen::VectorXd& configuration);
+  //It creates a node corresponding to the configuration and creates the correct connections inside the current_path_
+  NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr &conn);
+
+  //It gives the connection to which the configuration belongs
+  ConnectionPtr findConnection(const Eigen::VectorXd& configuration, int& idx);
+
   NodePtr findCloserNode(const Eigen::VectorXd& configuration);
   NodePtr findCloserNode(const NodePtr& node);
-  PathPtr getSubpathFromNode(const NodePtr& node);//std::vector<ConnectionPtr> getConnectionFromNode(const NodePtr& node);
-  PathPtr getSubpathToNode(const NodePtr& node);//std::vector<ConnectionPtr> getConnectionToNode(const NodePtr& node);
+  PathPtr getSubpathFromNode(const NodePtr& node);
+  PathPtr getSubpathToNode(const NodePtr& node);
   bool resample(const double& distance);
   double computeEuclideanNorm();
   Eigen::VectorXd pointOnCurvilinearAbscissa(const double& abscissa);
@@ -99,6 +103,7 @@ public:
   void setConnections(const std::vector<ConnectionPtr>& conn)
   {
      connections_ = conn;
+     this->computeCost();
   }
 
   bool simplify(const double& distance = 0.02);

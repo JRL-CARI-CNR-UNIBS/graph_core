@@ -41,7 +41,7 @@ protected:
   Eigen::VectorXd configuration_;
   unsigned int ndof_;
   bool analyzed_;
-  bool nonOptimal_;
+  bool non_optimal_;
 public:
   std::vector<ConnectionPtr> parent_connections_;
   std::vector<ConnectionPtr> child_connections_;
