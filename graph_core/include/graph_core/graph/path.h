@@ -76,7 +76,7 @@ public:
   }
 
   //It creates a node corresponding to the configuration and creates the correct connections inside the current_path_
-  NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr &conn);
+  NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr &conn, bool& rewire);
 
   //It gives the connection to which the configuration belongs
   ConnectionPtr findConnection(const Eigen::VectorXd& configuration, int& idx);

@@ -362,7 +362,7 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
     ROS_ERROR("Connection not found");
 }
 
-NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr& conn)
+NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr& conn, bool& rewire)
 {
     if(conn != NULL)
     {
@@ -382,28 +382,31 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
         {
             actual_node = std::make_shared<Node>(configuration);
 
-            double cost_parent = metrics_->cost(parent->getConfiguration(), actual_node->getConfiguration());
-            ConnectionPtr conn_parent = std::make_shared<Connection>(parent, actual_node);
-            conn_parent->setCost(cost_parent);
-            conn_parent->add();
+            if(rewire)
+            {
+                double cost_parent = metrics_->cost(parent->getConfiguration(), actual_node->getConfiguration());
+                ConnectionPtr conn_parent = std::make_shared<Connection>(parent, actual_node);
+                conn_parent->setCost(cost_parent);
+                conn_parent->add();
 
-            double cost_child = metrics_->cost(actual_node->getConfiguration(),child->getConfiguration());
-            ConnectionPtr conn_child = std::make_shared<Connection>(actual_node,child);
-            conn_child->setCost(cost_child);
-            conn_child->add();
+                double cost_child = metrics_->cost(actual_node->getConfiguration(),child->getConfiguration());
+                ConnectionPtr conn_child = std::make_shared<Connection>(actual_node,child);
+                conn_child->setCost(cost_child);
+                conn_child->add();
 
-            conn->remove();
+                conn->remove();
 
-            PathPtr subpath_parent = this->getSubpathToNode(parent);
-            PathPtr subpath_child = this->getSubpathFromNode(child);
+                PathPtr subpath_parent = this->getSubpathToNode(parent);
+                PathPtr subpath_child = this->getSubpathFromNode(child);
 
-            std::vector<ConnectionPtr> conn_vector;
-            conn_vector.insert(conn_vector.begin(),subpath_parent->getConnections().begin(),subpath_parent->getConnections().end());
-            conn_vector.push_back(conn_parent);
-            conn_vector.push_back(conn_child);
-            conn_vector.insert(conn_vector.end(),subpath_child->getConnections().begin(),subpath_child->getConnections().end());
+                std::vector<ConnectionPtr> conn_vector;
+                conn_vector.insert(conn_vector.begin(),subpath_parent->getConnections().begin(),subpath_parent->getConnections().end());
+                conn_vector.push_back(conn_parent);
+                conn_vector.push_back(conn_child);
+                conn_vector.insert(conn_vector.end(),subpath_child->getConnections().begin(),subpath_child->getConnections().end());
 
-            this->setConnections(conn_vector);
+                this->setConnections(conn_vector);
+            }
         }
 
         return actual_node;

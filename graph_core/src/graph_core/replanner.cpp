@@ -226,7 +226,7 @@ namespace pathplan
         bool solved = 0;
         bool flag_other_paths = 0;
         bool first_sol = 1; //flag to calculate the first solution time
-        unsigned int cont = 0;
+        unsigned int cont = 0;  //to count the number of replanning without significant improvement in the final solution
         std::vector<unsigned int> index;
         bool available_nodes;
         int limit;
@@ -234,54 +234,48 @@ namespace pathplan
         PathPtr confirmed_subpath_from_path2;
         int confirmed_connected2path_number;
         int connected2path_number;
-        PathPtr subpath1;
-        std::vector<ConnectionPtr> subpath1_conn;
         PathPtr admissible_current_path = NULL;
 
         examined_nodes_.clear();
 
 
-        int idx;
+        int idx; //to save the index of the connection on which the current configuration is
         ConnectionPtr current_conn = current_path_->findConnection(current_configuration_,idx);
         reset_other_paths = addAdmissibleCurrentPath(idx, admissible_current_path);
 
-        NodePtr node;
-        NodePtr parent = current_conn->getParent();
-        NodePtr child = current_conn->getChild();
-        double actual_node_conn_cost;
-        ConnectionPtr actual_node_conn;
+        //NodePtr parent = current_conn->getParent();
+        NodePtr child = current_conn->getChild();        
 
-        if(current_conn->getCost() == std::numeric_limits<double>::infinity()) //if the obstacle is obstructing the current connection, the replanning must start from the current configuration, so a node corresponding to the config is added
+        NodePtr actual_node = std::make_shared<Node>(current_configuration_);
+        ConnectionPtr actual_node_conn = std::make_shared<Connection>(actual_node,child);
+        double actual_node_conn_cost = metrics_->cost(actual_node,child);
+        actual_node_conn->setCost(actual_node_conn_cost);
+        actual_node_conn->add();
+
+        PathPtr subpath1 = current_path_->getSubpathFromNode(child);
+        std::vector<ConnectionPtr> subpath1_conn = subpath1->getConnections();
+
+        std::vector<ConnectionPtr> conn;
+        conn.push_back(actual_node_conn);
+        conn.insert(conn.end(),subpath1_conn.begin(),subpath1_conn.end());
+
+        replanned_path = std::make_shared<Path>(conn,metrics_,checker_); // at the start, the replanned path is initialized with the subpath of the current path from the current config to the goal
+        replanned_path_cost = replanned_path->cost();
+
+        if(current_conn->getCost() == std::numeric_limits<double>::infinity()) //if the obstacle is obstructing the current connection, the replanning must start from the current configuration
         {
-            node = current_path_->addNodeAtCurrentConfig(current_configuration_,current_conn);
-
-            replanned_path = current_path_->getSubpathFromNode(node); //at the start, the replanned path is initialized with the subpath of the current path
-            replanned_path_cost =  replanned_path->cost();
+            if(informed == 0)
+            {
+               bool rewire = 1;
+               actual_node = current_path_->addNodeAtCurrentConfig(current_configuration_,current_conn,rewire); //with informed == 0 the node must be added to current_path_
+            }
 
             available_nodes = 0;
             limit = 0;
-            path1_node_vector.push_back(node);
+            path1_node_vector.push_back(actual_node);
         }
-        else            //if the current connection is free, all the nodes between the current child to the parent of the connection obstructed are considered as starting points for the replanning
+        else      //if the current connection is free, all the nodes between the current child to the parent of the connection obstructed are considered as starting points for the replanning
         {
-            node = child;
-            NodePtr actual_node = std::make_shared<Node>(current_configuration_);   //no new node added to current_path_ (to keep the current_path_ light) but the connection between the current_configuration_ and child must be considered as part of the path
-
-            actual_node_conn_cost = metrics_->cost(actual_node,node);
-            actual_node_conn = std::make_shared<Connection>(actual_node,node);
-            actual_node_conn->setCost(actual_node_conn_cost);
-            actual_node_conn->add();
-
-            subpath1 = current_path_->getSubpathFromNode(node);
-            subpath1_conn = subpath1->getConnections();
-
-            std::vector<ConnectionPtr> conn;
-            conn.push_back(actual_node_conn);
-            conn.insert(conn.end(),subpath1_conn.begin(),subpath1_conn.end());
-
-            replanned_path = current_path_->getSubpathFromNode(node); // at the start, the replanned path is initialized with the subpath of the current path from the current config to the goal
-            replanned_path->setConnections(conn);
-            replanned_path_cost = replanned_path->cost();
 
             for(unsigned int i=0; i< subpath1_conn.size(); i++)
             {
@@ -324,7 +318,7 @@ namespace pathplan
                   {
                       if(n==0)
                       {
-                          flag_other_paths = 0; //to exit the loop
+                          flag_other_paths = 0;
                       }
 
                       if(path1_node_vector.at(j)->getConfiguration() == confirmed_subpath_from_path2->getConnections().at(n)->getParent()->getConfiguration()) // if the node analyzed is on the subpath2..(it happens only if informed == 2)
@@ -435,7 +429,7 @@ namespace pathplan
                         }
 
                         path1_node_vector = support;
-                        subpath1 = replanned_path->getSubpathFromNode(node);
+                        subpath1 = replanned_path->getSubpathFromNode(child);
                     }
 
                 }
