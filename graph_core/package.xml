@@ -67,6 +67,8 @@
   <exec_depend>moveit_ros_planning_interface</exec_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>rosdyn_core</exec_depend>
+  <depend>moveit_visual_tools</depend>
+  <depend>rviz_visual_tools</depend>
 
   <depend>human_probablistic_occupancy</depend>
 

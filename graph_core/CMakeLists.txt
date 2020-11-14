@@ -11,11 +11,13 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rosdyn_core
   human_probablistic_occupancy
+  moveit_visual_tools
+  rviz_visual_tools
   )
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES graph_core
-  CATKIN_DEPENDS actionlib moveit_core moveit_ros_planning moveit_ros_planning_interface roscpp rosdyn_core human_probablistic_occupancy
+  CATKIN_DEPENDS actionlib moveit_core moveit_ros_planning moveit_ros_planning_interface roscpp rosdyn_core human_probablistic_occupancy moveit_visual_tools rviz_visual_tools
   DEPENDS
   )
 include_directories(
@@ -63,6 +65,13 @@ target_link_libraries(test_tree
 add_executable(       test_moveit src/test/test_moveit.cpp)
 add_dependencies(     test_moveit ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(test_moveit
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
+add_executable(       test_replanner src/test/test_replanner.cpp)
+add_dependencies(     test_replanner ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_replanner
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
