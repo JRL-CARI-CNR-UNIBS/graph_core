@@ -33,11 +33,17 @@ namespace pathplan
 bool RRTConnect::config(const ros::NodeHandle& nh)
 {
   max_distance_ = 1;
+  configured_=true;
   return true;
 }
 
 bool RRTConnect::addGoal(const NodePtr &goal_node)
 {
+  if (!configured_)
+  {
+    ROS_ERROR("Solver is not configured.");
+    return false;
+  }
   solved_ = false;
   goal_node_ = goal_node;
   setProblem();
@@ -46,6 +52,11 @@ bool RRTConnect::addGoal(const NodePtr &goal_node)
 
 bool RRTConnect::addStart(const NodePtr &start_node)
 {
+  if (!configured_)
+  {
+    ROS_ERROR("Solver is not configured.");
+    return false;
+  }
   solved_ = false;
   start_tree_ = std::make_shared<Tree>(start_node, Forward, max_distance_, checker_, metrics_);
   setProblem();
@@ -80,6 +91,7 @@ bool RRTConnect::setProblem()
     cost_ = solution_->cost();
     sampler_->setCost(cost_);
     start_tree_->addNode(goal_node_);
+
     solved_ = true;
     PATH_COMMENT_STREAM("A direct solution is found\n" << *solution_);
   }

@@ -47,10 +47,12 @@ protected:
   SamplerPtr sampler_;
   bool solved_ = false;
   bool init_ = false;
+  bool configured_=false;
   double cost_;
   TreePtr start_tree_;
   PathPtr solution_;
   unsigned int dof_;
+
 protected:
   virtual bool setProblem()
   {

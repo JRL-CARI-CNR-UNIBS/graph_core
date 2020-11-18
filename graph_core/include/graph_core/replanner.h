@@ -4,6 +4,7 @@
 #include <eigen3/Eigen/Core>
 #include <ros/ros.h>
 #include <graph_core/util.h>
+#include <graph_core/test_util.h>
 #include <graph_core/graph/tree.h>
 #include <graph_core/graph/path.h>
 #include <graph_core/graph/connection.h>
@@ -12,6 +13,10 @@
 #include <graph_core/solvers/tree_solver.h>
 #include <graph_core/solvers/path_solver.h>
 #include <graph_core/collision_checker.h>
+#include <moveit_msgs/DisplayTrajectory.h>
+#include <moveit_visual_tools/moveit_visual_tools.h>
+#include <rviz_visual_tools/rviz_visual_tools.h>
+#include <moveit/robot_model/robot_model.h>
 
 namespace pathplan
 {
@@ -44,6 +49,7 @@ namespace pathplan
                       PathPtr& current_path,
                       std::vector<PathPtr>& other_paths,
                       const TreeSolverPtr& solver,
+                      //const BiRRTPtr solver,
                       const MetricsPtr& metrics,
                       const CollisionCheckerPtr& checker,
                       const Eigen::VectorXd& lb,
@@ -68,6 +74,10 @@ namespace pathplan
 
             //Starting from node of current_path_ it tries to find a connection to all the available paths of admissible_other_paths_
             bool pathSwitch(const PathPtr& current_path, const NodePtr& node, const bool& succ_node, PathPtr &new_path, PathPtr &subpath_from_path2, int &connected2path_number);
+
+            //To test the algorithm
+            bool pathSwitchTest(const PathPtr& current_path, const NodePtr& node, const bool& succ_node, PathPtr &new_path, PathPtr &subpath_from_path2, int &connected2path_number, pathplan::TestUtil& ut);
+
 
             //It menages the replanning calling more times pathSwitch from different nodes and giving the correct set of available paths
             bool informedOnlineReplanning(const int& informed, const bool& succ_node);
