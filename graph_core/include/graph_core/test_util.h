@@ -45,6 +45,7 @@ namespace pathplan
         std::string last_link_;
         ros::Publisher display_publisher_;
         ros::Publisher marker_pub_;
+        moveit_visual_tools::MoveItVisualToolsPtr visual_tools_;
 
         public:
             EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -68,11 +69,19 @@ namespace pathplan
             // Compute a path suing BiRRT from start_node to goal_node and then it is optimized if optimizePath==1 . nh is the NodeHandler of a ros node.
             PathPtr computeBiRRTPath(const NodePtr &start_node, NodePtr &goal_node, const Eigen::VectorXd& lb, const Eigen::VectorXd& ub, const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const bool& optimizePath);
 
+            //Transform a set of waypoints in a set of robotstate
+            std::vector<moveit::core::RobotState> fromWaypoints2State(const std::vector<Eigen::VectorXd> waypoints);
+
+            moveit::core::RobotState fromWaypoints2State(Eigen::VectorXd waypoint);
+
             // Display the robot executing the trajectory on Rviz; solution is the path, t_vector is the time vector to time parametrize the trj, start_state the initial state of the robot, display_publisher the publisher:  nh.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
-            std::vector<moveit::core::RobotState> displayTrajectoryOnMoveitRviz(const PathPtr& solution, const std::vector<double> t_vector,  const rviz_visual_tools::colors color, const bool button);
+            void displayTrajectoryOnMoveitRviz(const PathPtr& solution, const std::vector<double> t_vector,  const rviz_visual_tools::colors color);
 
             // Display marker( uint32_t shape = visualization_msgs::Marker::LINE_STRIP; or SPHERE) corresponding to the waypioints of a path, marker_pub is the publsiher: ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("/marker_visualization_topic", 1);
             void displayPathNodesRviz(const std::vector<moveit::core::RobotState>& wp_state_vector, const uint32_t& shape, const std::vector<int>& marker_id, const std::vector<double>& marker_scale, const std::vector<double>& marker_color);
+
+            //To activate the "next" button on Rviz
+            void nextButton(const std::string &string);
     };
 }
 

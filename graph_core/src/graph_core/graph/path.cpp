@@ -433,7 +433,7 @@ NodePtr Path::findCloserNode(const Eigen::VectorXd& configuration)
   {
     dist = (wp.at(idx)-configuration).norm();
 
-    ROS_INFO_STREAM("dist: " << dist << " min_dist: " << min_dist << " idx: "<< idx << " i_closer: " << i_closer);
+    //ROS_INFO_STREAM("dist: " << dist << " min_dist: " << min_dist << " idx: "<< idx << " i_closer: " << i_closer);
 
     if(dist<min_dist)
     {

@@ -76,11 +76,15 @@ namespace pathplan
             bool pathSwitch(const PathPtr& current_path, const NodePtr& node, const bool& succ_node, PathPtr &new_path, PathPtr &subpath_from_path2, int &connected2path_number);
 
             //To test the algorithm
-            bool pathSwitchTest(const PathPtr& current_path, const NodePtr& node, const bool& succ_node, PathPtr &new_path, PathPtr &subpath_from_path2, int &connected2path_number, pathplan::TestUtil& ut);
+            bool pathSwitch(const PathPtr& current_path, const NodePtr& node, const bool& succ_node, PathPtr &new_path, PathPtr &subpath_from_path2, int &connected2path_number, pathplan::TestUtil& ut);
 
 
             //It menages the replanning calling more times pathSwitch from different nodes and giving the correct set of available paths
             bool informedOnlineReplanning(const int& informed, const bool& succ_node);
+
+
+            //To test the algorithm
+            bool informedOnlineReplanning(const int& informed, const bool& succ_node, pathplan::TestUtil& ut);
 
     };
 }

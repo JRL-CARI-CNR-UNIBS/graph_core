@@ -129,15 +129,15 @@ int main(int argc, char **argv)
 
         std::vector<double> t_vector(solution->getWaypoints().size(),0.0);  //plotto solo il path, no time parametrization
         std::vector<int> marker_id; marker_id.push_back(-i);
-        std::vector<double> marker_scale(3,0.01);
-        std::vector<double> marker_scale_sphere(3,0.03);
+        std::vector<double> marker_scale(3,0.005);
+        std::vector<double> marker_scale_sphere(3,0.02);
         std::vector<double> marker_color;
         if(i==0) marker_color = {0.0f,1.0,0.0f,1.0};
         if(i==1) marker_color = {0.0f,0.0f,1.0,1.0};
         if(i==2) marker_color = {1.0,0.0f,0.0f,1.0};
 
-        std::vector<moveit::core::RobotState> wp_state_vector;
-        wp_state_vector = ut.displayTrajectoryOnMoveitRviz(solution,t_vector,colors.at(i),0);
+        std::vector<moveit::core::RobotState> wp_state_vector = ut.fromWaypoints2State(solution->getWaypoints());
+        //ut.displayTrajectoryOnMoveitRviz(solution,t_vector,colors.at(i),0);
         ut.displayPathNodesRviz(wp_state_vector, shape, marker_id, marker_scale, marker_color); //line strip
 
         std::vector<int> marker_id_sphere;
@@ -168,11 +168,13 @@ int main(int argc, char **argv)
     int connected2path_number;
     bool success;
     bool succ_node = 1;
+    bool informed = 1;
 
-    ROS_INFO_STREAM("PATH SWITCH STARTS");
+    ut.nextButton("Press \"next\" to start");
 
     pathplan::Replanner replanner = pathplan::Replanner(current_configuration, current_path, other_paths, solver, metrics, checker, lb, ub);
-    success = replanner.pathSwitchTest(current_path, node, succ_node, new_path, subpath_from_path2, connected2path_number, ut);
+    success =  replanner.informedOnlineReplanning(informed, succ_node,ut);  //InformedOnlineReplanning
+    //success = replanner.pathSwitch(current_path, node, succ_node, new_path, subpath_from_path2, connected2path_number, ut); //PathSwitch
 
     return 0;
 }

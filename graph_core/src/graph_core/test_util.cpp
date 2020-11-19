@@ -24,6 +24,23 @@ TestUtil::TestUtil(ros::NodeHandle& nh,
     last_link_ = last_link;
     display_publisher_ = display_publisher;
     marker_pub_ = marker_pub;
+
+    /*Visualize the trajectory*/
+    namespace rvt = rviz_visual_tools;   //PERCHE' LO SCRIVONO TUTTI?
+    //moveit_visual_tools::MoveItVisualToolsPtr visual_tools_;
+    std::string topic = "/rviz_visual_tools";
+
+    visual_tools_.reset(new moveit_visual_tools::MoveItVisualTools(base_link_,topic));
+}
+
+void TestUtil::nextButton(const std::string& string)
+{
+  /* Remote control is an introspection tool that allows users to step through a high level script
+  via buttons and keyboard shortcuts in RViz */
+  visual_tools_->loadRemoteControl();
+
+  /* We can also use visual_tools to wait for user input */
+  visual_tools_->prompt(string);
 }
 
 PathPtr TestUtil::computeBiRRTPath(const NodePtr &start_node, NodePtr &goal_node, const Eigen::VectorXd& lb, const Eigen::VectorXd& ub, const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const bool& optimizePath)
@@ -173,28 +190,42 @@ PathPtr TestUtil::computeBiRRTPath(const NodePtr &start_node, NodePtr &goal_node
     return solution;
 }
 
-std::vector<moveit::core::RobotState> TestUtil::displayTrajectoryOnMoveitRviz(const PathPtr& solution, const std::vector<double> t_vector,  const rviz_visual_tools::colors color, const bool button)
-{
 
-    COMMENT("Get waypoints");
+std::vector<moveit::core::RobotState> TestUtil::fromWaypoints2State(const std::vector<Eigen::VectorXd> waypoints)
+{
+  std::vector<moveit::core::RobotState> wp_state_vector;
+  for(unsigned int j=0; j<waypoints.size();j++)
+  {
+      Eigen::VectorXd waypoint = waypoints.at(j);
+
+      moveit::core::RobotState wp_state=planning_scene_->getCurrentState();
+      wp_state.setJointGroupPositions(group_name_,waypoint);
+      wp_state.update();
+      wp_state_vector.push_back(wp_state);
+  }
+
+  return wp_state_vector;
+}
+
+moveit::core::RobotState TestUtil::fromWaypoints2State(Eigen::VectorXd waypoint)
+{
+  moveit::core::RobotState wp_state=planning_scene_->getCurrentState();
+  wp_state.setJointGroupPositions(group_name_,waypoint);
+  wp_state.update();
+
+  return wp_state;
+}
+
+void TestUtil::displayTrajectoryOnMoveitRviz(const PathPtr& solution, const std::vector<double> t_vector,  const rviz_visual_tools::colors color)
+{
     std::vector<Eigen::VectorXd> waypoints=solution->getWaypoints();
+    std::vector<moveit::core::RobotState> wp_state_vector = fromWaypoints2State(waypoints);
 
     //Definizione della traiettoria, noti i waypoints del path
     robot_trajectory::RobotTrajectoryPtr trj = std::make_shared<robot_trajectory::RobotTrajectory>(kinematic_model_,group_name_);
-
-    COMMENT("processing %zu waypoints..", waypoints.size());
-    std::vector<moveit::core::RobotState> wp_state_vector;
     for(unsigned int j=0; j<waypoints.size();j++)
     {
-        Eigen::VectorXd waypoint = waypoints.at(j);
-
-        COMMENT("processing waypoint");
-        moveit::core::RobotState wp_state=planning_scene_->getCurrentState();
-        wp_state.setJointGroupPositions(group_name_,waypoint);
-        wp_state.update();
-        trj->addSuffixWayPoint(wp_state,t_vector.at(j)); //time parametrization
-
-        wp_state_vector.push_back(wp_state);
+        trj->addSuffixWayPoint(wp_state_vector.at(j),t_vector.at(j)); //time parametrization
     }
 
     //Trasformo la traiettoria in msg inviabile
@@ -207,34 +238,25 @@ std::vector<moveit::core::RobotState> TestUtil::displayTrajectoryOnMoveitRviz(co
     moveit::core::robotStateToRobotStateMsg(planning_scene_->getCurrentState(),disp_trj.trajectory_start);
 
     /*Visualize the trajectory*/
-    namespace rvt = rviz_visual_tools;   //PERCHE' LO SCRIVONO TUTTI?
+   /* namespace rvt = rviz_visual_tools;   //PERCHE' LO SCRIVONO TUTTI?
     moveit_visual_tools::MoveItVisualToolsPtr visual_tools;
     std::string topic = "/rviz_visual_tools";
 
-    visual_tools.reset(new moveit_visual_tools::MoveItVisualTools(base_link_,topic));
+    visual_tools.reset(new moveit_visual_tools::MoveItVisualTools(base_link_,topic));*/
 
-    visual_tools->loadRobotStatePub("/display_robot_state");
-    visual_tools->enableBatchPublishing();
+    visual_tools_->loadRobotStatePub("/display_robot_state");
+    visual_tools_->enableBatchPublishing();
     //if(i==0){visual_tools->deleteAllMarkers();}
-    visual_tools->trigger();
+    visual_tools_->trigger();
 
-    visual_tools->publishRobotState(planning_scene_->getCurrentStateNonConst(), color);
-    visual_tools->trigger();
+    visual_tools_->publishRobotState(planning_scene_->getCurrentStateNonConst(), color);
+    visual_tools_->trigger();
 
-    visual_tools->publishTrajectoryLine(disp_trj.trajectory.back(), joint_model_group_, color); //non dovrebbe pubblicare lei la linea della traiettoria?
-    visual_tools->trigger();
+    //visual_tools->publishTrajectoryLine(disp_trj.trajectory.back(), joint_model_group_, color); //non dovrebbe pubblicare lei la linea della traiettoria?
+    //visual_tools->trigger();
 
     display_publisher_.publish(disp_trj);  //to display the robot following the trj
-    visual_tools->trigger();
-
-    /* Remote control is an introspection tool that allows users to step through a high level script
-    via buttons and keyboard shortcuts in RViz */
-    visual_tools->loadRemoteControl();
-
-    /* We can also use visual_tools to wait for user input */
-    if(button){visual_tools->prompt("Press 'next' in the RvizVisualToolsGui window to start the demo");}
-
-    return wp_state_vector;
+    visual_tools_->trigger();
 }
 
 void TestUtil::displayPathNodesRviz(const std::vector<moveit::core::RobotState>& wp_state_vector, const uint32_t& shape, const std::vector<int>& marker_id, const std::vector<double>& marker_scale, const std::vector<double>& marker_color)
