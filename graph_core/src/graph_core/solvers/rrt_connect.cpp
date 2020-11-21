@@ -72,6 +72,12 @@ bool RRTConnect::addStartTree(const TreePtr &start_tree)
   setProblem();
   return true;
 }
+void RRTConnect::resetProblem()
+{
+  goal_node_.reset();
+  start_tree_.reset();
+  solved_=false;
+}
 
 bool RRTConnect::setProblem()
 {

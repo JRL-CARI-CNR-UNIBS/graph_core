@@ -141,6 +141,7 @@ bool Tree::extendToNode(const NodePtr& node,
   else
   {
     new_node = std::make_shared<Node>(next_configuration);
+    assert(std::find(nodes_.begin(),nodes_.end(),new_node)==nodes_.end());
     nodes_.push_back(new_node);
   }
 

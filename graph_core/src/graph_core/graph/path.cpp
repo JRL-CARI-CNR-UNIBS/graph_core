@@ -421,39 +421,22 @@ NodePtr Path::findCloserNode(const Eigen::VectorXd& configuration)
   if(connections_.size()<1)
   {
     ROS_ERROR("No connections");
+    throw std::invalid_argument("No connections");
   }
 
-  std::vector<Eigen::VectorXd> wp = getWaypoints();
-  double min_dist = std::numeric_limits<double>::infinity();
-
-  int i_closer = -1;
+  NodePtr closest_node=connections_.at(0)->getParent();
+  double min_dist = (closest_node->getConfiguration()-configuration).norm();
   double dist;
-
-  for(unsigned int idx=0; idx<wp.size(); idx++)
+  for (const ConnectionPtr& conn: connections_)
   {
-    dist = (wp.at(idx)-configuration).norm();
-
-    //ROS_INFO_STREAM("dist: " << dist << " min_dist: " << min_dist << " idx: "<< idx << " i_closer: " << i_closer);
-
+    dist = (conn->getChild()->getConfiguration()-configuration).norm();
     if(dist<min_dist)
     {
-      min_dist = dist;
-      i_closer = idx;
+      closest_node=conn->getChild();
+      min_dist=dist;
     }
   }
-
-  NodePtr closest_node;
-
-  if(i_closer == 0)
-  {
-    closest_node = connections_.front()->getParent();
-    return closest_node;
-  }
-  else
-  {
-    closest_node = connections_.at(i_closer-1)->getChild();
-    return closest_node;
-  }
+  return closest_node;
 }
 
 NodePtr Path::findCloserNode(const NodePtr& node)
@@ -469,7 +452,8 @@ PathPtr Path::getSubpathToNode(const NodePtr& node)
 {
   if((node->getConfiguration()-connections_.front()->getParent()->getConfiguration()).norm()<1e-06)
   {
-    ROS_ERROR("No subpath available");
+    ROS_ERROR("No subpath available, the node is equal to the first node of the path");
+    throw std::invalid_argument("No subpath available, the node is equal to the first node of the path");
   }
 
   PathPtr subpath;
@@ -485,7 +469,8 @@ PathPtr Path::getSubpathToNode(const NodePtr& node)
     }
   }
 
-  ROS_ERROR("The node doesn t belong to this path");
+  ROS_ERROR("The node doesn to belong to this path");
+  throw std::invalid_argument("The node doesn to belong to this path");
 }
 
 PathPtr Path::getSubpathFromNode(const NodePtr& node)

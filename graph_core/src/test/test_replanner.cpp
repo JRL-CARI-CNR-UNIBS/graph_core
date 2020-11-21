@@ -132,7 +132,8 @@ int main(int argc, char **argv)
         std::vector<double> marker_scale(3,0.005);
         std::vector<double> marker_scale_sphere(3,0.02);
         std::vector<double> marker_color;
-        if(i==0) marker_color = {0.0f,1.0,0.0f,1.0};
+        //if(i==0) marker_color = {0.0f,1.0,0.0f,1.0};
+        if(i==0) marker_color = {0.5,0.5,0.0,1.0};
         if(i==1) marker_color = {0.0f,0.0f,1.0,1.0};
         if(i==2) marker_color = {1.0,0.0f,0.0f,1.0};
 
@@ -149,8 +150,12 @@ int main(int argc, char **argv)
     }
 
     pathplan::PathPtr current_path = path_vector.front();
+    int idx = current_path->getConnections().size()/2;
+
     std::vector<pathplan::ConnectionPtr> conn_v = current_path->getConnections();
+    //conn_v.at(conn_v.size()-3)->setCost(std::numeric_limits<double>::infinity());
     conn_v.back()->setCost(std::numeric_limits<double>::infinity());
+    //conn_v.at(idx)->setCost(std::numeric_limits<double>::infinity());
     current_path->setConnections(conn_v);
 
     std::vector<pathplan::PathPtr> other_paths = {path_vector.at(1),path_vector.at(2)};
@@ -158,17 +163,17 @@ int main(int argc, char **argv)
     pathplan::SamplerPtr samp = std::make_shared<pathplan::InformedSampler>(start_conf, goal_conf, lb, ub);
     pathplan::BiRRTPtr solver = std::make_shared<pathplan::BiRRT>(metrics, checker, samp);
     solver->config(nh);
-    int idx = current_path->getConnections().size()/2;
 
-    pathplan::NodePtr node = current_path->getConnections().at(idx)->getChild();
-    Eigen::VectorXd current_configuration = node->getConfiguration();
+    //pathplan::NodePtr node = current_path->getConnections().at(idx)->getChild();
+    //Eigen::VectorXd current_configuration = node->getConfiguration();
+    Eigen::VectorXd current_configuration = (current_path->getConnections().at(idx)->getChild()->getConfiguration() + current_path->getConnections().at(idx)->getParent()->getConfiguration())/2;
 
     pathplan::PathPtr new_path;
     pathplan::PathPtr subpath_from_path2;
     int connected2path_number;
     bool success;
     bool succ_node = 1;
-    bool informed = 1;
+    int informed = 2;
 
     ut.nextButton("Press \"next\" to start");
 
