@@ -183,7 +183,7 @@ PathPtr TestUtil::computeBiRRTPath(const NodePtr &start_node, NodePtr &goal_node
         path_solver.solve(solution);
         //ROS_INFO_STREAM("local solver improve the solution to cost = " << solution->cost());
 
-        ROS_INFO_STREAM("solution\n" << *solution);
+        //ROS_INFO_STREAM("solution\n" << *solution);
 
     }
 

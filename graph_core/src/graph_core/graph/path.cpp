@@ -37,6 +37,7 @@ Path::Path(std::vector<ConnectionPtr> connections,
   checker_(checker)
 {
   assert(connections_.size() > 0);
+
   cost_ = 0;
 
   for (const ConnectionPtr& conn : connections_)
@@ -396,21 +397,42 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
 
         conn->remove();
 
-        PathPtr subpath_parent = this->getSubpathToNode(parent);
-        PathPtr subpath_child = this->getSubpathFromNode(child);
-
         std::vector<ConnectionPtr> conn_vector;
-        conn_vector.insert(conn_vector.begin(),subpath_parent->getConnections().begin(),subpath_parent->getConnections().end());
-        conn_vector.push_back(conn_parent);
-        conn_vector.push_back(conn_child);
-        conn_vector.insert(conn_vector.end(),subpath_child->getConnections().begin(),subpath_child->getConnections().end());
 
+        if(parent->getConfiguration() == this->getConnections().front()->getParent()->getConfiguration())  //the parent is the start node
+        {
+          PathPtr subpath_child = this->getSubpathFromNode(child);
+
+          conn_vector.push_back(conn_parent);
+          conn_vector.push_back(conn_child);
+          std::vector<ConnectionPtr> conn_sup = subpath_child->getConnections();
+          conn_vector.insert(conn_vector.end(),conn_sup.begin(),conn_sup.end());
+        }
+        else if(child->getConfiguration() == this->getConnections().back()->getChild()->getConfiguration())  //the child is the goal node
+        {
+          PathPtr subpath_parent = this->getSubpathToNode(parent);
+
+          std::vector<ConnectionPtr> conn_sup = subpath_parent->getConnections();
+          conn_vector.insert(conn_vector.begin(),conn_sup.begin(),conn_sup.end());
+          conn_vector.push_back(conn_parent);
+          conn_vector.push_back(conn_child);
+        }
+        else
+        {
+          PathPtr subpath_parent = this->getSubpathToNode(parent);
+          PathPtr subpath_child = this->getSubpathFromNode(child);
+
+          std::vector<ConnectionPtr> conn_sup = subpath_parent->getConnections();
+          conn_vector.insert(conn_vector.begin(),conn_sup.begin(),conn_sup.end());
+          conn_vector.push_back(conn_parent);
+          conn_vector.push_back(conn_child);
+          conn_sup = subpath_child->getConnections();
+          conn_vector.insert(conn_vector.end(),conn_sup.begin(),conn_sup.end());
+        }
         this->setConnections(conn_vector);
       }
     }
-
     return actual_node;
-
   }
 
   ROS_ERROR("Connection not found, the node can t be created");

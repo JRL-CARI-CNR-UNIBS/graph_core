@@ -26,108 +26,109 @@
 
 int main(int argc, char **argv)
 {
-    //std::string test = "sharework";
-    std::string test = "panda";
+  //std::string test = "sharework";
+  std::string test = "panda";
 
-    unsigned int n_paths = 3;
+  unsigned int n_paths = 3;
 
-    std::vector<rviz_visual_tools::colors> colors {rviz_visual_tools::GREEN, rviz_visual_tools::BLUE, rviz_visual_tools::RED};
-    uint32_t shape = visualization_msgs::Marker::LINE_STRIP;
+  std::vector<rviz_visual_tools::colors> colors {rviz_visual_tools::GREEN, rviz_visual_tools::BLUE, rviz_visual_tools::RED};
+  uint32_t shape = visualization_msgs::Marker::LINE_STRIP;
 
-    ros::init(argc, argv, "node_replanner");
-    ros::AsyncSpinner spinner(1);
-    spinner.start();
+  ros::init(argc, argv, "node_replanner");
+  ros::AsyncSpinner spinner(1);
+  spinner.start();
 
-    ros::NodeHandle nh;
+  ros::NodeHandle nh;
 
-    ros::Publisher display_publisher = nh.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
-    ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("/marker_visualization_topic", 1);
+  ros::Publisher display_publisher = nh.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
+  ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("/marker_visualization_topic", 1);
 
-    std::string group_name;
-    std::string base_link;
-    std::string last_link;
+  std::string group_name;
+  std::string base_link;
+  std::string last_link;
 
-    if(test == "sharework")
+  if(test == "sharework")
+  {
+    group_name = "manipulator";
+    base_link = "base_link";
+    last_link = "open_tip";
+  }
+  else
+  {
+    group_name = "panda_arm";
+    base_link = "panda_link0";
+    last_link = "panda_link8";
+  }
+
+  moveit::planning_interface::MoveGroupInterface move_group(group_name);
+  robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
+  robot_model::RobotModelPtr kinematic_model = robot_model_loader.getModel();
+  planning_scene::PlanningScenePtr planning_scene = std::make_shared<planning_scene::PlanningScene>(kinematic_model);
+  //robot_state::RobotState start_state = planning_scene->getCurrentState();  //stato iniziale
+
+  //moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
+
+  const robot_state::JointModelGroup* joint_model_group = move_group.getCurrentState()->getJointModelGroup(group_name); //kinematic_model->getJointModelGroup(group_name);
+  std::vector<std::string> joint_names = joint_model_group->getActiveJointModelNames();
+
+  unsigned int dof = joint_names.size();
+  Eigen::VectorXd lb(dof);
+  Eigen::VectorXd ub(dof);
+
+  for (unsigned int idx = 0; idx < dof; idx++)
+  {
+    const robot_model::VariableBounds& bounds = kinematic_model->getVariableBounds(joint_names.at(idx));  //bounds dei joints definito in urdf e file joints limit
+    if (bounds.position_bounded_)
     {
-       group_name = "manipulator";
-       base_link = "base_link";
-       last_link = "open_tip";
+      lb(idx) = bounds.min_position_;
+      ub(idx) = bounds.max_position_;
+      ROS_FATAL("joint name =%s, bound = [%f, %f]", joint_names.at(idx).c_str(), lb(idx), ub(idx));
     }
-    else
-    {
-       group_name = "panda_arm";
-       base_link = "panda_link0";
-       last_link = "panda_link8";
-    }
+  }
 
-    moveit::planning_interface::MoveGroupInterface move_group(group_name);
-    robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
-    robot_model::RobotModelPtr kinematic_model = robot_model_loader.getModel();
-    planning_scene::PlanningScenePtr planning_scene = std::make_shared<planning_scene::PlanningScene>(kinematic_model);
-    //robot_state::RobotState start_state = planning_scene->getCurrentState();  //stato iniziale
+  Eigen::VectorXd start_conf(dof);
+  if(test == "sharework")
+  {
+    start_conf << 0.0,0.0,0.0,0.0,0.0,0.0; //sharework
+  }
+  else
+  {
+    start_conf << 0.0,0.0,0.0,-1.5,0.0,1.5,0.50; //panda
+  }
 
-    //moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
+  Eigen::VectorXd goal_conf(dof);
+  if(test == "sharework")
+  {
+    goal_conf << -2.4568206461416158, -3.2888890061467357, 0.5022868201292561, -0.3550610439856255, 2.4569204968195355, 3.1415111410868053; //sharework
+  }
+  else
+  {
+    goal_conf <<  1.5, 0.5, 0.0, -1.0, 0.0, 2.0, 1.0; //panda
+  }
 
-    const robot_state::JointModelGroup* joint_model_group = move_group.getCurrentState()->getJointModelGroup(group_name); //kinematic_model->getJointModelGroup(group_name);
-    std::vector<std::string> joint_names = joint_model_group->getActiveJointModelNames();
+  pathplan::NodePtr start_node = std::make_shared<pathplan::Node>(start_conf);
+  //pathplan::NodePtr goal_node = std::make_shared<pathplan::Node>(goal_conf);
 
-    unsigned int dof = joint_names.size();
-    Eigen::VectorXd lb(dof);
-    Eigen::VectorXd ub(dof);
+  pathplan::MetricsPtr metrics = std::make_shared<pathplan::Metrics>();
+  pathplan::CollisionCheckerPtr checker = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scene, group_name);
 
-    for (unsigned int idx = 0; idx < dof; idx++)
-    {
-        const robot_model::VariableBounds& bounds = kinematic_model->getVariableBounds(joint_names.at(idx));  //bounds dei joints definito in urdf e file joints limit
-        if (bounds.position_bounded_)
-        {
-            lb(idx) = bounds.min_position_;
-            ub(idx) = bounds.max_position_;
-            ROS_FATAL("joint name =%s, bound = [%f, %f]", joint_names.at(idx).c_str(), lb(idx), ub(idx));
-        }
-    }
+  // ////////////////////////////////////////////////////////////////////////PATH PLAN & VISUALIZATION/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    Eigen::VectorXd start_conf(dof);
-    if(test == "sharework")
-    {
-        start_conf << 0.0,0.0,0.0,0.0,0.0,0.0; //sharework
-    }
-    else
-    {
-        start_conf << 0.0,0.0,0.0,-1.5,0.0,1.5,0.50; //panda
-    }
+  pathplan::TestUtil ut = pathplan::TestUtil(nh, kinematic_model, planning_scene, group_name, joint_model_group, base_link, last_link, display_publisher, marker_pub);
 
-    Eigen::VectorXd goal_conf(dof);
-    if(test == "sharework")
-    {
-      goal_conf << -2.4568206461416158, -3.2888890061467357, 0.5022868201292561, -0.3550610439856255, 2.4569204968195355, 3.1415111410868053; //sharework
-    }
-    else
-    {
-        goal_conf <<  1.5, 0.5, 0.0, -1.0, 0.0, 2.0, 1.0; //panda
-    }
-
-    pathplan::NodePtr start_node = std::make_shared<pathplan::Node>(start_conf);
-    //pathplan::NodePtr goal_node = std::make_shared<pathplan::Node>(goal_conf);
-
-    pathplan::MetricsPtr metrics = std::make_shared<pathplan::Metrics>();
-    pathplan::CollisionCheckerPtr checker = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scene, group_name);
-
-    // ////////////////////////////////////////////////////////////////////////PATH PLAN & VISUALIZATION/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    //pathplan::TestUtil ut = pathplan::TestUtil(nh, kinematic_model, planning_scene, group_name, start_state, joint_model_group, base_link, last_link, display_publisher, marker_pub);
-    pathplan::TestUtil ut = pathplan::TestUtil(nh, kinematic_model, planning_scene, group_name, joint_model_group, base_link, last_link, display_publisher, marker_pub);
-
+  for(unsigned int j=0; j<100;j++)
+  {
     std::vector<pathplan::PathPtr> path_vector;
 
     for (unsigned int i =0; i<n_paths; i++)
     {
-        pathplan::NodePtr goal_node = std::make_shared<pathplan::Node>(goal_conf);
+      pathplan::NodePtr goal_node = std::make_shared<pathplan::Node>(goal_conf);
 
-        pathplan::PathPtr solution = ut.computeBiRRTPath(start_node, goal_node, lb, ub, metrics, checker, 1);
-        path_vector.push_back(solution);
-        ros::Duration(0.1).sleep();
+      pathplan::PathPtr solution = ut.computeBiRRTPath(start_node, goal_node, lb, ub, metrics, checker, 1);
+      path_vector.push_back(solution);
+      ros::Duration(0.1).sleep();
 
-        std::vector<double> t_vector(solution->getWaypoints().size(),0.0);  //plotto solo il path, no time parametrization
+    /*  std::vector<double> t_vector(solution->getWaypoints().size(),0.0);  //plotto solo il path, no time parametrization
         std::vector<int> marker_id; marker_id.push_back(-i);
         std::vector<double> marker_scale(3,0.005);
         std::vector<double> marker_scale_sphere(3,0.02);
@@ -147,14 +148,22 @@ int main(int argc, char **argv)
             marker_id_sphere.push_back((i+1)*10000+j);  //to have different ids
         }
         ut.displayPathNodesRviz(wp_state_vector, visualization_msgs::Marker::SPHERE, marker_id_sphere, marker_scale_sphere, marker_color); //sphere at nodes
+      */
     }
 
     pathplan::PathPtr current_path = path_vector.front();
-    int idx = current_path->getConnections().size()/2;
+    int idx = 0;//current_path->getConnections().size()/2;
 
     std::vector<pathplan::ConnectionPtr> conn_v = current_path->getConnections();
-    //conn_v.at(conn_v.size()-3)->setCost(std::numeric_limits<double>::infinity());
-    conn_v.back()->setCost(std::numeric_limits<double>::infinity());
+    if(conn_v.size()-3 > 0)
+    {
+      conn_v.at(conn_v.size()-3)->setCost(std::numeric_limits<double>::infinity());
+    }
+    else
+    {
+      conn_v.at(conn_v.size()-2)->setCost(std::numeric_limits<double>::infinity());
+    }
+    //conn_v.back()->setCost(std::numeric_limits<double>::infinity());
     //conn_v.at(idx)->setCost(std::numeric_limits<double>::infinity());
     current_path->setConnections(conn_v);
 
@@ -166,20 +175,43 @@ int main(int argc, char **argv)
 
     //pathplan::NodePtr node = current_path->getConnections().at(idx)->getChild();
     //Eigen::VectorXd current_configuration = node->getConfiguration();
-    Eigen::VectorXd current_configuration = (current_path->getConnections().at(idx)->getChild()->getConfiguration() + current_path->getConnections().at(idx)->getParent()->getConfiguration())/2;
+
+    Eigen::VectorXd current_configuration = (current_path->getConnections().at(idx)->getChild()->getConfiguration() + current_path->getConnections().at(idx)->getParent()->getConfiguration())/2.0;
 
     pathplan::PathPtr new_path;
     pathplan::PathPtr subpath_from_path2;
     int connected2path_number;
     bool success;
     bool succ_node = 1;
-    int informed = 2;
+    int informed = 0;
 
-    ut.nextButton("Press \"next\" to start");
+    /*// ///////////////////// Visualization current node /////////////////////
+    std::vector<double> marker_scale_sphere_actual(3,0.02);
+    std::vector<double> marker_color_sphere_actual = {1.0,0.0,1.0,1.0};
+    std::vector<int> marker_id_sphere = {15678};
+
+    moveit::core::RobotState pink_marker = ut.fromWaypoints2State(current_configuration);
+
+    std::vector<moveit::core::RobotState> pink_marker_v = {pink_marker};
+    ut.displayPathNodesRviz(pink_marker_v, visualization_msgs::Marker::SPHERE, marker_id_sphere, marker_scale_sphere_actual, marker_color_sphere_actual);
+    // /////////////////////////////////////////////////////////////////////*/
+
+    //ut.nextButton("Press \"next\" to start");
 
     pathplan::Replanner replanner = pathplan::Replanner(current_configuration, current_path, other_paths, solver, metrics, checker, lb, ub);
-    success =  replanner.informedOnlineReplanning(informed, succ_node,ut);  //InformedOnlineReplanning
+    success =  replanner.informedOnlineReplanning(informed, succ_node);
+    //success =  replanner.informedOnlineReplanning(informed, succ_node,ut);  //InformedOnlineReplanning
     //success = replanner.pathSwitch(current_path, node, succ_node, new_path, subpath_from_path2, connected2path_number, ut); //PathSwitch
 
-    return 0;
+    if(success)ROS_INFO_STREAM("j: "<<j<<" success: "<<success<<" cost: "<<replanner.getReplannedPath()->cost());
+    else ROS_INFO_STREAM("j: "<<j<<" success: "<<success);
+
+    ros::Duration(2).sleep();
+  }
+  return 0;
 }
+
+
+
+//DOMANDA: retta nello spazio dei giunti non  è retta cartesiana, infatti la current conf non si trova sulla retta parent child. Calcolo path trovando waypoints e collegandoli con una retta, nel cartesiano li rappresento sempre collegati con una retta ma non dovrei fare così, dovrebbe essere una curva?
+//NOTA: alternare i nodi con informed 3
