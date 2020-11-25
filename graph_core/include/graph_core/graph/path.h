@@ -107,6 +107,7 @@ public:
   }
 
   bool simplify(const double& distance = 0.02);
+  bool isValid();
 
   // return true if improve
   bool warp();

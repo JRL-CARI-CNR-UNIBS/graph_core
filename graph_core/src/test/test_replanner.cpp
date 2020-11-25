@@ -82,7 +82,6 @@ int main(int argc, char **argv)
     {
       lb(idx) = bounds.min_position_;
       ub(idx) = bounds.max_position_;
-      ROS_FATAL("joint name =%s, bound = [%f, %f]", joint_names.at(idx).c_str(), lb(idx), ub(idx));
     }
   }
 
@@ -183,7 +182,7 @@ int main(int argc, char **argv)
     int connected2path_number;
     bool success;
     bool succ_node = 1;
-    int informed = 0;
+    int informed = 2;
 
     /*// ///////////////////// Visualization current node /////////////////////
     std::vector<double> marker_scale_sphere_actual(3,0.02);

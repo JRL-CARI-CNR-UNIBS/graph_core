@@ -71,6 +71,7 @@
   <depend>rviz_visual_tools</depend>
 
   <depend>human_probablistic_occupancy</depend>
+    <depend>object_loader_msgs</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

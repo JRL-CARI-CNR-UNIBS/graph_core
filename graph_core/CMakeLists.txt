@@ -15,11 +15,12 @@ find_package(catkin REQUIRED COMPONENTS
   human_probablistic_occupancy
   moveit_visual_tools
   rviz_visual_tools
+  object_loader_msgs
   )
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES graph_core
-  CATKIN_DEPENDS actionlib moveit_core moveit_ros_planning moveit_ros_planning_interface roscpp rosdyn_core human_probablistic_occupancy moveit_visual_tools rviz_visual_tools
+  CATKIN_DEPENDS actionlib moveit_core moveit_ros_planning moveit_ros_planning_interface roscpp rosdyn_core human_probablistic_occupancy moveit_visual_tools rviz_visual_tools object_loader_msgs
   DEPENDS
   )
 include_directories(
@@ -79,6 +80,12 @@ target_link_libraries(test_replanner
   ${catkin_LIBRARIES}
 )
 
+add_executable(       test_replanner_with_moving_obstacle src/test/test_replanner_with_moving_obstacle.cpp)
+add_dependencies(     test_replanner_with_moving_obstacle ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_replanner_with_moving_obstacle
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
 
 add_executable(       test_tube_sampling src/test/test_tube_sampling.cpp)
 add_dependencies(     test_tube_sampling ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

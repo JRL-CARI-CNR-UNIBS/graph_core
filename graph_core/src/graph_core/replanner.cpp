@@ -864,8 +864,6 @@ bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_n
               admissible_other_paths_.insert(admissible_other_paths_.begin(),reset_other_paths.begin(),reset_other_paths.begin()+confirmed_connected2path_number);  //l'ultimo elemento è escluso
               admissible_other_paths_.push_back(confirmed_subpath_from_path2->getSubpathFromNode(confirmed_subpath_from_path2->getConnections().at(n)->getParent()));
               admissible_other_paths_.insert(admissible_other_paths_.end(),reset_other_paths.begin()+confirmed_connected2path_number+1,reset_other_paths.end());
-
-              ROS_INFO_STREAM("dimensione admissible: "<<admissible_other_paths_.size());
             }
             else
             {
@@ -873,8 +871,6 @@ bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_n
 
               admissible_other_paths_.insert(admissible_other_paths_.begin(),reset_other_paths.begin(),reset_other_paths.begin()+confirmed_connected2path_number);
               admissible_other_paths_.push_back(confirmed_subpath_from_path2->getSubpathFromNode(confirmed_subpath_from_path2->getConnections().at(n)->getParent()));
-
-              ROS_INFO_STREAM("dimensione admissible: "<<admissible_other_paths_.size());
             }
 
             n = -1;
@@ -888,10 +884,12 @@ bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_n
 
       }
 
+      ROS_INFO_STREAM("Eseguo PathSwitch");
       solved = pathSwitch(replanned_path, path1_node_vector.at(j), succ_node, new_path, subpath_from_path2, connected2path_number);
     }
     else
     {
+      ROS_INFO_STREAM("Eseguo PathSwitch");
       solved = pathSwitch(current_path_, path1_node_vector.at(j), succ_node, new_path, subpath_from_path2, connected2path_number);
     }
 
@@ -911,8 +909,6 @@ bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_n
       PathPtr path;
       PathPtr subpath;
       std::vector<ConnectionPtr> path_conn;
-
-      ROS_INFO_STREAM("available nodes: "<<available_nodes);
 
       if(available_nodes) //calculating the cost of the replanned path found
       {
@@ -969,7 +965,6 @@ bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_n
         }
         else
         {
-          ROS_INFO_STREAM("else riempimento vettore replanned");
           std::vector<PathPtr> support_vector;
           support_vector.insert(support_vector.begin(),replanned_path_vector.begin()+1,replanned_path_vector.end());
           support_vector.push_back(replanned_path);
@@ -1061,7 +1056,6 @@ bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_n
     change_j = 0;
 
     ut.nextButton("Press \"next\" to execute the next InformedOnlineReplanning step");
-
   }
 
   for(unsigned int x=0; x<examined_nodes_.size();x++)

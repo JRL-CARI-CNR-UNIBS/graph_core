@@ -435,7 +435,7 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
     return actual_node;
   }
 
-  ROS_ERROR("Connection not found, the node can t be created");
+  ROS_ERROR("Connection not found, the node can't be created");
 }
 
 NodePtr Path::findCloserNode(const Eigen::VectorXd& configuration)
@@ -558,12 +558,33 @@ bool Path::simplify(const double& distance)
     }
     else
       ic++;
-
   }
 
   return simplified;
 }
 
+
+bool Path::isValid()
+{
+  bool valid = true;
+
+  if(cost_ == std::numeric_limits<double>::infinity())
+  {
+    return false;
+  }
+
+  for(const ConnectionPtr& conn : connections_)
+  {
+    if(!checker_->checkPath(conn->getParent()->getConfiguration(), conn->getChild()->getConfiguration()))
+    {
+      ROS_INFO_STREAM("PATH NOT VALID");
+      conn->setCost(std::numeric_limits<double>::infinity());
+      cost_ = std::numeric_limits<double>::infinity();
+      valid = false;
+    }
+  }
+  return valid;
+}
 
 std::ostream& operator<<(std::ostream& os, const Path& path)
 {
