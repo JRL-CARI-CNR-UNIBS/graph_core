@@ -100,6 +100,11 @@ public:
     return connections_;
   }
 
+  const std::vector<ConnectionPtr>& getConnectionsConst()const
+  {
+    return connections_;
+  }
+
   void setConnections(const std::vector<ConnectionPtr>& conn)
   {
      connections_ = conn;
