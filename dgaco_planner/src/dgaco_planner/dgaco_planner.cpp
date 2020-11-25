@@ -93,6 +93,7 @@ DgacoPlanner::DgacoPlanner ( const std::string& name,
   Eigen::Vector3d grav;
   grav << 0, 0, -9.806;
 
+  ROS_FATAL("Chain from %s to %s",base_frame.c_str(),tool_frame.c_str());
   rosdyn::ChainPtr chain=rosdyn::createChain(urdf_model, base_frame,tool_frame,grav);
 
   ros::NodeHandle nh;

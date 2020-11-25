@@ -1637,7 +1637,7 @@ Path Net::searchBall(const unsigned int& number_of_trials, const Path& path)
       Eigen::Map<const Eigen::VectorXd> p3(node3->getJoints().data(),m_dof);
       if ((best_path.at(idx)->getLength()+best_path.at(idx+1)->getLength())<1.01*(p3-p1).norm())
       {
-        ROS_FATAL("trial=%u,idx=%u : skip length=%f, distance=%f",i_trial,idx,(best_path.at(idx)->getLength()+best_path.at(idx+1)->getLength()),(p3-p1).norm());
+        ROS_DEBUG("trial=%u,idx=%u : skip length=%f, distance=%f",i_trial,idx,(best_path.at(idx)->getLength()+best_path.at(idx+1)->getLength()),(p3-p1).norm());
         continue;
       }
       double radius=std::min(best_path.at(idx)->getLength(),best_path.at(idx+1)->getLength());
