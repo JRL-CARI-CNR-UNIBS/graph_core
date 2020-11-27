@@ -14,11 +14,13 @@
 #include <moveit/planning_interface/planning_interface.h>
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <moveit/robot_model_loader/robot_model_loader.h>
+
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "node");
   ros::NodeHandle nh;
 
+  ros::AsyncSpinner aspin(4);
 
   std::string group_name = "ur5_on_guide";
   moveit::planning_interface::MoveGroupInterface move_group(group_name);
@@ -32,15 +34,13 @@ int main(int argc, char **argv)
   pathplan::MetricsPtr metrics = std::make_shared<pathplan::OccupancyMetrics>(nh);
   pathplan::CollisionCheckerPtr checker = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scene, group_name);
 
-
-
   std::vector<std::string> joint_names = kinematic_model->getJointModelGroup(group_name)->getActiveJointModelNames();
 
-  unsigned int m_dof = joint_names.size();
-  Eigen::VectorXd lb(m_dof);
-  Eigen::VectorXd ub(m_dof);
+  unsigned int dof = joint_names.size();
+  Eigen::VectorXd lb(dof);
+  Eigen::VectorXd ub(dof);
 
-  for (unsigned int idx = 0; idx < m_dof; idx++)
+  for (unsigned int idx = 0; idx < dof; idx++)
   {
     const robot_model::VariableBounds& bounds = kinematic_model->getVariableBounds(joint_names.at(idx));
     if (bounds.position_bounded_)

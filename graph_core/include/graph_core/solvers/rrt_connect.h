@@ -54,6 +54,7 @@ public:
   virtual bool addStartTree(const TreePtr& start_tree);
   virtual bool addGoal(const NodePtr& goal_node);
 
+  virtual void resetProblem();
   virtual bool update(const Eigen::VectorXd& point, PathPtr& solution);
   virtual bool update(const NodePtr& n, PathPtr& solution);
 

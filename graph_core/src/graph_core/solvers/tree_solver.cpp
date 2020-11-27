@@ -36,7 +36,7 @@ bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter)
   {
     if (update(solution))
     {
-      ROS_INFO("Solved in %u iterations", iter);
+      //ROS_INFO("Solved in %u iterations", iter);
       solved_ = true;
       return true;
     }

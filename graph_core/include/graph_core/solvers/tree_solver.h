@@ -47,10 +47,12 @@ protected:
   SamplerPtr sampler_;
   bool solved_ = false;
   bool init_ = false;
+  bool configured_=false;
   double cost_;
   TreePtr start_tree_;
   PathPtr solution_;
   unsigned int dof_;
+
 protected:
   virtual bool setProblem()
   {
@@ -79,6 +81,8 @@ public:
   virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100);
   virtual bool addStart(const NodePtr& start_node) = 0;
   virtual bool addGoal(const NodePtr& goal_node) = 0;
+  virtual void resetProblem()=0;
+
   const bool& solved()const
   {
     return solved_;

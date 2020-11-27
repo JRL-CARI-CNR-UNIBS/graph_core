@@ -68,6 +68,7 @@ bool Tree::tryExtend(const Eigen::VectorXd &configuration,
   assert(closest_node);
 
   double distance = (closest_node->getConfiguration() - configuration).norm();
+
   if (distance < tolerance_)
   {
     next_configuration = configuration;
@@ -133,12 +134,14 @@ bool Tree::extendToNode(const NodePtr& node,
   bool attached = false;
   if ((next_configuration - node->getConfiguration()).norm() < tolerance_)
   {
+
     attached = true;
     new_node = node;
   }
   else
   {
     new_node = std::make_shared<Node>(next_configuration);
+    assert(std::find(nodes_.begin(),nodes_.end(),new_node)==nodes_.end());
     nodes_.push_back(new_node);
   }
 
@@ -187,6 +190,7 @@ bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node)
     if (success)
     {
       new_node = tmp_node;
+
       if ((new_node->getConfiguration() - node->getConfiguration()).norm() < tolerance_)
         return true;
     }

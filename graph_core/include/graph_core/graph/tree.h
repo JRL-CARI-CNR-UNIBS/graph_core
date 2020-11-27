@@ -39,7 +39,7 @@ class Tree: public std::enable_shared_from_this<Tree>
 protected:
   NodePtr root_;
   Direction direction_;
-  double max_distance_;
+  double max_distance_=1;
   double tolerance_ = 1e-6;
   unsigned int maximum_nodes_ = 1000; // legare il massimo numero di punti al volume????
   CollisionCheckerPtr checker_;

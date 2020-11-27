@@ -40,6 +40,8 @@ class Node: public std::enable_shared_from_this<Node>
 protected:
   Eigen::VectorXd configuration_;
   unsigned int ndof_;
+  bool analyzed_;
+  bool non_optimal_;
 public:
   std::vector<ConnectionPtr> parent_connections_;
   std::vector<ConnectionPtr> child_connections_;
@@ -51,6 +53,10 @@ public:
   {
     return shared_from_this();
   }
+  void setAnalyzed(const bool& analyzed);
+  bool getAnalyzed();
+  void setNonOptimal(const bool& nonOptimal);
+  bool getNonOptimal();
   void addParentConnection(const ConnectionPtr& connection);
   void addChildConnection(const ConnectionPtr& connection);
   std::vector<NodePtr> getChildren() const;
