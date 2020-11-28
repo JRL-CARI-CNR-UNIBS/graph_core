@@ -86,6 +86,12 @@ namespace pathplan
             //To test the algorithm
             bool informedOnlineReplanning(const int& informed, const bool& succ_node, pathplan::TestUtil& ut);
 
+            //It directly connect the node to the goal
+            bool connect2goal(const PathPtr &current_path, const NodePtr& node, PathPtr &new_path);
+
+            //To test the algorithm
+            bool connect2goal(const PathPtr &current_path, const NodePtr& node, PathPtr &new_path, pathplan::TestUtil& ut);
+
     };
 }
 

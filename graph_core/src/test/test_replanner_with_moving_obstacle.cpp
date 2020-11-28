@@ -166,11 +166,12 @@ int main(int argc, char **argv)
     object_loader_msgs::object obj;
     obj.object_type="scatola";
 
-    int obj_conn_pos = current_path->getConnections().size()/2;
+    int obj_conn_pos = current_path->getConnections().size()-1;
     pathplan::ConnectionPtr obj_conn = current_path->getConnections().at(obj_conn_pos);
     pathplan::NodePtr obj_parent = obj_conn->getParent();
     pathplan::NodePtr obj_child = obj_conn->getChild();
-    Eigen::VectorXd obj_pos = (obj_child->getConfiguration()+obj_parent->getConfiguration())/2;
+    //Eigen::VectorXd obj_pos = (obj_child->getConfiguration()+obj_parent->getConfiguration())/2;
+    Eigen::VectorXd obj_pos = obj_parent->getConfiguration();
 
     moveit::core::RobotState obj_pos_state = ut.fromWaypoints2State(obj_pos);
     tf::poseEigenToMsg(obj_pos_state.getGlobalLinkTransform(last_link),obj.pose.pose);
@@ -188,7 +189,7 @@ int main(int argc, char **argv)
       return 1;
     }
 
-
+    // ///////////////////////////////////PLANNING SCENE UPDATED WITH THE NEW OBSTACLE ////////////////////////////////////////
     ros::ServiceClient ps_client=nh.serviceClient<moveit_msgs::GetPlanningScene>("/get_planning_scene");
 
     if (!ps_client.waitForExistence(ros::Duration(10)))
@@ -213,7 +214,7 @@ int main(int argc, char **argv)
     }
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    pathplan::NodePtr goal_node = std::make_shared<pathplan::Node>(goal_conf);
+    /*::NodePtr goal_node = std::make_shared<pathplan::Node>(goal_conf);
 
     pathplan::PathPtr solution = ut.computeBiRRTPath(start_node, goal_node, lb, ub, metrics, checker, 1);
     path_vector.push_back(solution);
@@ -236,7 +237,7 @@ int main(int argc, char **argv)
     {
       marker_id_sphere.push_back((12+1)*10000+j);  //to have different ids
     }
-    ut.displayPathNodesRviz(wp_state_vector, visualization_msgs::Marker::SPHERE, marker_id_sphere, marker_scale_sphere, marker_color); //sphere at nodes
+    ut.displayPathNodesRviz(wp_state_vector, visualization_msgs::Marker::SPHERE, marker_id_sphere, marker_scale_sphere, marker_color); //sphere at nodes*/
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     bool valid;
