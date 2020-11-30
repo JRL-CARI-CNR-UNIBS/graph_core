@@ -577,7 +577,6 @@ bool Path::isValid()
   {
     if(!checker_->checkPath(conn->getParent()->getConfiguration(), conn->getChild()->getConfiguration()))
     {
-      ROS_INFO_STREAM("PATH NOT VALID");
       conn->setCost(std::numeric_limits<double>::infinity());
       cost_ = std::numeric_limits<double>::infinity();
       valid = false;

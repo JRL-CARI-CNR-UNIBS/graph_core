@@ -35,7 +35,7 @@ int main(int argc, char **argv)
   uint32_t shape = visualization_msgs::Marker::LINE_STRIP;
 
   ros::init(argc, argv, "node_replanner");
-  ros::AsyncSpinner spinner(1);
+  ros::AsyncSpinner spinner(4);
   spinner.start();
 
   ros::NodeHandle nh;
@@ -166,11 +166,12 @@ int main(int argc, char **argv)
     object_loader_msgs::object obj;
     obj.object_type="scatola";
 
-    int obj_conn_pos = current_path->getConnections().size()/2;
+    int obj_conn_pos = current_path->getConnections().size()-1;
     pathplan::ConnectionPtr obj_conn = current_path->getConnections().at(obj_conn_pos);
     pathplan::NodePtr obj_parent = obj_conn->getParent();
     pathplan::NodePtr obj_child = obj_conn->getChild();
-    Eigen::VectorXd obj_pos = (obj_child->getConfiguration()+obj_parent->getConfiguration())/2;
+    //Eigen::VectorXd obj_pos = (obj_child->getConfiguration()+obj_parent->getConfiguration())/2;
+    Eigen::VectorXd obj_pos = obj_parent->getConfiguration();
 
     moveit::core::RobotState obj_pos_state = ut.fromWaypoints2State(obj_pos);
     tf::poseEigenToMsg(obj_pos_state.getGlobalLinkTransform(last_link),obj.pose.pose);
@@ -188,8 +189,32 @@ int main(int argc, char **argv)
       return 1;
     }
 
+    // ///////////////////////////////////PLANNING SCENE UPDATED WITH THE NEW OBSTACLE ////////////////////////////////////////
+    ros::ServiceClient ps_client=nh.serviceClient<moveit_msgs::GetPlanningScene>("/get_planning_scene");
+
+    if (!ps_client.waitForExistence(ros::Duration(10)))
+    {
+      ROS_ERROR("unable to connect to /get_planning_scene");
+      return 1;
+    }
+
+    moveit_msgs::GetPlanningScene ps_srv;
+
+    if (!ps_client.call(ps_srv))
+    {
+      ROS_ERROR("call to srv not ok");
+      return 1;
+    }
+
+
+    if (!planning_scene->setPlanningSceneMsg(ps_srv.response.scene))
+    {
+      ROS_ERROR("unable to update planning scene");
+      return 1;
+    }
+
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    pathplan::NodePtr goal_node = std::make_shared<pathplan::Node>(goal_conf);
+    /*::NodePtr goal_node = std::make_shared<pathplan::Node>(goal_conf);
 
     pathplan::PathPtr solution = ut.computeBiRRTPath(start_node, goal_node, lb, ub, metrics, checker, 1);
     path_vector.push_back(solution);
@@ -207,12 +232,12 @@ int main(int argc, char **argv)
     //ut.displayTrajectoryOnMoveitRviz(solution,t_vector,colors.at(i),0);
     ut.displayPathNodesRviz(wp_state_vector, shape, marker_id, marker_scale, marker_color); //line strip
 
-     marker_id_sphere;
+    marker_id_sphere;
     for(unsigned int j=0; j<wp_state_vector.size();j++)
     {
       marker_id_sphere.push_back((12+1)*10000+j);  //to have different ids
     }
-    ut.displayPathNodesRviz(wp_state_vector, visualization_msgs::Marker::SPHERE, marker_id_sphere, marker_scale_sphere, marker_color); //sphere at nodes
+    ut.displayPathNodesRviz(wp_state_vector, visualization_msgs::Marker::SPHERE, marker_id_sphere, marker_scale_sphere, marker_color); //sphere at nodes*/
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     bool valid;
