@@ -115,7 +115,7 @@ int main(int argc, char **argv)
 
   pathplan::TestUtil ut = pathplan::TestUtil(nh, kinematic_model, planning_scene, group_name, joint_model_group, base_link, last_link, display_publisher, marker_pub);
 
-  for(unsigned int j=0; j<1;j++)
+  for(unsigned int j=0; j<50;j++)
   {
     std::vector<pathplan::PathPtr> path_vector;
 
@@ -127,7 +127,7 @@ int main(int argc, char **argv)
       path_vector.push_back(solution);
       ros::Duration(0.1).sleep();
 
-      std::vector<double> t_vector(solution->getWaypoints().size(),0.0);  //plotto solo il path, no time parametrization
+      /*std::vector<double> t_vector(solution->getWaypoints().size(),0.0);  //plotto solo il path, no time parametrization
       std::vector<int> marker_id; marker_id.push_back(-i);
       std::vector<double> marker_scale(3,0.005);
       std::vector<double> marker_scale_sphere(3,0.02);
@@ -147,32 +147,32 @@ int main(int argc, char **argv)
         marker_id_sphere.push_back((i+1)*10000+j);  //to have different ids
       }
       ut.displayPathNodesRviz(wp_state_vector, visualization_msgs::Marker::SPHERE, marker_id_sphere, marker_scale_sphere, marker_color); //sphere at nodes
-
+      */
     }
 
     pathplan::PathPtr current_path = path_vector.front();
     int idx = 0;//current_path->getConnections().size()/2;
 
     std::vector<pathplan::ConnectionPtr> conn_v = current_path->getConnections();
-    /*if(conn_v.size()-3 > 0)
+    if(conn_v.size()-3 > 0)
     {
       conn_v.at(conn_v.size()-3)->setCost(std::numeric_limits<double>::infinity());
     }
     else
     {
       conn_v.at(conn_v.size()-2)->setCost(std::numeric_limits<double>::infinity());
-    }*/
-    conn_v.back()->setCost(std::numeric_limits<double>::infinity());
+    }
+    //conn_v.back()->setCost(std::numeric_limits<double>::infinity());
     //conn_v.at(idx)->setCost(std::numeric_limits<double>::infinity());
     current_path->setConnections(conn_v);
 
     /*conn_v = path_vector.at(1)->getConnections();
     conn_v.back()->setCost(std::numeric_limits<double>::infinity());
-    path_vector.at(1)->setConnections(conn_v);*/
+    path_vector.at(1)->setConnections(conn_v);
 
     conn_v = path_vector.at(2)->getConnections();
     conn_v.back()->setCost(std::numeric_limits<double>::infinity());
-    path_vector.at(2)->setConnections(conn_v);
+    path_vector.at(2)->setConnections(conn_v);*/
 
     std::vector<pathplan::PathPtr> other_paths = {path_vector.at(1),path_vector.at(2)};
     //pathplan::TreeSolverPtr solver = pathplan::TreeSolverPtr() ; birrt
@@ -192,7 +192,7 @@ int main(int argc, char **argv)
     bool succ_node = 1;
     int informed = 0;
 
-    // ///////////////////// Visualization current node /////////////////////
+    /*// ///////////////////// Visualization current node /////////////////////
     std::vector<double> marker_scale_sphere_actual(3,0.02);
     std::vector<double> marker_color_sphere_actual = {1.0,0.0,1.0,1.0};
     std::vector<int> marker_id_sphere = {15678};
@@ -203,19 +203,19 @@ int main(int argc, char **argv)
     ut.displayPathNodesRviz(pink_marker_v, visualization_msgs::Marker::SPHERE, marker_id_sphere, marker_scale_sphere_actual, marker_color_sphere_actual);
     // /////////////////////////////////////////////////////////////////////*/
 
-    ut.nextButton("Press \"next\" to start");
+    //ut.nextButton("Press \"next\" to start");
 
     pathplan::Replanner replanner = pathplan::Replanner(current_configuration, current_path, other_paths, solver, metrics, checker, lb, ub);
     //success = replanner.connect2goal(current_path,current_path->getConnections().at(0)->getChild(),new_path,ut);
 
-    //success =  replanner.informedOnlineReplanning(informed, succ_node);
-    success =  replanner.informedOnlineReplanning(informed, succ_node,ut);  //InformedOnlineReplanning
+    success =  replanner.informedOnlineReplanning(informed, succ_node);
+    //success =  replanner.informedOnlineReplanning(informed, succ_node,ut);  //InformedOnlineReplanning
     //success = replanner.pathSwitch(current_path, node, succ_node, new_path, subpath_from_path2, connected2path_number, ut); //PathSwitch
 
-    //if(success)ROS_INFO_STREAM("j: "<<j<<" success: "<<success<<" cost: "<<replanner.getReplannedPath()->cost());
-    //else ROS_INFO_STREAM("j: "<<j<<" success: "<<success);
+    if(success)ROS_INFO_STREAM("j: "<<j<<" success: "<<success<<" cost: "<<replanner.getReplannedPath()->cost());
+    else ROS_INFO_STREAM("j: "<<j<<" success: "<<success);
 
-    ros::Duration(2).sleep();
+    ros::Duration(0.1).sleep();
   }
   return 0;
 }
