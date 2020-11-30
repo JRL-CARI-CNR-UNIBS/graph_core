@@ -182,7 +182,7 @@ int main(int argc, char **argv)
     int connected2path_number;
     bool success;
     bool succ_node = 1;
-    int informed = 2;
+    int informed = 1;
 
     /*// ///////////////////// Visualization current node /////////////////////
     std::vector<double> marker_scale_sphere_actual(3,0.02);
