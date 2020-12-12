@@ -39,14 +39,14 @@ pathplan::TestUtilPtr ut;
 moveit_msgs::RobotTrajectory trj_msg;
 double t=0;
 double dt=0.01;
-//trajectory_processing::SplineInterpolator interpolator_fake;
 trajectory_processing::SplineInterpolator interpolator;
+trajectory_msgs::JointTrajectoryPoint pnt;
 
 bool first_replan = 1;
 
 void replanning_fcn()
 {
-  ros::Rate lp(100);  //modifica
+  ros::Rate lp(50);
   while (!stop)
   {
     trj_mtx.lock();
@@ -57,7 +57,7 @@ void replanning_fcn()
     if(!(current_configuration_replan-replanner->getCurrentPath()->getConnections().back()->getChild()->getConfiguration()).norm()<1e-06)
     {
       planning_mtx.lock();
-      bool success =  replanner->informedOnlineReplanning(1,1);
+      bool success =  replanner->informedOnlineReplanning(2,1);
       planning_mtx.unlock();
 
       ROS_INFO_STREAM("success: "<<success);
@@ -81,7 +81,7 @@ void replanning_fcn()
         trj_mtx.unlock();
 
         moveit_msgs::RobotTrajectory tmp_trj_msg;
-        robot_trajectory::RobotTrajectoryPtr trj= ut->fromPath2Trj(replanner->getCurrentPath());
+        robot_trajectory::RobotTrajectoryPtr trj= ut->fromPath2Trj(replanner->getCurrentPath(),pnt);
         trj->getRobotTrajectoryMsg(tmp_trj_msg);
 
         trj_mtx.lock();
@@ -283,14 +283,13 @@ int main(int argc, char **argv)
   ros::Rate lp(1/dt);
   while (ros::ok() && !stop)
   {
-    trajectory_msgs::JointTrajectoryPoint pnt;
     sensor_msgs::JointState joint_state;
     Eigen::VectorXd point2project(dof);
 
     trj_mtx.lock();
     interpolator.interpolate(ros::Duration(t),pnt);
 
-    pathplan::ConnectionPtr conn2project;
+    /*pathplan::ConnectionPtr conn2project;
     if(t==0) conn2project = replanner->getCurrentPath()->getConnections().front();
     else if(t>=trj->getWayPointDurationFromStart(replanner->getCurrentPath()->getConnections().size())) conn2project = replanner->getCurrentPath()->getConnections().back();
     else
@@ -305,14 +304,14 @@ int main(int argc, char **argv)
           conn2project = replanner->getCurrentPath()->getConnections().at(i);
         }
       }
-    }
+    }*/
 
     for(unsigned int i=0; i<pnt.positions.size();i++) point2project[i] = pnt.positions.at(i);
-    double distance;
-    bool in_conn;
-    current_configuration = replanner->getCurrentPath()->projectOnConnection(point2project,conn2project,distance,in_conn);
-    replanner->getCurrentPath()->findConnection(current_configuration,idx);
-    ROS_INFO_STREAM("CONN: "<<idx);
+    //double distance;
+    //bool in_conn;
+    //current_configuration = replanner->getCurrentPath()->projectOnConnection(point2project,conn2project,distance,in_conn);
+
+    current_configuration = replanner->getCurrentPath()->projectOnClosestConnection(point2project);
     t+=dt;
     trj_mtx.unlock();
 

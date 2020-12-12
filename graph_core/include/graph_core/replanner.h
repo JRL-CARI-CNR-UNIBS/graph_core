@@ -40,6 +40,7 @@ namespace pathplan
             Eigen::VectorXd ub_;
             double time_first_sol_;
             double time_replanning_;
+            double available_time_;
             bool success_;
 
 

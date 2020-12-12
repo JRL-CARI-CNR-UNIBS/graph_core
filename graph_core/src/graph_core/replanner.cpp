@@ -25,6 +25,7 @@ Replanner::Replanner(Eigen::VectorXd& current_configuration,
 
   admissible_other_paths_ = other_paths_;
   success_ = 0;
+  available_time_ = 1000000000;
 }
 
 void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd configuration)
@@ -58,7 +59,7 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd configurati
   else
   {
     int idx_replanned_path_start;
-    current_path_->findConnection(replanned_path_->getConnections().front()->getParent()->getConfiguration(),idx_replanned_path_start);
+    current_path_->findConnection(path->getConnections().front()->getParent()->getConfiguration(),idx_replanned_path_start);
     int j = 0;
     int j_save;
     for(unsigned int i=idx_replanned_path_start; i<current_path_->getConnections().size();i++)
@@ -84,7 +85,7 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd configurati
     {
       if(t == idx_current_path_conf)
       {
-        child = std::make_shared<pathplan::Node>(configuration);
+        child = current_node;
       }
       else
       {
@@ -133,7 +134,7 @@ bool Replanner::connect2goal(const PathPtr& current_path, const NodePtr& node, P
     solver_->addStart(node_fake);
     solver_->addGoal(goal_fake);
 
-    if (solver_->solve(new_path, 1000))
+    if (solver_->solve(new_path, 1000,available_time_))
     {
       PathLocalOptimizer path_solver(checker_, metrics_);
 
@@ -204,7 +205,7 @@ bool Replanner::connect2goal(const PathPtr& current_path, const NodePtr& node, P
     solver_->addStart(node_fake);
     solver_->addGoal(goal_fake);
 
-    if (solver_->solve(new_path, 1000))
+    if (solver_->solve(new_path, 1000,available_time_))
     {
       PathLocalOptimizer path_solver(checker_, metrics_);
 
@@ -393,7 +394,7 @@ bool Replanner::pathSwitch(const PathPtr &current_path,
 
         PathPtr connecting_path;
 
-        if (solver_->solve(connecting_path, 1000))
+        if (solver_->solve(connecting_path, 1000,available_time_))
         {
           PathLocalOptimizer path_solver(checker_, metrics_);
 
@@ -543,7 +544,7 @@ bool Replanner::pathSwitch(const PathPtr &current_path,
 
         PathPtr connecting_path;
 
-        if (solver_->solve(connecting_path, 1000))
+        if (solver_->solve(connecting_path, 1000,available_time_))
         {
           PathLocalOptimizer path_solver(checker_, metrics_);
 
@@ -811,6 +812,8 @@ bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_n
         }
       }
 
+      toc = ros::WallTime::now();
+      available_time_ = MAX_TIME - toc.toSec();
       if(no_available_paths)
       {
         solved = connect2goal(replanned_path,path1_node_vector.at(j),new_path);
@@ -822,6 +825,8 @@ bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_n
     }
     else
     {
+      toc = ros::WallTime::now();
+      available_time_ = MAX_TIME - toc.toSec();
       if(no_available_paths)
       {
         solved = connect2goal(current_path_,path1_node_vector.at(j),new_path);
@@ -1177,6 +1182,8 @@ bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_n
 
       }
 
+      toc = ros::WallTime::now();
+      available_time_ = MAX_TIME - toc.toSec();
       if(no_available_paths)
       {
         ROS_INFO_STREAM("Eseguo Connect2Goal");
@@ -1190,6 +1197,8 @@ bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_n
     }
     else
     {
+      toc = ros::WallTime::now();
+      available_time_ = MAX_TIME - toc.toSec();
       if(no_available_paths)
       {
         ROS_INFO_STREAM("Eseguo Connect2Goal");

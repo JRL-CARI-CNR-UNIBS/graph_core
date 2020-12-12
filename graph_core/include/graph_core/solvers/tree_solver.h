@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/metrics.h>
 #include <graph_core/sampler.h>
 #include <ros/ros.h>
+#include <ros/duration.h>
 namespace pathplan
 {
 
@@ -78,7 +79,7 @@ public:
   virtual bool update(const Eigen::VectorXd& point, PathPtr& solution) = 0;
   virtual bool update(const NodePtr& n, PathPtr& solution)=0;
 
-  virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100);
+  virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100, const double &max_time = 10000);
   virtual bool addStart(const NodePtr& start_node) = 0;
   virtual bool addGoal(const NodePtr& goal_node) = 0;
   virtual void resetProblem()=0;

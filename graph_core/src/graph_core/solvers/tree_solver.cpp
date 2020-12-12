@@ -30,16 +30,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
-bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter)
+bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const double& max_time)
 {
+  double max_duration = ros::Time::now().toSec() + max_time;
+
   for (unsigned int iter = 0; iter < max_iter; iter++)
   {
     if (update(solution))
     {
-      //ROS_INFO("Solved in %u iterations", iter);  add maximum duration, se non specifico vale 100000000
+      //ROS_INFO("Solved in %u iterations", iter);
       solved_ = true;
       return true;
     }
+    if(ros::Time::now().toSec()>max_duration) break;
   }
   return false;
 }
