@@ -194,16 +194,11 @@ PathPtr TestUtil::computeBiRRTPath(const NodePtr &start_node, NodePtr &goal_node
 std::vector<moveit::core::RobotState> TestUtil::fromWaypoints2State(const std::vector<Eigen::VectorXd> waypoints)
 {
   std::vector<moveit::core::RobotState> wp_state_vector;
-  for(unsigned int j=0; j<waypoints.size();j++)
+  for(const Eigen::VectorXd& waypoint: waypoints)
   {
-      Eigen::VectorXd waypoint = waypoints.at(j);
-
-      moveit::core::RobotState wp_state=planning_scene_->getCurrentState();
-      wp_state.setJointGroupPositions(group_name_,waypoint);
-      wp_state.update();
+      moveit::core::RobotState wp_state=fromWaypoints2State(waypoint);
       wp_state_vector.push_back(wp_state);
   }
-
   return wp_state_vector;
 }
 
@@ -214,49 +209,6 @@ moveit::core::RobotState TestUtil::fromWaypoints2State(Eigen::VectorXd waypoint)
   wp_state.update();
 
   return wp_state;
-}
-
-void TestUtil::displayTrajectoryOnMoveitRviz(const PathPtr& solution, const std::vector<double> t_vector,  const rviz_visual_tools::colors color)
-{
-    std::vector<Eigen::VectorXd> waypoints=solution->getWaypoints();
-    std::vector<moveit::core::RobotState> wp_state_vector = fromWaypoints2State(waypoints);
-
-    //Definizione della traiettoria, noti i waypoints del path
-    robot_trajectory::RobotTrajectoryPtr trj = std::make_shared<robot_trajectory::RobotTrajectory>(kinematic_model_,group_name_);
-    for(unsigned int j=0; j<waypoints.size();j++)
-    {
-        trj->addSuffixWayPoint(wp_state_vector.at(j),t_vector.at(j)); //time parametrization
-    }
-
-    //Trasformo la traiettoria in msg inviabile
-    moveit_msgs::RobotTrajectory trj_msg;
-    trj->getRobotTrajectoryMsg(trj_msg);
-
-    moveit_msgs::DisplayTrajectory disp_trj;
-    disp_trj.trajectory.push_back(trj_msg);
-    disp_trj.model_id=kinematic_model_->getName();
-    moveit::core::robotStateToRobotStateMsg(planning_scene_->getCurrentState(),disp_trj.trajectory_start);
-
-    /*Visualize the trajectory*/
-   /* namespace rvt = rviz_visual_tools;   //PERCHE' LO SCRIVONO TUTTI?
-    moveit_visual_tools::MoveItVisualToolsPtr visual_tools;
-    std::string topic = "/rviz_visual_tools";
-
-    visual_tools.reset(new moveit_visual_tools::MoveItVisualTools(base_link_,topic));*/
-
-    visual_tools_->loadRobotStatePub("/display_robot_state");
-    visual_tools_->enableBatchPublishing();
-    //if(i==0){visual_tools->deleteAllMarkers();}
-    visual_tools_->trigger();
-
-    visual_tools_->publishRobotState(planning_scene_->getCurrentStateNonConst(), color);
-    visual_tools_->trigger();
-
-    //visual_tools->publishTrajectoryLine(disp_trj.trajectory.back(), joint_model_group_, color); //non dovrebbe pubblicare lei la linea della traiettoria?
-    //visual_tools->trigger();
-
-    display_publisher_.publish(disp_trj);  //to display the robot following the trj
-    visual_tools_->trigger();
 }
 
 void TestUtil::displayPathNodesRviz(const std::vector<moveit::core::RobotState>& wp_state_vector, const uint32_t& shape, const std::vector<int>& marker_id, const std::vector<double>& marker_scale, const std::vector<double>& marker_color)
@@ -322,6 +274,77 @@ void TestUtil::displayPathNodesRviz(const std::vector<moveit::core::RobotState>&
         marker_pub_.publish(marker);
         ros::Duration(0.1).sleep();
     }
+}
+
+robot_trajectory::RobotTrajectoryPtr TestUtil::fromPath2Trj(const PathPtr& solution)
+{
+    std::vector<Eigen::VectorXd> waypoints=solution->getWaypoints();
+    std::vector<moveit::core::RobotState> wp_state_vector = fromWaypoints2State(waypoints);
+
+    //Definizione della traiettoria, noti i waypoints del path
+    robot_trajectory::RobotTrajectoryPtr trj = std::make_shared<robot_trajectory::RobotTrajectory>(kinematic_model_,group_name_);
+    for(unsigned int j=0; j<waypoints.size();j++)
+    {
+      trj->addSuffixWayPoint(wp_state_vector.at(j),0);
+    }
+
+    trajectory_processing::IterativeParabolicTimeParameterization iptp;
+    iptp.computeTimeStamps(*trj);
+
+    return trj;
+}
+
+robot_trajectory::RobotTrajectoryPtr TestUtil::fromPath2Trj(const PathPtr& solution, const trajectory_msgs::JointTrajectoryPoint& pnt)
+{
+    std::vector<Eigen::VectorXd> waypoints=solution->getWaypoints();
+    std::vector<moveit::core::RobotState> wp_state_vector = fromWaypoints2State(waypoints);
+
+    //Definizione della traiettoria, noti i waypoints del path
+    robot_trajectory::RobotTrajectoryPtr trj = std::make_shared<robot_trajectory::RobotTrajectory>(kinematic_model_,group_name_);
+    for(unsigned int j=0; j<waypoints.size();j++)
+    {
+      if (j==0)
+      {
+        wp_state_vector.at(j).setJointGroupVelocities(group_name_,pnt.velocities);
+        wp_state_vector.at(j).setJointGroupAccelerations(group_name_,pnt.accelerations);
+      }
+      trj->addSuffixWayPoint(wp_state_vector.at(j),0); //time parametrization
+    }
+
+    trajectory_processing::IterativeParabolicTimeParameterization iptp;
+    iptp.computeTimeStamps(*trj);
+
+    return trj;
+}
+
+void TestUtil::displayTrjRviz(const moveit_msgs::RobotTrajectory trj_msg)
+{
+  //moveit_msgs::RobotTrajectory trj_msg;
+  //trj->getRobotTrajectoryMsg(trj_msg);
+
+  moveit_msgs::DisplayTrajectory disp_trj;
+  disp_trj.trajectory.push_back(trj_msg);
+  disp_trj.model_id=kinematic_model_->getName();
+
+  robot_state::RobotState start_state=planning_scene_->getCurrentState();
+  start_state.setJointGroupPositions(group_name_,trj_msg.joint_trajectory.points.at(0).positions);
+  moveit::core::robotStateToRobotStateMsg(start_state,disp_trj.trajectory_start);
+
+  /*Visualize the trajectory*/
+  namespace rvt = rviz_visual_tools;   //PERCHE' LO SCRIVONO TUTTI?
+  moveit_visual_tools::MoveItVisualToolsPtr visual_tools;
+  /*std::string topic = "/rviz_visual_tools";
+  visual_tools.reset(new moveit_visual_tools::MoveItVisualTools(base_link_,topic));*/
+
+  visual_tools_->loadRobotStatePub("/display_robot_state");
+  visual_tools_->enableBatchPublishing();
+  visual_tools_->trigger();
+
+  visual_tools_->publishRobotState(planning_scene_->getCurrentStateNonConst());
+  visual_tools_->trigger();
+
+  display_publisher_.publish(disp_trj);  //to display the robot following the trj
+  visual_tools_->trigger();
 }
 
 }

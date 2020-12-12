@@ -24,6 +24,8 @@
 #include <moveit_visual_tools/moveit_visual_tools.h>
 #include <rviz_visual_tools/rviz_visual_tools.h>
 #include <eigen_conversions/eigen_msg.h>
+#include <moveit/robot_trajectory/robot_trajectory.h>
+#include <moveit/trajectory_processing/iterative_time_parameterization.h>
 
 #define COMMENT(...) ROS_LOG(::ros::console::levels::Debug, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__);
 
@@ -74,14 +76,22 @@ namespace pathplan
 
             moveit::core::RobotState fromWaypoints2State(Eigen::VectorXd waypoint);
 
-            // Display the robot executing the trajectory on Rviz; solution is the path, t_vector is the time vector to time parametrize the trj, start_state the initial state of the robot, display_publisher the publisher:  nh.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
-            void displayTrajectoryOnMoveitRviz(const PathPtr& solution, const std::vector<double> t_vector,  const rviz_visual_tools::colors color);
-
             // Display marker( uint32_t shape = visualization_msgs::Marker::LINE_STRIP; or SPHERE) corresponding to the waypioints of a path, marker_pub is the publsiher: ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("/marker_visualization_topic", 1);
             void displayPathNodesRviz(const std::vector<moveit::core::RobotState>& wp_state_vector, const uint32_t& shape, const std::vector<int>& marker_id, const std::vector<double>& marker_scale, const std::vector<double>& marker_color);
 
             //To activate the "next" button on Rviz
             void nextButton(const std::string &string);
+
+            //To trasform a path to a RobotTrajectory
+            robot_trajectory::RobotTrajectoryPtr fromPath2Trj(const PathPtr& solution);
+
+            //To trasform a path to a RobotTrajectory
+            robot_trajectory::RobotTrajectoryPtr fromPath2Trj(const PathPtr& solution, const trajectory_msgs::JointTrajectoryPoint& pnt);
+
+            //To display the execution of the trj on Rviz
+            void displayTrjRviz(const moveit_msgs::RobotTrajectory trj_msg);
+
+
     };
 }
 

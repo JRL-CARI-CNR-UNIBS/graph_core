@@ -36,7 +36,7 @@ bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter)
   {
     if (update(solution))
     {
-      //ROS_INFO("Solved in %u iterations", iter);
+      //ROS_INFO("Solved in %u iterations", iter);  add maximum duration, se non specifico vale 100000000
       solved_ = true;
       return true;
     }

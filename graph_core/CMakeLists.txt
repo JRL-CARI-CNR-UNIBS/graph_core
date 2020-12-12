@@ -16,11 +16,12 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_visual_tools
   rviz_visual_tools
   object_loader_msgs
+  moveit_planning_helper
   )
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES graph_core
-  CATKIN_DEPENDS actionlib moveit_core moveit_ros_planning moveit_ros_planning_interface roscpp rosdyn_core human_probablistic_occupancy moveit_visual_tools rviz_visual_tools object_loader_msgs
+  CATKIN_DEPENDS actionlib moveit_core moveit_ros_planning moveit_ros_planning_interface roscpp rosdyn_core human_probablistic_occupancy moveit_visual_tools rviz_visual_tools object_loader_msgs moveit_planning_helper
   DEPENDS
   )
 include_directories(
@@ -101,6 +102,14 @@ target_link_libraries(narrow_pass_test
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
+
+add_executable(       test_online_replanner src/test/test_online_replanner.cpp)
+add_dependencies(     test_online_replanner ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_online_replanner
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
 
 
 #install(PROGRAMS

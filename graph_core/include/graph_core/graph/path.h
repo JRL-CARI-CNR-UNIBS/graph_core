@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/metrics.h>
 #include <graph_core/collision_checker.h>
 #include <graph_core/graph/tree.h>
+#include <math.h>
 
 #define NO_SPIRAL
 
@@ -113,6 +114,10 @@ public:
 
   bool simplify(const double& distance = 0.02);
   bool isValid();
+  Eigen::VectorXd projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool &in_conn);
+  const Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point);
+
+
 
   // return true if improve
   bool warp();

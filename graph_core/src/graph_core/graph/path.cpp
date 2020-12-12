@@ -363,6 +363,82 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
   ROS_ERROR("Connection not found");
 }
 
+Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool& in_conn)
+{
+  //To find the projection of point on the connection, the area of the triangle composed by the parent,
+  //the child and the point is calculated using the Erone's formula. Then it is checked if the projection is
+  // between the parent and the child
+
+  Eigen::VectorXd parent = conn->getParent()->getConfiguration();
+  Eigen::VectorXd child = conn->getChild()->getConfiguration();
+
+  double a = (parent-child).norm();
+  double b = (parent-point).norm();
+  double c = (point-child).norm();
+
+  double p = (a+b+c)/2;
+  double A = sqrt(p*(p-a)*(p-b)*(p-c)); //Erone's formula
+
+  distance = 2*A/a;  //A=a*h/2 -> h=2A/a
+
+  double c_pitagora = sqrt(b*b+a*a);
+  double s; //distance parent-projection
+
+  if(c<=c_pitagora) s = sqrt(b*b-distance*distance);
+  else s = - sqrt(b*b-distance*distance);
+
+  Eigen::VectorXd projection = parent+(child-parent)*s/a;
+
+  if(s/a>=0 && s/a<=1) in_conn = 1;
+  else in_conn = 0;
+
+  if(conn == connections_.front() && s/a<0)  //if the point is before the start it is projected on the start
+  {
+    projection = parent; //the start
+    in_conn = 1;
+  }
+
+  if(conn == connections_.back() && s/a>1)  //if the point is before the start it is projected on the start
+  {
+    projection = child;  //the goal
+    in_conn = 1;
+  }
+  return projection;
+}
+
+const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& point)
+{
+  //The point is projected on the connection on which its projection is between parent and child and to which the distance is the smallest
+
+  Eigen::VectorXd pr;
+  Eigen::VectorXd projection;
+  double min_distance = std::numeric_limits<double>::infinity();
+
+  for(const ConnectionPtr conn:connections_)
+  {
+    double distance;
+    bool in_conn;
+    pr = projectOnConnection(point,conn,distance,in_conn);
+
+    if(in_conn)
+    {
+      if(distance<min_distance)
+      {
+        min_distance = distance;
+        projection = pr;
+      }
+    }
+  }
+
+  if(min_distance == std::numeric_limits<double>::infinity())
+  {
+    projection = findCloserNode(point)->getConfiguration();
+    ROS_ERROR("projection on path not found");
+    //assert(0);
+  }
+  return projection;
+}
+
 NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr& conn, bool& rewire)
 {
   if(conn != NULL)
@@ -475,7 +551,13 @@ PathPtr Path::getSubpathToNode(const NodePtr& node)
   if((node->getConfiguration()-connections_.front()->getParent()->getConfiguration()).norm()<1e-06)
   {
     ROS_ERROR("No subpath available, the node is equal to the first node of the path");
+    ROS_INFO_STREAM("configuration: "<<node->getConfiguration().transpose());
     throw std::invalid_argument("No subpath available, the node is equal to the first node of the path");
+  }
+
+  if((node->getConfiguration()-connections_.back()->getChild()->getConfiguration()).norm()<1e-06)
+  {
+    return this->pointer();
   }
 
   PathPtr subpath;
@@ -492,11 +574,19 @@ PathPtr Path::getSubpathToNode(const NodePtr& node)
   }
 
   ROS_ERROR("The node doesn to belong to this path");
+  ROS_INFO_STREAM("configuration: "<<node->getConfiguration().transpose());
   throw std::invalid_argument("The node doesn to belong to this path");
 }
 
 PathPtr Path::getSubpathFromNode(const NodePtr& node)
 {
+  if((node->getConfiguration()-connections_.back()->getChild()->getConfiguration()).norm()<1e-06)
+  {
+    ROS_ERROR("No subpath available, the node is equal to the last node of the path");
+    ROS_INFO_STREAM("configuration: "<<node->getConfiguration().transpose());
+    throw std::invalid_argument("No subpath available, the node is equal to the last node of the path");
+  }
+
   if((node->getConfiguration()-connections_.front()->getParent()->getConfiguration()).norm()<1e-06)
   {
     return this->pointer();
@@ -516,6 +606,8 @@ PathPtr Path::getSubpathFromNode(const NodePtr& node)
   }
 
   ROS_ERROR("The node doesn t belong to this path");
+  ROS_INFO_STREAM("configuration: "<<node->getConfiguration().transpose());
+  throw std::invalid_argument("The node doesn to belong to this path");
 }
 
 bool Path::simplify(const double& distance)

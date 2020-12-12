@@ -40,6 +40,7 @@ namespace pathplan
             Eigen::VectorXd ub_;
             double time_first_sol_;
             double time_replanning_;
+            bool success_;
 
 
         public:
@@ -58,15 +59,53 @@ namespace pathplan
             PathPtr getReplannedPath()
             {
                 return replanned_path_;
-            }  
-            void setCurrentConf(Eigen::VectorXd& q)
+            }
+
+            std::vector<PathPtr> getReplannedPathVector()
+            {
+              return replanned_paths_vector_;
+            }
+
+            PathPtr getCurrentPath()
+            {
+                return current_path_;
+            }
+
+            void setCurrentPath(const PathPtr& path)
+            {
+                current_path_ = path;
+            }
+
+            void setCurrentConf(const Eigen::VectorXd& q)
             {
                 current_configuration_ = q;
+                solver_->resetProblem();
+                solver_->addStart(std::make_shared<Node>(q));
+            }
+
+            Eigen::VectorXd getCurrentConf()
+            {
+              return current_configuration_;
+            }
+
+            MetricsPtr getMetrics()
+            {
+              return metrics_;
+            }
+
+            void addOtherPath(const PathPtr& path)
+            {
+                other_paths_.push_back(path);
             }
 
             ReplannerPtr pointer()
             {
                 return shared_from_this();
+            }
+
+            bool getSuccess()
+            {
+              return success_;
             }
 
             //It find the portion of current_path_ between the obstacle and the goal and add it as first element of a vector containing the other available paths
@@ -91,6 +130,8 @@ namespace pathplan
 
             //To test the algorithm
             bool connect2goal(const PathPtr &current_path, const NodePtr& node, PathPtr &new_path, pathplan::TestUtil& ut);
+
+            void startReplannedPathFromNewCurrentConf(Eigen::VectorXd configuration);
 
     };
 }
