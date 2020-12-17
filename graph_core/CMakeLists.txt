@@ -17,11 +17,12 @@ find_package(catkin REQUIRED COMPONENTS
   rviz_visual_tools
   object_loader_msgs
   moveit_planning_helper
+  eigen_conversions
   )
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES graph_core
-  CATKIN_DEPENDS actionlib moveit_core moveit_ros_planning moveit_ros_planning_interface roscpp rosdyn_core human_probablistic_occupancy moveit_visual_tools rviz_visual_tools object_loader_msgs moveit_planning_helper
+  CATKIN_DEPENDS actionlib moveit_core moveit_ros_planning moveit_ros_planning_interface roscpp rosdyn_core human_probablistic_occupancy moveit_visual_tools rviz_visual_tools object_loader_msgs moveit_planning_helper eigen_conversions
   DEPENDS
   )
 include_directories(
