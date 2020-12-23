@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<launch>
+  <rosparam command="load" file="$(find graph_core)/config/object_test_replanner.yaml"/>
+  <include file="$(find cell_moveit_config)/launch/demo.launch"/>
+  <node pkg="object_loader" name="context_manager_node" type="context_manager_node" respawn="true" output="screen"/>
+  <node name="test_online_replanner"
+        pkg="graph_core"
+        type="test_online_replanner"
+        output="screen"
+        launch-prefix="gdb -ex run --args" >
+  </node>
+
+</launch>
