@@ -86,6 +86,8 @@ public:
   NodePtr findCloserNode(const NodePtr& node);
   PathPtr getSubpathFromNode(const NodePtr& node);
   PathPtr getSubpathToNode(const NodePtr& node);
+  PathPtr getSubpathFromNode(const Eigen::VectorXd& conf);
+  PathPtr getSubpathToNode(const Eigen::VectorXd& conf);
   bool resample(const double& distance);
   double computeEuclideanNorm();
   Eigen::VectorXd pointOnCurvilinearAbscissa(const double& abscissa);
@@ -116,6 +118,8 @@ public:
   bool isValid();
   Eigen::VectorXd projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool &in_conn);
   const Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point);
+  const Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point, const int& n_conn, int &idx);
+
 
 
 

@@ -23,17 +23,20 @@
 #include <eigen_conversions/eigen_msg.h>
 #include <graph_core/replanner.h>
 #include <moveit_planning_helper/spline_interpolator.h>
+#include <object_loader_msgs/addObjects.h>
 #include <thread>
 #include <mutex>
 
 volatile bool stop=false;
 
 pathplan::ReplannerPtr replanner;
-//Eigen::VectorXd current_configuration;
-std::vector<double> conf_pass;
+Eigen::VectorXd current_configuration;
+Eigen::VectorXd configuration_replan;
+//std::vector<double> conf_pass;
 planning_scene::PlanningScenePtr planning_scn;
 std::mutex planning_mtx;
 std::mutex trj_mtx;
+std::mutex checker_mtx;
 pathplan::TestUtilPtr ut;
 
 moveit_msgs::RobotTrajectory trj_msg;
@@ -41,6 +44,8 @@ double t=0;
 double dt=0.01;
 trajectory_processing::SplineInterpolator interpolator;
 trajectory_msgs::JointTrajectoryPoint pnt;
+int n_conn = 0;
+int n_conn_replan = 0;
 
 bool first_replan = 1;
 
@@ -50,11 +55,10 @@ void replanning_fcn()
   while (!stop)
   {
     trj_mtx.lock();
-    Eigen::VectorXd current_configuration_replan = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(conf_pass.data(), conf_pass.size());
-    replanner->setCurrentConf(current_configuration_replan);
+    replanner->setCurrentConf(configuration_replan);
     trj_mtx.unlock();
 
-    if(!(current_configuration_replan-replanner->getCurrentPath()->getConnections().back()->getChild()->getConfiguration()).norm()<1e-06)
+    if(!(configuration_replan-replanner->getCurrentPath()->getConnections().back()->getChild()->getConfiguration()).norm()<1e-06)
     {
       planning_mtx.lock();
       bool success =  replanner->informedOnlineReplanning(2,1);
@@ -68,23 +72,26 @@ void replanning_fcn()
           first_replan = 0;
           replanner->addOtherPath(replanner->getCurrentPath());
         }
-        current_configuration_replan = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(conf_pass.data(), conf_pass.size()); //update current_configuration
 
-        if(replanner->getReplannedPath()->getConnections().at(0)->getParent()->getConfiguration() != current_configuration_replan)
+        trj_mtx.lock();
+        Eigen::VectorXd conf = current_configuration;
+        trj_mtx.unlock();
+
+        if(replanner->getReplannedPath()->getConnections().at(0)->getParent()->getConfiguration() != conf)
         {
-          trj_mtx.lock();
-          replanner->startReplannedPathFromNewCurrentConf(current_configuration_replan);
-          trj_mtx.unlock();
+          replanner->startReplannedPathFromNewCurrentConf(conf);
         }
         trj_mtx.lock();
+        checker_mtx.lock();
         replanner->setCurrentPath(replanner->getReplannedPath());
-        trj_mtx.unlock();
+        n_conn = 0;
+        n_conn_replan = 0;
+        checker_mtx.unlock();
 
         moveit_msgs::RobotTrajectory tmp_trj_msg;
         robot_trajectory::RobotTrajectoryPtr trj= ut->fromPath2Trj(replanner->getCurrentPath(),pnt);
         trj->getRobotTrajectoryMsg(tmp_trj_msg);
 
-        trj_mtx.lock();
         interpolator.setTrajectory(tmp_trj_msg);
         interpolator.setSplineOrder(1);
         t=0;
@@ -105,7 +112,6 @@ void replanning_fcn()
 
 void collision_check_fcn()
 {
-
   ros::NodeHandle nh;
   ros::ServiceClient ps_client=nh.serviceClient<moveit_msgs::GetPlanningScene>("/get_planning_scene");
 
@@ -116,29 +122,83 @@ void collision_check_fcn()
 
   moveit_msgs::GetPlanningScene ps_srv;
 
-
   ros::Rate lp(30);
+  bool object_spawned = false;
+  bool second_object_spawned = false;
   while (!stop)
   {
-    /*
+    // ////////////////////////////////////////////SPAWNING THE OBJECT/////////////////////////////////////////////
+
+    ros::ServiceClient add_obj;
+    if(t>=0.8 && !second_object_spawned)
+    {
+      second_object_spawned = true;
+      object_spawned = false;
+    }
+
+    if(!object_spawned && t>=0.3)
+    {
+      object_spawned = true;
+
+      add_obj=nh.serviceClient<object_loader_msgs::addObjects>("add_object_to_scene");
+
+      if (!add_obj.waitForExistence(ros::Duration(10)))
+      {
+        ROS_FATAL("srv not found");
+      }
+
+      object_loader_msgs::addObjects srv;
+      object_loader_msgs::object obj;
+      obj.object_type="scatola";
+
+      int obj_conn_pos = replanner->getCurrentPath()->getConnections().size()-2;
+      pathplan::ConnectionPtr obj_conn = replanner->getCurrentPath()->getConnections().at(obj_conn_pos);
+      pathplan::NodePtr obj_parent = obj_conn->getParent();
+      pathplan::NodePtr obj_child = obj_conn->getChild();
+      Eigen::VectorXd obj_pos = (obj_child->getConfiguration()+obj_parent->getConfiguration())/2;
+      //Eigen::VectorXd obj_pos = obj_parent->getConfiguration();
+
+      moveit::core::RobotState obj_pos_state = ut->fromWaypoints2State(obj_pos);
+      tf::poseEigenToMsg(obj_pos_state.getGlobalLinkTransform("panda_link8"),obj.pose.pose);
+      obj.pose.header.frame_id="world";
+
+      srv.request.objects.push_back(obj);
+      if (!add_obj.call(srv))
+      {
+        ROS_ERROR("call to srv not ok");
+      }
+      if (!srv.response.success)
+      {
+        ROS_ERROR("srv error");
+      }
+
+      if (!planning_scn->setPlanningSceneMsg(ps_srv.response.scene))
+      {
+        ROS_ERROR("unable to update planning scene");
+      }
+    }
+
+    // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     if (!ps_client.call(ps_srv))
     {
       ROS_ERROR("call to srv not ok");
-      return 1;
     }
-
 
     planning_mtx.lock();
     if (!planning_scn->setPlanningSceneMsg(ps_srv.response.scene))
     {
-      ROS_ERROR_THROTTLE("unable to update planning scene");
+      ROS_ERROR("unable to update planning scene");
+      //ROS_ERROR_THROTTLE("unable to update planning scene");
     }
-    replanner->checkPathValidity();
+    checker_mtx.lock();
+    bool valid = replanner->checkPathValidity();
+    checker_mtx.unlock();
     planning_mtx.unlock();
     lp.sleep();
-*/
-  }
 
+    //ROS_INFO_STREAM("valid: "<<valid);
+  }
 }
 
 int main(int argc, char **argv)
@@ -260,14 +320,6 @@ int main(int argc, char **argv)
   pathplan::BiRRTPtr solver = std::make_shared<pathplan::BiRRT>(metrics, checker, samp);
   solver->config(nh);
 
-  Eigen::VectorXd current_configuration;
-
-  current_configuration = current_path->getConnections().at(0)->getParent()->getConfiguration();
-  conf_pass.resize(current_configuration.size());
-  Eigen::VectorXd::Map(&conf_pass[0], current_configuration.size()) = current_configuration;
-
-  replanner = std::make_shared<pathplan::Replanner>(current_configuration, current_path, other_paths, solver, metrics, checker, lb, ub);
-
   robot_trajectory::RobotTrajectoryPtr trj= ut->fromPath2Trj(current_path);
   moveit_msgs::RobotTrajectory tmp_trj_msg;
   trj->getRobotTrajectoryMsg(tmp_trj_msg);
@@ -275,54 +327,53 @@ int main(int argc, char **argv)
   interpolator.setTrajectory(tmp_trj_msg);
   interpolator.setSplineOrder(1);
 
+  current_configuration = current_path->getConnections().at(0)->getParent()->getConfiguration();
+  /*conf_pass.resize(current_configuration.size());
+  Eigen::VectorXd::Map(&conf_pass[0], current_configuration.size()) = current_configuration;*/
+
+  Eigen::VectorXd point2project(dof);
+  interpolator.interpolate(ros::Duration(t+dt),pnt);
+  for(unsigned int i=0; i<pnt.positions.size();i++) point2project[i] = pnt.positions.at(i);
+
+  int new_n_conn_replan;
+  configuration_replan = current_path->projectOnClosestConnection(point2project,n_conn_replan,new_n_conn_replan);
+  n_conn_replan = new_n_conn_replan;
+
+  replanner = std::make_shared<pathplan::Replanner>(configuration_replan, current_path, other_paths, solver, metrics, checker, lb, ub);
+
   stop=false;
   std::thread replanning_thread=std::thread(&replanning_fcn);
   std::thread col_check_thread=std::thread(&collision_check_fcn);
 
-  int idx;
   ros::Rate lp(1/dt);
   while (ros::ok() && !stop)
   {
     sensor_msgs::JointState joint_state;
-    Eigen::VectorXd point2project(dof);
 
     trj_mtx.lock();
+    trajectory_msgs::JointTrajectoryPoint pnt_replan;
+    interpolator.interpolate(ros::Duration(t+dt),pnt_replan);
+
+    for(unsigned int i=0; i<pnt_replan.positions.size();i++) point2project[i] = pnt_replan.positions.at(i);
+
+    new_n_conn_replan;
+    configuration_replan = replanner->getCurrentPath()->projectOnClosestConnection(point2project,n_conn_replan,new_n_conn_replan);
+    n_conn_replan = new_n_conn_replan;
+
     interpolator.interpolate(ros::Duration(t),pnt);
 
-    /*pathplan::ConnectionPtr conn2project;
-    if(t==0) conn2project = replanner->getCurrentPath()->getConnections().front();
-    else if(t>=trj->getWayPointDurationFromStart(replanner->getCurrentPath()->getConnections().size())) conn2project = replanner->getCurrentPath()->getConnections().back();
-    else
-    {
-      for(unsigned int i=0; i<replanner->getCurrentPath()->getConnections().size();i++)
-      {
-        double t1 = trj->getWayPointDurationFromStart(i);
-        double t2 = trj->getWayPointDurationFromStart(i+1);
-
-        if(t>t1 && t<=t2)
-        {
-          conn2project = replanner->getCurrentPath()->getConnections().at(i);
-        }
-      }
-    }*/
-
     for(unsigned int i=0; i<pnt.positions.size();i++) point2project[i] = pnt.positions.at(i);
-    //double distance;
-    //bool in_conn;
-    //current_configuration = replanner->getCurrentPath()->projectOnConnection(point2project,conn2project,distance,in_conn);
 
-    current_configuration = replanner->getCurrentPath()->projectOnClosestConnection(point2project);
+    int new_n_conn;
+    current_configuration = replanner->getCurrentPath()->projectOnClosestConnection(point2project,n_conn,new_n_conn);
+    n_conn= new_n_conn;
+
     t+=dt;
     trj_mtx.unlock();
 
     if((current_configuration-goal_conf).norm()<1e-6) stop = true;
     else
     {
-      trj_mtx.lock();
-      conf_pass.resize(current_configuration.size());
-      Eigen::VectorXd::Map(&conf_pass[0], current_configuration.size()) = current_configuration;
-      trj_mtx.unlock();
-
       std::vector<double> marker_scale_sphere_actual(3,0.02);
       std::vector<double> marker_color_sphere_actual = {1.0,0.0,1.0,1.0};
       std::vector<int> marker_id_sphere = {15678};

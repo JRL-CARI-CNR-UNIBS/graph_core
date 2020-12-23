@@ -75,6 +75,9 @@ namespace pathplan
             void setCurrentPath(const PathPtr& path)
             {
                 current_path_ = path;
+                admissible_other_paths_ = other_paths_;
+                examined_nodes_.clear();
+                success_ = 0;
             }
 
             void setCurrentConf(const Eigen::VectorXd& q)
@@ -82,6 +85,8 @@ namespace pathplan
                 current_configuration_ = q;
                 solver_->resetProblem();
                 solver_->addStart(std::make_shared<Node>(q));
+                examined_nodes_.clear();
+                success_ = 0;
             }
 
             Eigen::VectorXd getCurrentConf()
@@ -133,6 +138,8 @@ namespace pathplan
             bool connect2goal(const PathPtr &current_path, const NodePtr& node, PathPtr &new_path, pathplan::TestUtil& ut);
 
             void startReplannedPathFromNewCurrentConf(Eigen::VectorXd configuration);
+
+            bool checkPathValidity();
 
     };
 }
