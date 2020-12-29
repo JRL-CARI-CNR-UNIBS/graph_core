@@ -1069,7 +1069,7 @@ bool Net::runRRTConnect()
 
   for (unsigned int idx=0;idx<m_end_nodes.size();idx++)
   {
-    ROS_PROTO("creating tree %u of %u",idx,m_end_nodes.size());
+    ROS_PROTO("creating tree %u of %zu",idx,m_end_nodes.size());
 
     goal_trees.at(idx)= std::make_shared<Tree>(m_end_nodes.at(idx),
                                                m_node_params,
@@ -1086,7 +1086,7 @@ bool Net::runRRTConnect()
 
   while(m_best_path_per_goal.at(m_end_nodes.at(ien)).first<1.01*m_utopia_costs.at(m_end_nodes.at(ien)))
   {
-    ROS_PROTO("check if end node %u (of %u) is direct connected",ien,m_end_nodes.size());
+    ROS_PROTO("check if end node %u (of %zu) is direct connected",ien,m_end_nodes.size());
     if (++ien>=m_end_nodes.size())
       ien=0;
   }

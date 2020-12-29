@@ -55,7 +55,6 @@ public:
                 const moveit::core::RobotModelConstPtr& model
               );
 
-  bool canServiceRequest(const moveit_msgs::MotionPlanRequest &req) const;
 
   void setPlanningScene(const planning_scene::PlanningSceneConstPtr& planning_scene);
   virtual bool solve(planning_interface::MotionPlanResponse& res) override;

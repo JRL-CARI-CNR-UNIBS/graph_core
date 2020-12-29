@@ -47,6 +47,7 @@ protected:
   CollisionCheckerPtr checker_;
   SamplerPtr sampler_;
   bool solved_ = false;
+  bool completed_=false;
   bool init_ = false;
   bool configured_=false;
   double cost_;
@@ -61,6 +62,8 @@ protected:
   }
   virtual void clean(){}
 
+  virtual void printMyself(std::ostream& os) const {}
+
 public:
   TreeSolver(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
@@ -71,18 +74,26 @@ public:
   {
     cost_ = std::numeric_limits<double>::infinity();
   }
+
+  const double& cost(){return cost_;}
   virtual bool config(const ros::NodeHandle& nh)
   {
     return false;
   }
   virtual bool update(PathPtr& solution) = 0;
-  virtual bool update(const Eigen::VectorXd& point, PathPtr& solution) = 0;
-  virtual bool update(const NodePtr& n, PathPtr& solution)=0;
+  virtual bool update(const Eigen::VectorXd& point, PathPtr& solution){return false;}
+  virtual bool update(const NodePtr& n, PathPtr& solution){return false;}
 
   virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100, const double &max_time = 10000);
   virtual bool addStart(const NodePtr& start_node) = 0;
   virtual bool addGoal(const NodePtr& goal_node) = 0;
   virtual void resetProblem()=0;
+
+
+  const bool& completed()const
+  {
+    return completed_;
+  }
 
   const bool& solved()const
   {
@@ -103,6 +114,10 @@ public:
     sampler_ = sampler;
   }
 
+  friend std::ostream& operator<<(std::ostream& os, const TreeSolver& solver);
 
 };
-}
+inline std::ostream& operator<<(std::ostream& os, const TreeSolver& solver){solver.printMyself(os);return os;}
+
+}  // namespace pathplan
+

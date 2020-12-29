@@ -90,10 +90,13 @@ void InformedSampler::setCost(const double &cost)
   {
     ROS_WARN("cost is %f, focci distance is %f", cost_, focii_distance_);
     cost_ = focii_distance_;
+    min_radius_ = 0.0;
   }
-  assert(cost_ >= focii_distance_);
+  else
+  {
+    min_radius_ = 0.5 * std::sqrt(std::pow(cost, 2) - std::pow(focii_distance_, 2));
+  }
   max_radius_ = 0.5 * cost;
-  min_radius_ = 0.5 * std::sqrt(std::pow(cost, 2) - std::pow(focii_distance_, 2));
   ellipse_axis_.setConstant(min_radius_);
   ellipse_axis_(0) = max_radius_;
 
@@ -109,7 +112,8 @@ void InformedSampler::setCost(const double &cost)
   else
     specific_volume_=max_radius_*std::pow(min_radius_,ndof_-1);
 
-  specific_volume_=std::pow(specific_volume_,1./ndof_);
+  if (specific_volume_>0.0)
+    specific_volume_=std::pow(specific_volume_,1./ndof_);
 }
 
 double InformedSampler::getSpecificVolume()

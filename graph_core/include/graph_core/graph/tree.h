@@ -41,7 +41,7 @@ protected:
   Direction direction_;
   double max_distance_=1;
   double tolerance_ = 1e-6;
-  unsigned int maximum_nodes_ = 1000; // legare il massimo numero di punti al volume????
+  unsigned int maximum_nodes_ = 5000; // legare il massimo numero di punti al volume????
   CollisionCheckerPtr checker_;
   MetricsPtr metrics_;
 
@@ -49,6 +49,11 @@ protected:
 
   void purgeNodeOutsideEllipsoid(NodePtr& node,
                                          const SamplerPtr& sampler,
+                                         const std::vector<NodePtr>& white_list,
+                                         unsigned int& removed_nodes);
+
+  void purgeNodeOutsideEllipsoids(NodePtr& node,
+                                         const std::vector<SamplerPtr>& samplers,
                                          const std::vector<NodePtr>& white_list,
                                          unsigned int& removed_nodes);
 
@@ -107,8 +112,10 @@ public:
   }
 
   unsigned int purgeNodesOutsideEllipsoid(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list);
+  unsigned int purgeNodesOutsideEllipsoids(const std::vector<SamplerPtr>& samplers, const std::vector<NodePtr>& white_list);
   unsigned int purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds = true);
   bool purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
+  bool needCleaning(){return nodes_.size()>maximum_nodes_;}
 
   const double& getMaximumDistance() const {return max_distance_;}
 };

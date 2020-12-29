@@ -28,45 +28,66 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <moveit/planning_interface/planning_interface.h>
-#include <dirrt_star/dirrt_star_planner.h>
-#include <dirrt_star/multigoal_planner.h>
+#include <moveit/robot_state/conversions.h>
+#include <moveit/planning_scene/planning_scene.h>
+#include <graph_core/solvers/multigoal.h>
+#include <graph_core/solvers/path_solver.h>
+#include <graph_core/metrics.h>
+#include <graph_core/moveit_collision_checker.h>
+#include <graph_core/tube_informed_sampler.h>
+#include <rosparam_utilities/rosparam_utilities.h>
+#define COMMENT(...) ROS_LOG(::ros::console::levels::Debug, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
+
+
+#include <fstream>
+#include <iostream>
 
 
 namespace pathplan {
 namespace dirrt_star {
-class PathPlanerManager : public planning_interface::PlannerManager
+
+class MultigoalPlanner: public planning_interface::PlanningContext
 {
 public:
-  virtual bool initialize(const robot_model::RobotModelConstPtr& model, const std::string& ns) override;
-  std::string getDescription() const override
-  {
-    return "Dgaco";
-  }
-  bool canServiceRequest(const moveit_msgs::MotionPlanRequest &req) const override;
+  MultigoalPlanner ( const std::string& name,
+                const std::string& group,
+                const moveit::core::RobotModelConstPtr& model
+              );
 
 
+  virtual bool solve(planning_interface::MotionPlanResponse& res) override;
+  virtual bool solve(planning_interface::MotionPlanDetailedResponse& res) override;
 
-  void getPlanningAlgorithms(std::vector<std::string> &algs) const override;
+  /** \brief If solve() is running, terminate the computation. Return false if termination not possible. No-op if
+   * solve() is not running (returns true).*/
+  virtual bool terminate() override;
 
-
-  void setPlannerConfigurations(const planning_interface::PlannerConfigurationMap &pcs) override;
-
-  planning_interface::PlanningContextPtr getPlanningContext(
-    const planning_scene::PlanningSceneConstPtr &planning_scene,
-    const planning_interface::MotionPlanRequest &req,
-    moveit_msgs::MoveItErrorCodes &error_code) const override;
-
-
+  /** \brief Clear the data structures used by the planner */
+  virtual void clear() override;
 
 protected:
+  moveit::core::RobotModelConstPtr robot_model_;
+  //planning_scene::PlanningSceneConstPtr pl
   ros::NodeHandle m_nh;
 
-  std::map< std::string, std::shared_ptr<planning_interface::PlanningContext>> m_planners;
-  moveit::core::RobotModelConstPtr m_robot_model;
+  ros::WallDuration m_max_refining_time;
+
+  unsigned int m_dof;
+  std::vector<std::string> joint_names_;
+  Eigen::VectorXd m_lb;
+  Eigen::VectorXd m_ub;
+  std::string group_;
+
+  pathplan::MetricsPtr metrics;
+  pathplan::CollisionCheckerPtr checker;
+
+
+  double collision_distance=0.04;
+  bool m_is_running=false;
+  bool m_stop=false;
+
+
 };
 
-//
-
 }
 }
-

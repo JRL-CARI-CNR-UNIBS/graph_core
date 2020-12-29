@@ -23,6 +23,7 @@ include_directories(
 
 add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/dirrt_star_planner.cpp
+  src/${PROJECT_NAME}/multigoal_planner.cpp
   src/${PROJECT_NAME}/dirrt_star_planner_manager.cpp
 )
 

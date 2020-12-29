@@ -83,7 +83,11 @@ bool RRTStar::update(PathPtr& solution)
   if (!init_)
     return false;
   if (cost_ <= 1.003 * utopia_)
+  {
+    completed_=true;
+    solution=solution_;
     return true;
+  }
 
   return update(sampler_->sample(), solution);
 
@@ -97,6 +101,8 @@ bool RRTStar::update(const Eigen::VectorXd& point, PathPtr& solution)
   if (cost_ <= 1.003 * utopia_)
   {
     ROS_INFO("Already optimal");
+    solution=solution_;
+    completed_=true;
     return true;
   }
   double cost = solution_->cost();
@@ -126,8 +132,11 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
   if (!init_)
     return false;
   if (cost_ <= 1.003 * utopia_)
+  {
+    completed_=true;
+    solution=solution_;
     return true;
-
+  }
   double cost = solution_->cost();
   //double r_rewire = std::min(start_tree_->getMaximumDistance(), r_rewire_factor_ * sampler_->getSpecificVolume() * std::pow(std::log(start_tree_->getNumberOfNodes())/start_tree_->getNumberOfNodes(),1./dof_));
   double r_rewire = start_tree_->getMaximumDistance();

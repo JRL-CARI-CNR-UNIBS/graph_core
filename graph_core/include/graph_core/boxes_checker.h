@@ -27,55 +27,35 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include <graph_core/sampler.h>
+#include <graph_core/collision_checker.h>
+#include <moveit/planning_scene/planning_scene.h>
 
+namespace pathplan
+{
 
-namespace pathplan {
-
-
-
-class LocalInformedSampler: public InformedSampler
+class BoxesChecker: public CollisionChecker
 {
 protected:
-  std::vector<Eigen::VectorXd,Eigen::aligned_allocator<Eigen::VectorXd>> centers_;
-  std::vector<double> radii_;
-
-  std::uniform_int_distribution<> id_;
+  double box_size_;
+  double boxes_distance_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  LocalInformedSampler(const Eigen::VectorXd& start_configuration,
-                  const Eigen::VectorXd& stop_configuration,
-                  const Eigen::VectorXd& lower_bound,
-                  const Eigen::VectorXd& upper_bound,
-                  const double& cost = std::numeric_limits<double>::infinity()):
-    InformedSampler(start_configuration,stop_configuration,lower_bound,upper_bound,cost)
+  BoxesChecker(const double& box_size, const double& boxes_distance):
+    box_size_(box_size),
+    boxes_distance_(boxes_distance)
   {
-
   }
 
-  void addBall(const Eigen::VectorXd& center, const double& radius)
+  virtual bool check(const Eigen::VectorXd& configuration)
   {
-    if (center.size()!=start_configuration_.size())
+    for (long idx=0;idx<configuration.size();idx++)
     {
-      ROS_INFO("center size=%zu, start configuration =%zu",center.size(),start_configuration_.size());
+      double tmp=std::abs(std::fmod(configuration(idx),boxes_distance_));
+      if ((tmp>box_size_*0.5) && (tmp<(boxes_distance_-box_size_*0.5)))
+        return true;
     }
-    assert(center.size()==start_configuration_.size());
-    centers_.push_back(center);
-    radii_.push_back(radius);
-    id_=std::uniform_int_distribution<>(0,centers_.size()-1);
+    return false;
   }
-
-  void clearBalls()
-  {
-    centers_.clear();
-    radii_.clear();
-  }
-
-  virtual Eigen::VectorXd sample();
 
 };
-
-
-typedef std::shared_ptr<LocalInformedSampler> LocalInformedSamplerPtr;
-
 }

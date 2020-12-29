@@ -1,6 +1,6 @@
-#pragma once
 /*
-Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
+Copyright (c) 2020, JRL-CARI CNR-STIIMA/UNIBS
+Manuel Beschi manuel.beschi@unibs.it
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,35 +26,57 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#pragma once
 #include <graph_core/solvers/tree_solver.h>
-
+#include <graph_core/solvers/rrt_star.h>
+#include <graph_core/tube_informed_sampler.h>
 namespace pathplan
 {
 
-class RRTConnect: public TreeSolver
+
+
+class MultigoalSolver: public TreeSolver
 {
 protected:
-  NodePtr goal_node_;
-  double max_distance_;
-  double utopia_;
-  virtual bool setProblem();
+  enum GoalStatus { search, refine, done, discard};
+  std::vector<NodePtr> goal_nodes_;
+  std::vector<TreePtr> goal_trees_;
+  std::vector<double> costs_;
+  std::vector<double> utopias_;
+  std::vector<PathPtr> solutions_;
+  std::vector<TubeInformedSamplerPtr> tube_samplers_;
+  std::vector<GoalStatus> status_;
 
+  double cost_at_last_clean=std::numeric_limits<double>::infinity();
+  double best_utopia_=std::numeric_limits<double>::infinity();
+  int best_goal_index=-1;
+  double max_distance_=1.0;
+  bool extend_ = false;
+  virtual bool setProblem();
+  virtual void clean(){}
+
+  bool isBestSolution(const int& index);
+
+  virtual void printMyself(std::ostream& os) const;
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  RRTConnect(const MetricsPtr& metrics,
+
+  MultigoalSolver(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
              const SamplerPtr& sampler):
-    TreeSolver(metrics,checker,sampler){}
+    TreeSolver(metrics, checker, sampler) {}
+
   virtual bool config(const ros::NodeHandle& nh);
+  virtual bool update(PathPtr& solution);
 
   virtual bool addStart(const NodePtr& start_node);
-  virtual bool addStartTree(const TreePtr& start_tree);
   virtual bool addGoal(const NodePtr& goal_node);
+  virtual void resetProblem();
 
-  virtual bool update(const Eigen::VectorXd& point,PathPtr& solution);
-
-  virtual bool update(PathPtr& solution);
+  void cleanTree();
 
 };
 
-}
+typedef std::shared_ptr<TreeSolver> TreeSolverPtr;
+
+
+}  // namespace pathplan

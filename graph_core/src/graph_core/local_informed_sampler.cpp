@@ -37,7 +37,6 @@ Eigen::VectorXd LocalInformedSampler::sample()
     return InformedSampler::sample();
 
 
-  bool flag = true;
   for (int itrial = 0; itrial < 100; itrial++)
   {
     unsigned int iball = id_(gen_);
