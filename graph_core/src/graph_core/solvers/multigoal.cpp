@@ -108,7 +108,7 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node)
   }
 
   TubeInformedSamplerPtr tube_sampler = std::make_shared<TubeInformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler_->getLB(),sampler_->getUB(),cost_);
-  tube_sampler->setLocalBias(0.3);
+  tube_sampler->setLocalBias(local_bias_);
   tube_sampler->setRadius(0.01);
   if (solution)
     tube_sampler->setPath(solution);
@@ -199,6 +199,21 @@ bool MultigoalSolver::config(const ros::NodeHandle& nh)
   {
     ROS_WARN("%s/extend is not set. using false (connect algorithm)",nh.getNamespace().c_str());
     max_distance_=1.0;
+  }
+  if (!nh.getParam("local_bias",local_bias_))
+  {
+    ROS_WARN("%s/local_bias is not set. using 0.3",nh.getNamespace().c_str());
+    local_bias_=0.3;
+  }
+  if (local_bias_<0)
+  {
+    ROS_WARN("%s/local_bias cannot be negative, set equal to 0",nh.getNamespace().c_str());
+    local_bias_=0.0;
+  }
+  if (local_bias_>1)
+  {
+    ROS_WARN("%s/local_bias cannot be greater than 1.0, set equal to 1.0",nh.getNamespace().c_str());
+    local_bias_=1.0;
   }
   configured_=true;
   return true;

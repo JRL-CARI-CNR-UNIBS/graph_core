@@ -354,6 +354,7 @@ bool MultigoalPlanner::terminate()
       return false;
     }
   }
+  return false;
 }
 
 }

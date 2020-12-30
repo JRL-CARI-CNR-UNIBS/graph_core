@@ -51,6 +51,7 @@ protected:
   double best_utopia_=std::numeric_limits<double>::infinity();
   int best_goal_index=-1;
   double max_distance_=1.0;
+  double local_bias_=0.3;
   bool extend_ = false;
   virtual bool setProblem();
   virtual void clean(){}
