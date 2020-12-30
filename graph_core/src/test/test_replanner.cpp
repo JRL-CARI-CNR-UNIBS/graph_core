@@ -152,28 +152,29 @@ int main(int argc, char **argv)
     }
 
     pathplan::PathPtr current_path = path_vector.front();
-    int idx = 0;//current_path->getConnections().size()/2;
+    int idx = 0; //current_path->getConnections().size()-1;
 
     std::vector<pathplan::ConnectionPtr> conn_v = current_path->getConnections();
-    if(conn_v.size()-3 > 0)
+    /*if(conn_v.size()-3 > 0)
     {
       conn_v.at(conn_v.size()-3)->setCost(std::numeric_limits<double>::infinity());
     }
     else
     {
       conn_v.at(conn_v.size()-2)->setCost(std::numeric_limits<double>::infinity());
-    }
-    //conn_v.back()->setCost(std::numeric_limits<double>::infinity());
-    //conn_v.at(idx)->setCost(std::numeric_limits<double>::infinity());
+    }*/
+
+    conn_v.back()->setCost(std::numeric_limits<double>::infinity());
+    conn_v.at(idx)->setCost(std::numeric_limits<double>::infinity());
     current_path->setConnections(conn_v);
 
-    /*conn_v = path_vector.at(1)->getConnections();
+    conn_v = path_vector.at(1)->getConnections();
     conn_v.back()->setCost(std::numeric_limits<double>::infinity());
     path_vector.at(1)->setConnections(conn_v);
 
     conn_v = path_vector.at(2)->getConnections();
     conn_v.back()->setCost(std::numeric_limits<double>::infinity());
-    path_vector.at(2)->setConnections(conn_v);*/
+    path_vector.at(2)->setConnections(conn_v);
 
     std::vector<pathplan::PathPtr> other_paths = {path_vector.at(1),path_vector.at(2)};
     pathplan::SamplerPtr samp = std::make_shared<pathplan::InformedSampler>(start_conf, goal_conf, lb, ub);
@@ -181,13 +182,16 @@ int main(int argc, char **argv)
     solver->config(nh);
 
     Eigen::VectorXd current_configuration = (current_path->getConnections().at(idx)->getChild()->getConfiguration() + current_path->getConnections().at(idx)->getParent()->getConfiguration())/2.0;
+    //pathplan::NodePtr node = current_path->getConnections().at(idx)->getParent();
+    //Eigen::VectorXd current_configuration = node->getConfiguration();
+
 
     pathplan::PathPtr new_path;
     pathplan::PathPtr subpath_from_path2;
     int connected2path_number;
     bool success;
     bool succ_node = 1;
-    int informed = 0;
+    int informed = 2;
 
     // ///////////////////// Visualization current node /////////////////////
     std::vector<double> marker_scale_sphere_actual(3,0.02);
@@ -204,8 +208,8 @@ int main(int argc, char **argv)
 
     pathplan::Replanner replanner = pathplan::Replanner(current_configuration, current_path, other_paths, solver, metrics, checker, lb, ub);
 
-    success =  replanner.informedOnlineReplanning(informed, succ_node);
-    //success =  replanner.informedOnlineReplanning(informed, succ_node,ut);
+    //success =  replanner.informedOnlineReplanning(informed, succ_node);
+    success =  replanner.informedOnlineReplanning(informed, succ_node,ut);
     //success = replanner.pathSwitch(current_path, node, succ_node, new_path, subpath_from_path2, connected2path_number, ut);
 
     if(success)ROS_INFO_STREAM("j: "<<j<<" success: "<<success<<" cost: "<<replanner.getReplannedPath()->cost());
@@ -220,7 +224,6 @@ int main(int argc, char **argv)
     std::vector<moveit::core::RobotState> wp_state_vector = ut.fromWaypoints2State(replanner.getReplannedPath()->getWaypoints());
     ut.displayPathNodesRviz(wp_state_vector, visualization_msgs::Marker::LINE_STRIP, marker_id, marker_scale, marker_color); //line strip
     /*/////////////////////////////////////////////////////////////////////////*/
-
 
     robot_trajectory::RobotTrajectoryPtr trj= ut.fromPath2Trj(replanner.getReplannedPath());
     moveit_msgs::RobotTrajectory trj_msg;
