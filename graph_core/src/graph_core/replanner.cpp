@@ -50,145 +50,192 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd configurati
 
   pathplan::PathPtr path = std::make_shared<pathplan::Path>(replanned_path_->getConnections(),metrics_,checker_);
   pathplan::NodePtr current_node = std::make_shared<pathplan::Node>(configuration);
+  pathplan::NodePtr path_start = path->getConnections().front()->getParent();
   pathplan::NodePtr node;
 
-  int idx_conn;
-  bool found = (path->findConnection(configuration,idx_conn) != NULL);
-  if(found)
+  int idx1, idx2;
+  double abscissa1 = current_path_->curvilinearAbscissaOfPoint(configuration,idx1);
+  double abscissa2 = current_path_->curvilinearAbscissaOfPoint(path_start->getConfiguration(),idx2);
+
+  if(abscissa1 == abscissa2) return;  //the start of the replanned path is the current configuration
+  if(abscissa1 < abscissa2)  //the replanned path starts from a position after the current one
   {
-    node = path->getConnections().at(idx_conn)->getChild();
-
-    if((path->getConnections().size()-1) > idx_conn)
+    if(idx1 == idx2)
     {
-      for(unsigned int i=idx_conn+1; i<path->getConnections().size();i++) path_connections.push_back(path->getConnections().at(i));
-    }
-    for(unsigned int i=0; i<=idx_conn; i++) path->getConnections().at(i)->remove();
-
-    if(current_node->getConfiguration() != node->getConfiguration())
-    {
-      pathplan::ConnectionPtr conn = std::make_shared<pathplan::Connection>(current_node,node);
-      double cost = metrics_->cost(current_node,node);
-      conn->setCost(cost);
+      //Directly connect the current configuration with the start of the replanned path
+      ConnectionPtr conn = std::make_shared<Connection>(current_node, path_start);
+      double cost_conn = metrics_->cost(configuration,path_start->getConfiguration());
+      conn->setCost(cost_conn);
       conn->add();
 
       connections.push_back(conn);
     }
-    if((path->getConnections().size()-1) > idx_conn) connections.insert(connections.end(),path_connections.begin(),path_connections.end());
+    if(idx1 < idx2)
+    {
+      NodePtr child = path->getConnections().at(idx1)->getChild();
+      ConnectionPtr conn = std::make_shared<Connection>(current_node, child);
+      double cost_conn = metrics_->cost(configuration,child->getConfiguration());
+      conn->setCost(cost_conn);
+      conn->add();
+
+      connections.push_back(conn);
+
+      //Adding the connections between the two configurations
+      for(unsigned int z = idx1+1; z<idx2; z++) connections.push_back(current_path_->getConnections().at(z));
+
+      NodePtr parent = path->getConnections().at(idx2)->getParent();
+      conn = std::make_shared<Connection>(parent,path_start);
+      cost_conn = metrics_->cost(parent->getConfiguration(),path_start->getConfiguration());
+      conn->setCost(cost_conn);
+      conn->add();
+
+      connections.push_back(conn);
+    }
+
+    for(const ConnectionPtr& replanned_connection:path->getConnections()) connections.push_back(replanned_connection);
+
     path->setConnections(connections);
 
+    replanned_path_ = path;
+    return;
   }
-  else
+  else //the replanned path starts from a position before the current one
   {
-    int idx_replanned_path_start = -1;
-    ROS_INFO("QUA0");
-    ConnectionPtr conn = current_path_->findConnection(path->getConnections().front()->getParent()->getConfiguration(),idx_replanned_path_start);
-    ROS_INFO_STREAM("idx0: "<<idx_replanned_path_start);
-
-
-    int idx;
-    if(path->getConnections().front()->getParent()->getConfiguration() == current_path_->getConnections().at(idx_replanned_path_start)->getChild()->getConfiguration()) idx = idx_replanned_path_start + 1;
-    else idx = idx_replanned_path_start;
-
-    int j = 0;
-    int j_save = -2;
-    for(unsigned int i=idx; i<current_path_->getConnections().size();i++)
+    int idx_conn;
+    bool found = (path->findConnection(configuration,idx_conn) != NULL);
+    if(found)
     {
-      if(path->getConnections().at(j)->getChild()->getConfiguration() == current_path_->getConnections().at(i)->getChild()->getConfiguration())
-      {
-        node = path->getConnections().at(j)->getChild();
-        j_save = j;
-      }
-      else break;
-      j+=1;
-    }
+      node = path->getConnections().at(idx_conn)->getChild();
 
-    bool add_conn = false;
-    if(j_save != -2)
-    {
-      for(unsigned int i=j_save+1; i<path->getConnections().size();i++) path_connections.push_back(path->getConnections().at(i));
-      for(unsigned int i=0; i<=j_save; i++) path->getConnections().at(i)->remove();
-    }
-    else
-    {
-      if((conn->getParent()->getConfiguration()-configuration).norm() <1e-06 || (conn->getChild()->getConfiguration()-configuration).norm() <1e-06)
+      if((path->getConnections().size()-1) > idx_conn)
       {
-        node = path->getConnections().front()->getParent();
-        for(unsigned int i=0; i<path->getConnections().size();i++) path_connections.push_back(path->getConnections().at(i));
+        for(unsigned int i=idx_conn+1; i<path->getConnections().size();i++) path_connections.push_back(path->getConnections().at(i));
       }
-      else
-      {
-        node = current_path_->getConnections().at(idx_replanned_path_start)->getChild();
-        for(unsigned int i=0; i<path->getConnections().size();i++) path_connections.push_back(path->getConnections().at(i));
-        add_conn = true;
-      }
-    }
+      for(unsigned int i=0; i<=idx_conn; i++) path->getConnections().at(i)->remove();
 
-    bool connected = false;
-    int idx_current_path_conf = -1;
-    ROS_INFO("QUA");
-    current_path_->findConnection(configuration,idx_current_path_conf);
-    ROS_INFO_STREAM("idx: "<<idx_current_path_conf);
-    int t = idx_current_path_conf;
-    pathplan::NodePtr child;
-    pathplan::NodePtr parent;
-    while(!connected)
-    {
-      if(t == idx_current_path_conf)
+      if(current_node->getConfiguration() != node->getConfiguration())
       {
-        child = current_node;
-      }
-      else
-      {
-        child = std::make_shared<pathplan::Node>(current_path_->getConnections().at(t)->getChild()->getConfiguration());
-      }
-      parent = std::make_shared<pathplan::Node>(current_path_->getConnections().at(t)->getParent()->getConfiguration());
-
-      if(child->getConfiguration() != node->getConfiguration())
-      {
-        pathplan::ConnectionPtr conn = std::make_shared<pathplan::Connection>(child,parent); //you re moving backwards
-        double cost = metrics_->cost(child,parent);
+        pathplan::ConnectionPtr conn = std::make_shared<pathplan::Connection>(current_node,node);
+        double cost = metrics_->cost(current_node,node);
         conn->setCost(cost);
         conn->add();
 
         connections.push_back(conn);
       }
-      else connected = true;
-
-      t-=1;
+      if((path->getConnections().size()-1) > idx_conn) connections.insert(connections.end(),path_connections.begin(),path_connections.end());
+      path->setConnections(connections);
     }
-
-    if(add_conn)
+    else
     {
-      pathplan::ConnectionPtr conn = std::make_shared<pathplan::Connection>(node,current_node); //you re moving backwards
-      double cost = metrics_->cost(node,current_node);
-      conn->setCost(cost);
-      conn->add();
-      connections.push_back(conn);
+      int idx_replanned_path_start = -1;
+      ConnectionPtr conn = current_path_->findConnection(path_start->getConfiguration(),idx_replanned_path_start);
+
+      int idx;
+      if(path_start->getConfiguration() == current_path_->getConnections().at(idx_replanned_path_start)->getChild()->getConfiguration()) idx = idx_replanned_path_start + 1;
+      else idx = idx_replanned_path_start;
+
+      int j = 0;
+      int j_save = -2;
+      for(unsigned int i=idx; i<current_path_->getConnections().size();i++)
+      {
+        if(path->getConnections().at(j)->getChild()->getConfiguration() == current_path_->getConnections().at(i)->getChild()->getConfiguration())
+        {
+          node = path->getConnections().at(j)->getChild();
+          j_save = j;
+        }
+        else break;
+        j+=1;
+      }
+
+      bool add_conn = false;
+      if(j_save != -2)
+      {
+        for(unsigned int i=j_save+1; i<path->getConnections().size();i++) path_connections.push_back(path->getConnections().at(i));
+        for(unsigned int i=0; i<=j_save; i++) path->getConnections().at(i)->remove();
+      }
+      else
+      {
+        if((conn->getParent()->getConfiguration()-configuration).norm() <1e-06 || (conn->getChild()->getConfiguration()-configuration).norm() <1e-06)
+        {
+          node = path->getConnections().front()->getParent();
+          for(unsigned int i=0; i<path->getConnections().size();i++) path_connections.push_back(path->getConnections().at(i));
+        }
+        else
+        {
+          node = current_path_->getConnections().at(idx_replanned_path_start)->getChild();
+          for(unsigned int i=0; i<path->getConnections().size();i++) path_connections.push_back(path->getConnections().at(i));
+          add_conn = true;
+        }
+      }
+
+      bool connected = false;
+      int idx_current_path_conf = -1;
+      current_path_->findConnection(configuration,idx_current_path_conf);
+      int t = idx_current_path_conf;
+      pathplan::NodePtr child;
+      pathplan::NodePtr parent;
+      while(!connected)
+      {
+        if(t == idx_current_path_conf)
+        {
+          child = current_node;
+        }
+        else
+        {
+          child = std::make_shared<pathplan::Node>(current_path_->getConnections().at(t)->getChild()->getConfiguration());
+        }
+        parent = std::make_shared<pathplan::Node>(current_path_->getConnections().at(t)->getParent()->getConfiguration());
+
+        if(child->getConfiguration() != node->getConfiguration())
+        {
+          pathplan::ConnectionPtr conn = std::make_shared<pathplan::Connection>(child,parent); //you re moving backwards
+          double cost = metrics_->cost(child,parent);
+          conn->setCost(cost);
+          conn->add();
+
+          connections.push_back(conn);
+        }
+        else connected = true;
+
+        t-=1;
+      }
+
+      if(add_conn)
+      {
+        pathplan::ConnectionPtr conn = std::make_shared<pathplan::Connection>(node,current_node); //you re moving backwards
+        double cost = metrics_->cost(node,current_node);
+        conn->setCost(cost);
+        conn->add();
+
+        connections.push_back(conn);
+      }
+      connections.insert(connections.end(),path_connections.begin(),path_connections.end());
+      path->setConnections(connections);
     }
-    connections.insert(connections.end(),path_connections.begin(),path_connections.end());
-    path->setConnections(connections);
+
+    /*std::vector<Eigen::VectorXd> wp = path->getWaypoints();
+    std::vector<ConnectionPtr> new_connections;
+    ConnectionPtr connection;
+    double cost;
+    NodePtr child;
+    NodePtr parent;
+
+    for(unsigned int i=0; i<wp.size()-1; i++)
+    {
+      parent = std::make_shared<Node>(wp.at(i));
+      child = std::make_shared<Node>(wp.at(i+1));
+
+      connection = std::make_shared<Connection>(parent,child);
+      cost = metrics_->cost(parent,child);
+      connection->setCost(cost);
+      connection->add();
+      new_connections.push_back(connection);
+    }
+
+    replanned_path_ = std::make_shared<Path>(new_connections,metrics_,checker_);*/
+
+    replanned_path_ = path;
   }
-
-  std::vector<Eigen::VectorXd> wp = path->getWaypoints();
-  std::vector<ConnectionPtr> new_connections;
-  ConnectionPtr connection;
-  double cost;
-  NodePtr child;
-  NodePtr parent;
-
-  for(unsigned int i=0; i<wp.size()-1; i++)
-  {
-    parent = std::make_shared<Node>(wp.at(i));
-    child = std::make_shared<Node>(wp.at(i+1));
-
-    connection = std::make_shared<Connection>(parent,child);
-    cost = metrics_->cost(parent,child);
-    connection->setCost(cost);
-    connection->add();
-    new_connections.push_back(connection);
-  }
-
-  replanned_path_ = std::make_shared<Path>(new_connections,metrics_,checker_);
 }
 
 bool Replanner::connect2goal(const PathPtr& current_path, const NodePtr& node, PathPtr &new_path)

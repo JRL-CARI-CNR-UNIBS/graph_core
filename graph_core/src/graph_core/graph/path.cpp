@@ -89,6 +89,42 @@ Eigen::VectorXd Path::pointOnCurvilinearAbscissa(const double& abscissa)
   return connections_.back()->getChild()->getConfiguration();
 }
 
+double Path::curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf, int& idx)
+{
+  ConnectionPtr connection = findConnection(conf,idx);
+  if(connection == NULL)
+  {
+    ROS_ERROR("The configuration doesn't belong to the path");
+    assert(0);
+  }
+  else
+  {
+    double euclidean_norm = 0;
+    double sub_euclidean_norm = -1;
+    for (const ConnectionPtr& conn : connections_)
+    {
+      if(connection == conn)
+      {
+        sub_euclidean_norm = euclidean_norm; //norma fino alla connessione precedente a quella dove si trova la configurazione
+      }
+      euclidean_norm += conn->norm();
+    }
+
+    if(sub_euclidean_norm == -1) assert(0);
+
+    double dist = (conf - connection->getParent()->getConfiguration()).norm();
+    double abscissa = (sub_euclidean_norm+dist)/euclidean_norm;
+
+    return abscissa;
+  }
+}
+
+double Path::curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf)
+{
+  int idx;
+  return curvilinearAbscissaOfPoint(conf,idx);
+}
+
 void Path::computeCost()
 {
   cost_ = 0;
@@ -439,10 +475,11 @@ const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& po
   return projection;
 }
 
-const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& point, const int& n_conn, int& idx)
+const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& point, int& n_conn)
 {
   //The point is projected on the connection on which its projection is between parent and child and to which the distance is the smallest and the history of the projection is taken into consideration
 
+  int idx;
   Eigen::VectorXd pr;
   Eigen::VectorXd projection;
   double min_distance = std::numeric_limits<double>::infinity();
@@ -470,12 +507,17 @@ const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& po
     }
   }
 
+
   if(min_distance == std::numeric_limits<double>::infinity())
   {
-    projection = findCloserNode(point)->getConfiguration();
+    projection = connections_.at(n_conn)->getChild()->getConfiguration();
+
+    //projection = findCloserNode(point)->getConfiguration();
+    //findConnection(projection,n_conn);
     ROS_ERROR("projection on path not found");
-    //assert(0);
   }
+  else  n_conn = idx;
+
   return projection;
 }
 

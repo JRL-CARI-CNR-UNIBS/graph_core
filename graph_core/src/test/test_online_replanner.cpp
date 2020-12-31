@@ -47,7 +47,7 @@ trajectory_msgs::JointTrajectoryPoint pnt;
 int n_conn = 0;
 int n_conn_replan = 0;
 
-bool first_replan = 1;
+bool first_replan = true;
 
 void replanning_fcn()
 {
@@ -69,7 +69,7 @@ void replanning_fcn()
       {
         if(first_replan)
         {
-          first_replan = 0;
+          first_replan = false;
           replanner->addOtherPath(replanner->getCurrentPath());
         }
 
@@ -335,9 +335,7 @@ int main(int argc, char **argv)
   interpolator.interpolate(ros::Duration(t+dt),pnt);
   for(unsigned int i=0; i<pnt.positions.size();i++) point2project[i] = pnt.positions.at(i);
 
-  int new_n_conn_replan;
-  configuration_replan = current_path->projectOnClosestConnection(point2project,n_conn_replan,new_n_conn_replan);
-  n_conn_replan = new_n_conn_replan;
+  configuration_replan = current_path->projectOnClosestConnection(point2project,n_conn_replan);
 
   replanner = std::make_shared<pathplan::Replanner>(configuration_replan, current_path, other_paths, solver, metrics, checker, lb, ub);
 
@@ -356,17 +354,13 @@ int main(int argc, char **argv)
 
     for(unsigned int i=0; i<pnt_replan.positions.size();i++) point2project[i] = pnt_replan.positions.at(i);
 
-    new_n_conn_replan;
-    configuration_replan = replanner->getCurrentPath()->projectOnClosestConnection(point2project,n_conn_replan,new_n_conn_replan);
-    n_conn_replan = new_n_conn_replan;
+    configuration_replan = replanner->getCurrentPath()->projectOnClosestConnection(point2project,n_conn_replan);
 
     interpolator.interpolate(ros::Duration(t),pnt);
 
     for(unsigned int i=0; i<pnt.positions.size();i++) point2project[i] = pnt.positions.at(i);
 
-    int new_n_conn;
-    current_configuration = replanner->getCurrentPath()->projectOnClosestConnection(point2project,n_conn,new_n_conn);
-    n_conn= new_n_conn;
+    current_configuration = replanner->getCurrentPath()->projectOnClosestConnection(point2project,n_conn);
 
     t+=dt;
     trj_mtx.unlock();

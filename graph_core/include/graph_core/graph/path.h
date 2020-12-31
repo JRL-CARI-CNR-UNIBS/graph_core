@@ -91,6 +91,10 @@ public:
   bool resample(const double& distance);
   double computeEuclideanNorm();
   Eigen::VectorXd pointOnCurvilinearAbscissa(const double& abscissa);
+  double curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf);
+  double curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf, int& idx);
+
+
 
   std::vector<Eigen::VectorXd> getWaypoints();
   void setTree(const TreePtr& tree)
@@ -118,7 +122,7 @@ public:
   bool isValid();
   Eigen::VectorXd projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool &in_conn);
   const Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point);
-  const Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point, const int& n_conn, int &idx);
+  const Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point, int &n_conn);
 
 
 
