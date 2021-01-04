@@ -31,6 +31,7 @@ include_directories(
   )
 add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/metrics.cpp
+  src/${PROJECT_NAME}/avoidance_metrics.cpp
   src/${PROJECT_NAME}/occupancy_metrics.cpp
   src/${PROJECT_NAME}/sampler.cpp
   src/${PROJECT_NAME}/local_informed_sampler.cpp

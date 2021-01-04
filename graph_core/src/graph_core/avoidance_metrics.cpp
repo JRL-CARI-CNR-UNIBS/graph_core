@@ -25,12 +25,13 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/occupancy_metrics.h>
+#include <graph_core/avoidance_metrics.h>
 
 
 namespace pathplan
 {
-OccupancyMetrics::OccupancyMetrics(ros::NodeHandle& nh):
+
+AvoidanceMetrics::AvoidanceMetrics(const ros::NodeHandle &nh):
   Metrics(),
   nh_(nh)
 {
@@ -47,52 +48,84 @@ OccupancyMetrics::OccupancyMetrics(ros::NodeHandle& nh):
   {
     ROS_ERROR("%s/tool_frame not defined", nh_.getNamespace().c_str());
   }
-  if (!nh_.getParam("weight", weight_))
+  if (!nh_.getParam("max_penalty", max_penalty_))
   {
-    ROS_ERROR("%s/weight not defined", nh_.getNamespace().c_str());
+    ROS_ERROR("%s/weight not defined, use 1.0", nh_.getNamespace().c_str());
+    max_penalty_=1.0;
+  }
+  if (!nh_.getParam("max_distance", max_distance_))
+  {
+    ROS_ERROR("%s/max_distance not defined, use 1.5 meter", nh_.getNamespace().c_str());
+    max_distance_=1.5;
+  }
+  if (!nh_.getParam("min_distance", min_distance_))
+  {
+    ROS_ERROR("%s/min_distance not defined, use 0.5 meter", nh_.getNamespace().c_str());
+    min_distance_=0.5;
   }
   if (!nh_.getParam("computation_step", step_))
   {
-    ROS_ERROR("%s/computation_step not defined", nh_.getNamespace().c_str());
+    ROS_ERROR("%s/computation_step not defined, use 0.1", nh_.getNamespace().c_str());
+    step_=0.1;
   }
 
   Eigen::Vector3d grav;
   grav << 0, 0, -9.806;
 
-  rosdyn::ChainPtr chain = rosdyn::createChain(model, base_frame, tool_frame, grav);
-  human_occupancy::OccupancyGridPtr grid = std::make_shared<human_occupancy::OccupancyGrid>(nh);
-  filter_ = std::make_shared<human_occupancy::OccupancyFilter>(chain, grid, nh_);
+  chain_ = rosdyn::createChain(model, base_frame, tool_frame, grav);
+
+  if (!nh_.getParam("links", links_))
+  {
+    ROS_ERROR("%s/links not defined, use all links", nh_.getNamespace().c_str());
+    links_=chain_->getLinksName();
+  }
+
+  points_.resize(3,0);
+  inv_delta_distance_=1.0/(max_distance_-min_distance_);
 }
 
-
-double OccupancyMetrics::cost(const NodePtr& node1,
-                              const NodePtr& node2)
+void AvoidanceMetrics::addPoint(const Eigen::Vector3d &point)
 {
-  return cost(node1->getConfiguration(), node2->getConfiguration());
+  points_.conservativeResize(3, points_.cols()+1);
+  points_.col(points_.cols()-1) = point;
 }
 
-double OccupancyMetrics::cost(const Eigen::VectorXd& configuration1,
-                              const Eigen::VectorXd& configuration2)
+double AvoidanceMetrics::cost(const Eigen::VectorXd& configuration1,
+                     const Eigen::VectorXd& configuration2)
 {
   double length = (configuration1 - configuration2).norm();
-  if (length < 1e-6)
+  if (length < 0.1*step_)
     return length;
 
   double cost = length;
   unsigned int nsteps = std::ceil(length / step_);
   double inv_nsteps = 1.0 / nsteps;
-  double distance = length / nsteps;
+  double l = length / nsteps;
   for (unsigned int istep = 0; istep <= nsteps; istep++)
   {
     Eigen::VectorXd q = configuration1 + (configuration2 - configuration1) * inv_nsteps * istep;
-    double occupancy = filter_->occupancy(q);
-    if (istep == 0 || istep == nsteps)
-      cost += 0.5 * occupancy * weight_ * distance;
-    else
-      cost += occupancy * weight_ * distance;
+    double dist=std::numeric_limits<double>::infinity();
+    for (const std::string& link: links_)
+    {
+      Eigen::Affine3d T_b_l=chain_->getTransformationLink(q,link);
+      for (long ip=0;ip<points_.cols();ip++)
+      {
+        double d=(T_b_l.translation()-points_.col(ip)).norm();
+        dist=(d>dist)?d:dist;
+        if (dist<min_distance_)
+          break;
+      }
+      if (dist<min_distance_)
+        break;
+    }
+    if (dist<=min_distance_)
+      cost+=l*max_penalty_;
+    else if (dist<max_distance_)
+      cost+=l*max_penalty_*(max_distance_-dist)*inv_delta_distance_;
   }
 
   return cost;
 }
+
 
 }
