@@ -89,6 +89,42 @@ Eigen::VectorXd Path::pointOnCurvilinearAbscissa(const double& abscissa)
   return connections_.back()->getChild()->getConfiguration();
 }
 
+double Path::curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf, int& idx)
+{
+  ConnectionPtr connection = findConnection(conf,idx);
+  if(connection == NULL)
+  {
+    ROS_ERROR("The configuration doesn't belong to the path");
+    assert(0);
+  }
+  else
+  {
+    double euclidean_norm = 0;
+    double sub_euclidean_norm = -1;
+    for (const ConnectionPtr& conn : connections_)
+    {
+      if(connection == conn)
+      {
+        sub_euclidean_norm = euclidean_norm; //norma fino alla connessione precedente a quella dove si trova la configurazione
+      }
+      euclidean_norm += conn->norm();
+    }
+
+    if(sub_euclidean_norm == -1) assert(0);
+
+    double dist = (conf - connection->getParent()->getConfiguration()).norm();
+    double abscissa = (sub_euclidean_norm+dist)/euclidean_norm;
+
+    return abscissa;
+  }
+}
+
+double Path::curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf)
+{
+  int idx;
+  return curvilinearAbscissaOfPoint(conf,idx);
+}
+
 void Path::computeCost()
 {
   cost_ = 0;
@@ -357,7 +393,6 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
       idx = i;
       return conn;
     }
-
   }
 
   ROS_ERROR("Connection not found");
@@ -403,6 +438,7 @@ Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const Co
     projection = child;  //the goal
     in_conn = 1;
   }
+
   return projection;
 }
 
@@ -436,6 +472,52 @@ const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& po
     ROS_ERROR("projection on path not found");
     //assert(0);
   }
+  return projection;
+}
+
+const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& point, int& n_conn)
+{
+  //The point is projected on the connection on which its projection is between parent and child and to which the distance is the smallest and the history of the projection is taken into consideration
+
+  int idx;
+  Eigen::VectorXd pr;
+  Eigen::VectorXd projection;
+  double min_distance = std::numeric_limits<double>::infinity();
+
+  ConnectionPtr conn;
+  for(unsigned int i=0;i<connections_.size();i++)
+  {
+    conn = connections_.at(i);
+
+    double distance;
+    bool in_conn;
+    pr = projectOnConnection(point,conn,distance,in_conn);
+
+    if(in_conn)
+    {
+      if(distance<min_distance)
+      {
+        if(i==n_conn || i==n_conn+1)
+        {
+          min_distance = distance;
+          projection = pr;
+          idx = i;
+        }
+      }
+    }
+  }
+
+
+  if(min_distance == std::numeric_limits<double>::infinity())
+  {
+    projection = connections_.at(n_conn)->getChild()->getConfiguration();
+
+    //projection = findCloserNode(point)->getConfiguration();
+    //findConnection(projection,n_conn);
+    ROS_ERROR("projection on path not found");
+  }
+  else  n_conn = idx;
+
   return projection;
 }
 
@@ -546,6 +628,12 @@ NodePtr Path::findCloserNode(const NodePtr& node)
   return closest_node;
 }
 
+PathPtr Path::getSubpathToNode(const Eigen::VectorXd& conf)
+{
+  NodePtr node = std::make_shared<Node>(conf);
+  return getSubpathToNode(node);
+}
+
 PathPtr Path::getSubpathToNode(const NodePtr& node)
 {
   if((node->getConfiguration()-connections_.front()->getParent()->getConfiguration()).norm()<1e-06)
@@ -576,6 +664,12 @@ PathPtr Path::getSubpathToNode(const NodePtr& node)
   ROS_ERROR("The node doesn to belong to this path");
   ROS_INFO_STREAM("configuration: "<<node->getConfiguration().transpose());
   throw std::invalid_argument("The node doesn to belong to this path");
+}
+
+PathPtr Path::getSubpathFromNode(const Eigen::VectorXd& conf)
+{
+  NodePtr node = std::make_shared<Node>(conf);
+  return getSubpathFromNode(node);
 }
 
 PathPtr Path::getSubpathFromNode(const NodePtr& node)
@@ -659,6 +753,9 @@ bool Path::simplify(const double& distance)
 bool Path::isValid()
 {
   bool valid = true;
+  Eigen::VectorXd parent;
+  Eigen::VectorXd child;
+  double cost;
 
   if(cost_ == std::numeric_limits<double>::infinity())
   {
@@ -667,13 +764,24 @@ bool Path::isValid()
 
   for(const ConnectionPtr& conn : connections_)
   {
+    assert(conn);
     if(!checker_->checkPath(conn->getParent()->getConfiguration(), conn->getChild()->getConfiguration()))
     {
       conn->setCost(std::numeric_limits<double>::infinity());
-      cost_ = std::numeric_limits<double>::infinity();
       valid = false;
     }
+    else
+    {
+      parent = conn->getParent()->getConfiguration();
+      child = conn->getChild()->getConfiguration();
+      cost = metrics_->cost(parent,child);
+      conn->setCost(cost);
+    }
   }
+
+  if(!valid) cost_ = std::numeric_limits<double>::infinity();
+  else computeCost();
+
   return valid;
 }
 
