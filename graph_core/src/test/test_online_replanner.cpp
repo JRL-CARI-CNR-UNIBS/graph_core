@@ -48,12 +48,14 @@ int n_conn = 0;
 int n_conn_replan = 0;
 
 bool first_replan = true;
+bool replan = true;
 
 void replanning_fcn()
 {
   ros::Rate lp(50);
   while (!stop)
   {
+
     trj_mtx.lock();
     replanner->setCurrentConf(configuration_replan);
     trj_mtx.unlock();
@@ -75,13 +77,11 @@ void replanning_fcn()
 
         trj_mtx.lock();
         Eigen::VectorXd conf = current_configuration;
-        trj_mtx.unlock();
+        //trj_mtx.unlock();
 
-        if(replanner->getReplannedPath()->getConnections().at(0)->getParent()->getConfiguration() != conf)
-        {
-          replanner->startReplannedPathFromNewCurrentConf(conf);
-        }
-        trj_mtx.lock();
+        replanner->startReplannedPathFromNewCurrentConf(conf);
+
+        //trj_mtx.lock();
         checker_mtx.lock();
         replanner->setCurrentPath(replanner->getReplannedPath());
         n_conn = 0;
@@ -106,6 +106,7 @@ void replanning_fcn()
         ut->displayPathNodesRviz(wp_state_vector, visualization_msgs::Marker::LINE_STRIP, marker_id, marker_scale, marker_color); //line strip
       }
     }
+
     lp.sleep();
   }
 }
@@ -331,11 +332,17 @@ int main(int argc, char **argv)
   /*conf_pass.resize(current_configuration.size());
   Eigen::VectorXd::Map(&conf_pass[0], current_configuration.size()) = current_configuration;*/
 
+  double k_repl = 50;
+
   Eigen::VectorXd point2project(dof);
-  interpolator.interpolate(ros::Duration(t+dt),pnt);
+  interpolator.interpolate(ros::Duration(t+k_repl*dt),pnt);
   for(unsigned int i=0; i<pnt.positions.size();i++) point2project[i] = pnt.positions.at(i);
 
-  configuration_replan = current_path->projectOnClosestConnection(point2project,n_conn_replan);
+  configuration_replan = current_path->projectOnClosestConnection(point2project);
+  Eigen::VectorXd past_configuration_replan = configuration_replan;
+  n_conn_replan = 0;
+
+  Eigen::VectorXd past_current_configuration = start_conf;
 
   replanner = std::make_shared<pathplan::Replanner>(configuration_replan, current_path, other_paths, solver, metrics, checker, lb, ub);
 
@@ -349,18 +356,28 @@ int main(int argc, char **argv)
     sensor_msgs::JointState joint_state;
 
     trj_mtx.lock();
-    trajectory_msgs::JointTrajectoryPoint pnt_replan;
-    interpolator.interpolate(ros::Duration(t+dt),pnt_replan);
+    double dt_replan = k_repl*dt;
+    do
+    {
+      trajectory_msgs::JointTrajectoryPoint pnt_replan;
+      interpolator.interpolate(ros::Duration(t+dt_replan),pnt_replan);
 
-    for(unsigned int i=0; i<pnt_replan.positions.size();i++) point2project[i] = pnt_replan.positions.at(i);
+      for(unsigned int i=0; i<pnt_replan.positions.size();i++) point2project[i] = pnt_replan.positions.at(i);
 
-    configuration_replan = replanner->getCurrentPath()->projectOnClosestConnection(point2project,n_conn_replan);
+      configuration_replan = replanner->getCurrentPath()->projectOnClosestConnection(point2project,past_configuration_replan,n_conn_replan);
+      if(configuration_replan == past_configuration_replan) replan = false;
+      else replan = true;
+      past_configuration_replan = configuration_replan;
+
+      dt_replan += dt;
+    }while(!replan);
 
     interpolator.interpolate(ros::Duration(t),pnt);
 
     for(unsigned int i=0; i<pnt.positions.size();i++) point2project[i] = pnt.positions.at(i);
 
-    current_configuration = replanner->getCurrentPath()->projectOnClosestConnection(point2project,n_conn);
+    current_configuration = replanner->getCurrentPath()->projectOnClosestConnection(point2project,past_current_configuration,n_conn);
+    past_current_configuration = current_configuration;
 
     t+=dt;
     trj_mtx.unlock();
@@ -374,6 +391,12 @@ int main(int argc, char **argv)
       moveit::core::RobotState pink_marker = ut->fromWaypoints2State(current_configuration);
       std::vector<moveit::core::RobotState> pink_marker_v = {pink_marker};
       ut->displayPathNodesRviz(pink_marker_v, visualization_msgs::Marker::SPHERE, marker_id_sphere, marker_scale_sphere_actual, marker_color_sphere_actual);
+
+      marker_color_sphere_actual = {0.0,0.0,0.0,1.0};
+      marker_id_sphere = {15680};
+      moveit::core::RobotState black_marker = ut->fromWaypoints2State(configuration_replan);
+      std::vector<moveit::core::RobotState> black_marker_v = {black_marker};
+      ut->displayPathNodesRviz(black_marker_v, visualization_msgs::Marker::SPHERE, marker_id_sphere, marker_scale_sphere_actual, marker_color_sphere_actual);
 
       joint_state.position = pnt.positions;
       joint_state.velocity = pnt.velocities;
