@@ -407,7 +407,35 @@ Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const Co
   Eigen::VectorXd parent = conn->getParent()->getConfiguration();
   Eigen::VectorXd child = conn->getChild()->getConfiguration();
 
-  double a = (parent-child).norm();
+  Eigen::VectorXd conn_vector = child-parent;
+  Eigen::VectorXd point_vector = point-parent;
+
+  double conn_length = (parent-child).norm();
+  double point_length = (point-parent).norm();
+  double s = (point_vector.transpose())*conn_vector;
+
+  Eigen::VectorXd projection = parent + conn_vector*s/conn_length;
+  distance = sqrt(point_length*point_length-s*s);
+
+  if(s/conn_length>=0 && s/conn_length<=1) in_conn = 1;
+  else in_conn = 0;
+
+  if(conn == connections_.front() && s/conn_length<0)  //if the point is before the start it is projected on the start
+  {
+    projection = parent; //the start
+    in_conn = 1;
+  }
+
+  if(conn == connections_.back() && s/conn_length>1)  //if the point is before the start it is projected on the start
+  {
+    projection = child;  //the goal
+    in_conn = 1;
+  }
+
+  return projection;
+
+
+  /*double a = (parent-child).norm();
   double b = (parent-point).norm();
   double c = (point-child).norm();
 
@@ -439,7 +467,7 @@ Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const Co
     in_conn = 1;
   }
 
-  return projection;
+  return projection; */
 }
 
 const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& point)
@@ -470,12 +498,11 @@ const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& po
   {
     projection = findCloserNode(point)->getConfiguration();
     ROS_ERROR("projection on path not found");
-    //assert(0);
   }
   return projection;
 }
 
-const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& point, int& n_conn)
+const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& point, const Eigen::VectorXd past_prj, int& n_conn)
 {
   //The point is projected on the connection on which its projection is between parent and child and to which the distance is the smallest and the history of the projection is taken into consideration
 
@@ -510,10 +537,7 @@ const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& po
 
   if(min_distance == std::numeric_limits<double>::infinity())
   {
-    projection = connections_.at(n_conn)->getChild()->getConfiguration();
-
-    //projection = findCloserNode(point)->getConfiguration();
-    //findConnection(projection,n_conn);
+    projection = past_prj;
     ROS_ERROR("projection on path not found");
   }
   else  n_conn = idx;
