@@ -1,4 +1,3 @@
-#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -26,40 +25,32 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/metrics.h>
-#include <rosdyn_core/primitives.h>
+
+#include <graph_core/scaled_sampler.h>
 
 namespace pathplan
 {
-
-
-// Avoidance metrics
-class AvoidanceMetrics: public Metrics
+ScaledInformedSampler::ScaledInformedSampler(const Eigen::VectorXd& start_configuration,
+                                             const Eigen::VectorXd& stop_configuration,
+                                             const Eigen::VectorXd& lower_bound,
+                                             const Eigen::VectorXd& upper_bound,
+                                             const Eigen::VectorXd& scale,
+                                             const double& cost):
+  InformedSampler(start_configuration,stop_configuration,lower_bound,upper_bound,cost),
+  scale_(scale)
 {
-protected:
-  double step_ = 0.1;
-  ros::NodeHandle nh_;
-  rosdyn::ChainPtr chain_;
+  inv_scale_=scale_.cwiseInverse();
 
-  double min_distance_=0.2;
-  double max_distance_=1.0;
-  double inv_delta_distance_;
-  double max_penalty_g=2.0;
-
-  std::vector<std::string> links_;
-
-  Eigen::Matrix<double,3,-1> points_;
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  AvoidanceMetrics(const ros::NodeHandle& nh);
-
-  void addPoint(const Eigen::Vector3d& point);
-
-  virtual double cost(const Eigen::VectorXd& configuration1,
-                      const Eigen::VectorXd& configuration2);
-
-
-};
-typedef std::shared_ptr<AvoidanceMetrics> AvoidanceMetricsPtr;
-
+  InformedSampler(inv_scale_.cwiseProduct(start_configuration),
+                  inv_scale_.cwiseProduct(stop_configuration),
+                  inv_scale_.cwiseProduct(lower_bound),
+                  inv_scale_.cwiseProduct(upper_bound),
+                  cost);
 }
+Eigen::VectorXd ScaledInformedSampler::sample()
+{
+  return scale_.cwiseProduct(InformedSampler::sample());
+}
+
+
+}  // namespace pathplan

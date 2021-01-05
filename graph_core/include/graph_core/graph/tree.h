@@ -69,6 +69,7 @@ public:
   {
     return root_;
   }
+
   void addNode(const NodePtr& node, const bool& check_if_present = true);
   bool tryExtend(const Eigen::VectorXd& configuration,
                  Eigen::VectorXd& next_configuration,
@@ -118,6 +119,7 @@ public:
   bool needCleaning(){return nodes_.size()>maximum_nodes_;}
 
   const double& getMaximumDistance() const {return max_distance_;}
+  const Direction& getDirection() const {return direction_;}
 };
 
 typedef std::shared_ptr<Tree> TreePtr;

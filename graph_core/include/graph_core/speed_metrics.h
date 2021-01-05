@@ -36,35 +36,21 @@ namespace pathplan
 
 
 // Avoidance metrics
-class AvoidanceMetrics: public Metrics
+class SpeedMetrics: public Metrics
 {
 protected:
-  double step_ = 0.1;
-  ros::NodeHandle nh_;
-  rosdyn::ChainPtr chain_;
+  Eigen::VectorXd max_speed_;
+  Eigen::VectorXd inv_max_speed_;
 
-  double min_distance_=0.2;
-  double max_distance_=1.0;
-  double inv_delta_distance_;
-  double max_penalty_=2.0;
-
-  std::vector<std::string> links_;
-
-  Eigen::Matrix<double,3,-1> points_;
-
-  ros::Publisher marker_pub_;
-  int marker_id_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  AvoidanceMetrics(const ros::NodeHandle& nh);
-
-  void addPoint(const Eigen::Vector3d& point);
+  SpeedMetrics(const Eigen::VectorXd& max_speed);
 
   virtual double cost(const Eigen::VectorXd& configuration1,
                       const Eigen::VectorXd& configuration2);
 
 
 };
-typedef std::shared_ptr<AvoidanceMetrics> AvoidanceMetricsPtr;
+typedef std::shared_ptr<SpeedMetrics> SpeedMetricsPtr;
 
 }

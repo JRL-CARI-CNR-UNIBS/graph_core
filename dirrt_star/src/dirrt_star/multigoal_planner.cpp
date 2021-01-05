@@ -63,7 +63,7 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
   COMMENT("number of joints  = %u",m_dof);
   m_lb.resize(m_dof);
   m_ub.resize(m_dof);
-
+  m_max_speed_.resize(m_dof);
 
   COMMENT("read bounds");
   for (unsigned int idx=0;idx<m_dof;idx++)
@@ -74,6 +74,7 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
     {
       m_lb(idx)=bounds.min_position_;
       m_ub(idx)=bounds.max_position_;
+      m_max_speed_(idx)=bounds.max_velocity_;
     }
   }
 
@@ -82,7 +83,8 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
   urdf_model.initParam("robot_description");
 
   COMMENT("create metrics");
-  metrics=std::make_shared<pathplan::Metrics>();
+//  metrics=std::make_shared<pathplan::Metrics>();
+  metrics=std::make_shared<pathplan::SpeedMetrics>(m_max_speed_);
 
 
   COMMENT("created MultigoalPlanner");

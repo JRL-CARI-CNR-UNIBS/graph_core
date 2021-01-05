@@ -39,7 +39,7 @@ Metrics::Metrics()
 double Metrics::cost(const NodePtr& node1,
                      const NodePtr& node2)
 {
-  return Metrics::cost(node1->getConfiguration(), node2->getConfiguration());
+  return cost(node1->getConfiguration(), node2->getConfiguration());
 }
 
 
@@ -49,5 +49,17 @@ double Metrics::cost(const Eigen::VectorXd& configuration1,
   return (configuration1 - configuration2).norm();
 }
 
+double Metrics::utopia(const NodePtr& node1,
+                     const NodePtr& node2)
+{
+  return utopia(node1->getConfiguration(), node2->getConfiguration());
+}
+
+
+double Metrics::utopia(const Eigen::VectorXd& configuration1,
+                     const Eigen::VectorXd& configuration2)
+{
+  return (configuration1 - configuration2).norm();
+}
 
 }

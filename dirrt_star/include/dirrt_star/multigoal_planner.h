@@ -33,9 +33,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/solvers/multigoal.h>
 #include <graph_core/solvers/path_solver.h>
 #include <graph_core/metrics.h>
+#include <graph_core/speed_metrics.h>
 #include <graph_core/moveit_collision_checker.h>
 #include <graph_core/tube_informed_sampler.h>
 #include <rosparam_utilities/rosparam_utilities.h>
+
 #define COMMENT(...) ROS_LOG(::ros::console::levels::Debug, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
 
 
@@ -76,6 +78,7 @@ protected:
   std::vector<std::string> joint_names_;
   Eigen::VectorXd m_lb;
   Eigen::VectorXd m_ub;
+  Eigen::VectorXd m_max_speed_;
   std::string group_;
 
   pathplan::MetricsPtr metrics;

@@ -55,7 +55,8 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node)
     return false;
   }
 
-  double utopia=(goal_node->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
+  double utopia=metrics_->utopia(goal_node,start_tree_->getRoot());
+//  double utopia=(goal_node->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
   if (utopia>cost_)
   {
     ROS_DEBUG("the utopia cost of this goal is already worst than the actual solution, skip it");
@@ -109,7 +110,7 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node)
 
   TubeInformedSamplerPtr tube_sampler = std::make_shared<TubeInformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler_->getLB(),sampler_->getUB(),cost_);
   tube_sampler->setLocalBias(local_bias_);
-  tube_sampler->setRadius(0.01);
+  tube_sampler->setRadius(tube_radius_);
   if (solution)
     tube_sampler->setPath(solution);
 
@@ -215,6 +216,19 @@ bool MultigoalSolver::config(const ros::NodeHandle& nh)
     ROS_WARN("%s/local_bias cannot be greater than 1.0, set equal to 1.0",nh.getNamespace().c_str());
     local_bias_=1.0;
   }
+
+  if (!nh.getParam("tube_radius",tube_radius_))
+  {
+    ROS_WARN("%s/tube_radius is not set. using 0.01",nh.getNamespace().c_str());
+    tube_radius_=0.3;
+  }
+  if (tube_radius_<=0)
+  {
+    ROS_WARN("%s/local_bias cannot be negative, set equal to 0.01",nh.getNamespace().c_str());
+    tube_radius_=0.01;
+  }
+
+
   configured_=true;
   return true;
 }

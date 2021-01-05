@@ -26,45 +26,33 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/metrics.h>
-#include <rosdyn_core/primitives.h>
-#include <visualization_msgs/MarkerArray.h>
-#include <eigen_conversions/eigen_msg.h>
+#include <graph_core/sampler.h>
+#include <graph_core/graph/path.h>
 
-namespace pathplan
-{
+namespace pathplan {
 
 
-// Avoidance metrics
-class AvoidanceMetrics: public Metrics
+
+class ScaledInformedSampler: public InformedSampler
 {
 protected:
-  double step_ = 0.1;
-  ros::NodeHandle nh_;
-  rosdyn::ChainPtr chain_;
+  Eigen::VectorXd scale_;
+  Eigen::VectorXd inv_scale_;
 
-  double min_distance_=0.2;
-  double max_distance_=1.0;
-  double inv_delta_distance_;
-  double max_penalty_=2.0;
 
-  std::vector<std::string> links_;
-
-  Eigen::Matrix<double,3,-1> points_;
-
-  ros::Publisher marker_pub_;
-  int marker_id_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  AvoidanceMetrics(const ros::NodeHandle& nh);
+  ScaledInformedSampler(const Eigen::VectorXd& start_configuration,
+                      const Eigen::VectorXd& stop_configuration,
+                      const Eigen::VectorXd& lower_bound,
+                      const Eigen::VectorXd& upper_bound,
+                      const Eigen::VectorXd& scale,
+                      const double& cost = std::numeric_limits<double>::infinity());
 
-  void addPoint(const Eigen::Vector3d& point);
-
-  virtual double cost(const Eigen::VectorXd& configuration1,
-                      const Eigen::VectorXd& configuration2);
-
-
+  virtual Eigen::VectorXd sample();
 };
-typedef std::shared_ptr<AvoidanceMetrics> AvoidanceMetricsPtr;
 
-}
+
+typedef std::shared_ptr<ScaledInformedSampler> ScaledInformedSamplerPtr;
+
+}    // namespace pathplan

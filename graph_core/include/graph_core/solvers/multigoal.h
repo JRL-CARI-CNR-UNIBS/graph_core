@@ -52,6 +52,7 @@ protected:
   int best_goal_index=-1;
   double max_distance_=1.0;
   double local_bias_=0.3;
+  double tube_radius_=0.01;
   bool extend_ = false;
   virtual bool setProblem();
   virtual void clean(){}
