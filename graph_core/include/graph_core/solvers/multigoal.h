@@ -1,6 +1,6 @@
-#pragma once
 /*
-Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
+Copyright (c) 2020, JRL-CARI CNR-STIIMA/UNIBS
+Manuel Beschi manuel.beschi@unibs.it
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,54 +26,59 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/graph/tree.h>
-#include <graph_core/graph/path.h>
-#include <graph_core/collision_checker.h>
-#include <graph_core/metrics.h>
-#include <graph_core/sampler.h>
-#include <ros/ros.h>
-namespace pathplan {
+#pragma once
+#include <graph_core/solvers/tree_solver.h>
+#include <graph_core/solvers/rrt_star.h>
+#include <graph_core/tube_informed_sampler.h>
+namespace pathplan
+{
 
 
-class TreeSolver;
-typedef std::shared_ptr<TreeSolver> TreeSolverPtr;
-class TreeSolver: public std::enable_shared_from_this<TreeSolver>
+
+class MultigoalSolver: public TreeSolver
 {
 protected:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  MetricsPtr metrics_;
-  CollisionCheckerPtr checker_;
-  SamplerPtr sampler_;
-  bool solved_=false;
-  bool init_=false;
-  double cost_;
-  TreePtr start_tree_;
-  PathPtr solution_;
+  enum GoalStatus { search, refine, done, discard};
+  std::vector<NodePtr> goal_nodes_;
+  std::vector<TreePtr> goal_trees_;
+  std::vector<double> costs_;
+  std::vector<double> utopias_;
+  std::vector<PathPtr> solutions_;
+  std::vector<TubeInformedSamplerPtr> tube_samplers_;
+  std::vector<GoalStatus> status_;
 
-protected:
-  virtual bool setProblem(){return false;}
+  double cost_at_last_clean=std::numeric_limits<double>::infinity();
+  double best_utopia_=std::numeric_limits<double>::infinity();
+  int best_goal_index=-1;
+  double max_distance_=1.0;
+  double local_bias_=0.3;
+  double tube_radius_=0.01;
+  bool extend_ = false;
+  virtual bool setProblem();
+  virtual void clean(){}
+
+  bool isBestSolution(const int& index);
+
+  virtual void printMyself(std::ostream& os) const;
 public:
-  TreeSolver(const MetricsPtr& metrics,
+
+  MultigoalSolver(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
              const SamplerPtr& sampler):
-    metrics_(metrics),
-    checker_(checker),
-    sampler_(sampler)
-  {
-    cost_=std::numeric_limits<double>::infinity();
-  }
-  virtual bool config(const ros::NodeHandle& nh){return false;}
-  virtual bool update(PathPtr& solution)=0;
-  virtual bool update(const Eigen::VectorXd& point,PathPtr& solution)=0;
-  virtual bool solve(PathPtr& solution, const unsigned int& max_iter=100);
-  virtual bool addStart(const NodePtr& start_node)=0;
-  virtual bool addGoal(const NodePtr& goal_node)=0;
-  const bool& solved()const{return solved_;}
-  const double& cost()const{return cost_;}
-  virtual bool setSolution(const PathPtr &solution);
-  TreePtr getStartTree() const {return start_tree_;}
+    TreeSolver(metrics, checker, sampler) {}
 
-  void setSampler(const SamplerPtr& sampler){sampler_=sampler;}
+  virtual bool config(const ros::NodeHandle& nh);
+  virtual bool update(PathPtr& solution);
+
+  virtual bool addStart(const NodePtr& start_node);
+  virtual bool addGoal(const NodePtr& goal_node);
+  virtual void resetProblem();
+
+  void cleanTree();
 
 };
-}
+
+typedef std::shared_ptr<TreeSolver> TreeSolverPtr;
+
+
+}  // namespace pathplan

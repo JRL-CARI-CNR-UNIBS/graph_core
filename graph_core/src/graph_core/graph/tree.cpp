@@ -35,11 +35,11 @@ Tree::Tree(const NodePtr& root,
            const double &max_distance,
            const CollisionCheckerPtr &checker,
            const MetricsPtr &metrics):
-  checker_(checker),
-  metrics_(metrics),
-  max_distance_(max_distance),
+  root_(root),
   direction_(direction),
-  root_(root)
+  max_distance_(max_distance),
+  checker_(checker),
+  metrics_(metrics)
 {
   nodes_.push_back(root);
 }
@@ -523,6 +523,16 @@ unsigned int Tree::purgeNodesOutsideEllipsoid(const SamplerPtr& sampler, const s
   return removed_nodes;
 }
 
+unsigned int Tree::purgeNodesOutsideEllipsoids(const std::vector<SamplerPtr>& samplers, const std::vector<NodePtr>& white_list)
+{
+  if (nodes_.size() < maximum_nodes_)
+    return 0;
+  unsigned int removed_nodes = 0;
+
+  purgeNodeOutsideEllipsoids(root_,samplers,white_list,removed_nodes);
+  return removed_nodes;
+}
+
 void Tree::purgeNodeOutsideEllipsoid(NodePtr& node,
                                      const SamplerPtr& sampler,
                                      const std::vector<NodePtr>& white_list,
@@ -555,6 +565,45 @@ void Tree::purgeNodeOutsideEllipsoid(NodePtr& node,
   }
   return;
 }
+
+
+void Tree::purgeNodeOutsideEllipsoids(NodePtr& node,
+                                      const std::vector<SamplerPtr>& samplers,
+                                      const std::vector<NodePtr>& white_list,
+                                      unsigned int& removed_nodes)
+{
+
+  if (nodes_.size() < 0.5*maximum_nodes_)
+    return;
+  assert(node);
+
+  // check if it belongs to a admissible informed set or the white list
+  bool inbound=std::find(white_list.begin(), white_list.end(), node) != white_list.end();
+  for (const SamplerPtr& sampler: samplers)
+    inbound = inbound || sampler->inBounds(node->getConfiguration());
+
+  if (inbound)
+  {
+    // if node is inside the admissible set, check its successors
+    std::vector<NodePtr> successors;
+    if (direction_ == Forward)
+      successors = node->getChildren();
+    else
+      successors = node->getParents();
+
+    for (NodePtr& n : successors)
+    {
+      assert(n.get()!=node.get());
+      purgeNodeOutsideEllipsoids(n,samplers,white_list,removed_nodes);
+    }
+  }
+  else
+  {
+    purgeFromHere(node, white_list, removed_nodes);
+  }
+  return;
+}
+
 
 unsigned int Tree::purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds)
 {
@@ -608,33 +657,20 @@ bool Tree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, 
     successors = node->getParents();
 
 
-//  ROS_INFO("%u,successors = %zu, removed nodes %u, nodes = %zu",node.get(),successors.size(),removed_nodes,nodes_.size());
   for (NodePtr& n : successors)
   {
-    //      assert(n.get()!=node.get());
-    if (n.get()==node.get())
-    {
-      ROS_ERROR("tree error, change to assert");
-      successors.clear();
-      continue;
-    }
+    assert(n.get()!=node.get());
     if (!purgeFromHere(n,white_list,removed_nodes))
       return false;
   }
 
-  if (node)
+  assert(node);
+  std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
+  node->disconnect();
+  if (it < nodes_.end())
   {
-    std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
-    node->disconnect();
-    if (it < nodes_.end())
-    {
-      nodes_.erase(it);
-      removed_nodes++;
-    }
-  }
-  else
-  {
-    ROS_ERROR("node do not exist anymore");
+    nodes_.erase(it);
+    removed_nodes++;
   }
   return true;
 }

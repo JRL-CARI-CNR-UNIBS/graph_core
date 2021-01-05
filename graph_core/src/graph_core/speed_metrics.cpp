@@ -1,4 +1,3 @@
-#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -26,21 +25,25 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <graph_core/speed_metrics.h>
 
-#include <eigen3/Eigen/Core>
-#include <ros/ros.h>
-#define PATH_COMMENT(...) ROS_LOG(::ros::console::levels::Fatal, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
-#define PATH_COMMENT_STREAM(...) ROS_LOG_STREAM(::ros::console::levels::Fatal, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
 
-namespace pathplan {
+namespace pathplan
+{
 
-enum Direction {Forward, Backward};
+SpeedMetrics::SpeedMetrics(const Eigen::VectorXd &max_speed):
+  Metrics(),
+  max_speed_(max_speed)
+{
+  inv_max_speed_=max_speed_.cwiseInverse();
+}
 
-class Connection;
-class Node;
-typedef std::shared_ptr<Node> NodePtr;
-typedef std::shared_ptr<Connection> ConnectionPtr;
+double SpeedMetrics::cost(const Eigen::VectorXd& configuration1,
+                     const Eigen::VectorXd& configuration2)
+{
+  double cost= (inv_max_speed_.cwiseProduct(configuration1 - configuration2)).norm();
+  return cost;
+}
 
-Eigen::MatrixXd computeRotationMatrix(const Eigen::VectorXd& x1, const Eigen::VectorXd&  x2);
 
 }

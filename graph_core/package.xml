@@ -74,6 +74,7 @@
   <depend>object_loader_msgs</depend>
   <depend>moveit_planning_helper</depend>
   <depend>eigen_conversions</depend>
+  <depend>geometry_msgs</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

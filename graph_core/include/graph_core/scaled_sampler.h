@@ -26,56 +26,33 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #include <graph_core/sampler.h>
-
+#include <graph_core/graph/path.h>
 
 namespace pathplan {
 
 
 
-class LocalInformedSampler: public InformedSampler
+class ScaledInformedSampler: public InformedSampler
 {
 protected:
-  std::vector<Eigen::VectorXd,Eigen::aligned_allocator<Eigen::VectorXd>> centers_;
-  std::vector<double> radii_;
+  Eigen::VectorXd scale_;
+  Eigen::VectorXd inv_scale_;
 
-  std::uniform_int_distribution<> id_;
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  LocalInformedSampler(const Eigen::VectorXd& start_configuration,
-                  const Eigen::VectorXd& stop_configuration,
-                  const Eigen::VectorXd& lower_bound,
-                  const Eigen::VectorXd& upper_bound,
-                  const double& cost = std::numeric_limits<double>::infinity()):
-    InformedSampler(start_configuration,stop_configuration,lower_bound,upper_bound,cost)
-  {
-
-  }
-
-  void addBall(const Eigen::VectorXd& center, const double& radius)
-  {
-    if (center.size()!=start_configuration_.size())
-    {
-      ROS_INFO("center size=%zu, start configuration =%zu",center.size(),start_configuration_.size());
-    }
-    assert(center.size()==start_configuration_.size());
-    centers_.push_back(center);
-    radii_.push_back(radius);
-    id_=std::uniform_int_distribution<>(0,centers_.size()-1);
-  }
-
-  void clearBalls()
-  {
-    centers_.clear();
-    radii_.clear();
-  }
+  ScaledInformedSampler(const Eigen::VectorXd& start_configuration,
+                      const Eigen::VectorXd& stop_configuration,
+                      const Eigen::VectorXd& lower_bound,
+                      const Eigen::VectorXd& upper_bound,
+                      const Eigen::VectorXd& scale,
+                      const double& cost = std::numeric_limits<double>::infinity());
 
   virtual Eigen::VectorXd sample();
-
 };
 
 
-typedef std::shared_ptr<LocalInformedSampler> LocalInformedSamplerPtr;
+typedef std::shared_ptr<ScaledInformedSampler> ScaledInformedSamplerPtr;
 
-}
+}    // namespace pathplan

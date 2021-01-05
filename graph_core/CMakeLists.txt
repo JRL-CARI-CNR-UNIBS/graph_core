@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(graph_core)
 add_compile_options(-std=c++14 -funroll-loops -Wall -Ofast)
-#set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
+#set(CMAKE_BUILD_TYPE Debug)
 
 
 find_package(catkin REQUIRED COMPONENTS
@@ -18,11 +18,12 @@ find_package(catkin REQUIRED COMPONENTS
   object_loader_msgs
   moveit_planning_helper
   eigen_conversions
+  geometry_msgs
   )
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES graph_core
-  CATKIN_DEPENDS actionlib moveit_core moveit_ros_planning moveit_ros_planning_interface roscpp rosdyn_core human_probablistic_occupancy moveit_visual_tools rviz_visual_tools object_loader_msgs moveit_planning_helper eigen_conversions
+  CATKIN_DEPENDS actionlib moveit_core moveit_ros_planning moveit_ros_planning_interface roscpp rosdyn_core human_probablistic_occupancy moveit_visual_tools rviz_visual_tools object_loader_msgs moveit_planning_helper eigen_conversions geometry_msgs
   DEPENDS
   )
 include_directories(
@@ -31,18 +32,24 @@ include_directories(
   )
 add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/metrics.cpp
+  src/${PROJECT_NAME}/avoidance_metrics.cpp
   src/${PROJECT_NAME}/occupancy_metrics.cpp
+  src/${PROJECT_NAME}/speed_metrics.cpp
   src/${PROJECT_NAME}/sampler.cpp
   src/${PROJECT_NAME}/local_informed_sampler.cpp
   src/${PROJECT_NAME}/tube_informed_sampler.cpp
+  src/${PROJECT_NAME}/scaled_sampler.cpp
   src/${PROJECT_NAME}/util.cpp
   src/${PROJECT_NAME}/moveit_collision_checker.cpp
   src/${PROJECT_NAME}/narrow_pass_checker.cpp
+  src/${PROJECT_NAME}/boxes_checker.cpp
   src/${PROJECT_NAME}/collision_checker.cpp
   src/${PROJECT_NAME}/graph/node.cpp
   src/${PROJECT_NAME}/graph/connection.cpp
   src/${PROJECT_NAME}/graph/tree.cpp
   src/${PROJECT_NAME}/graph/path.cpp
+  src/${PROJECT_NAME}/graph/graph_display.cpp
+  src/${PROJECT_NAME}/solvers/multigoal.cpp
   src/${PROJECT_NAME}/solvers/tree_solver.cpp
   src/${PROJECT_NAME}/solvers/rrt_connect.cpp
   src/${PROJECT_NAME}/solvers/birrt.cpp
@@ -111,6 +118,12 @@ target_link_libraries(test_online_replanner
   ${catkin_LIBRARIES}
 )
 
+add_executable(       test_multigoal src/test/test_multicore.cpp)
+add_dependencies(     test_multigoal ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_multigoal
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
 
 
 #install(PROGRAMS

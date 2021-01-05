@@ -27,37 +27,35 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include <graph_core/util.h>
-#include <graph_core/graph/node.h>
-namespace pathplan {
-class Connection : public std::enable_shared_from_this<Connection>
+#include <graph_core/collision_checker.h>
+#include <moveit/planning_scene/planning_scene.h>
+
+namespace pathplan
+{
+
+class BoxesChecker: public CollisionChecker
 {
 protected:
-  NodePtr parent_;
-  NodePtr child_;
-  double cost_;
-  bool valid=false;
-  double euclidean_norm_;
+  double box_size_;
+  double boxes_distance_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Connection(const NodePtr& parent, const NodePtr& child);
-  ConnectionPtr pointer(){return shared_from_this();}
-  void add();
-  void remove();
+  BoxesChecker(const double& box_size, const double& boxes_distance):
+    box_size_(box_size),
+    boxes_distance_(boxes_distance)
+  {
+  }
 
-  void setCost(const double& cost){cost_=cost;}
-  const double& getCost(){return cost_;}
-  double norm(){return euclidean_norm_;}
-  const NodePtr& getParent() const{return parent_;}
-  const NodePtr& getChild() const{return child_;}
+  virtual bool check(const Eigen::VectorXd& configuration)
+  {
+    for (long idx=0;idx<configuration.size();idx++)
+    {
+      double tmp=std::abs(std::fmod(configuration(idx),boxes_distance_));
+      if ((tmp>box_size_*0.5) && (tmp<(boxes_distance_-box_size_*0.5)))
+        return true;
+    }
+    return false;
+  }
 
-
-  friend std::ostream& operator<<(std::ostream& os, const Connection& connection);
-  ~Connection();
 };
-
-
-
-std::ostream& operator<<(std::ostream& os, const Connection& connection);
-
 }

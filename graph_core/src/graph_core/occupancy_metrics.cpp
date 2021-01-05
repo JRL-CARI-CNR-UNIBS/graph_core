@@ -31,8 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 OccupancyMetrics::OccupancyMetrics(ros::NodeHandle& nh):
-  nh_(nh),
-  Metrics()
+  Metrics(),
+  nh_(nh)
 {
 
   urdf::Model model;

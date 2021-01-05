@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <moveit/planning_interface/planning_interface.h>
 #include <dirrt_star/dirrt_star_planner.h>
+#include <dirrt_star/multigoal_planner.h>
 
 
 namespace pathplan {
@@ -60,7 +61,7 @@ public:
 protected:
   ros::NodeHandle m_nh;
 
-  std::map< std::string, std::shared_ptr<pathplan::dirrt_star::DIRRTStar>> m_planners;
+  std::map< std::string, std::shared_ptr<planning_interface::PlanningContext>> m_planners;
   moveit::core::RobotModelConstPtr m_robot_model;
 };
 

@@ -26,35 +26,45 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/solvers/tree_solver.h>
+#include <graph_core/metrics.h>
+#include <rosdyn_core/primitives.h>
+#include <visualization_msgs/MarkerArray.h>
+#include <eigen_conversions/eigen_msg.h>
 
 namespace pathplan
 {
 
-class RRTConnect: public TreeSolver
+
+// Avoidance metrics
+class AvoidanceMetrics: public Metrics
 {
 protected:
-  NodePtr goal_node_;
-  double max_distance_;
-  double utopia_;
-  virtual bool setProblem();
+  double step_ = 0.1;
+  ros::NodeHandle nh_;
+  rosdyn::ChainPtr chain_;
 
+  double min_distance_=0.2;
+  double max_distance_=1.0;
+  double inv_delta_distance_;
+  double max_penalty_=2.0;
+
+  std::vector<std::string> links_;
+
+  Eigen::Matrix<double,3,-1> points_;
+
+  ros::Publisher marker_pub_;
+  int marker_id_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  RRTConnect(const MetricsPtr& metrics,
-             const CollisionCheckerPtr& checker,
-             const SamplerPtr& sampler):
-    TreeSolver(metrics,checker,sampler){}
-  virtual bool config(const ros::NodeHandle& nh);
+  AvoidanceMetrics(const ros::NodeHandle& nh);
 
-  virtual bool addStart(const NodePtr& start_node);
-  virtual bool addStartTree(const TreePtr& start_tree);
-  virtual bool addGoal(const NodePtr& goal_node);
+  void addPoint(const Eigen::Vector3d& point);
 
-  virtual bool update(const Eigen::VectorXd& point,PathPtr& solution);
+  virtual double cost(const Eigen::VectorXd& configuration1,
+                      const Eigen::VectorXd& configuration2);
 
-  virtual bool update(PathPtr& solution);
 
 };
+typedef std::shared_ptr<AvoidanceMetrics> AvoidanceMetricsPtr;
 
 }

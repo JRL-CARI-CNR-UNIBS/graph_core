@@ -1,4 +1,3 @@
-#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -26,42 +25,32 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <eigen3/Eigen/Core>
-#include <ros/ros.h>
-#include <graph_core/util.h>
-#include <graph_core/graph/connection.h>
 
-namespace pathplan {
+#include <graph_core/scaled_sampler.h>
 
-
-class Node: public std::enable_shared_from_this<Node>
+namespace pathplan
 {
-protected:
-  Eigen::VectorXd configuration_;
-  unsigned int ndof_;
-public:
-  std::vector<ConnectionPtr> parent_connections_;
-  std::vector<ConnectionPtr> child_connections_;
+ScaledInformedSampler::ScaledInformedSampler(const Eigen::VectorXd& start_configuration,
+                                             const Eigen::VectorXd& stop_configuration,
+                                             const Eigen::VectorXd& lower_bound,
+                                             const Eigen::VectorXd& upper_bound,
+                                             const Eigen::VectorXd& scale,
+                                             const double& cost):
+  InformedSampler(start_configuration,stop_configuration,lower_bound,upper_bound,cost),
+  scale_(scale)
+{
+  inv_scale_=scale_.cwiseInverse();
 
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-Node(const Eigen::VectorXd& configuration);
-NodePtr pointer(){return shared_from_this();}
-void addParentConnection(const ConnectionPtr& connection);
-void addChildConnection(const ConnectionPtr& connection);
-std::vector<NodePtr> getChildren() const;
-std::vector<NodePtr> getParents() const;
-
-void disconnect();
-void remoteParentConnection(const ConnectionPtr& connection);
-void remoteChildConnection(const ConnectionPtr& connection);
-const Eigen::VectorXd& getConfiguration(){return configuration_;}
-~Node();
-
-friend std::ostream& operator<<(std::ostream& os, const Node& path);
-
-};
-
-std::ostream& operator<<(std::ostream& os, const Node& node);
-
+  InformedSampler(inv_scale_.cwiseProduct(start_configuration),
+                  inv_scale_.cwiseProduct(stop_configuration),
+                  inv_scale_.cwiseProduct(lower_bound),
+                  inv_scale_.cwiseProduct(upper_bound),
+                  cost);
 }
+Eigen::VectorXd ScaledInformedSampler::sample()
+{
+  return scale_.cwiseProduct(InformedSampler::sample());
+}
+
+
+}  // namespace pathplan

@@ -30,13 +30,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <moveit/planning_interface/planning_interface.h>
 #include <moveit/robot_state/conversions.h>
 #include <moveit/planning_scene/planning_scene.h>
-#include <graph_core/solvers/rrt_star.h>
-#include <graph_core/solvers/birrt.h>
+#include <graph_core/solvers/multigoal.h>
 #include <graph_core/solvers/path_solver.h>
 #include <graph_core/metrics.h>
+#include <graph_core/speed_metrics.h>
 #include <graph_core/moveit_collision_checker.h>
 #include <graph_core/tube_informed_sampler.h>
 #include <rosparam_utilities/rosparam_utilities.h>
+
 #define COMMENT(...) ROS_LOG(::ros::console::levels::Debug, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
 
 
@@ -47,16 +48,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan {
 namespace dirrt_star {
 
-class DIRRTStar: public planning_interface::PlanningContext
+class MultigoalPlanner: public planning_interface::PlanningContext
 {
 public:
-  DIRRTStar ( const std::string& name,
+  MultigoalPlanner ( const std::string& name,
                 const std::string& group,
                 const moveit::core::RobotModelConstPtr& model
               );
 
 
-  void setPlanningScene(const planning_scene::PlanningSceneConstPtr& planning_scene);
   virtual bool solve(planning_interface::MotionPlanResponse& res) override;
   virtual bool solve(planning_interface::MotionPlanDetailedResponse& res) override;
 
@@ -72,24 +72,18 @@ protected:
   //planning_scene::PlanningSceneConstPtr pl
   ros::NodeHandle m_nh;
 
-  ros::WallDuration m_max_planning_time;
   ros::WallDuration m_max_refining_time;
 
   unsigned int m_dof;
   std::vector<std::string> joint_names_;
   Eigen::VectorXd m_lb;
   Eigen::VectorXd m_ub;
+  Eigen::VectorXd m_max_speed_;
   std::string group_;
-  bool m_tube_sampler;
-  bool m_path_optimization;
-  double m_forgetting_factor=0.99;
-  double m_minimum_success_rate=1e-12;
 
   pathplan::MetricsPtr metrics;
   pathplan::CollisionCheckerPtr checker;
 
-  std::mt19937 m_gen;
-  std::uniform_real_distribution<double> m_ud;
 
   double collision_distance=0.04;
   bool m_is_running=false;
