@@ -94,7 +94,7 @@ double Path::curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf, int& idx)
   ConnectionPtr connection = findConnection(conf,idx);
   if(connection == NULL)
   {
-    ROS_ERROR("The configuration doesn't belong to the path");
+    ROS_ERROR("The configuration doesn't belong to the path -> the curviliner abscissa can't be computed");
     assert(0);
   }
   else
@@ -407,7 +407,7 @@ Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const Co
   Eigen::VectorXd parent = conn->getParent()->getConfiguration();
   Eigen::VectorXd child = conn->getChild()->getConfiguration();
 
-  Eigen::VectorXd conn_vector = child-parent;
+  /*Eigen::VectorXd conn_vector = child-parent;
   Eigen::VectorXd point_vector = point-parent;
 
   double conn_length = (parent-child).norm();
@@ -432,10 +432,10 @@ Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const Co
     in_conn = 1;
   }
 
-  return projection;
+  return projection;*/
 
 
-  /*double a = (parent-child).norm();
+  double a = (parent-child).norm();
   double b = (parent-point).norm();
   double c = (point-child).norm();
 
@@ -467,7 +467,7 @@ Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const Co
     in_conn = 1;
   }
 
-  return projection; */
+  return projection;
 }
 
 const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& point)
@@ -538,6 +538,7 @@ const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& po
   if(min_distance == std::numeric_limits<double>::infinity())
   {
     projection = past_prj;
+    //projection = findCloserNode(std::make_shared<Node>(point))->getConfiguration();
     ROS_ERROR("projection on path not found");
   }
   else  n_conn = idx;

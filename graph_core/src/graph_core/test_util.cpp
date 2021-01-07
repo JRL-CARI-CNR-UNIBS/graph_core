@@ -242,7 +242,7 @@ void TestUtil::displayPathNodesRviz(const std::vector<moveit::core::RobotState>&
             marker.color.a = marker_color.at(3);
 
             marker_pub_.publish(marker);
-            ros::Duration(0.1).sleep();
+            ros::Duration(0.001).sleep();
         }
 
         if(shape == visualization_msgs::Marker::LINE_STRIP)
@@ -272,7 +272,7 @@ void TestUtil::displayPathNodesRviz(const std::vector<moveit::core::RobotState>&
         marker.color.a = marker_color.at(3);
 
         marker_pub_.publish(marker);
-        ros::Duration(0.1).sleep();
+        ros::Duration(0.001).sleep();
     }
 }
 
@@ -305,6 +305,7 @@ robot_trajectory::RobotTrajectoryPtr TestUtil::fromPath2Trj(const PathPtr& solut
     {
       if (j==0)
       {
+        wp_state_vector.at(j).setJointGroupPositions(group_name_,pnt.positions);
         wp_state_vector.at(j).setJointGroupVelocities(group_name_,pnt.velocities);
         wp_state_vector.at(j).setJointGroupAccelerations(group_name_,pnt.accelerations);
       }

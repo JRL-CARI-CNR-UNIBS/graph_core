@@ -51,9 +51,8 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd configurati
   pathplan::PathPtr path = std::make_shared<pathplan::Path>(replanned_path_->getConnections(),metrics_,checker_);
   pathplan::NodePtr current_node = std::make_shared<pathplan::Node>(configuration);
   pathplan::NodePtr path_start = path->getConnections().front()->getParent();
-  pathplan::NodePtr node;
 
-  for(unsigned int i=0;i<path->getConnections().size()-1;i++)
+  for(unsigned int i=0;i<path->getConnections().size()-1;i++)  //DA ELIMINARE
   {
     bool verifica = (path->getConnections().at(i)->getChild()->getConfiguration() == path->getConnections().at(i+1)->getParent()->getConfiguration());
     if(!verifica)
@@ -67,9 +66,9 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd configurati
   {
     if(wp == configuration)
     {
-      replanned_path_ = path->getSubpathFromNode(std::make_shared<Node>(wp));
+      replanned_path_ = path->getSubpathFromNode(current_node);
 
-      for(unsigned int i=1; i<replanned_path_->getWaypoints().size(); i++)
+      for(unsigned int i=1; i<replanned_path_->getWaypoints().size(); i++)  //DA ELIMINARE
       {
         if(replanned_path_->getWaypoints().at(i) == replanned_path_->getWaypoints().at(i-1)) throw std::invalid_argument("nodi uguali");
       }
@@ -77,14 +76,14 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd configurati
     }
   }
 
-  int idx1, idx2;
-  double abscissa1 = current_path_->curvilinearAbscissaOfPoint(configuration,idx1);
-  double abscissa2 = current_path_->curvilinearAbscissaOfPoint(path_start->getConfiguration(),idx2);
+  int idx_current_conf, idx_path_start;
+  double abscissa_current_conf = current_path_->curvilinearAbscissaOfPoint(configuration,idx_current_conf);
+  double abscissa_path_start = current_path_->curvilinearAbscissaOfPoint(path_start->getConfiguration(),idx_path_start);
 
-  if(abscissa1 == abscissa2) return;  //the start of the replanned path is the current configuration
-  if(abscissa1 < abscissa2)  //the replanned path starts from a position after the current one
+  if(abscissa_current_conf == abscissa_path_start) return;  //the start of the replanned path is the current configuration
+  else if(abscissa_current_conf < abscissa_path_start)  //the replanned path starts from a position after the current one
   {
-    if(idx1 == idx2)
+    if(idx_current_conf == idx_path_start)
     {
       //Directly connect the current configuration with the start of the replanned path
       ConnectionPtr conn = std::make_shared<Connection>(current_node, path_start);
@@ -94,33 +93,39 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd configurati
 
       connections.push_back(conn);
     }
-    if(idx1 < idx2)
+    if(idx_current_conf < idx_path_start)
     {
-      NodePtr child = current_path_->getConnections().at(idx1)->getChild();
-      ConnectionPtr conn = std::make_shared<Connection>(current_node, child);
-      double cost_conn = metrics_->cost(configuration,child->getConfiguration());
-      conn->setCost(cost_conn);
-      conn->add();
+      NodePtr child = current_path_->getConnections().at(idx_current_conf)->getChild();
+      if(child->getConfiguration() != configuration)
+      {
+        ConnectionPtr conn = std::make_shared<Connection>(current_node, child);
+        double cost_conn = metrics_->cost(configuration,child->getConfiguration());
+        conn->setCost(cost_conn);
+        conn->add();
 
-      connections.push_back(conn);
+        connections.push_back(conn);
+      }
 
       //Adding the connections between the two configurations
-      for(unsigned int z = idx1+1; z<idx2; z++) connections.push_back(current_path_->getConnections().at(z));
+      for(unsigned int z = idx_current_conf+1; z<idx_path_start; z++) connections.push_back(current_path_->getConnections().at(z));
 
-      NodePtr parent = current_path_->getConnections().at(idx2)->getParent();
-      conn = std::make_shared<Connection>(parent,path_start);
-      cost_conn = metrics_->cost(parent->getConfiguration(),path_start->getConfiguration());
-      conn->setCost(cost_conn);
-      conn->add();
+      NodePtr parent = current_path_->getConnections().at(idx_path_start)->getParent();
+      if(parent->getConfiguration() != path_start->getConfiguration())
+      {
+        ConnectionPtr conn = std::make_shared<Connection>(parent,path_start);
+        double cost_conn = metrics_->cost(parent->getConfiguration(),path_start->getConfiguration());
+        conn->setCost(cost_conn);
+        conn->add();
 
-      connections.push_back(conn);
+        connections.push_back(conn);
+      }
 
-      for(unsigned int i=0;i<connections.size()-1;i++)
+      for(unsigned int i=0;i<connections.size()-1;i++)  //DA ELIMINARE
       {
         bool verifica = (connections.at(i)->getChild()->getConfiguration() == connections.at(i+1)->getParent()->getConfiguration());
         if(!verifica)
         {
-          ROS_INFO_STREAM("QUA3, index i: "<<i<<" idx1: "<<idx1<<" idx2: "<<idx2);
+          ROS_INFO_STREAM("QUA3, index i: "<<i<<" idx1: "<<idx_current_conf<<" idx2: "<<idx_path_start);
           throw std::invalid_argument("disconnessione");
         }
       }
@@ -132,7 +137,7 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd configurati
 
     replanned_path_ = path;
 
-    for(unsigned int i=0;i<path->getConnections().size()-1;i++)
+    for(unsigned int i=0;i<path->getConnections().size()-1;i++) //DA ELIMINARE
     {
       bool verifica = (path->getConnections().at(i)->getChild()->getConfiguration() == path->getConnections().at(i+1)->getParent()->getConfiguration());
       if(!verifica)
@@ -144,11 +149,12 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd configurati
 
     return;
   }
-  else //the replanned path starts from a position before the current one
+  else //the replanned path starts from a position before the current configuration
   {
+    pathplan::NodePtr node;
+
     int idx_conn;
-    bool found = (path->findConnection(configuration,idx_conn) != NULL);
-    if(found)
+    if(path->findConnection(configuration,idx_conn) != NULL)
     {
       node = path->getConnections().at(idx_conn)->getChild();
 
@@ -172,12 +178,10 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd configurati
     }
     else
     {
-      int idx_path_start = -1;
-      ConnectionPtr conn = current_path_->findConnection(path_start->getConfiguration(),idx_path_start);
+      ConnectionPtr conn = current_path_->getConnections().at(idx_path_start);
 
-      int idx;
+      int idx = idx_path_start;
       if(path_start->getConfiguration() == current_path_->getConnections().at(idx_path_start)->getChild()->getConfiguration()) idx = idx_path_start + 1;
-      else idx = idx_path_start;
 
       int j = 0;
       int j_save = -2;
@@ -200,9 +204,9 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd configurati
       }
       else
       {
-        if((conn->getParent()->getConfiguration()-configuration).norm() <1e-06 || (conn->getChild()->getConfiguration()-configuration).norm() <1e-06)
+        if((conn->getParent()->getConfiguration() == path_start->getConfiguration()) || (conn->getChild()->getConfiguration() == path_start->getConfiguration()))
         {
-          node = path->getConnections().front()->getParent();
+          node = path_start;
           path_connections = path->getConnections();
         }
         else
@@ -214,14 +218,13 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd configurati
       }
 
       bool connected = false;
-      int idx_current_path_conf = -1;
-      current_path_->findConnection(configuration,idx_current_path_conf);
-      int t = idx_current_path_conf;
+      int t = idx_current_conf;
       pathplan::NodePtr child;
       pathplan::NodePtr parent;
+
       while(!connected)
       {
-        if(t == idx_current_path_conf)
+        if(t == idx_current_conf)
         {
           child = current_node;
         }
@@ -247,7 +250,7 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd configurati
 
       if(add_conn)
       {
-        pathplan::ConnectionPtr conn = std::make_shared<pathplan::Connection>(node,current_node); //you re moving backwards
+        pathplan::ConnectionPtr conn = std::make_shared<pathplan::Connection>(node,current_node); //you are moving backwards
         double cost = metrics_->cost(node,current_node);
         conn->setCost(cost);
         conn->add();
@@ -257,7 +260,7 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd configurati
       connections.insert(connections.end(),path_connections.begin(),path_connections.end());
       path->setConnections(connections);
 
-      for(unsigned int i=0;i<path->getConnections().size()-1;i++)
+      for(unsigned int i=0;i<path->getConnections().size()-1;i++) //DA ELIMINARE
       {
         bool verifica = (path->getConnections().at(i)->getChild()->getConfiguration() == path->getConnections().at(i+1)->getParent()->getConfiguration());
         if(!verifica)
@@ -268,7 +271,7 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd configurati
       }
     }
 
-    std::vector<Eigen::VectorXd> wp = path->getWaypoints();
+    /*std::vector<Eigen::VectorXd> wp = path->getWaypoints();
     std::vector<ConnectionPtr> new_connections;
     ConnectionPtr connection;
     double cost;
@@ -289,7 +292,9 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd configurati
 
     replanned_path_ = std::make_shared<Path>(new_connections,metrics_,checker_);
 
-    for(unsigned int i=0;i<path->getConnections().size()-1;i++)
+    */
+
+    for(unsigned int i=0;i<path->getConnections().size()-1;i++) //DA ELIMINARE
     {
       bool verifica = (path->getConnections().at(i)->getChild()->getConfiguration() == path->getConnections().at(i+1)->getParent()->getConfiguration());
       if(!verifica)
@@ -299,7 +304,7 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd configurati
       }
     }
 
-    //replanned_path_ = path;
+    replanned_path_ = path;
   }
 }
 
@@ -511,6 +516,18 @@ bool Replanner::pathSwitch(const PathPtr &current_path,
                            PathPtr &subpath_from_path2,
                            int &connected2path_number)
 {
+
+  for(unsigned int i=0;i<current_path->getConnections().size()-1;i++)
+  {
+    bool verifica = (current_path->getConnections().at(i)->getChild()->getConfiguration() == current_path->getConnections().at(i+1)->getParent()->getConfiguration());
+    if(!verifica)
+    {
+      ROS_INFO_STREAM("QUA000, index i: "<<i);
+      throw std::invalid_argument("disconnessione");
+    }
+  }
+
+
   // Identifying the subpath of current_path starting from node
   NodePtr path1_node = node;
   PathPtr path1_node2goal;
@@ -648,6 +665,16 @@ bool Replanner::pathSwitch(const PathPtr &current_path,
 
   if(success)
   {
+
+    for(unsigned int i=0;i<new_path->getConnections().size()-1;i++)
+    {
+      bool verifica = (new_path->getConnections().at(i)->getChild()->getConfiguration() == new_path->getConnections().at(i+1)->getParent()->getConfiguration());
+      if(!verifica)
+      {
+        ROS_INFO_STREAM("QUA001, index i: "<<i);
+        throw std::invalid_argument("disconnessione");
+      }
+    }
     //ROS_INFO_STREAM("PathSwitch has found a solution with cost: " << new_path->cost());
   }
   else
@@ -896,8 +923,15 @@ bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_n
 
   if(idx<0)
   {
-    ROS_INFO_STREAM("current conf: "<< current_configuration_.transpose());
-    ROS_INFO_STREAM("start conf: "<< current_path_->getWaypoints().at(0).transpose());
+    double dist1 = (current_configuration_ - current_path_->getWaypoints().at(1)).norm();
+    double dist2 = (current_path_->getWaypoints().at(0) - current_path_->getWaypoints().at(1)).norm();
+    ROS_INFO_STREAM("current conf: "<< current_configuration_.transpose()<< " dist: "<<dist1);
+    ROS_INFO_STREAM("start conf: "<< current_path_->getWaypoints().at(0).transpose() << " dist: "<<dist2);
+    ROS_INFO_STREAM("DIFF: "<<abs(dist1-dist2));
+    ROS_INFO_STREAM("idx: "<<idx);
+
+    for(Eigen::VectorXd wp:current_path_->getWaypoints()) ROS_INFO_STREAM("WP: "<<wp.transpose());
+
     assert(0);
   }
 
@@ -1103,9 +1137,19 @@ bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_n
           try
           {
             subpath =  subpath1->getSubpathToNode(path1_node_vector.at(j));  //path between the current connection child and the node analyzed now
+
+            for(unsigned int i=0;i<subpath->getConnections().size()-1;i++)
+            {
+              bool verifica = (subpath->getConnections().at(i)->getChild()->getConfiguration() == subpath->getConnections().at(i+1)->getParent()->getConfiguration());
+              if(!verifica)
+              {
+                ROS_INFO_STREAM("QUA04, index i: "<<i);
+                throw std::invalid_argument("disconnessione");
+              }
+            }
           }
           catch(std::invalid_argument)
-          {            
+          {
             for(const Eigen::VectorXd& wp:current_path_->getWaypoints()) ROS_INFO_STREAM("node current path: "<<wp.transpose());
             for(const NodePtr& node:path1_node_vector) ROS_INFO_STREAM("node VECTOR: "<<node->getConfiguration().transpose());
           }
@@ -1113,9 +1157,44 @@ bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_n
           std::vector<ConnectionPtr> conn_sup = subpath->getConnections();
           path_conn.insert(path_conn.end(),conn_sup.begin(),conn_sup.end());
 
+          for(unsigned int i=0;i<path_conn.size()-1;i++)
+          {
+            bool verifica = (path_conn.at(i)->getChild()->getConfiguration() == path_conn.at(i+1)->getParent()->getConfiguration());
+            if(!verifica)
+            {
+              ROS_INFO_STREAM("QUA07, index i: "<<i);
+              throw std::invalid_argument("disconnessione");
+            }
+          }
+
+          if(path_conn.back()->getChild()->getConfiguration() != new_path->getConnections().front()->getParent()->getConfiguration())
+          {
+            if((path_conn.back()->getChild()->getConfiguration() - new_path->getConnections().front()->getParent()->getConfiguration()).norm()>1e-06)
+            {
+              ROS_INFO_STREAM("child path_conn: "<< path_conn.back()->getChild()->getConfiguration().transpose());
+              ROS_INFO_STREAM("parent new_path: "<< new_path->getConnections().front()->getParent()->getConfiguration().transpose());
+            }
+            else
+            {
+              throw std::invalid_argument("non identici");
+
+            }
+          }
+
           conn_sup.clear();
           conn_sup = new_path->getConnections();
           path_conn.insert(path_conn.end(),conn_sup.begin(),conn_sup.end());
+
+
+          for(unsigned int i=0;i<path_conn.size()-1;i++)
+          {
+            bool verifica = (path_conn.at(i)->getChild()->getConfiguration() == path_conn.at(i+1)->getParent()->getConfiguration());
+            if(!verifica)
+            {
+              ROS_INFO_STREAM("QUA08, index i: "<<i);
+              throw std::invalid_argument("disconnessione");
+            }
+          }
 
           path = std::make_shared<Path>(path_conn,metrics_,checker_);
         }
@@ -1179,6 +1258,17 @@ bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_n
           }
 
           change_j = 0;
+
+          for(unsigned int i=0;i<new_path->getConnections().size()-1;i++)
+          {
+            bool verifica = (new_path->getConnections().at(i)->getChild()->getConfiguration() == new_path->getConnections().at(i+1)->getParent()->getConfiguration());
+            if(!verifica)
+            {
+              ROS_INFO_STREAM("QUA05, index i: "<<i);
+              throw std::invalid_argument("disconnessione");
+            }
+          }
+
           for(unsigned int r=0; r<new_path->getConnections().size()-1; r++)
           {
             if(new_path->getConnections().at(r)->getParent()->getAnalyzed() == 0 && new_path->getConnections().at(r)->getParent()->getNonOptimal() == 0) //Analyzed to check if they have been already analyzed (if 0 not not analyzed), nonOptimal to check if they are useful to improve the replanning solution (if 0, maybe they can improve the solution)
@@ -1200,6 +1290,17 @@ bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_n
           }
 
           if(child->getConfiguration() != current_path_->getWaypoints().back()) subpath1 = replanned_path->getSubpathFromNode(child);  //it may happens when from the last conf of current path connect2goal is called and the connecting path is made of only one connection
+
+          for(unsigned int i=0;i<replanned_path->getConnections().size()-1;i++)
+          {
+            bool verifica = (replanned_path->getConnections().at(i)->getChild()->getConfiguration() == replanned_path->getConnections().at(i+1)->getParent()->getConfiguration());
+            if(!verifica)
+            {
+              ROS_INFO_STREAM("QUA006, index i: "<<i);
+              throw std::invalid_argument("disconnessione");
+            }
+          }
+
         }
       }
 
