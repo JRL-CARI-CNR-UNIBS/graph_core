@@ -32,9 +32,9 @@ int main(int argc, char **argv)
 
   robot_state::RobotState state = planning_scene->getCurrentState();
 
-  pathplan::Display display_tree(planning_scene,group_name,"ur5_tool0");
+  pathplan::Display display_tree(planning_scene,group_name,"base_link","ur5_tool0");  //AGGIUNTO base_link
 
-//  pathplan::MetricsPtr metrics=std::make_shared<pathplan::Metrics>();
+  //  pathplan::MetricsPtr metrics=std::make_shared<pathplan::Metrics>();
   pathplan::AvoidanceMetricsPtr metrics=std::make_shared<pathplan::AvoidanceMetrics>(nh);
   Eigen::Vector3d human; human << 0.703, 0.396, 1.245;
   metrics->addPoint(human);
@@ -99,7 +99,7 @@ int main(int argc, char **argv)
   ros::WallTime tl=ros::WallTime::now()-ros::WallDuration(1000);
   ros::Rate lp(100);
   bool solved=false;
-  int path_id=-1;
+  int path_id = -1;
   while (ros::ok())
   {
     solver->update(solution);

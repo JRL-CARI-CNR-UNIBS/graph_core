@@ -31,10 +31,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <visualization_msgs/MarkerArray.h>
 #include <moveit/planning_scene/planning_scene.h>
 #include <eigen_conversions/eigen_msg.h>
+#include <moveit_visual_tools/moveit_visual_tools.h>
+#include <moveit_msgs/DisplayTrajectory.h>
 
 namespace pathplan
 {
-#define DISPLAYTIME 0.1
+#define DISPLAYTIME 0.00001
 class Display;
 typedef std::shared_ptr<Display> DisplayPtr;
 class Display: public std::enable_shared_from_this<Display>
@@ -42,6 +44,7 @@ class Display: public std::enable_shared_from_this<Display>
 protected:
   planning_scene::PlanningScenePtr planning_scene_;
   std::string group_name_;
+  std::string base_link_;
   std::string last_link_;
   int marker_id_;
   std::vector<double> node_marker_scale_;
@@ -58,7 +61,26 @@ protected:
 public:
   Display(const planning_scene::PlanningScenePtr planning_scene,
           const std::string& group_name,
+          const std::string& base_link,
           const std::string& last_link);
+
+  void changeNodeSize(const std::vector<double>& marker_size)
+  {
+    node_marker_scale_ = marker_size;
+  }
+  void defaultNodeSize()
+  {
+    node_marker_scale_.resize(3,0.02);
+  }
+
+  void changeConnectionSize(const std::vector<double>& marker_size)
+  {
+    connection_marker_scale_ = marker_size;
+  }
+  void defaultConnectionSize()
+  {
+    connection_marker_scale_.resize(3,0.005);;
+  }
 
   void clearMarkers(const std::string &ns="pathplan");
   void clearMarker(const int& id,const std::string& ns="pathplan");
@@ -74,10 +96,17 @@ public:
                    const std::string& ns="pathplan",
                    const std::vector<double>& marker_color= {1,0,0,1.0},
                    const bool& plot_state=false);
+  std::vector<int> displayPathAndWaypoints(const PathPtr& path,
+                   const std::string& ns="pathplan",
+                   const std::vector<double>& marker_color= {1,0,0,1.0},
+                   const bool& plot_state=false);
 
   int displayTree(const TreePtr& tree,
                    const std::string& ns="pathplan",
                    const std::vector<double>& marker_color= {1,0,0,1.0});
+
+  void nextButton(const std::string& string="Press Next");
+
 };
 }
 

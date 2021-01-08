@@ -4,6 +4,8 @@
 #include <graph_core/graph/node.h>
 #include <graph_core/graph/path.h>
 #include <graph_core/graph/tree.h>
+#include <graph_core/graph/trajectory.h>
+#include <graph_core/graph/graph_display.h>
 #include <graph_core/solvers/rrt_connect.h>
 #include <graph_core/solvers/birrt.h>
 #include <graph_core/solvers/rrt_star.h>
@@ -87,7 +89,9 @@ int main(int argc, char **argv)
 
   // ////////////////////////////////////////////////////////////////////////PATH PLAN & VISUALIZATION/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  pathplan::TestUtil ut = pathplan::TestUtil(nh, kinematic_model, planning_scene, group_name, joint_model_group, base_link, last_link, display_publisher, marker_pub);
+  pathplan::Display disp = pathplan::Display(planning_scene,group_name,base_link,last_link);
+  pathplan::PathPtr path = NULL;
+  pathplan::Trajectory trajectory = pathplan::Trajectory(path,nh,planning_scene,group_name,base_link,last_link);
 
   for(unsigned int j=0; j<1;j++)
   {
@@ -97,31 +101,17 @@ int main(int argc, char **argv)
     {
       pathplan::NodePtr goal_node = std::make_shared<pathplan::Node>(goal_conf);
 
-      pathplan::PathPtr solution = ut.computeBiRRTPath(start_node, goal_node, lb, ub, metrics, checker, 1);
+      pathplan::PathPtr solution = trajectory.computeBiRRTPath(start_node, goal_node, lb, ub, metrics, checker, 1);
       path_vector.push_back(solution);
       ros::Duration(0.1).sleep();
 
-      std::vector<double> t_vector(solution->getWaypoints().size(),0.0);  //plotto solo il path, no time parametrization
-      std::vector<int> marker_id; marker_id.push_back(-i);
-      std::vector<double> marker_scale(3,0.005);
-      std::vector<double> marker_scale_sphere(3,0.02);
       std::vector<double> marker_color;
-      //if(i==0) marker_color = {0.0f,1.0,0.0f,1.0};
+
       if(i==0) marker_color = {0.5,0.5,0.0,1.0};
       if(i==1) marker_color = {0.0f,0.0f,1.0,1.0};
       if(i==2) marker_color = {1.0,0.0f,0.0f,1.0};
 
-      std::vector<moveit::core::RobotState> wp_state_vector = ut.fromWaypoints2State(solution->getWaypoints());
-      //ut.displayTrajectoryOnMoveitRviz(solution,t_vector,colors.at(i),0);
-      ut.displayPathNodesRviz(wp_state_vector, shape, marker_id, marker_scale, marker_color); //line strip
-
-      std::vector<int> marker_id_sphere;
-      for(unsigned int j=0; j<wp_state_vector.size();j++)
-      {
-        marker_id_sphere.push_back((i+1)*10000+j);  //to have different ids
-      }
-      ut.displayPathNodesRviz(wp_state_vector, visualization_msgs::Marker::SPHERE, marker_id_sphere, marker_scale_sphere, marker_color); //sphere at nodes
-
+      disp.displayPathAndWaypoints(solution,"pathplan",marker_color);
     }
 
     pathplan::PathPtr current_path = path_vector.front();
@@ -142,14 +132,8 @@ int main(int argc, char **argv)
     int informed = 2;
 
     // ///////////////////// Visualization current node /////////////////////
-    std::vector<double> marker_scale_sphere_actual(3,0.02);
     std::vector<double> marker_color_sphere_actual = {1.0,0.0,1.0,1.0};
-    std::vector<int> marker_id_sphere = {15678};
-
-    moveit::core::RobotState pink_marker = ut.fromWaypoints2State(current_configuration);
-
-    std::vector<moveit::core::RobotState> pink_marker_v = {pink_marker};
-    ut.displayPathNodesRviz(pink_marker_v, visualization_msgs::Marker::SPHERE, marker_id_sphere, marker_scale_sphere_actual, marker_color_sphere_actual);
+    disp.displayNode(std::make_shared<pathplan::Node>(current_configuration),"pathplan",marker_color_sphere_actual);
     // /////////////////////////////////////////////////////////////////////*/
 
     // ///////////////////////////// ADDING A MOBILE OBSTACLE //////////////////////
@@ -173,7 +157,7 @@ int main(int argc, char **argv)
     //Eigen::VectorXd obj_pos = (obj_child->getConfiguration()+obj_parent->getConfiguration())/2;
     Eigen::VectorXd obj_pos = obj_parent->getConfiguration();
 
-    moveit::core::RobotState obj_pos_state = ut.fromWaypoints2State(obj_pos);
+    moveit::core::RobotState obj_pos_state = trajectory.fromWaypoints2State(obj_pos);
     tf::poseEigenToMsg(obj_pos_state.getGlobalLinkTransform(last_link),obj.pose.pose);
     obj.pose.header.frame_id="world";
 
@@ -213,32 +197,6 @@ int main(int argc, char **argv)
       return 1;
     }
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /*::NodePtr goal_node = std::make_shared<pathplan::Node>(goal_conf);
-
-    pathplan::PathPtr solution = ut.computeBiRRTPath(start_node, goal_node, lb, ub, metrics, checker, 1);
-    path_vector.push_back(solution);
-    ros::Duration(0.1).sleep();
-
-    std::vector<double> t_vector(solution->getWaypoints().size(),0.0);  //plotto solo il path, no time parametrization
-    std::vector<int> marker_id; marker_id.push_back(-12);
-    std::vector<double> marker_scale(3,0.005);
-    std::vector<double> marker_scale_sphere(3,0.02);
-    std::vector<double> marker_color;
-    //if(i==0) marker_color = {0.0f,1.0,0.0f,1.0};
-    marker_color = {0.85,0.85,0.4,1.0};
-
-    std::vector<moveit::core::RobotState> wp_state_vector = ut.fromWaypoints2State(solution->getWaypoints());
-    //ut.displayTrajectoryOnMoveitRviz(solution,t_vector,colors.at(i),0);
-    ut.displayPathNodesRviz(wp_state_vector, shape, marker_id, marker_scale, marker_color); //line strip
-
-    marker_id_sphere;
-    for(unsigned int j=0; j<wp_state_vector.size();j++)
-    {
-      marker_id_sphere.push_back((12+1)*10000+j);  //to have different ids
-    }
-    ut.displayPathNodesRviz(wp_state_vector, visualization_msgs::Marker::SPHERE, marker_id_sphere, marker_scale_sphere, marker_color); //sphere at nodes*/
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     bool valid;
     valid =current_path->isValid();
@@ -252,11 +210,11 @@ int main(int argc, char **argv)
 
     // ///////////////////////////////////////////////////////////////////////////
 
-    ut.nextButton("Press \"next\" to start");
+    disp.nextButton("Press \"next\" to start");
 
     pathplan::Replanner replanner = pathplan::Replanner(current_configuration, current_path, other_paths, solver, metrics, checker, lb, ub);
     //success =  replanner.informedOnlineReplanning(informed, succ_node);
-    success =  replanner.informedOnlineReplanning(informed, succ_node,ut);  //InformedOnlineReplanning
+    success =  replanner.informedOnlineReplanning(informed, succ_node,disp);  //InformedOnlineReplanning
     //success = replanner.pathSwitch(current_path, node, succ_node, new_path, subpath_from_path2, connected2path_number, ut); //PathSwitch
 
     if(success)ROS_INFO_STREAM("j: "<<j<<" success: "<<success<<" cost: "<<replanner.getReplannedPath()->cost());

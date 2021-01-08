@@ -4,7 +4,7 @@
 #include <eigen3/Eigen/Core>
 #include <ros/ros.h>
 #include <graph_core/util.h>
-#include <graph_core/test_util.h>
+#include <graph_core/graph/graph_display.h>
 #include <graph_core/graph/tree.h>
 #include <graph_core/graph/path.h>
 #include <graph_core/graph/connection.h>
@@ -121,7 +121,7 @@ namespace pathplan
             bool pathSwitch(const PathPtr& current_path, const NodePtr& node, const bool& succ_node, PathPtr &new_path, PathPtr &subpath_from_path2, int &connected2path_number);
 
             //To test the algorithm
-            bool pathSwitch(const PathPtr& current_path, const NodePtr& node, const bool& succ_node, PathPtr &new_path, PathPtr &subpath_from_path2, int &connected2path_number, pathplan::TestUtil& ut);
+            bool pathSwitch(const PathPtr& current_path, const NodePtr& node, const bool& succ_node, PathPtr &new_path, PathPtr &subpath_from_path2, int &connected2path_number, Display &disp);
 
 
             //It menages the replanning calling more times pathSwitch from different nodes and giving the correct set of available paths
@@ -129,13 +129,13 @@ namespace pathplan
 
 
             //To test the algorithm
-            bool informedOnlineReplanning(const int& informed, const bool& succ_node, pathplan::TestUtil& ut);
+            bool informedOnlineReplanning(const int& informed, const bool& succ_node, Display &disp);
 
             //It directly connect the node to the goal
             bool connect2goal(const PathPtr &current_path, const NodePtr& node, PathPtr &new_path);
 
             //To test the algorithm
-            bool connect2goal(const PathPtr &current_path, const NodePtr& node, PathPtr &new_path, pathplan::TestUtil& ut);
+            bool connect2goal(const PathPtr &current_path, const NodePtr& node, PathPtr &new_path, Display &disp);
 
             void startReplannedPathFromNewCurrentConf(Eigen::VectorXd configuration);
 

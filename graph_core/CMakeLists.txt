@@ -48,6 +48,7 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/graph/connection.cpp
   src/${PROJECT_NAME}/graph/tree.cpp
   src/${PROJECT_NAME}/graph/path.cpp
+  src/${PROJECT_NAME}/graph/trajectory.cpp
   src/${PROJECT_NAME}/graph/graph_display.cpp
   src/${PROJECT_NAME}/solvers/multigoal.cpp
   src/${PROJECT_NAME}/solvers/tree_solver.cpp

@@ -4,13 +4,14 @@
 #include <graph_core/graph/node.h>
 #include <graph_core/graph/path.h>
 #include <graph_core/graph/tree.h>
+#include<graph_core/graph/graph_display.h>
+#include<graph_core/graph/trajectory.h>
 #include <graph_core/solvers/rrt_connect.h>
 #include <graph_core/solvers/birrt.h>
 #include <graph_core/solvers/rrt_star.h>
 #include <graph_core/solvers/path_solver.h>
 #include <graph_core/moveit_collision_checker.h>
 #include <graph_core/local_informed_sampler.h>
-#include <graph_core/test_util.h>
 #include <moveit/planning_scene/planning_scene.h>
 #include <moveit/planning_interface/planning_interface.h>
 #include <moveit/move_group_interface/move_group_interface.h>
@@ -36,11 +37,13 @@ planning_scene::PlanningScenePtr planning_scn;
 std::mutex planning_mtx;
 std::mutex trj_mtx;
 std::mutex checker_mtx;
-pathplan::TestUtilPtr ut;
+std::mutex display_mtx;
+pathplan::TrajectoryPtr trajectory;
+pathplan::DisplayPtr disp;
 
 moveit_msgs::RobotTrajectory trj_msg;
 double t=0;
-double dt=0.01;
+double dt=0.1;//0.01;
 double dt_replan=dt;
 double t_replan=t+dt_replan;
 trajectory_processing::SplineInterpolator interpolator;
@@ -52,8 +55,10 @@ bool first_replan = true;
 
 void replanning_fcn()
 {
-  ros::Rate lp(50);
+  ros::Rate lp(1/dt);
   bool replan = true;
+  int replanned_path_id;
+  int node_id;
   Eigen::VectorXd goal;
   while (!stop)
   {
@@ -77,10 +82,12 @@ void replanning_fcn()
       {
         std::vector<double> marker_scale_sphere_actual(3,0.02);
         std::vector<double> marker_color_sphere_actual = {0.0,0.0,0.0,1.0};
-        std::vector<int> marker_id_sphere = {15680};
-        moveit::core::RobotState black_marker = ut->fromWaypoints2State(replanner->getCurrentConf());
-        std::vector<moveit::core::RobotState> black_marker_v = {black_marker};
-        ut->displayPathNodesRviz(black_marker_v, visualization_msgs::Marker::SPHERE, marker_id_sphere, marker_scale_sphere_actual, marker_color_sphere_actual);
+        display_mtx.lock();
+        disp->clearMarker(node_id);
+        disp->changeNodeSize(marker_scale_sphere_actual);
+        node_id = disp->displayNode(std::make_shared<pathplan::Node>(replanner->getCurrentConf()),"pathplan",marker_color_sphere_actual);
+        disp->defaultNodeSize();
+        display_mtx.unlock();
 
         if(first_replan)
         {
@@ -102,20 +109,23 @@ void replanning_fcn()
         checker_mtx.unlock();
 
         moveit_msgs::RobotTrajectory tmp_trj_msg;
-        robot_trajectory::RobotTrajectoryPtr trj= ut->fromPath2Trj(replanner->getCurrentPath(),pnt);
+        trajectory->setPath(replanner->getCurrentPath());
+        robot_trajectory::RobotTrajectoryPtr trj= trajectory->fromPath2Trj(pnt);
         trj->getRobotTrajectoryMsg(tmp_trj_msg);
 
         interpolator.setTrajectory(tmp_trj_msg);
         interpolator.setSplineOrder(1);
         trj_mtx.unlock();
 
-        std::vector<int> marker_id; marker_id.push_back(-101);
         std::vector<double> marker_scale(3,0.01);
-        std::vector<double> marker_color;
-        marker_color = {1.0,1.0,0.0,1.0};
+        std::vector<double> marker_color = {1.0,1.0,0.0,1.0};
 
-        std::vector<moveit::core::RobotState> wp_state_vector = ut->fromWaypoints2State(replanner->getReplannedPath()->getWaypoints());
-        ut->displayPathNodesRviz(wp_state_vector, visualization_msgs::Marker::LINE_STRIP, marker_id, marker_scale, marker_color); //line strip
+        display_mtx.lock();
+        disp->clearMarker(replanned_path_id);
+        disp->changeConnectionSize(marker_scale);
+        replanned_path_id = disp->displayPath(replanner->getReplannedPath(),"pathplan",marker_color);
+        disp->defaultConnectionSize();
+        display_mtx.unlock();
       }
     }
 
@@ -137,19 +147,19 @@ void collision_check_fcn()
 
   ros::Rate lp(30);
   bool object_spawned = false;
-  bool second_object_spawned = true;  //false
+  bool second_object_spawned = false;
   while (!stop)
   {
     // ////////////////////////////////////////////SPAWNING THE OBJECT/////////////////////////////////////////////
 
     ros::ServiceClient add_obj;
-    if(t>=0.8 && !second_object_spawned)
+    if(t>=0.15 && !second_object_spawned)
     {
       second_object_spawned = true;
       object_spawned = false;
     }
 
-    if(!object_spawned && t>=0.3)
+    if(!object_spawned && t>=0.05)
     {
       object_spawned = true;
 
@@ -171,7 +181,7 @@ void collision_check_fcn()
       Eigen::VectorXd obj_pos = (obj_child->getConfiguration()+obj_parent->getConfiguration())/2;
       //Eigen::VectorXd obj_pos = obj_parent->getConfiguration();
 
-      moveit::core::RobotState obj_pos_state = ut->fromWaypoints2State(obj_pos);
+      moveit::core::RobotState obj_pos_state = trajectory->fromWaypoints2State(obj_pos);
       tf::poseEigenToMsg(obj_pos_state.getGlobalLinkTransform("panda_link8"),obj.pose.pose);
       obj.pose.header.frame_id="world";
 
@@ -191,7 +201,6 @@ void collision_check_fcn()
       }
     }
 
-
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     if (!ps_client.call(ps_srv))
@@ -203,7 +212,6 @@ void collision_check_fcn()
     if (!planning_scn->setPlanningSceneMsg(ps_srv.response.scene))
     {
       ROS_ERROR("unable to update planning scene");
-      //ROS_ERROR_THROTTLE("unable to update planning scene");
     }
     checker_mtx.lock();
     replanner->checkPathValidity();
@@ -292,7 +300,12 @@ int main(int argc, char **argv)
 
   // ///////////////////////////PATH PLAN & VISUALIZATION//////////////////////////////////////////////////////////////////////////
 
-  ut = std::make_shared<pathplan::TestUtil>(nh, kinematic_model, planning_scn, group_name, joint_model_group, base_link, last_link, display_publisher, marker_pub);
+  disp = std::make_shared<pathplan::Display>(planning_scn,group_name,base_link,last_link);
+  pathplan::PathPtr path = NULL;
+  trajectory = std::make_shared<pathplan::Trajectory>(path,nh,planning_scn,group_name,base_link,last_link);
+
+  int current_node_id;
+  int trj_node_id;
 
   std::vector<pathplan::PathPtr> path_vector;
 
@@ -300,27 +313,15 @@ int main(int argc, char **argv)
   {
     pathplan::NodePtr goal_node = std::make_shared<pathplan::Node>(goal_conf);
 
-    pathplan::PathPtr solution = ut->computeBiRRTPath(start_node, goal_node, lb, ub, metrics, checker, 1);
+    pathplan::PathPtr solution = trajectory->computeBiRRTPath(start_node, goal_node, lb, ub, metrics, checker, 1);
     path_vector.push_back(solution);
 
-    std::vector<int> marker_id; marker_id.push_back(-i);
-    std::vector<double> marker_scale(3,0.005);
-    std::vector<double> marker_scale_sphere(3,0.02);
     std::vector<double> marker_color;
-
     if(i==0) marker_color = {0.5,0.5,0.0,1.0};
     if(i==1) marker_color = {0.0f,0.0f,1.0,1.0};
     if(i==2) marker_color = {1.0,0.0f,0.0f,1.0};
 
-    std::vector<moveit::core::RobotState> wp_state_vector = ut->fromWaypoints2State(solution->getWaypoints());
-    ut->displayPathNodesRviz(wp_state_vector, visualization_msgs::Marker::LINE_STRIP, marker_id, marker_scale, marker_color);
-
-    std::vector<int> marker_id_sphere;
-    for(unsigned int j=0; j<wp_state_vector.size();j++)
-    {
-      marker_id_sphere.push_back((i+1)*10000+j);  //to have different ids
-    }
-    ut->displayPathNodesRviz(wp_state_vector, visualization_msgs::Marker::SPHERE, marker_id_sphere, marker_scale_sphere, marker_color); //sphere at nodes
+    disp->displayPathAndWaypoints(solution,"pathplan",marker_color);
   }
 
   // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -332,7 +333,8 @@ int main(int argc, char **argv)
   pathplan::BiRRTPtr solver = std::make_shared<pathplan::BiRRT>(metrics, checker, samp);
   solver->config(nh);
 
-  robot_trajectory::RobotTrajectoryPtr trj= ut->fromPath2Trj(current_path);
+  trajectory->setPath(current_path);
+  robot_trajectory::RobotTrajectoryPtr trj= trajectory->fromPath2Trj();
   moveit_msgs::RobotTrajectory tmp_trj_msg;
   trj->getRobotTrajectoryMsg(tmp_trj_msg);
 
@@ -377,17 +379,6 @@ int main(int argc, char **argv)
     t+=dt;
     t_replan=t+dt_replan;
 
-    /*double delta = dt_replan;
-    do
-    {
-      interpolator.interpolate(ros::Duration(t+delta),pnt_replan);
-      for(unsigned int i=0; i<pnt_replan.positions.size();i++) point2project[i] = pnt_replan.positions.at(i);
-      configuration_replan = replanner->getCurrentPath()->projectOnClosestConnection(point2project,past_configuration_replan,n_conn_replan);
-
-      delta+=dt;
-
-    }while((configuration_replan == past_configuration_replan) && ((t+delta)<interpolator.trjTime().toSec()));*/
-
     interpolator.interpolate(ros::Duration(t_replan),pnt_replan);
     for(unsigned int i=0; i<pnt_replan.positions.size();i++) point2project[i] = pnt_replan.positions.at(i);
     configuration_replan = replanner->getCurrentPath()->projectOnClosestConnection(point2project,past_configuration_replan,n_conn_replan);
@@ -403,25 +394,22 @@ int main(int argc, char **argv)
 
     trj_mtx.unlock();
 
-    if((current_configuration-goal_conf).norm()<1e-6)
-    {
-      stop = true;
-      ROS_ERROR("STOOOOOOOOOOOOOOOOOP");
-    }
+    if((current_configuration-goal_conf).norm()<1e-6) stop = true;
     else
     {
       std::vector<double> marker_scale_sphere_actual(3,0.02);
       std::vector<double> marker_color_sphere_actual = {1.0,0.0,1.0,1.0};
-      std::vector<int> marker_id_sphere = {15679};
-      moveit::core::RobotState pink_marker = ut->fromWaypoints2State(current_configuration);
-      std::vector<moveit::core::RobotState> pink_marker_v = {pink_marker};
-      ut->displayPathNodesRviz(pink_marker_v, visualization_msgs::Marker::SPHERE, marker_id_sphere, marker_scale_sphere_actual, marker_color_sphere_actual);
 
+      display_mtx.lock();
+      disp->clearMarker(current_node_id);
+      disp->changeNodeSize(marker_scale_sphere_actual);
+      current_node_id = disp->displayNode(std::make_shared<pathplan::Node>(current_configuration),"pathplan",marker_color_sphere_actual);
+
+      disp->clearMarker(trj_node_id);
       marker_color_sphere_actual = {0.0,1.0,0.0,1.0};
-      marker_id_sphere = {15681};
-      moveit::core::RobotState green_marker = ut->fromWaypoints2State(point2project);
-      std::vector<moveit::core::RobotState> green_marker_v = {green_marker};
-      ut->displayPathNodesRviz(green_marker_v, visualization_msgs::Marker::SPHERE, marker_id_sphere, marker_scale_sphere_actual, marker_color_sphere_actual);
+      trj_node_id = disp->displayNode(std::make_shared<pathplan::Node>(point2project),"pathplan",marker_color_sphere_actual);
+      disp->defaultNodeSize();
+      display_mtx.unlock();
 
       joint_state.position = pnt.positions;
       joint_state.velocity = pnt.velocities;

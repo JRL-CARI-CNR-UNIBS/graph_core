@@ -34,14 +34,16 @@ namespace pathplan
 
 Display::Display(const planning_scene::PlanningScenePtr planning_scene,
                  const std::string& group_name,
+                 const std::string& base_link,
                  const std::string& last_link):
   planning_scene_(planning_scene),
   group_name_(group_name),
+  base_link_(base_link),
   last_link_(last_link)
 {
-  node_marker_scale_.resize(3,0.05);
-  connection_marker_scale_.resize(3,0.02);
-  tree_marker_scale_.resize(3,0.01);
+  node_marker_scale_.resize(3,0.02);
+  connection_marker_scale_.resize(3,0.005);
+  tree_marker_scale_.resize(3,0.005);
   marker_id_=0;
   state_=std::make_shared<moveit::core::RobotState>(planning_scene_->getCurrentState());
   marker_pub_ = nh_.advertise<visualization_msgs::Marker>("/marker_visualization_topic", 1000);
@@ -75,9 +77,9 @@ void Display::clearMarker(const int& id,const std::string& ns)
 }
 
 int Display::displayNode(const NodePtr &n,
-                          const std::string& ns,
-                          const std::vector<double> &marker_color,
-                          const bool &plot_state)
+                         const std::string& ns,
+                         const std::vector<double> &marker_color,
+                         const bool &plot_state)
 {
 
   visualization_msgs::Marker marker;
@@ -108,9 +110,9 @@ int Display::displayNode(const NodePtr &n,
 }
 
 int Display::displayConnection(const ConnectionPtr& conn,
-                                const std::string& ns,
-                                const std::vector<double>& marker_color,
-                                const bool& plot_state)
+                               const std::string& ns,
+                               const std::vector<double>& marker_color,
+                               const bool& plot_state)
 {
   visualization_msgs::Marker marker;
   marker.ns = ns;
@@ -145,9 +147,9 @@ int Display::displayConnection(const ConnectionPtr& conn,
 }
 
 int Display::displayPath(const PathPtr &path,
-                          const std::string& ns,
-                          const std::vector<double> &marker_color,
-                          const bool &plot_state)
+                         const std::string& ns,
+                         const std::vector<double> &marker_color,
+                         const bool &plot_state)
 {
   visualization_msgs::Marker marker;
   marker.ns = ns;
@@ -165,7 +167,6 @@ int Display::displayPath(const PathPtr &path,
   marker.color.g = marker_color.at(1);
   marker.color.b = marker_color.at(2);
   marker.color.a = marker_color.at(3);
-
 
   std::vector<ConnectionPtr> connections=path->getConnections();
   if (connections.size()==0)
@@ -187,9 +188,76 @@ int Display::displayPath(const PathPtr &path,
   return marker.id;
 }
 
+
+std::vector<int> Display::displayPathAndWaypoints(const PathPtr &path,
+                                                  const std::string& ns,
+                                                  const std::vector<double> &marker_color,
+                                                  const bool &plot_state)
+{
+  visualization_msgs::Marker marker;
+  marker.ns = ns;
+  marker.type = visualization_msgs::Marker::LINE_LIST;
+  marker.header.frame_id="world";
+  marker.header.stamp=ros::Time::now();
+  marker.action = visualization_msgs::Marker::ADD;
+  marker.id= marker_id_++;
+
+  marker.scale.x = connection_marker_scale_.at(0);
+  marker.scale.y = connection_marker_scale_.at(1);
+  marker.scale.z = connection_marker_scale_.at(2);
+
+  marker.color.r = marker_color.at(0);
+  marker.color.g = marker_color.at(1);
+  marker.color.b = marker_color.at(2);
+  marker.color.a = marker_color.at(3);
+
+  visualization_msgs::Marker marker_wp;
+  marker_wp.ns = ns;
+  marker_wp.type = visualization_msgs::Marker::SPHERE_LIST;
+  marker_wp.header.frame_id="world";
+  marker_wp.header.stamp=ros::Time::now();
+  marker_wp.action = visualization_msgs::Marker::ADD;
+  marker_wp.id= marker_id_++;
+
+  marker_wp.scale.x = node_marker_scale_.at(0);
+  marker_wp.scale.y = node_marker_scale_.at(1);
+  marker_wp.scale.z = node_marker_scale_.at(2);
+
+  marker_wp.color.r = marker_color.at(0);
+  marker_wp.color.g = marker_color.at(1);
+  marker_wp.color.b = marker_color.at(2);
+  marker_wp.color.a = marker_color.at(3);
+
+  std::vector<int> ids;
+  ids.push_back(marker.id);
+  ids.push_back(marker_wp.id);
+
+  std::vector<ConnectionPtr> connections=path->getConnections();
+  if (connections.size()==0)
+    return ids;
+  for (const ConnectionPtr& conn: connections)
+  {
+    geometry_msgs::Pose pose;
+    state_->setJointGroupPositions(group_name_,conn->getParent()->getConfiguration());
+    tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+    marker.points.push_back(pose.position);
+    marker_wp.points.push_back(pose.position);
+
+    state_->setJointGroupPositions(group_name_,conn->getChild()->getConfiguration());
+    tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+    marker.points.push_back(pose.position);
+    marker_wp.points.push_back(pose.position);
+  }
+
+  marker_pub_.publish(marker);
+  marker_pub_.publish(marker_wp);
+  ros::Duration(DISPLAYTIME).sleep();
+  return ids;
+}
+
 int Display::displayTree(const TreePtr &tree,
-                          const std::string &ns,
-                          const std::vector<double> &marker_color)
+                         const std::string &ns,
+                         const std::vector<double> &marker_color)
 {
   visualization_msgs::Marker marker;
   marker.ns = ns;
@@ -239,5 +307,17 @@ void Display::displayTreeNode(const NodePtr &n,
 
     displayTreeNode(conn->getChild(),direction,points);
   }
+}
+
+void Display::nextButton(const std::string& string)
+{
+  moveit_visual_tools::MoveItVisualToolsPtr visual_tools_ = std::make_shared<moveit_visual_tools::MoveItVisualTools>(base_link_,"/rviz_visual_tools");
+
+  /* Remote control is an introspection tool that allows users to step through a high level script
+  via buttons and keyboard shortcuts in RViz */
+  visual_tools_->loadRemoteControl();
+
+  /* We can also use visual_tools to wait for user input */
+  visual_tools_->prompt(string);
 }
 }
