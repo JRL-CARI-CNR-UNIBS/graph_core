@@ -798,12 +798,17 @@ bool Replanner::pathSwitch(const PathPtr &current_path,
 
 bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_node)
 {
+  const double MAX_TIME = 0.1; //seconds
+  return informedOnlineReplanning(informed, succ_node, MAX_TIME);
+}
+
+bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_node, const double MAX_TIME)
+{
   ros::WallTime tic=ros::WallTime::now();
   ros::WallTime toc;
   double time_span;
 
-  const double  MAX_TIME = 0.01; //seconds
-  const double TIME_LIMIT = 0.005; //seconds
+  const double TIME_LIMIT = MAX_TIME-0.15*MAX_TIME; //seconds
   const int CONT_LIMIT = 5;
 
   PathPtr new_path;
@@ -841,7 +846,7 @@ bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_n
     double dist2 = (current_path_->getWaypoints().at(0) - current_path_->getWaypoints().at(1)).norm();
     ROS_INFO_STREAM("current conf: "<< current_configuration_.transpose()<< " dist: "<<dist1);
     ROS_INFO_STREAM("start conf: "<< current_path_->getWaypoints().at(0).transpose() << " dist: "<<dist2);
-    ROS_INFO_STREAM("DIFF: "<<abs(dist1-dist2));
+    ROS_INFO_STREAM("DIFF: "<<std::abs(dist1-dist2));
     ROS_INFO_STREAM("idx: "<<idx);
 
     for(Eigen::VectorXd wp:current_path_->getWaypoints()) ROS_INFO_STREAM("WP: "<<wp.transpose());
@@ -1352,9 +1357,8 @@ bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_n
     disp.defaultNodeSize();
     /*/////////////////////////////////////////////////////////////////////////////////////////////*/
 
-
     ROS_INFO_STREAM("Solved: "<<solved);
-    ROS_INFO_STREAM("actual conn cost: "<<actual_node_conn->getCost());
+    //ROS_INFO_STREAM("actual conn cost: "<<actual_node_conn->getCost());
 
     if(solved)
     {

@@ -113,7 +113,7 @@ int main(int argc, char **argv)
 
   // ////////////////////////////////////////////////////////////////////////PATH PLAN & VISUALIZATION/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  pathplan::Display disp = pathplan::Display(planning_scene,group_name,base_link,last_link);
+  pathplan::Display disp = pathplan::Display(planning_scene,group_name,last_link);
   pathplan::PathPtr path = NULL;
   pathplan::Trajectory trajectory = pathplan::Trajectory(path,nh,planning_scene,group_name,base_link,last_link);
 
@@ -188,9 +188,9 @@ int main(int argc, char **argv)
 
     pathplan::Replanner replanner = pathplan::Replanner(current_configuration, current_path, other_paths, solver, metrics, checker, lb, ub);
 
-    success =  replanner.informedOnlineReplanning(informed, succ_node,disp);
+    success =  replanner.informedOnlineReplanning(informed,succ_node,disp);
     //success = replanner.pathSwitch(current_path,node, succ_node, new_path, subpath_from_path2, connected2path_number, disp);
-    // = replanner.connect2goal(current_path,node, new_path,disp);
+    //success = replanner.connect2goal(current_path,node, new_path,disp);
 
 
     if(success)ROS_INFO_STREAM("j: "<<j<<" success: "<<success<<" cost: "<<replanner.getReplannedPath()->cost());

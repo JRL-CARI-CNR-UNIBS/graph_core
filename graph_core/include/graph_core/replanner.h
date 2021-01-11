@@ -125,8 +125,8 @@ namespace pathplan
 
 
             //It menages the replanning calling more times pathSwitch from different nodes and giving the correct set of available paths
+            bool informedOnlineReplanning(const int& informed, const bool& succ_node, const double MAX_TIME);
             bool informedOnlineReplanning(const int& informed, const bool& succ_node);
-
 
             //To test the algorithm
             bool informedOnlineReplanning(const int& informed, const bool& succ_node, Display &disp);

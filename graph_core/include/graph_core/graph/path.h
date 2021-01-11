@@ -122,9 +122,8 @@ public:
   bool isValid();
   Eigen::VectorXd projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool &in_conn);
   const Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point);
-  const Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point, const Eigen::VectorXd past_prj, int &n_conn);
-
-
+  const Eigen::VectorXd projectOnClosestConnectionKeepingPastPrj(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, int &n_conn);
+  const Eigen::VectorXd projectOnClosestConnectionKeepingCurvilinearAbscissa(const Eigen::VectorXd& point, Eigen::VectorXd &past_prj, int &n_conn);
 
 
   // return true if improve

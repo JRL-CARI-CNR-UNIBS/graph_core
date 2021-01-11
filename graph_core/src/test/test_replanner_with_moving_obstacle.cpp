@@ -89,7 +89,7 @@ int main(int argc, char **argv)
 
   // ////////////////////////////////////////////////////////////////////////PATH PLAN & VISUALIZATION/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  pathplan::Display disp = pathplan::Display(planning_scene,group_name,base_link,last_link);
+  pathplan::Display disp = pathplan::Display(planning_scene,group_name,last_link);
   pathplan::PathPtr path = NULL;
   pathplan::Trajectory trajectory = pathplan::Trajectory(path,nh,planning_scene,group_name,base_link,last_link);
 

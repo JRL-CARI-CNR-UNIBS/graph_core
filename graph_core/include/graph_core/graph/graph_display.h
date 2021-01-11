@@ -44,7 +44,6 @@ class Display: public std::enable_shared_from_this<Display>
 protected:
   planning_scene::PlanningScenePtr planning_scene_;
   std::string group_name_;
-  std::string base_link_;
   std::string last_link_;
   int marker_id_;
   std::vector<double> node_marker_scale_;
@@ -61,7 +60,6 @@ protected:
 public:
   Display(const planning_scene::PlanningScenePtr planning_scene,
           const std::string& group_name,
-          const std::string& base_link,
           const std::string& last_link);
 
   void changeNodeSize(const std::vector<double>& marker_size)
@@ -85,25 +83,49 @@ public:
   void clearMarkers(const std::string &ns="pathplan");
   void clearMarker(const int& id,const std::string& ns="pathplan");
   int displayNode(const NodePtr& n,
-                   const std::string& ns="pathplan",
-                   const std::vector<double>& marker_color = {1,0,0,1.0},
-                   const bool& plot_state=false);
+                  const std::string& ns="pathplan",
+                  const std::vector<double>& marker_color = {1,0,0,1.0},
+                  const bool& plot_state=false);
+  int displayNode(const NodePtr& n,
+                  const int &static_id,
+                  const std::string& ns="pathplan",
+                  const std::vector<double>& marker_color = {1,0,0,1.0},
+                  const bool& plot_state=false);
   int displayConnection(const ConnectionPtr& conn,
-                         const std::string& ns="pathplan",
-                         const std::vector<double>& marker_color= {1,0,0,1.0},
-                         const bool& plot_state=false);
+                        const std::string& ns="pathplan",
+                        const std::vector<double>& marker_color= {1,0,0,1.0},
+                        const bool& plot_state=false);
+  int displayConnection(const ConnectionPtr& conn,
+                        const int &static_id,
+                        const std::string& ns="pathplan",
+                        const std::vector<double>& marker_color= {1,0,0,1.0},
+                        const bool& plot_state=false);
   int displayPath(const PathPtr& path,
-                   const std::string& ns="pathplan",
-                   const std::vector<double>& marker_color= {1,0,0,1.0},
-                   const bool& plot_state=false);
+                  const std::string& ns="pathplan",
+                  const std::vector<double>& marker_color= {1,0,0,1.0},
+                  const bool& plot_state=false);
+  int displayPath(const PathPtr& path,
+                  const int &static_id,
+                  const std::string& ns="pathplan",
+                  const std::vector<double>& marker_color= {1,0,0,1.0},
+                  const bool& plot_state=false);
   std::vector<int> displayPathAndWaypoints(const PathPtr& path,
-                   const std::string& ns="pathplan",
-                   const std::vector<double>& marker_color= {1,0,0,1.0},
-                   const bool& plot_state=false);
-
+                                           const std::string& ns="pathplan",
+                                           const std::vector<double>& marker_color= {1,0,0,1.0},
+                                           const bool& plot_state=false);
+  std::vector<int> displayPathAndWaypoints(const PathPtr& path,
+                                           const int &static_id_path,
+                                           const int &static_id_wp,
+                                           const std::string& ns="pathplan",
+                                           const std::vector<double>& marker_color= {1,0,0,1.0},
+                                           const bool& plot_state=false);
   int displayTree(const TreePtr& tree,
-                   const std::string& ns="pathplan",
-                   const std::vector<double>& marker_color= {1,0,0,1.0});
+                  const std::string& ns="pathplan",
+                  const std::vector<double>& marker_color= {1,0,0,1.0});
+  int displayTree(const TreePtr& tree,
+                  const int &static_id,
+                  const std::string& ns="pathplan",
+                  const std::vector<double>& marker_color= {1,0,0,1.0});
 
   void nextButton(const std::string& string="Press Next");
 

@@ -34,11 +34,9 @@ namespace pathplan
 
 Display::Display(const planning_scene::PlanningScenePtr planning_scene,
                  const std::string& group_name,
-                 const std::string& base_link,
                  const std::string& last_link):
   planning_scene_(planning_scene),
   group_name_(group_name),
-  base_link_(base_link),
   last_link_(last_link)
 {
   node_marker_scale_.resize(3,0.02);
@@ -81,6 +79,17 @@ int Display::displayNode(const NodePtr &n,
                          const std::vector<double> &marker_color,
                          const bool &plot_state)
 {
+  int static_id = marker_id_++;
+
+  return displayNode(n,static_id,ns,marker_color,plot_state);
+}
+
+int Display::displayNode(const NodePtr &n,
+                         const int &static_id,
+                         const std::string& ns,
+                         const std::vector<double> &marker_color,
+                         const bool &plot_state)
+{
 
   visualization_msgs::Marker marker;
   marker.type = visualization_msgs::Marker::SPHERE;
@@ -93,7 +102,7 @@ int Display::displayNode(const NodePtr &n,
   marker.header.frame_id="world";
   marker.header.stamp=ros::Time::now();
   marker.action = visualization_msgs::Marker::ADD;
-  marker.id= marker_id_++;
+  marker.id= static_id;
 
   marker.scale.x = node_marker_scale_.at(0);
   marker.scale.y = node_marker_scale_.at(1);
@@ -114,6 +123,17 @@ int Display::displayConnection(const ConnectionPtr& conn,
                                const std::vector<double>& marker_color,
                                const bool& plot_state)
 {
+  int static_id = marker_id_++;
+
+  return displayConnection(conn,static_id,ns,marker_color,plot_state);
+}
+
+int Display::displayConnection(const ConnectionPtr& conn,
+                               const int &static_id,
+                               const std::string& ns,
+                               const std::vector<double>& marker_color,
+                               const bool& plot_state)
+{
   visualization_msgs::Marker marker;
   marker.ns = ns;
   marker.type = visualization_msgs::Marker::LINE_STRIP;
@@ -130,7 +150,7 @@ int Display::displayConnection(const ConnectionPtr& conn,
   marker.header.frame_id="world";
   marker.header.stamp=ros::Time::now();
   marker.action = visualization_msgs::Marker::ADD;
-  marker.id= marker_id_++;
+  marker.id= static_id;
 
   marker.scale.x = connection_marker_scale_.at(0);
   marker.scale.y = connection_marker_scale_.at(1);
@@ -151,13 +171,24 @@ int Display::displayPath(const PathPtr &path,
                          const std::vector<double> &marker_color,
                          const bool &plot_state)
 {
+  int static_id = marker_id_++;
+
+  return displayPath(path,static_id,ns,marker_color,plot_state);
+}
+
+int Display::displayPath(const PathPtr &path,
+                         const int &static_id,
+                         const std::string& ns,
+                         const std::vector<double> &marker_color,
+                         const bool &plot_state)
+{
   visualization_msgs::Marker marker;
   marker.ns = ns;
   marker.type = visualization_msgs::Marker::LINE_LIST;
   marker.header.frame_id="world";
   marker.header.stamp=ros::Time::now();
   marker.action = visualization_msgs::Marker::ADD;
-  marker.id= marker_id_++;
+  marker.id= static_id;
 
   marker.scale.x = connection_marker_scale_.at(0);
   marker.scale.y = connection_marker_scale_.at(1);
@@ -188,8 +219,19 @@ int Display::displayPath(const PathPtr &path,
   return marker.id;
 }
 
-
 std::vector<int> Display::displayPathAndWaypoints(const PathPtr &path,
+                                                  const std::string& ns,
+                                                  const std::vector<double> &marker_color,
+                                                  const bool &plot_state)
+{
+  int static_id_path = marker_id_++;
+  int static_id_wp = marker_id_++;
+
+  return displayPathAndWaypoints(path,static_id_path,static_id_wp,ns,marker_color,plot_state);
+}
+std::vector<int> Display::displayPathAndWaypoints(const PathPtr &path,
+                                                  const int &static_id_path,
+                                                  const int &static_id_wp,
                                                   const std::string& ns,
                                                   const std::vector<double> &marker_color,
                                                   const bool &plot_state)
@@ -200,7 +242,7 @@ std::vector<int> Display::displayPathAndWaypoints(const PathPtr &path,
   marker.header.frame_id="world";
   marker.header.stamp=ros::Time::now();
   marker.action = visualization_msgs::Marker::ADD;
-  marker.id= marker_id_++;
+  marker.id= static_id_path;
 
   marker.scale.x = connection_marker_scale_.at(0);
   marker.scale.y = connection_marker_scale_.at(1);
@@ -217,7 +259,7 @@ std::vector<int> Display::displayPathAndWaypoints(const PathPtr &path,
   marker_wp.header.frame_id="world";
   marker_wp.header.stamp=ros::Time::now();
   marker_wp.action = visualization_msgs::Marker::ADD;
-  marker_wp.id= marker_id_++;
+  marker_wp.id= static_id_wp;
 
   marker_wp.scale.x = node_marker_scale_.at(0);
   marker_wp.scale.y = node_marker_scale_.at(1);
@@ -259,13 +301,23 @@ int Display::displayTree(const TreePtr &tree,
                          const std::string &ns,
                          const std::vector<double> &marker_color)
 {
+  int static_id = marker_id_++;
+
+  return displayTree(tree,static_id,ns,marker_color);
+}
+
+int Display::displayTree(const TreePtr &tree,
+                         const int &static_id,
+                         const std::string &ns,
+                         const std::vector<double> &marker_color)
+{
   visualization_msgs::Marker marker;
   marker.ns = ns;
   marker.type = visualization_msgs::Marker::LINE_LIST;
   marker.header.frame_id="world";
   marker.header.stamp=ros::Time::now();
   marker.action = visualization_msgs::Marker::ADD;
-  marker.id= marker_id_++;
+  marker.id= static_id;
 
   marker.scale.x = tree_marker_scale_.at(0);
   marker.scale.y = tree_marker_scale_.at(1);
@@ -311,7 +363,8 @@ void Display::displayTreeNode(const NodePtr &n,
 
 void Display::nextButton(const std::string& string)
 {
-  moveit_visual_tools::MoveItVisualToolsPtr visual_tools_ = std::make_shared<moveit_visual_tools::MoveItVisualTools>(base_link_,"/rviz_visual_tools");
+  //moveit_visual_tools::MoveItVisualToolsPtr visual_tools_ = std::make_shared<moveit_visual_tools::MoveItVisualTools>(base_link_,"/rviz_visual_tools");
+  moveit_visual_tools::MoveItVisualToolsPtr visual_tools_ = std::make_shared<moveit_visual_tools::MoveItVisualTools>("/rviz_visual_tools");
 
   /* Remote control is an introspection tool that allows users to step through a high level script
   via buttons and keyboard shortcuts in RViz */
