@@ -65,12 +65,12 @@ bool PathLocalOptimizer::step(PathPtr& solution)
   ros::Time t1 = ros::Time::now();
   bool solved = !path_->warp();
   PATH_COMMENT("warp needs %f seconds", (ros::Time::now() - t1).toSec());
-//  t1=ros::Time::now();
-//  solved=!path_->slipParent() && solved;
-//  PATH_COMMENT("slipParent needs %f seconds",(ros::Time::now()-t1).toSec());
-//  t1=ros::Time::now();
-//  solved=!path_->slipChild() && solved;
-//  PATH_COMMENT("slipChild needs %f seconds",(ros::Time::now()-t1).toSec());
+  //  t1=ros::Time::now();
+  //  solved=!path_->slipParent() && solved;
+  //  PATH_COMMENT("slipParent needs %f seconds",(ros::Time::now()-t1).toSec());
+  //  t1=ros::Time::now();
+  //  solved=!path_->slipChild() && solved;
+  //  PATH_COMMENT("slipChild needs %f seconds",(ros::Time::now()-t1).toSec());
 
   if (cost <= (1.001 * path_->cost()))
   {
@@ -100,8 +100,13 @@ bool PathLocalOptimizer::step(PathPtr& solution)
 
 }
 
-bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iteration)
+bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iteration, const double& max_time)
 {
+  ros::WallTime tic = ros::WallTime::now();
+  ros::WallTime toc;
+  double available_time = max_time;
+  if(available_time<=0.0) return false;
+
   unsigned int iter = 0;
   solution = path_;
   while (iter++ < max_iteration)
@@ -112,6 +117,10 @@ bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iterat
       return true;
     }
     step(solution);
+
+    toc = ros::WallTime::now();
+    available_time = available_time-(toc-tic).toSec();
+    if(available_time<=0.0) break;
   }
   return solved_;
 }

@@ -184,11 +184,15 @@ int main(int argc, char **argv)
     disp.displayNode(std::make_shared<pathplan::Node>(current_configuration),"pathplan",marker_color_sphere_actual);
     // /////////////////////////////////////////////////////////////////////*/
 
-    disp.nextButton("Press \"next\" to start");
+    //disp.nextButton("Press \"next\" to start");
 
     pathplan::Replanner replanner = pathplan::Replanner(current_configuration, current_path, other_paths, solver, metrics, checker, lb, ub);
 
-    success =  replanner.informedOnlineReplanning(informed,succ_node,disp);
+    ros::WallTime tic = ros::WallTime::now();
+    success =  replanner.informedOnlineReplanning(informed,succ_node,1);
+    ros::WallTime toc = ros::WallTime::now();
+    ROS_INFO_STREAM("DURATION: "<<(toc-tic).toSec());
+    //success =  replanner.informedOnlineReplanning(informed,succ_node,disp);
     //success = replanner.pathSwitch(current_path,node, succ_node, new_path, subpath_from_path2, connected2path_number, disp);
     //success = replanner.connect2goal(current_path,node, new_path,disp);
 
@@ -201,6 +205,8 @@ int main(int argc, char **argv)
     std::vector<double> marker_color;
     marker_color = {1.0,1.0,0.0,1.0};
 
+    std::vector<double> marker_scale(3,0.01);
+    disp.changeConnectionSize(marker_scale);
     disp.displayPath(replanner.getReplannedPath(),"pathplan",marker_color);
     /*/////////////////////////////////////////////////////////////////////////*/
 

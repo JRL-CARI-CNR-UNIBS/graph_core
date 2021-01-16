@@ -81,6 +81,8 @@ public:
 
   //It gives the connection to which the configuration belongs
   ConnectionPtr findConnection(const Eigen::VectorXd& configuration, int& idx);
+  ConnectionPtr findConnection(const Eigen::VectorXd& configuration);
+
 
   NodePtr findCloserNode(const Eigen::VectorXd& configuration);
   NodePtr findCloserNode(const NodePtr& node);

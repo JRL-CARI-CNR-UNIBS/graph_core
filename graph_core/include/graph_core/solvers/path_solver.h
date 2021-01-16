@@ -56,7 +56,7 @@ public:
   void config(ros::NodeHandle& nh);
   bool step(PathPtr& solution);
   bool solve(PathPtr& solution,
-             const unsigned int& max_iteration = 100);
+             const unsigned int& max_iteration = 100, const double &max_time = 10000);
 
 
 };

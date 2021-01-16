@@ -208,6 +208,9 @@ robot_trajectory::RobotTrajectoryPtr Trajectory::fromPath2Trj()
   }
 
   trajectory_processing::IterativeParabolicTimeParameterization iptp;
+  //trajectory_processing::IterativeParabolicTimeParameterization iptp(100,0.001);
+  //trajectory_processing::TimeOptimalTrajectoryGeneration iptp(0.1,0.1,0.001);
+
   iptp.computeTimeStamps(*trj_);
 
   return trj_;
@@ -237,6 +240,8 @@ robot_trajectory::RobotTrajectoryPtr Trajectory::fromPath2Trj(const trajectory_m
   }
 
   trajectory_processing::IterativeParabolicTimeParameterization iptp;
+  //trajectory_processing::IterativeParabolicTimeParameterization iptp(100,0.001);
+  //trajectory_processing::TimeOptimalTrajectoryGeneration iptp(0.1,0.1,0.001);
   iptp.computeTimeStamps(*trj_);
 
   return trj_;

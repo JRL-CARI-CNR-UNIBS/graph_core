@@ -1,4 +1,4 @@
-#include <ros/ros.h>
+﻿#include <ros/ros.h>
 #include <graph_core/metrics.h>
 #include <graph_core/occupancy_metrics.h>
 #include <graph_core/graph/node.h>
@@ -43,17 +43,17 @@ pathplan::DisplayPtr disp;
 moveit_msgs::RobotTrajectory trj_msg;
 double t=0;
 double dt=0.01;
-double main_frequency = 1/dt;
+double main_frequency = 1/dt *0.1;
 double replan_frequency = 0.5*main_frequency;
-double replan_offset=4*dt;
+double replan_offset=6*dt;
 double t_replan=t+replan_offset;
 trajectory_processing::SplineInterpolator interpolator;
 trajectory_msgs::JointTrajectoryPoint pnt;
 trajectory_msgs::JointTrajectoryPoint pnt_replan;
+Eigen::VectorXd past_configuration_replan;
 int n_conn = 0;
 int n_conn_replan = 0;
 bool first_replan = true;
-Eigen::VectorXd past_configuration_replan;
 
 void replanning_fcn()
 {
@@ -68,6 +68,8 @@ void replanning_fcn()
 
   while (!stop)
   {
+    ros::WallTime tic_tot=ros::WallTime::now();
+
     trj_mtx.lock();
     t_replan=t+replan_offset;
 
@@ -80,7 +82,7 @@ void replanning_fcn()
     goal = replanner->getCurrentPath()->getConnections().back()->getChild()->getConfiguration();
     replan = ((current_configuration-goal).norm()>1e-06 && (configuration_replan-goal).norm()>1e-06);
     if(replan) replanner->setCurrentConf(configuration_replan);
-    //else stop = true;
+    else stop = true;
     trj_mtx.unlock();
 
     std::vector<double> marker_scale_sphere_actual(3,0.02);
@@ -91,15 +93,27 @@ void replanning_fcn()
     disp->defaultNodeSize();
     display_mtx.unlock();
 
+    marker_color_sphere_actual = {0.5,0.5,0.5,1.0};
+    display_mtx.lock();
+    disp->changeNodeSize(marker_scale_sphere_actual);
+    disp->displayNode(std::make_shared<pathplan::Node>(point2project),node_id-8,"pathplan",marker_color_sphere_actual);
+    disp->defaultNodeSize();
+    display_mtx.unlock();
+
     if(replan)
     {
       planning_mtx.lock();
-      success =  replanner->informedOnlineReplanning(2,1,0.85/replan_frequency);  //85% of the cycle time is used by informedOnlineReplanning
+      ros::WallTime tic_rep=ros::WallTime::now();
+      success =  replanner->informedOnlineReplanning(2,1,0.85*2*dt);//(2,1,0.85/replan_frequency);  //85% of the cycle time is used by informedOnlineReplanning
+      ros::WallTime toc_rep=ros::WallTime::now();
       planning_mtx.unlock();
 
-      ROS_INFO_STREAM("success: "<<success);
+      //ROS_INFO_STREAM("success: "<<success);
+      ros::WallTime tic_trj;
+      ros::WallTime toc_trj;
       if(success && !stop)
       {
+        ROS_INFO_STREAM("tempo informed: "<<(toc_rep-tic_rep).toSec()<<" max t: "<<0.85*2*dt);
         std::vector<double> marker_scale(3,0.01);
         std::vector<double> marker_color = {1.0,1.0,0.0,1.0};
         display_mtx.lock();
@@ -114,17 +128,6 @@ void replanning_fcn()
           replanner->addOtherPath(replanner->getCurrentPath());
         }
 
-        /*double current_abscissa = replanner->getCurrentPath()->curvilinearAbscissaOfPoint(current_configuration);
-        double replan_abscissa = replanner->getCurrentPath()->curvilinearAbscissaOfPoint(configuration_replan);
-        double past_replan_abscissa = replanner->getCurrentPath()->curvilinearAbscissaOfPoint(past_configuration_replan);
-
-        if(past_replan_abscissa < current_abscissa)
-        {
-          ROS_INFO_STREAM("curr: "<<current_abscissa);
-          ROS_INFO_STREAM("replan: "<<replan_abscissa);
-          ROS_INFO_STREAM("past: "<<past_replan_abscissa);
-        }*/
-
         trj_mtx.lock();
         replanner->startReplannedPathFromNewCurrentConf(current_configuration);
         t=0;
@@ -136,17 +139,29 @@ void replanning_fcn()
         n_conn_replan = 0;
         checker_mtx.unlock();
 
+        tic_trj=ros::WallTime::now();
         moveit_msgs::RobotTrajectory tmp_trj_msg;
         trajectory->setPath(replanner->getCurrentPath());
         robot_trajectory::RobotTrajectoryPtr trj= trajectory->fromPath2Trj(pnt);
         trj->getRobotTrajectoryMsg(tmp_trj_msg);
+        toc_trj=ros::WallTime::now();
+
+        //ROS_INFO_STREAM("duration: "<<(toc-tic).toSec());
 
         interpolator.setTrajectory(tmp_trj_msg);
         interpolator.setSplineOrder(1);
         trj_mtx.unlock();
       }
-    }
+      ros::WallTime toc_tot=ros::WallTime::now();
+      double duration = (toc_tot-tic_tot).toSec();
 
+      if(duration>(2*dt))
+      {
+        ROS_WARN("CYCLE TIME SUPERATO: duration-> %f",duration);
+        ROS_WARN("rep-> %f",(toc_rep-tic_rep).toSec());
+        if(success) ROS_WARN("trj-> %f",(toc_trj-tic_trj).toSec());
+      }
+    }
     lp.sleep();
   }
 }
@@ -229,10 +244,10 @@ void collision_check_fcn()
     }
     std::vector<moveit_msgs::CollisionObject> collision_objs;
     planning_scn->getCollisionObjectMsgs(collision_objs);
-    for (const moveit_msgs::CollisionObject& obj: collision_objs)
+    /*for (const moveit_msgs::CollisionObject& obj: collision_objs)
     {
       ROS_INFO("object id=%s",obj.id.c_str());
-    }
+    }*/
     checker_mtx.lock();
     replanner->checkPathValidity();
     checker_mtx.unlock();
@@ -395,8 +410,8 @@ int main(int argc, char **argv)
 
     interpolator.interpolate(ros::Duration(t),pnt);
     for(unsigned int i=0; i<pnt.positions.size();i++) point2project[i] = pnt.positions.at(i);
-    current_configuration = replanner->getCurrentPath()->projectOnClosestConnectionKeepingPastPrj(point2project,past_current_configuration,n_conn);
     past_current_configuration = current_configuration;
+    current_configuration = replanner->getCurrentPath()->projectOnClosestConnectionKeepingPastPrj(point2project,past_current_configuration,n_conn);
 
     trj_mtx.unlock();
 
