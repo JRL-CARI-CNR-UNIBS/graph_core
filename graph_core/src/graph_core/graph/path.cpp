@@ -403,7 +403,7 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
     {
       dist_error=std::abs(dist-dist1-dist2);
     }
-    if(std::abs(dist-dist1-dist2)<1.0e-06)
+    if(std::abs(dist-dist1-dist2)<1.0e-04)
     {
       conn = connections_.at(i);
       idx = i;

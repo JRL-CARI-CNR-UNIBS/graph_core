@@ -104,8 +104,8 @@ bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iterat
 {
   ros::WallTime tic = ros::WallTime::now();
   ros::WallTime toc;
-  double available_time = max_time;
-  if(available_time<=0.0) return false;
+  double time = max_time;
+  if(time<=0.0) return false;
 
   unsigned int iter = 0;
   solution = path_;
@@ -119,8 +119,8 @@ bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iterat
     step(solution);
 
     toc = ros::WallTime::now();
-    available_time = available_time-(toc-tic).toSec();
-    if(available_time<=0.0) break;
+    time = max_time-(toc-tic).toSec();
+    if(time<=0.0) break;
   }
   return solved_;
 }

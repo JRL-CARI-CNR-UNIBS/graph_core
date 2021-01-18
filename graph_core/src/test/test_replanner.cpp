@@ -188,29 +188,34 @@ int main(int argc, char **argv)
 
     pathplan::Replanner replanner = pathplan::Replanner(current_configuration, current_path, other_paths, solver, metrics, checker, lb, ub);
 
-    ros::WallTime tic = ros::WallTime::now();
-    success =  replanner.informedOnlineReplanning(informed,succ_node,1);
-    ros::WallTime toc = ros::WallTime::now();
-    ROS_INFO_STREAM("DURATION: "<<(toc-tic).toSec());
+    for(unsigned int x=0; x<50;x++)
+    {
+      ros::WallTime tic = ros::WallTime::now();
+      success =  replanner.informedOnlineReplanning(informed,succ_node,0.75*0.05);
+      ros::WallTime toc = ros::WallTime::now();
+      ROS_INFO_STREAM("DURATION: "<<(toc-tic).toSec()<<" success: "<<success<< " n sol: "<<replanner.getReplannedPathVector().size());
+      if((toc-tic).toSec()>0.05) ROS_ERROR("ATTENTO");
+      ros::Duration(0.01).sleep();
+    }
     //success =  replanner.informedOnlineReplanning(informed,succ_node,disp);
     //success = replanner.pathSwitch(current_path,node, succ_node, new_path, subpath_from_path2, connected2path_number, disp);
     //success = replanner.connect2goal(current_path,node, new_path,disp);
 
 
-    if(success)ROS_INFO_STREAM("j: "<<j<<" success: "<<success<<" cost: "<<replanner.getReplannedPath()->cost());
-    else ROS_INFO_STREAM("j: "<<j<<" success: "<<success);
+    //if(success)ROS_INFO_STREAM("j: "<<j<<" success: "<<success<<" cost: "<<replanner.getReplannedPath()->cost());
+    //else ROS_INFO_STREAM("j: "<<j<<" success: "<<success);
 
     /*//////////////////////////Visualization////////////////////////////////////*/
-    std::vector<int> marker_id; marker_id.push_back(-101);
+   /* std::vector<int> marker_id; marker_id.push_back(-101);
     std::vector<double> marker_color;
     marker_color = {1.0,1.0,0.0,1.0};
 
     std::vector<double> marker_scale(3,0.01);
     disp.changeConnectionSize(marker_scale);
-    disp.displayPath(replanner.getReplannedPath(),"pathplan",marker_color);
+    disp.displayPath(replanner.getReplannedPath(),"pathplan",marker_color);*/
     /*/////////////////////////////////////////////////////////////////////////*/
 
-    trajectory.setPath(replanner.getReplannedPath());
+    /*trajectory.setPath(replanner.getReplannedPath());
     robot_trajectory::RobotTrajectoryPtr trj= trajectory.fromPath2Trj();
     moveit_msgs::RobotTrajectory trj_msg;
     trj->getRobotTrajectoryMsg(trj_msg);
@@ -219,7 +224,7 @@ int main(int argc, char **argv)
     interpolator.setTrajectory(trj_msg);
     interpolator.setSplineOrder(1);
     interpolator.resampleTrajectory(0.5, trj_msg);
-    trajectory.displayTrj();
+    trajectory.displayTrj();*/
 
     ros::Duration(0.1).sleep();
   }
