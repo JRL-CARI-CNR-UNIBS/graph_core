@@ -35,6 +35,8 @@ bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const do
   ros::WallTime tic = ros::WallTime::now();
   ros::WallTime toc;
   double time =  max_time;
+  double mean = 0.0;
+  std::vector<double> time_vector;
   if(time<=0.0) return false;
 
   for (unsigned int iter = 0; iter < max_iter; iter++)
@@ -45,9 +47,12 @@ bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const do
       solved_ = true;
       return true;
     }
+
     toc = ros::WallTime::now();
+    time_vector.push_back((toc-tic).toSec());
+    mean = std::accumulate(time_vector.begin(), time_vector.end(),0.0)/((double) time_vector.size());
     time = max_time-(toc-tic).toSec();
-    if(time<=0.0) break;
+    if(time<=0.9*mean || time<=0.0) break;
   }
   return false;
 }
