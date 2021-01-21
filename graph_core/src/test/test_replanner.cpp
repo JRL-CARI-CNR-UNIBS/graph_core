@@ -190,12 +190,12 @@ int main(int argc, char **argv)
 
     for(unsigned int x=0; x<1;x++)
     {
-      double time = 0.5/0.90;
+      double time = 0.5;
       ros::WallTime tic = ros::WallTime::now();
       success =  replanner.informedOnlineReplanning(informed,succ_node,0.90*time);
       ros::WallTime toc = ros::WallTime::now();
       ROS_INFO_STREAM("DURATION: "<<(toc-tic).toSec()<<" success: "<<success<< " n sol: "<<replanner.getReplannedPathVector().size());
-      if((toc-tic).toSec()>time) ROS_ERROR("ATTENTO");
+      if((toc-tic).toSec()>time) ROS_ERROR("TIME OUT");
       ros::Duration(0.01).sleep();
     }
     //success =  replanner.informedOnlineReplanning(informed,succ_node,disp);
@@ -206,7 +206,7 @@ int main(int argc, char **argv)
     //if(success)ROS_INFO_STREAM("j: "<<j<<" success: "<<success<<" cost: "<<replanner.getReplannedPath()->cost());
     //else ROS_INFO_STREAM("j: "<<j<<" success: "<<success);
 
-    /*//////////////////////////Visualization////////////////////////////////////*/
+    /*//////////////////////////Visualization////////////////////////////////////
     std::vector<int> marker_id; marker_id.push_back(-101);
     std::vector<double> marker_color;
     marker_color = {1.0,1.0,0.0,1.0};
@@ -214,7 +214,7 @@ int main(int argc, char **argv)
     std::vector<double> marker_scale(3,0.01);
     disp.changeConnectionSize(marker_scale);
     disp.displayPath(replanner.getReplannedPath(),"pathplan",marker_color);
-    /*/////////////////////////////////////////////////////////////////////////*/
+    /////////////////////////////////////////////////////////////////////////*/
 
     /*trajectory.setPath(replanner.getReplannedPath());
     robot_trajectory::RobotTrajectoryPtr trj= trajectory.fromPath2Trj();

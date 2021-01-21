@@ -150,7 +150,7 @@ int main(int argc, char **argv)
     object_loader_msgs::object obj;
     obj.object_type="scatola";
 
-    int obj_conn_pos = current_path->getConnections().size()-1;
+    int obj_conn_pos = current_path->getConnections().size()-2;
     pathplan::ConnectionPtr obj_conn = current_path->getConnections().at(obj_conn_pos);
     pathplan::NodePtr obj_parent = obj_conn->getParent();
     pathplan::NodePtr obj_child = obj_conn->getChild();
@@ -210,15 +210,38 @@ int main(int argc, char **argv)
 
     // ///////////////////////////////////////////////////////////////////////////
 
-    disp.nextButton("Press \"next\" to start");
+    //disp.nextButton("Press \"next\" to start");
 
     pathplan::Replanner replanner = pathplan::Replanner(current_configuration, current_path, other_paths, solver, metrics, checker, lb, ub);
+
+    for(unsigned int x=0; x<1;x++)
+    {
+      double time = 0.050;
+      ros::WallTime tic = ros::WallTime::now();
+      success =  replanner.informedOnlineReplanning(informed,succ_node,0.90*time);
+      ros::WallTime toc = ros::WallTime::now();
+      if((toc-tic).toSec()>time) ROS_ERROR("TIME OUT");
+      ROS_INFO_STREAM("DURATION: "<<(toc-tic).toSec()<<" success: "<<success<< " n sol: "<<replanner.getReplannedPathVector().size());
+      ros::Duration(0.01).sleep();
+    }
+
+    if(success)
+    {
+      std::vector<int> marker_id; marker_id.push_back(-101);
+      std::vector<double> marker_color;
+      marker_color = {1.0,1.0,0.0,1.0};
+
+      std::vector<double> marker_scale(3,0.01);
+      disp.changeConnectionSize(marker_scale);
+      disp.displayPath(replanner.getReplannedPath(),"pathplan",marker_color);
+    }
+
     //success =  replanner.informedOnlineReplanning(informed, succ_node);
-    success =  replanner.informedOnlineReplanning(informed, succ_node,disp);  //InformedOnlineReplanning
+    //success =  replanner.informedOnlineReplanning(informed, succ_node,disp);  //InformedOnlineReplanning
     //success = replanner.pathSwitch(current_path, node, succ_node, new_path, subpath_from_path2, connected2path_number, ut); //PathSwitch
 
-    if(success)ROS_INFO_STREAM("j: "<<j<<" success: "<<success<<" cost: "<<replanner.getReplannedPath()->cost());
-    else ROS_INFO_STREAM("j: "<<j<<" success: "<<success);
+    //if(success)ROS_INFO_STREAM("j: "<<j<<" success: "<<success<<" cost: "<<replanner.getReplannedPath()->cost());
+    //else ROS_INFO_STREAM("j: "<<j<<" success: "<<success);
 
     ros::Duration(2).sleep();
   }

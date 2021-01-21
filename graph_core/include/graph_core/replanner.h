@@ -44,6 +44,7 @@ namespace pathplan
             bool success_;
             double pathSwitch_cycle_time_mean_;
             double informedOnlineReplanning_cycle_time_mean_;
+            bool anObstacle_;
 
 
         public:

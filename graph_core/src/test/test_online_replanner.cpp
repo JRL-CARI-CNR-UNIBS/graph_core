@@ -45,7 +45,7 @@ double t=0;
 double dt=0.01;
 double main_frequency = 1/dt;
 double replan_frequency = 0.2*main_frequency;
-double replan_offset=10*dt;
+double replan_offset=20*dt;
 double t_replan=t+replan_offset;
 trajectory_processing::SplineInterpolator interpolator;
 trajectory_msgs::JointTrajectoryPoint pnt;
