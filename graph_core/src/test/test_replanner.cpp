@@ -190,7 +190,7 @@ int main(int argc, char **argv)
 
     for(unsigned int x=0; x<1;x++)
     {
-      double time = 0.5;
+      double time = 0.1;
       ros::WallTime tic = ros::WallTime::now();
       success =  replanner.informedOnlineReplanning(informed,succ_node,0.90*time);
       ros::WallTime toc = ros::WallTime::now();
@@ -206,7 +206,7 @@ int main(int argc, char **argv)
     //if(success)ROS_INFO_STREAM("j: "<<j<<" success: "<<success<<" cost: "<<replanner.getReplannedPath()->cost());
     //else ROS_INFO_STREAM("j: "<<j<<" success: "<<success);
 
-    /*//////////////////////////Visualization////////////////////////////////////
+    //////////////////////////Visualization////////////////////////////////////
     std::vector<int> marker_id; marker_id.push_back(-101);
     std::vector<double> marker_color;
     marker_color = {1.0,1.0,0.0,1.0};
@@ -214,7 +214,7 @@ int main(int argc, char **argv)
     std::vector<double> marker_scale(3,0.01);
     disp.changeConnectionSize(marker_scale);
     disp.displayPath(replanner.getReplannedPath(),"pathplan",marker_color);
-    /////////////////////////////////////////////////////////////////////////*/
+    /////////////////////////////////////////////////////////////////////////
 
     /*trajectory.setPath(replanner.getReplannedPath());
     robot_trajectory::RobotTrajectoryPtr trj= trajectory.fromPath2Trj();

@@ -52,7 +52,11 @@ bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const do
     time_vector.push_back((toc-tic).toSec());
     mean = std::accumulate(time_vector.begin(), time_vector.end(),0.0)/((double) time_vector.size());
     time = max_time-(toc-tic).toSec();
-    if(time<=0.9*mean || time<=0.0) break;
+    if(time<=0.9*mean || time<=0.0)
+    {
+      ROS_ERROR("TIME OUT");
+      break;
+    }
   }
   return false;
 }

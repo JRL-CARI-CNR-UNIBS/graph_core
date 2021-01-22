@@ -40,6 +40,7 @@ bool BiRRT::config(const ros::NodeHandle &nh)
 bool BiRRT::addGoal(const NodePtr &goal_node)
 {
   goal_tree_ = std::make_shared<Tree>(goal_node, Backward, max_distance_, checker_, metrics_);
+
   return RRTConnect::addGoal(goal_node);
 }
 
