@@ -28,8 +28,8 @@ PathPtr Trajectory::computeBiRRTPath(const NodePtr &start_node, NodePtr &goal_no
 
   pathplan::BiRRT solver(metrics, checker, sampler);
   solver.config(nh_);
-  solver.addGoal(goal_node);
   solver.addStart(start_node);
+  solver.addGoal(goal_node);
 
   pathplan::PathPtr solution;
   if (!solver.solve(solution, 1000))

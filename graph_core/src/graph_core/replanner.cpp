@@ -281,7 +281,7 @@ bool Replanner::connect2goal(const PathPtr& current_path, const NodePtr& node, P
     time_vector.push_back(pathSwitch_cycle_time_mean_);
   }
 
-  if(time<=0.0 || time<=percentage_variability*pathSwitch_cycle_time_mean_) return false;  //nb: ora time == max time quindi time<=percentage_variability*pathSwitch_cycle_time_mean_ con pathSwitch_cycle_time_mean == initial_value è sempre verificato
+  if(time<=0.0 || time<percentage_variability*pathSwitch_cycle_time_mean_) return false;  //nb: ora time == max time quindi time<=percentage_variability*pathSwitch_cycle_time_mean_ con pathSwitch_cycle_time_mean == initial_value è sempre verificato
 
   bool success = 1;
 
@@ -299,11 +299,22 @@ bool Replanner::connect2goal(const PathPtr& current_path, const NodePtr& node, P
     solver_->setSampler(sampler);
     solver_->resetProblem();
     solver_->addStart(node_fake);
-    solver_->addGoal(goal_fake);
 
     toc = ros::WallTime::now();
-    time = max_time-(toc-tic).toSec();
+    if(pathSwitch_cycle_time_mean_ == initial_value) time = initial_value-(toc-tic).toSec();  //when there is an obstacle or when the cycle time mean has not been defined yet
+    else time = (2-percentage_variability)*pathSwitch_cycle_time_mean_-(toc-tic).toSec();
+    ros::WallTime tic_setProblem = ros::WallTime::now();
 
+    solver_->addGoal(goal_fake,time);
+
+    if(verbose && solver_->solved()) ROS_INFO("Solved->direct connection found");
+    if(verbose)
+    {
+      ros::WallTime toc_setProblem = ros::WallTime::now();
+      ROS_INFO_STREAM("Time to directly connect: "<<(toc_setProblem-tic_setProblem).toSec());
+    }
+
+    toc = ros::WallTime::now();
     if(pathSwitch_cycle_time_mean_ == initial_value) time = initial_value-(toc-tic).toSec();  //when there is an obstacle or when the cycle time mean has not been defined yet
     else time = (2-percentage_variability)*pathSwitch_cycle_time_mean_-(toc-tic).toSec();
 
@@ -322,7 +333,6 @@ bool Replanner::connect2goal(const PathPtr& current_path, const NodePtr& node, P
       path_solver.setPath(new_path);
 
       toc = ros::WallTime::now();
-      time = max_time-(toc-tic).toSec();
       if(pathSwitch_cycle_time_mean_ == initial_value) time = initial_value-(toc-tic).toSec();
       else time = (2-percentage_variability)*pathSwitch_cycle_time_mean_-(toc-tic).toSec();
       ros::WallTime tic_opt = ros::WallTime::now();
@@ -337,6 +347,8 @@ bool Replanner::connect2goal(const PathPtr& current_path, const NodePtr& node, P
 
       std::vector<ConnectionPtr> new_path_conn = new_path->getConnections();
       std::vector<ConnectionPtr> new_connections;
+
+      if(verbose) ROS_INFO_STREAM("solution cost: "<<new_path->cost());
 
       if(new_path->cost()<subpath1->cost())
       {
@@ -565,7 +577,7 @@ bool Replanner::pathSwitch(const PathPtr &current_path,
     time_vector.push_back(pathSwitch_cycle_time_mean_);
   }
 
-  if(time<=0.0 || time<=percentage_variability*pathSwitch_cycle_time_mean_) return false;  //nb: ora time == max time quindi time<=percentage_variability*pathSwitch_cycle_time_mean_ con pathSwitch_cycle_time_mean == initial_value è sempre verificato
+  if(time<=0.0 || time<percentage_variability*pathSwitch_cycle_time_mean_) return false;  //nb: ora time == max time quindi time<=percentage_variability*pathSwitch_cycle_time_mean_ con pathSwitch_cycle_time_mean == initial_value è sempre verificato
 
   // Identifying the subpath of current_path starting from node
   NodePtr path1_node = node;
@@ -630,11 +642,21 @@ bool Replanner::pathSwitch(const PathPtr &current_path,
         solver_->setSampler(sampler);
         solver_->resetProblem();
         solver_->addStart(path1_node_fake);
-        solver_->addGoal(path2_node_fake);
+
+        double solver_time;
+        toc_cycle = ros::WallTime::now();
+        if(pathSwitch_cycle_time_mean_ == initial_value) solver_time = initial_value-(toc_cycle-tic_cycle).toSec();  //when there is an obstacle or when the cycle time mean has not been defined yet
+        else solver_time = (2-percentage_variability)*pathSwitch_cycle_time_mean_-(toc_cycle-tic_cycle).toSec();
+        ros::WallTime tic_setProblem = ros::WallTime::now();
+
+        solver_->addGoal(path2_node_fake,solver_time);
+
+        ros::WallTime toc_setProblem = ros::WallTime::now();
+        if(verbose && solver_->solved()) ROS_INFO("Solved->direct connection found");
+        if(verbose) ROS_INFO_STREAM("Time to directly connect: "<<(toc_setProblem-tic_setProblem).toSec());
 
         PathPtr connecting_path;
 
-        double solver_time;
         toc_cycle = ros::WallTime::now();
         if(pathSwitch_cycle_time_mean_ == initial_value) solver_time = initial_value-(toc_cycle-tic_cycle).toSec();  //when there is an obstacle or when the cycle time mean has not been defined yet
         else solver_time = (2-percentage_variability)*pathSwitch_cycle_time_mean_-(toc_cycle-tic_cycle).toSec();
@@ -670,6 +692,8 @@ bool Replanner::pathSwitch(const PathPtr &current_path,
           std::vector<ConnectionPtr> new_connecting_path_conn;
 
           double conn_cost = subpath2_cost + connecting_path->cost();
+
+          if(verbose) ROS_INFO_STREAM("solution cost: "<<conn_cost);
 
           if(conn_cost<path_cost && conn_cost<subpath1_cost && !subpath2.empty()) //maybe "if(conn_cost<path_cost)" is enough (the GOAL is always excluded and at the beginning subpath1_cost is path_cost)
           {
@@ -732,7 +756,7 @@ bool Replanner::pathSwitch(const PathPtr &current_path,
 
       toc=ros::WallTime::now();
       time = max_time - (toc-tic).toSec();
-      if((!anObstacle_ && time<=percentage_variability*pathSwitch_cycle_time_mean_)|| time<=0.0)  //if there is an obstacle, you should use the entire available time to find a feasible solution
+      if((!anObstacle_ && time<percentage_variability*pathSwitch_cycle_time_mean_)|| time<=0.0)  //if there is an obstacle, you should use the entire available time to find a feasible solution
       {
         time_out = true;
         break;
@@ -947,12 +971,6 @@ bool Replanner::pathSwitch(const PathPtr &current_path,
     ROS_INFO_STREAM("PathSwitch has NOT found a solution");
   }
   return success;
-}
-
-bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_node)
-{
-  const double MAX_TIME = 0.1; //seconds
-  return informedOnlineReplanning(informed, succ_node, MAX_TIME);
 }
 
 bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_node, const double MAX_TIME)
@@ -1293,7 +1311,7 @@ bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_n
       toc_cycle = ros::WallTime::now();
       time_vector.push_back((toc_cycle-tic_cycle).toSec());
       informedOnlineReplanning_cycle_time_mean_ = std::accumulate(time_vector.begin(), time_vector.end(),0.0)/((double) time_vector.size());
-      if(verbose) ROS_INFO_STREAM("Solution found!->Informed cycle duration: "<<(toc_cycle-tic_cycle).toSec());
+      if(verbose) ROS_INFO_STREAM("Solution with cost "<<replanned_path_cost<<" found!->Informed cycle duration: "<<(toc_cycle-tic_cycle).toSec());
     }
 
     if(informed == 2 && success && j == 0)
@@ -1319,7 +1337,7 @@ bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_n
     toc = ros::WallTime::now();
     available_time_ = MAX_TIME-(toc-tic).toSec();
 
-    if((!anObstacle_ && available_time_<=percentage_variability*informedOnlineReplanning_cycle_time_mean_) || available_time_<=0.0)
+    if((!anObstacle_ && available_time_<percentage_variability*informedOnlineReplanning_cycle_time_mean_) || available_time_<=0.0)
     {
       if(verbose) ROS_INFO_STREAM("TIME OUT! available time: "<<available_time_<<", time needed for a new cycle: "<<percentage_variability*informedOnlineReplanning_cycle_time_mean_);
       j = -1;
@@ -1363,8 +1381,8 @@ bool Replanner::informedOnlineReplanning(const int& informed, const bool& succ_n
   ros::WallTime tic=ros::WallTime::now();
   ros::WallTime toc;
 
-  const double  MAX_TIME = 3000000000.0;  //seconds
-  const double TIME_LIMIT = 2500000000.0; //seconds
+  const double  MAX_TIME = std::numeric_limits<double>::infinity();  //seconds
+  const double TIME_LIMIT = 0.85*MAX_TIME; //seconds
   const int CONT_LIMIT = 5;
 
   available_time_ = MAX_TIME;

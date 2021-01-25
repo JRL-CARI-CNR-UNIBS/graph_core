@@ -54,7 +54,7 @@ protected:
   double local_bias_=0.3;
   double tube_radius_=0.01;
   bool extend_ = false;
-  virtual bool setProblem();
+  virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity());
   virtual void clean(){}
 
   bool isBestSolution(const int& index);
@@ -70,8 +70,8 @@ public:
   virtual bool config(const ros::NodeHandle& nh);
   virtual bool update(PathPtr& solution);
 
-  virtual bool addStart(const NodePtr& start_node);
-  virtual bool addGoal(const NodePtr& goal_node);
+  virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity());
+  virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity());
   virtual void resetProblem();
 
   void cleanTree();

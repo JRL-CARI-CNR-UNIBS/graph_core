@@ -50,7 +50,7 @@ public:
 
   virtual bool config(const ros::NodeHandle& nh);
 
-  virtual bool addGoal(const NodePtr &goal_node);
+  virtual bool addGoal(const NodePtr &goal_node, const double &max_time = std::numeric_limits<double>::infinity());
   virtual bool update(PathPtr& solution);
   virtual bool update(const Eigen::VectorXd& point, PathPtr& solution);
   virtual bool update(const NodePtr& n, PathPtr& solution);

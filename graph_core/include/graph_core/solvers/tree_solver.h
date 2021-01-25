@@ -56,7 +56,7 @@ protected:
   unsigned int dof_;
 
 protected:
-  virtual bool setProblem()
+  virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity())
   {
     return false;
   }
@@ -84,9 +84,9 @@ public:
   virtual bool update(const Eigen::VectorXd& point, PathPtr& solution){return false;}
   virtual bool update(const NodePtr& n, PathPtr& solution){return false;}
 
-  virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100, const double &max_time = 10000);
-  virtual bool addStart(const NodePtr& start_node) = 0;
-  virtual bool addGoal(const NodePtr& goal_node) = 0;
+  virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100, const double &max_time = std::numeric_limits<double>::infinity());
+  virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;
+  virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;
   virtual void resetProblem()=0;
 
 

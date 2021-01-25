@@ -33,7 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
-bool MultigoalSolver::addStart(const NodePtr& start_node)
+bool MultigoalSolver::addStart(const NodePtr& start_node, const double &max_time)
 {
   if (!configured_)
   {
@@ -42,12 +42,12 @@ bool MultigoalSolver::addStart(const NodePtr& start_node)
   }
   solved_ = false;
   start_tree_ = std::make_shared<Tree>(start_node, Forward, max_distance_, checker_, metrics_);
-  setProblem();
+  setProblem(max_time);
   ROS_DEBUG("Add start goal");
   return true;
 }
 
-bool MultigoalSolver::addGoal(const NodePtr& goal_node)
+bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
 {
   if (!start_tree_)
   {
@@ -78,7 +78,7 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node)
   NodePtr new_node;
 
   unsigned int index=goal_nodes_.size();
-  if (start_tree_->connectToNode(goal_node, new_node))
+  if (start_tree_->connectToNode(goal_node, new_node,max_time))
   {
     solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node), metrics_, checker_);
     solution->setTree(start_tree_);
@@ -178,7 +178,7 @@ void MultigoalSolver::resetProblem()
   solved_=false;
 }
 
-bool MultigoalSolver::setProblem()
+bool MultigoalSolver::setProblem(const double &max_time)   //CHIEDI A MNAUEL->devi metterlo perche in TreeSolver hai dovuto metterlo, ma qua non serve
 {
   if (!start_tree_)
     return false;

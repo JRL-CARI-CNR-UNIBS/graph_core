@@ -37,7 +37,7 @@ bool RRTConnect::config(const ros::NodeHandle& nh)
   return true;
 }
 
-bool RRTConnect::addGoal(const NodePtr &goal_node)
+bool RRTConnect::addGoal(const NodePtr &goal_node, const double &max_time)
 {
   if (!configured_)
   {
@@ -47,12 +47,12 @@ bool RRTConnect::addGoal(const NodePtr &goal_node)
   solved_ = false;
   goal_node_ = goal_node;
 
-  setProblem();
+  setProblem(max_time);
 
   return true;
 }
 
-bool RRTConnect::addStart(const NodePtr &start_node)
+bool RRTConnect::addStart(const NodePtr &start_node, const double &max_time)
 {
   if (!configured_)
   {
@@ -61,7 +61,9 @@ bool RRTConnect::addStart(const NodePtr &start_node)
   }
   solved_ = false;
   start_tree_ = std::make_shared<Tree>(start_node, Forward, max_distance_, checker_, metrics_);
-  setProblem();
+
+  setProblem(max_time);
+
   return true;
 }
 
@@ -81,10 +83,8 @@ void RRTConnect::resetProblem()
   solved_=false;
 }
 
-bool RRTConnect::setProblem()
+bool RRTConnect::setProblem(const double &max_time)
 {
-  ros::WallTime tic = ros::WallTime::now();
-
   if (!start_tree_)
     return false;
   if (!goal_node_)
@@ -94,17 +94,10 @@ bool RRTConnect::setProblem()
   init_ = true;
   NodePtr new_node;
 
-  ROS_INFO_STREAM("TIME SET PROBLEM 0: "<<(ros::WallTime::now()-tic).toSec());
-
-  if (start_tree_->connectToNode(goal_node_, new_node))
+  if (start_tree_->connectToNode(goal_node_, new_node, max_time))
   {
-
-    ROS_INFO_STREAM("TIME SET PROBLEM 1: "<<(ros::WallTime::now()-tic).toSec());
-
     solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
-
-    ROS_INFO_STREAM("TIME SET PROBLEM 2: "<<(ros::WallTime::now()-tic).toSec());
 
     cost_ = solution_->cost();
     sampler_->setCost(cost_);
@@ -112,8 +105,6 @@ bool RRTConnect::setProblem()
 
     solved_ = true;
     PATH_COMMENT_STREAM("A direct solution is found\n" << *solution_);
-
-    ROS_INFO_STREAM("TIME SET PROBLEM 3: "<<(ros::WallTime::now()-tic).toSec());
   }
   else
   {

@@ -55,8 +55,7 @@ public:
   void setPath(const PathPtr& path);
   void config(ros::NodeHandle& nh);
   bool step(PathPtr& solution);
-  bool solve(PathPtr& solution,
-             const unsigned int& max_iteration = 100, const double &max_time = 10000);
+  bool solve(PathPtr& solution, const unsigned int& max_iteration = 100, const double &max_time = std::numeric_limits<double>::infinity());
 
 
 };
