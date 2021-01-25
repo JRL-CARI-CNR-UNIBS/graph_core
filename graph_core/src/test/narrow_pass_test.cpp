@@ -12,9 +12,9 @@
 
 #include <iostream>
 #include <fstream>
-#include <filesystem>
+#include <boost/filesystem.hpp>
 
-namespace fs = std::filesystem;
+namespace fs = boost::filesystem;
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "narrow_pass_test");
