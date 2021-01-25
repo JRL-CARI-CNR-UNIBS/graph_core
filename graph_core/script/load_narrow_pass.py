@@ -25,7 +25,10 @@ for dof in range(2,11):
             continue
         
         with open(path+'/description.yaml') as f:
-            description = yaml.load(f, Loader=yaml.FullLoader)
+            try:
+                description = yaml.load(f, Loader=yaml.FullLoader)
+            except:
+                description = yaml.load(f)
         
         if plotfig:
             if (description["tube_sampler"]):
