@@ -20,6 +20,26 @@
     <rosparam  command="load" file="$(find graph_core)/config/narrow_pass4.yaml" />
     <param  name="tube_sampler" value="true" />
   </node>
+  <node if="true" pkg="graph_core" type="narrow_pass_test" name="$(anon narrow_5)" output="screen"  launch-prefix="gnome-terminal  --geometry 80x43+55+14 --">
+    <rosparam  command="load" file="$(find graph_core)/config/narrow_pass_gen.yaml" />
+    <rosparam  command="load" file="$(find graph_core)/config/narrow_pass5.yaml" />
+    <param  name="tube_sampler" value="true" />
+  </node>
+  <node if="true" pkg="graph_core" type="narrow_pass_test" name="$(anon narrow_6)" output="screen"  launch-prefix="gnome-terminal --geometry 80x43+55+14 --">
+    <rosparam  command="load" file="$(find graph_core)/config/narrow_pass_gen.yaml" />
+    <rosparam  command="load" file="$(find graph_core)/config/narrow_pass6.yaml" />
+    <param  name="tube_sampler" value="true" />
+  </node>
+  <node if="true" pkg="graph_core" type="narrow_pass_test" name="$(anon narrow_7)" output="screen"  launch-prefix="gnome-terminal  --geometry 80x43+55+14 --">
+    <rosparam  command="load" file="$(find graph_core)/config/narrow_pass_gen.yaml" />
+    <rosparam  command="load" file="$(find graph_core)/config/narrow_pass7.yaml" />
+    <param  name="tube_sampler" value="true" />
+  </node>
+  <node if="true" pkg="graph_core" type="narrow_pass_test" name="$(anon narrow_pass8)" output="screen"  launch-prefix="gnome-terminal  --geometry 80x43+55+14 --">
+    <rosparam  command="load" file="$(find graph_core)/config/narrow_pass_gen.yaml" />
+    <rosparam  command="load" file="$(find graph_core)/config/narrow_pass8.yaml" />
+    <param  name="tube_sampler" value="true" />
+  </node>
   <node if="true" pkg="graph_core" type="narrow_pass_test" name="$(anon narrow_e)" output="screen"  launch-prefix="gnome-terminal --geometry 80x43+55+14 --">
     <rosparam  command="load" file="$(find graph_core)/config/narrow_pass_gen.yaml" />
     <rosparam  command="load" file="$(find graph_core)/config/narrow_pass1.yaml" />
