@@ -13,14 +13,14 @@ import yaml
 import pandas as pd 
 
 #path="/home/jacobi/.ros/narrow_pass/1611415310.475126/dof3" #ellisse
-tests=os.listdir("/home/jacobi/.ros/narrow_pass/");
+tests=os.listdir(os.getenv("HOME")+"/.ros/narrow_pass/");
 results=[]
 
 plotfig=False
 for dof in range(2,11):
     
     for test in tests:
-        path="/home/jacobi/.ros/narrow_pass/"+test+"/dof"+str(dof) #tubo
+        path=os.getenv("HOME")+"/.ros/narrow_pass/"+test+"/dof"+str(dof) #tubo
         if not os.path.exists(path):
             continue
         
@@ -92,4 +92,4 @@ for dof in range(2,11):
             plt.show()
 
 df = pd.DataFrame(results)
-df.to_excel("~/.ros/narrow_pass/results.xlsx")
+df.to_excel(os.getenv("HOME")+"/.ros/narrow_pass/results.xlsx")
