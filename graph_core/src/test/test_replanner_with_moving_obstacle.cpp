@@ -29,7 +29,7 @@
 
 int main(int argc, char **argv)
 {
-  std::string test = "panda";
+  std::string test = "cartesian";
 
   unsigned int n_paths = 3;
 
@@ -49,9 +49,18 @@ int main(int argc, char **argv)
   std::string base_link;
   std::string last_link;
 
-  group_name = "panda_arm";
-  base_link = "panda_link0";
-  last_link = "panda_link8";
+  if(test=="panda")
+  {
+    group_name = "panda_arm";
+    base_link = "panda_link0";
+    last_link = "panda_link8";
+  }
+  if(test=="cartesian")
+  {
+    group_name = "cartesian_arm";
+    base_link = "world";
+    last_link = "end_effector";
+  }
 
   moveit::planning_interface::MoveGroupInterface move_group(group_name);
   robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
@@ -76,11 +85,13 @@ int main(int argc, char **argv)
   }
 
   Eigen::VectorXd start_conf(dof);
-  start_conf << 0.0,0.0,0.0,-1.5,0.0,1.5,0.50; //panda
+  if(test=="panda") start_conf << 0.0,0.0,0.0,-1.5,0.0,1.5,0.50;
+  if(test=="cartesian") start_conf << 0.0,0.0,0.0;
 
 
   Eigen::VectorXd goal_conf(dof);
-  goal_conf <<  1.5, 0.5, 0.0, -1.0, 0.0, 2.0, 1.0; //panda
+  if(test=="panda") goal_conf << 1.5,0.5,0.0,-1.0,0.0,2.0,1.0;;
+  if(test=="cartesian") goal_conf << 0.8,0.8,0.8;
 
   pathplan::NodePtr start_node = std::make_shared<pathplan::Node>(start_conf);
 
@@ -92,6 +103,8 @@ int main(int argc, char **argv)
   pathplan::Display disp = pathplan::Display(planning_scene,group_name,last_link);
   pathplan::PathPtr path = NULL;
   pathplan::Trajectory trajectory = pathplan::Trajectory(path,nh,planning_scene,group_name,base_link,last_link);
+
+ros::Duration(5).sleep();
 
   for(unsigned int j=0; j<1;j++)
   {
@@ -150,7 +163,7 @@ int main(int argc, char **argv)
     object_loader_msgs::object obj;
     obj.object_type="scatola";
 
-    int obj_conn_pos = current_path->getConnections().size()-2;
+    int obj_conn_pos = 3; // current_path->getConnections().size()-4;
     pathplan::ConnectionPtr obj_conn = current_path->getConnections().at(obj_conn_pos);
     pathplan::NodePtr obj_parent = obj_conn->getParent();
     pathplan::NodePtr obj_child = obj_conn->getChild();
@@ -210,13 +223,11 @@ int main(int argc, char **argv)
 
     // ///////////////////////////////////////////////////////////////////////////
 
-    //disp.nextButton("Press \"next\" to start");
-
     pathplan::Replanner replanner = pathplan::Replanner(current_configuration, current_path, other_paths, solver, metrics, checker, lb, ub);
 
     for(unsigned int x=0; x<1;x++)
     {
-      double time = 0.050;
+      double time = 0.1;
       ros::WallTime tic = ros::WallTime::now();
       success =  replanner.informedOnlineReplanning(informed,succ_node,0.90*time);
       ros::WallTime toc = ros::WallTime::now();
@@ -238,7 +249,7 @@ int main(int argc, char **argv)
 
     //success =  replanner.informedOnlineReplanning(informed, succ_node);
     //success =  replanner.informedOnlineReplanning(informed, succ_node,disp);  //InformedOnlineReplanning
-    //success = replanner.pathSwitch(current_path, node, succ_node, new_path, subpath_from_path2, connected2path_number, ut); //PathSwitch
+    //      success = replanner.pathSwitch(current_path,current_path->getConnections().at(idx)->getChild(), succ_node, new_path, subpath_from_path2, connected2path_number, disp); //PathSwitch
 
     //if(success)ROS_INFO_STREAM("j: "<<j<<" success: "<<success<<" cost: "<<replanner.getReplannedPath()->cost());
     //else ROS_INFO_STREAM("j: "<<j<<" success: "<<success);

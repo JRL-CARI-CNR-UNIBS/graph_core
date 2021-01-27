@@ -47,6 +47,8 @@ int n_conn = 0;
 
 int main(int argc, char **argv)
 {
+  std::string test = "cartesian";
+
   ros::init(argc, argv, "node_prj");
   ros::AsyncSpinner spinner(1);
   spinner.start();
@@ -59,9 +61,19 @@ int main(int argc, char **argv)
   std::string base_link;
   std::string last_link;
 
-  group_name = "panda_arm";
-  base_link = "panda_link0";
-  last_link = "panda_link8";
+  if(test == "panda")
+  {
+    group_name = "panda_arm";
+    base_link = "panda_link0";
+    last_link = "panda_link8";
+  }
+
+  if(test == "cartesian")
+  {
+    group_name = "cartesian_arm";
+    base_link = "world";
+    last_link = "end_effector";
+  }
 
   moveit::planning_interface::MoveGroupInterface move_group(group_name);
   robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
@@ -86,10 +98,12 @@ int main(int argc, char **argv)
   }
 
   Eigen::VectorXd start_conf(dof);
-  start_conf << 0.0,0.0,0.0,-1.5,0.0,1.5,0.50; //panda
+  if(test == "panda") start_conf << 0.0,0.0,0.0,-1.5,0.0,1.5,0.50;
+  if(test == "cartesian") start_conf << 0.0,0.0,0.0;
 
   Eigen::VectorXd goal_conf(dof);
-  goal_conf <<  1.5, 0.5, 0.0, -1.0, 0.0, 2.0, 1.0; //panda
+  if(test == "panda") goal_conf <<  1.5,0.5,0.0,-1.0,0.0,2.0,1.0;
+  if(test == "cartesian") goal_conf <<  0.8,0.8,0.8;
 
   pathplan::NodePtr start_node = std::make_shared<pathplan::Node>(start_conf);
 

@@ -207,7 +207,7 @@ bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node, const double &m
     time_vector.push_back((toc-tic).toSec());
     mean = std::accumulate(time_vector.begin(), time_vector.end(),0.0)/((double) time_vector.size());
     time = max_time-(toc-tic).toSec();
-    if(time<=0.8*mean || time<=0.0)
+    if(time<0.8*mean || time<=0.0)
     {
       ROS_ERROR("TIME OUT");
       break;

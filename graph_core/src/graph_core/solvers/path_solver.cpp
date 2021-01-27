@@ -124,7 +124,7 @@ bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iterat
     time_vector.push_back((toc-tic).toSec());
     mean = std::accumulate(time_vector.begin(), time_vector.end(),0.0)/((double) time_vector.size());
     time = max_time-(toc-tic).toSec();
-    if(time<=0.8*mean || time<=0.0) break;
+    if(time<0.8*mean || time<=0.0) break;
   }
   return solved_;
 }

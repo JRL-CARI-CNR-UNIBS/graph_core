@@ -84,8 +84,10 @@ public:
   ConnectionPtr findConnection(const Eigen::VectorXd& configuration);
 
 
+  NodePtr findCloserNode(const Eigen::VectorXd& configuration, double &dist);
   NodePtr findCloserNode(const Eigen::VectorXd& configuration);
   NodePtr findCloserNode(const NodePtr& node);
+  NodePtr findCloserNode(const NodePtr& node, double &dist);
   PathPtr getSubpathFromNode(const NodePtr& node);
   PathPtr getSubpathToNode(const NodePtr& node);
   PathPtr getSubpathFromNode(const Eigen::VectorXd& conf);

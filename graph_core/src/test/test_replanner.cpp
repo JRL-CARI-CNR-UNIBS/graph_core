@@ -30,7 +30,8 @@
 int main(int argc, char **argv)
 {
   //std::string test = "sharework";
-  std::string test = "panda";
+  //std::string test = "panda";
+  std::string test = "cartesian";
 
   unsigned int n_paths = 3;
 
@@ -56,11 +57,17 @@ int main(int argc, char **argv)
     base_link = "base_link";
     last_link = "open_tip";
   }
-  else
+  if(test == "panda")
   {
     group_name = "panda_arm";
     base_link = "panda_link0";
     last_link = "panda_link8";
+  }
+  if(test == "cartesian")
+  {
+    group_name = "cartesian_arm";
+    base_link = "world";
+    last_link = "end_effector";
   }
 
   moveit::planning_interface::MoveGroupInterface move_group(group_name);
@@ -90,9 +97,13 @@ int main(int argc, char **argv)
   {
     start_conf << 0.0,0.0,0.0,0.0,0.0,0.0; //sharework
   }
-  else
+  if(test == "panda")
   {
     start_conf << 0.0,0.0,0.0,-1.5,0.0,1.5,0.50; //panda
+  }
+  if(test == "cartesian")
+  {
+    start_conf << 0.0,0.0,0.0;
   }
 
   Eigen::VectorXd goal_conf(dof);
@@ -100,9 +111,13 @@ int main(int argc, char **argv)
   {
     goal_conf << -2.4568206461416158, -3.2888890061467357, 0.5022868201292561, -0.3550610439856255, 2.4569204968195355, 3.1415111410868053; //sharework
   }
-  else
+  if(test == "panda")
   {
     goal_conf <<  1.5, 0.5, 0.0, -1.0, 0.0, 2.0, 1.0; //panda
+  }
+  if(test == "cartesian")
+  {
+    goal_conf <<  0.8,0.8,0.8;
   }
 
   pathplan::NodePtr start_node = std::make_shared<pathplan::Node>(start_conf);
@@ -125,7 +140,7 @@ int main(int argc, char **argv)
     {
       pathplan::NodePtr goal_node = std::make_shared<pathplan::Node>(goal_conf);
 
-      pathplan::PathPtr solution = trajectory.computeBiRRTPath(start_node, goal_node, lb, ub, metrics, checker, 1);
+      pathplan::PathPtr solution = trajectory.computeBiRRTPath(start_node, goal_node, lb, ub, metrics, checker, 0);
       path_vector.push_back(solution);
       ros::Duration(0.1).sleep();
 
@@ -138,7 +153,7 @@ int main(int argc, char **argv)
     }
 
     pathplan::PathPtr current_path = path_vector.front();
-    int idx = 4; // current_path->getConnections().size()-1;
+    int idx = current_path->getConnections().size()-1;
 
     std::vector<pathplan::ConnectionPtr> conn_v = current_path->getConnections();
     /*if(conn_v.size()-3 > 0)
@@ -168,7 +183,7 @@ int main(int argc, char **argv)
     solver->config(nh);
 
     //Eigen::VectorXd current_configuration = (current_path->getConnections().at(idx)->getChild()->getConfiguration() + current_path->getConnections().at(idx)->getParent()->getConfiguration())/2.0;
-    pathplan::NodePtr node = current_path->getConnections().at(idx)->getParent();
+    pathplan::NodePtr node = current_path->getConnections().at(1)->getParent();
     Eigen::VectorXd current_configuration = node->getConfiguration();
 
 
@@ -190,21 +205,25 @@ int main(int argc, char **argv)
 
     for(unsigned int x=0; x<1;x++)
     {
-      double time = 0.1;
+
+      /*double time = 0.5;
       ros::WallTime tic = ros::WallTime::now();
       success =  replanner.informedOnlineReplanning(informed,succ_node,0.90*time);
       ros::WallTime toc = ros::WallTime::now();
       ROS_INFO_STREAM("DURATION: "<<(toc-tic).toSec()<<" success: "<<success<< " n sol: "<<replanner.getReplannedPathVector().size());
       if((toc-tic).toSec()>time) ROS_ERROR("TIME OUT");
-      ros::Duration(0.01).sleep();
+      ros::Duration(0.01).sleep();*/
     }
-    //success =  replanner.informedOnlineReplanning(informed,succ_node,disp);
+    success =  replanner.informedOnlineReplanning(informed,succ_node,disp);
     //success = replanner.pathSwitch(current_path,node, succ_node, new_path, subpath_from_path2, connected2path_number, disp);
     //success = replanner.connect2goal(current_path,node, new_path,disp);
 
 
     //if(success)ROS_INFO_STREAM("j: "<<j<<" success: "<<success<<" cost: "<<replanner.getReplannedPath()->cost());
     //else ROS_INFO_STREAM("j: "<<j<<" success: "<<success);
+
+
+    ROS_ERROR("FINE");
 
     //////////////////////////Visualization////////////////////////////////////
     std::vector<int> marker_id; marker_id.push_back(-101);

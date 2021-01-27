@@ -704,7 +704,7 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
   ROS_ERROR("Connection not found, the node can't be created");
 }
 
-NodePtr Path::findCloserNode(const Eigen::VectorXd& configuration)
+NodePtr Path::findCloserNode(const Eigen::VectorXd& configuration, double &dist)
 {
   if(connections_.size()<1)
   {
@@ -714,7 +714,6 @@ NodePtr Path::findCloserNode(const Eigen::VectorXd& configuration)
 
   NodePtr closest_node=connections_.at(0)->getParent();
   double min_dist = (closest_node->getConfiguration()-configuration).norm();
-  double dist;
   for (const ConnectionPtr& conn: connections_)
   {
     dist = (conn->getChild()->getConfiguration()-configuration).norm();
@@ -724,16 +723,26 @@ NodePtr Path::findCloserNode(const Eigen::VectorXd& configuration)
       min_dist=dist;
     }
   }
+  dist = min_dist;
   return closest_node;
+}
+
+NodePtr Path::findCloserNode(const Eigen::VectorXd& configuration)
+{
+  double distance;
+  return findCloserNode(configuration,distance);
 }
 
 NodePtr Path::findCloserNode(const NodePtr& node)
 {
   Eigen::VectorXd configuration = node->getConfiguration();
+  return findCloserNode(configuration);
+}
 
-  NodePtr closest_node = findCloserNode(configuration);
-
-  return closest_node;
+NodePtr Path::findCloserNode(const NodePtr& node, double &dist)
+{
+  Eigen::VectorXd configuration = node->getConfiguration();
+  return findCloserNode(configuration,dist);
 }
 
 PathPtr Path::getSubpathToNode(const Eigen::VectorXd& conf)
@@ -864,11 +873,6 @@ bool Path::isValid()
   Eigen::VectorXd parent;
   Eigen::VectorXd child;
   double cost;
-
-  if(cost_ == std::numeric_limits<double>::infinity())
-  {
-    return false;
-  }
 
   for(const ConnectionPtr& conn : connections_)
   {
