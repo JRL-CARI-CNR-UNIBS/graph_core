@@ -104,7 +104,7 @@ int main(int argc, char **argv)
   pathplan::PathPtr path = NULL;
   pathplan::Trajectory trajectory = pathplan::Trajectory(path,nh,planning_scene,group_name,base_link,last_link);
 
-ros::Duration(5).sleep();
+  ros::Duration(5).sleep();
 
   for(unsigned int j=0; j<1;j++)
   {
@@ -228,8 +228,9 @@ ros::Duration(5).sleep();
     for(unsigned int x=0; x<1;x++)
     {
       double time = 0.1;
+      double time_repl = time*0.9;
       ros::WallTime tic = ros::WallTime::now();
-      success =  replanner.informedOnlineReplanning(informed,succ_node,0.90*time);
+      success =  replanner.informedOnlineReplanning(informed,succ_node,time_repl);
       ros::WallTime toc = ros::WallTime::now();
       if((toc-tic).toSec()>time) ROS_ERROR("TIME OUT");
       ROS_INFO_STREAM("DURATION: "<<(toc-tic).toSec()<<" success: "<<success<< " n sol: "<<replanner.getReplannedPathVector().size());

@@ -121,7 +121,8 @@ void replanning_fcn()
     {
       planning_mtx.lock();
       ros::WallTime tic_rep=ros::WallTime::now();
-      success =  replanner->informedOnlineReplanning(2,1,0.75/replan_frequency);//(2,1,0.85/replan_frequency);  //85% of the cycle time is used by informedOnlineReplanning
+      double time_informedOnlineRepl = 0.75/replan_frequency;
+      success =  replanner->informedOnlineReplanning(2,1,time_informedOnlineRepl);
       ros::WallTime toc_rep=ros::WallTime::now();
       planning_mtx.unlock();
 

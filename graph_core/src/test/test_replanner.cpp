@@ -30,8 +30,8 @@
 int main(int argc, char **argv)
 {
   //std::string test = "sharework";
-  //std::string test = "panda";
-  std::string test = "cartesian";
+  std::string test = "panda";
+  //std::string test = "cartesian";
 
   unsigned int n_paths = 3;
 
@@ -128,7 +128,7 @@ int main(int argc, char **argv)
 
   // ////////////////////////////////////////////////////////////////////////PATH PLAN & VISUALIZATION/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  pathplan::Display disp = pathplan::Display(planning_scene,group_name,last_link);
+  pathplan::DisplayPtr disp = std::make_shared<pathplan::Display>(planning_scene,group_name,last_link);
   pathplan::PathPtr path = NULL;
   pathplan::Trajectory trajectory = pathplan::Trajectory(path,nh,planning_scene,group_name,base_link,last_link);
 
@@ -140,7 +140,7 @@ int main(int argc, char **argv)
     {
       pathplan::NodePtr goal_node = std::make_shared<pathplan::Node>(goal_conf);
 
-      pathplan::PathPtr solution = trajectory.computeBiRRTPath(start_node, goal_node, lb, ub, metrics, checker, 0);
+      pathplan::PathPtr solution = trajectory.computeBiRRTPath(start_node, goal_node, lb, ub, metrics, checker, 1);
       path_vector.push_back(solution);
       ros::Duration(0.1).sleep();
 
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
       if(i==1) marker_color = {0.0f,0.0f,1.0,1.0};
       if(i==2) marker_color = {1.0,0.0f,0.0f,1.0};
 
-      disp.displayPathAndWaypoints(solution,"pathplan",marker_color);
+      disp->displayPathAndWaypoints(solution,"pathplan",marker_color);
     }
 
     pathplan::PathPtr current_path = path_vector.front();
@@ -196,10 +196,10 @@ int main(int argc, char **argv)
 
     // ///////////////////// Visualization current node /////////////////////
     std::vector<double> marker_color_sphere_actual = {1.0,0.0,1.0,1.0};
-    disp.displayNode(std::make_shared<pathplan::Node>(current_configuration),"pathplan",marker_color_sphere_actual);
+    disp->displayNode(std::make_shared<pathplan::Node>(current_configuration),"pathplan",marker_color_sphere_actual);
     // /////////////////////////////////////////////////////////////////////*/
 
-    //disp.nextButton("Press \"next\" to start");
+    disp->nextButton("Press \"next\" to start");
 
     pathplan::Replanner replanner = pathplan::Replanner(current_configuration, current_path, other_paths, solver, metrics, checker, lb, ub);
 
@@ -207,16 +207,20 @@ int main(int argc, char **argv)
     {
 
       /*double time = 0.5;
+      double time_repl = time*0.9;
       ros::WallTime tic = ros::WallTime::now();
-      success =  replanner.informedOnlineReplanning(informed,succ_node,0.90*time);
+      success =  replanner.informedOnlineReplanning(informed,succ_node,time_repl);
       ros::WallTime toc = ros::WallTime::now();
       ROS_INFO_STREAM("DURATION: "<<(toc-tic).toSec()<<" success: "<<success<< " n sol: "<<replanner.getReplannedPathVector().size());
       if((toc-tic).toSec()>time) ROS_ERROR("TIME OUT");
       ros::Duration(0.01).sleep();*/
     }
-    success =  replanner.informedOnlineReplanning(informed,succ_node,disp);
-    //success = replanner.pathSwitch(current_path,node, succ_node, new_path, subpath_from_path2, connected2path_number, disp);
-    //success = replanner.connect2goal(current_path,node, new_path,disp);
+
+    replanner.setInformedOnlineReplanningDisp(disp);
+    success =  replanner.informedOnlineReplanning(informed,succ_node);
+    //replanner.setPathSwitchDisp(disp);
+    //success = replanner.pathSwitch(current_path,node, succ_node, new_path, subpath_from_path2, connected2path_number);
+    //success = replanner.connect2goal(current_path,node,new_path);
 
 
     //if(success)ROS_INFO_STREAM("j: "<<j<<" success: "<<success<<" cost: "<<replanner.getReplannedPath()->cost());
@@ -231,8 +235,8 @@ int main(int argc, char **argv)
     marker_color = {1.0,1.0,0.0,1.0};
 
     std::vector<double> marker_scale(3,0.01);
-    disp.changeConnectionSize(marker_scale);
-    disp.displayPath(replanner.getReplannedPath(),"pathplan",marker_color);
+    disp->changeConnectionSize(marker_scale);
+    disp->displayPath(replanner.getReplannedPath(),"pathplan",marker_color);
     /////////////////////////////////////////////////////////////////////////
 
     /*trajectory.setPath(replanner.getReplannedPath());

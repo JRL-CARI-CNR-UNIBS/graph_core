@@ -109,6 +109,11 @@ public:
     return start_tree_;
   }
 
+  PathPtr getSolution() const
+  {
+    return solution_;
+  }
+
   void setSampler(const SamplerPtr& sampler)
   {
     sampler_ = sampler;

@@ -44,8 +44,11 @@ protected:
   bool success_;
   double pathSwitch_cycle_time_mean_;
   double informedOnlineReplanning_cycle_time_mean_;
-  bool anObstacle_;
+  bool an_obstacle_;
 
+  bool informedOnlineReplanning_disp_;
+  bool pathSwitch_disp_;
+  DisplayPtr disp_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -73,6 +76,22 @@ public:
   PathPtr getCurrentPath()
   {
     return current_path_;
+  }
+
+  void setInformedOnlineReplanningDisp(const DisplayPtr &disp)
+  {
+    if(!disp) throw std::invalid_argument("Display not initialized");
+
+    disp_ = disp;
+    informedOnlineReplanning_disp_ = true;
+  }
+
+  void setPathSwitchDisp(const DisplayPtr &disp)
+  {
+    if(!disp) throw std::invalid_argument("Display not initialized");
+
+    disp_ = disp;
+    pathSwitch_disp_ = true;
   }
 
   void setCurrentPath(const PathPtr& path)
@@ -117,31 +136,21 @@ public:
     return success_;
   }
 
+  bool checkPathValidity();
+
+  void startReplannedPathFromNewCurrentConf(Eigen::VectorXd &configuration);
+
   //It find the portion of current_path_ between the obstacle and the goal and add it as first element of a vector containing the other available paths
-  std::vector<PathPtr> addAdmissibleCurrentPath(const int idx_current_conn, PathPtr& admissible_current_path);
-
-  //Starting from node of current_path_ it tries to find a connection to all the available paths of admissible_other_paths_
-  bool pathSwitch(const PathPtr& current_path, const NodePtr& node, const bool& succ_node, PathPtr &new_path, PathPtr &subpath_from_path2, int &connected2path_number);
-
-  //To test the algorithm
-  bool pathSwitch(const PathPtr& current_path, const NodePtr& node, const bool& succ_node, PathPtr &new_path, PathPtr &subpath_from_path2, int &connected2path_number, Display &disp);
-
-
-  //It menages the replanning calling more times pathSwitch from different nodes and giving the correct set of available paths
-  bool informedOnlineReplanning(const int& informed, const bool& succ_node, const double MAX_TIME = std::numeric_limits<double>::infinity());
-
-  //To test the algorithm
-  bool informedOnlineReplanning(const int& informed, const bool& succ_node, Display &disp);
+  std::vector<PathPtr> addAdmissibleCurrentPath(const int &idx_current_conn, PathPtr& admissible_current_path);
 
   //It directly connect the node to the goal
   bool connect2goal(const PathPtr &current_path, const NodePtr& node, PathPtr &new_path);
 
-  //To test the algorithm
-  bool connect2goal(const PathPtr &current_path, const NodePtr& node, PathPtr &new_path, Display &disp);
+  //Starting from node of current_path_ it tries to find a connection to all the available paths of admissible_other_paths_
+  bool pathSwitch(const PathPtr& current_path, const NodePtr& node, const bool& succ_node, PathPtr &new_path, PathPtr &subpath_from_path2, int &connected2path_number);
 
-  void startReplannedPathFromNewCurrentConf(Eigen::VectorXd configuration);
-
-  bool checkPathValidity();
+  //It menages the replanning calling more times pathSwitch from different nodes and giving the correct set of available paths
+  bool informedOnlineReplanning(const int& informed, const bool& succ_node, const double &max_time  = std::numeric_limits<double>::infinity());
 
 };
 }
