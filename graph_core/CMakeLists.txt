@@ -50,6 +50,7 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/graph/connection.cpp
   src/${PROJECT_NAME}/graph/tree.cpp
   src/${PROJECT_NAME}/graph/path.cpp
+  src/${PROJECT_NAME}/graph/trajectory.cpp
   src/${PROJECT_NAME}/graph/graph_display.cpp
   src/${PROJECT_NAME}/solvers/multigoal.cpp
   src/${PROJECT_NAME}/solvers/tree_solver.cpp
@@ -127,6 +128,12 @@ target_link_libraries(test_multigoal
   ${catkin_LIBRARIES}
 )
 
+add_executable(       test_projection src/test/test_projection.cpp)
+add_dependencies(     test_projection ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_projection
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
 
 #install(PROGRAMS
 #  scripts/my_python_script

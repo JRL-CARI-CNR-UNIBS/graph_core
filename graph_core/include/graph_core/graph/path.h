@@ -81,9 +81,13 @@ public:
 
   //It gives the connection to which the configuration belongs
   ConnectionPtr findConnection(const Eigen::VectorXd& configuration, int& idx);
+  ConnectionPtr findConnection(const Eigen::VectorXd& configuration);
 
+
+  NodePtr findCloserNode(const Eigen::VectorXd& configuration, double &dist);
   NodePtr findCloserNode(const Eigen::VectorXd& configuration);
   NodePtr findCloserNode(const NodePtr& node);
+  NodePtr findCloserNode(const NodePtr& node, double &dist);
   PathPtr getSubpathFromNode(const NodePtr& node);
   PathPtr getSubpathToNode(const NodePtr& node);
   PathPtr getSubpathFromNode(const Eigen::VectorXd& conf);
@@ -122,9 +126,8 @@ public:
   bool isValid();
   Eigen::VectorXd projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool &in_conn);
   const Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point);
-  const Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point, const Eigen::VectorXd past_prj, int &n_conn);
-
-
+  const Eigen::VectorXd projectOnClosestConnectionKeepingPastPrj(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, int &n_conn);
+  const Eigen::VectorXd projectOnClosestConnectionKeepingCurvilinearAbscissa(const Eigen::VectorXd& point, Eigen::VectorXd &past_prj, int &n_conn);
 
 
   // return true if improve

@@ -58,7 +58,7 @@ protected:
   unsigned int dof_;
 
 protected:
-  virtual bool setProblem()
+  virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity())
   {
     return false;
   }
@@ -75,7 +75,7 @@ public:
     sampler_(sampler)
   {
     path_cost_ = std::numeric_limits<double>::infinity();
-    goal_cost_fcn_=std::make_shared(GoalCostFunction());
+    goal_cost_fcn_=std::make_shared<GoalCostFunction>();
   }
 
   const double& cost(){return path_cost_;}
@@ -87,9 +87,9 @@ public:
   virtual bool update(const Eigen::VectorXd& point, PathPtr& solution){return false;}
   virtual bool update(const NodePtr& n, PathPtr& solution){return false;}
 
-  virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100, const double &max_time = 10000);
-  virtual bool addStart(const NodePtr& start_node) = 0;
-  virtual bool addGoal(const NodePtr& goal_node) = 0;
+  virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100, const double &max_time = std::numeric_limits<double>::infinity());
+  virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;
+  virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;
   virtual void resetProblem()=0;
 
   void setGoalCostFunction(const GoalCostFunctionPtr& goal_cost_fcn)
@@ -114,6 +114,11 @@ public:
   TreePtr getStartTree() const
   {
     return start_tree_;
+  }
+
+  PathPtr getSolution() const
+  {
+    return solution_;
   }
 
   void setSampler(const SamplerPtr& sampler)

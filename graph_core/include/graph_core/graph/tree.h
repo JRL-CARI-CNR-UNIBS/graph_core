@@ -85,7 +85,8 @@ public:
                NodePtr& new_node);
 
   bool connectToNode(const NodePtr& node,
-                     NodePtr& new_node);
+                     NodePtr& new_node,
+                     const double &max_time = std::numeric_limits<double>::infinity());
 
   bool rewire(const Eigen::VectorXd& configuration,
               double r_rewire);

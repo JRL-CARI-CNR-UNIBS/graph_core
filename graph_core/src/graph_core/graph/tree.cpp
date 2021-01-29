@@ -82,6 +82,7 @@ bool Tree::tryExtend(const Eigen::VectorXd &configuration,
   {
     next_configuration = closest_node->getConfiguration() + (configuration - closest_node->getConfiguration()) / distance * max_distance_;
   }
+
   if (checker_->checkPath(closest_node->getConfiguration(), next_configuration))
     return true;
 
@@ -180,8 +181,15 @@ bool Tree::connect(const Eigen::VectorXd &configuration, NodePtr &new_node)
   return false;
 }
 
-bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node)
+bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node, const double &max_time)
 {
+  ros::WallTime tic = ros::WallTime::now();
+  ros::WallTime toc;
+  double time =  max_time;
+  double mean = 0.0;
+  std::vector<double> time_vector;
+  if(time<=0.0) return false;
+
   bool success = true;
   while (success)
   {
@@ -193,6 +201,16 @@ bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node)
 
       if ((new_node->getConfiguration() - node->getConfiguration()).norm() < tolerance_)
         return true;
+    }
+
+    toc = ros::WallTime::now();
+    time_vector.push_back((toc-tic).toSec());
+    mean = std::accumulate(time_vector.begin(), time_vector.end(),0.0)/((double) time_vector.size());
+    time = max_time-(toc-tic).toSec();
+    if(time<0.8*mean || time<=0.0)
+    {
+      ROS_ERROR("TIME OUT");
+      break;
     }
   }
   return false;

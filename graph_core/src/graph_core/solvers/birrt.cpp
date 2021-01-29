@@ -37,10 +37,11 @@ bool BiRRT::config(const ros::NodeHandle &nh)
   return RRTConnect::config(nh);
 
 }
-bool BiRRT::addGoal(const NodePtr &goal_node)
+bool BiRRT::addGoal(const NodePtr &goal_node, const double &max_time)
 {
   goal_tree_ = std::make_shared<Tree>(goal_node, Backward, max_distance_, checker_, metrics_);
-  return RRTConnect::addGoal(goal_node);
+
+  return RRTConnect::addGoal(goal_node, max_time);
 }
 
 bool BiRRT::update(PathPtr &solution)
@@ -48,7 +49,7 @@ bool BiRRT::update(PathPtr &solution)
   PATH_COMMENT("RRTConnect::update");
   if (solved_)
   {
-    PATH_COMMENT("alreay find a solution");
+    PATH_COMMENT("alreay found a solution");
     solution = solution_;
     return true;
   }

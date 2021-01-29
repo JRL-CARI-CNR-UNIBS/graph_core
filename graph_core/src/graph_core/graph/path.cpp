@@ -91,11 +91,15 @@ Eigen::VectorXd Path::pointOnCurvilinearAbscissa(const double& abscissa)
 
 double Path::curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf, int& idx)
 {
+  double abscissa = std::numeric_limits<double>::infinity();
+
   ConnectionPtr connection = findConnection(conf,idx);
   if(connection == NULL)
   {
-    ROS_ERROR("The configuration doesn't belong to the path");
+    ROS_ERROR("The configuration does not belong to the path -> the curvilinear abscissa can not be computed");
+    ROS_INFO_STREAM("conf: "<<conf.transpose());
     assert(0);
+    return abscissa;
   }
   else
   {
@@ -113,7 +117,7 @@ double Path::curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf, int& idx)
     if(sub_euclidean_norm == -1) assert(0);
 
     double dist = (conf - connection->getParent()->getConfiguration()).norm();
-    double abscissa = (sub_euclidean_norm+dist)/euclidean_norm;
+    abscissa = (sub_euclidean_norm+dist)/euclidean_norm;
 
     return abscissa;
   }
@@ -368,6 +372,12 @@ std::vector<Eigen::VectorXd> Path::getWaypoints()
 }
 
 
+ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration)
+{
+  int idx;
+  return findConnection(configuration,idx);
+}
+
 ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& idx)
 {
   ConnectionPtr conn = NULL;
@@ -378,6 +388,8 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
 
   double dist, dist1, dist2;
 
+  double dist_error=std::numeric_limits<double>::infinity();
+
   for(unsigned int i=0; i<connections_.size(); i++)
   {
     parent = connections_.at(i)->getParent()->getConfiguration();
@@ -387,7 +399,11 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
     dist1 = (parent - configuration).norm();
     dist2 = (configuration-child).norm();
 
-    if(abs(dist-dist1-dist2)<1e-06)
+    if (dist_error>=std::abs(dist-dist1-dist2))
+    {
+      dist_error=std::abs(dist-dist1-dist2);
+    }
+    if(std::abs(dist-dist1-dist2)<1.0e-04)
     {
       conn = connections_.at(i);
       idx = i;
@@ -395,14 +411,11 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
     }
   }
 
-  ROS_ERROR("Connection not found");
+  ROS_ERROR("Connection not found. minimum error %f",dist_error);
 }
 
 Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool& in_conn)
 {
-  //To find the projection of point on the connection, the area of the triangle composed by the parent,
-  //the child and the point is calculated using the Erone's formula. Then it is checked if the projection is
-  // between the parent and the child
 
   Eigen::VectorXd parent = conn->getParent()->getConfiguration();
   Eigen::VectorXd child = conn->getChild()->getConfiguration();
@@ -410,69 +423,89 @@ Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const Co
   Eigen::VectorXd conn_vector = child-parent;
   Eigen::VectorXd point_vector = point-parent;
 
-  double conn_length = (parent-child).norm();
-  double point_length = (point-parent).norm();
-  double s = (point_vector.transpose())*conn_vector;
+  double conn_length = (conn_vector).norm();
+  assert(conn_length>0);
+
+  double point_length = (point_vector).norm();
+  double s = point_vector.dot(conn_vector/conn_length);
 
   Eigen::VectorXd projection = parent + conn_vector*s/conn_length;
-  distance = sqrt(point_length*point_length-s*s);
+  distance = std::sqrt(point_length*point_length-s*s);
 
-  if(s/conn_length>=0 && s/conn_length<=1) in_conn = 1;
-  else in_conn = 0;
+  if(s>=0 && s<=conn_length)
+  {
+    in_conn = 1;
+  }
+  else
+    in_conn = 0;
 
-  if(conn == connections_.front() && s/conn_length<0)  //if the point is before the start it is projected on the start
+  if(conn == connections_.front() && s<0)  //if the point is before the start it is projected on the start
   {
     projection = parent; //the start
     in_conn = 1;
   }
 
-  if(conn == connections_.back() && s/conn_length>1)  //if the point is before the start it is projected on the start
+  if(conn == connections_.back() && s>conn_length)  //if the point is before the start it is projected on the start
   {
     projection = child;  //the goal
     in_conn = 1;
+  }
+
+  if (in_conn)
+  {
+    int index=0;
+    if (findConnection(projection,index)==NULL)
+    {
+      ROS_ERROR("distance = %f, s=%f, conn_length=%f",distance,s,conn_length);
+    }
   }
 
   return projection;
 
-
-  /*double a = (parent-child).norm();
+  // //////////////////////////////////////////////////
+  /*  double a = (parent-child).norm();
   double b = (parent-point).norm();
   double c = (point-child).norm();
 
-  double p = (a+b+c)/2;
-  double A = sqrt(p*(p-a)*(p-b)*(p-c)); //Erone's formula
+  double p = (a+b+c)/2.0;
+  double A = std::sqrt(p*(p-a)*(p-b)*(p-c)); //Erone's formula
 
-  distance = 2*A/a;  //A=a*h/2 -> h=2A/a
+  distance = 2.0*A/a;  //A=a*h/2 -> h=2A/a
 
-  double c_pitagora = sqrt(b*b+a*a);
+  double c_pitagora = std::sqrt(b*b+a*a);
   double s; //distance parent-projection
 
-  if(c<=c_pitagora) s = sqrt(b*b-distance*distance);
-  else s = - sqrt(b*b-distance*distance);
+  if(c<=c_pitagora) s = std::sqrt(b*b-distance*distance);
+  else s = - std::sqrt(b*b-distance*distance);
+
 
   Eigen::VectorXd projection = parent+(child-parent)*s/a;
 
-  if(s/a>=0 && s/a<=1) in_conn = 1;
-  else in_conn = 0;
-
-  if(conn == connections_.front() && s/a<0)  //if the point is before the start it is projected on the start
+  if(s/a>=0 && s/a<=1)
+  {
+    in_conn = 1;
+  }
+  else if(conn == connections_.front() && s/a<0)  //if the point is before the start it is projected on the start
   {
     projection = parent; //the start
     in_conn = 1;
   }
-
-  if(conn == connections_.back() && s/a>1)  //if the point is before the start it is projected on the start
+  else if(conn == connections_.back() && s/a>1)  //if the point is before the start it is projected on the start
   {
     projection = child;  //the goal
     in_conn = 1;
   }
+  else
+  {
+    in_conn = 0;
+  }
 
-  return projection; */
+  return projection;*/
 }
 
 const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& point)
 {
-  //The point is projected on the connection on which its projection is between parent and child and to which the distance is the smallest
+  //The point is projected on the connection on which its projection is between the parent and the child and from which the distance is the smallest one.
 
   Eigen::VectorXd pr;
   Eigen::VectorXd projection;
@@ -481,10 +514,10 @@ const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& po
   for(const ConnectionPtr conn:connections_)
   {
     double distance;
-    bool in_conn;
-    pr = projectOnConnection(point,conn,distance,in_conn);
+    bool in_connection;
+    pr = projectOnConnection(point,conn,distance,in_connection);
 
-    if(in_conn)
+    if(in_connection)
     {
       if(distance<min_distance)
       {
@@ -502,9 +535,10 @@ const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& po
   return projection;
 }
 
-const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& point, const Eigen::VectorXd past_prj, int& n_conn)
+const Eigen::VectorXd Path::projectOnClosestConnectionKeepingPastPrj(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, int& n_conn)
 {
-  //The point is projected on the connection on which its projection is between parent and child and to which the distance is the smallest and the history of the projection is taken into consideration
+  //The point is projected on the connection on which its projection is between the parent and the child and from which the distance is the smallest one.
+  //The point can stay on the same connection or can move the next one. If a projection is not found, the past one is used.
 
   int idx;
   Eigen::VectorXd pr;
@@ -517,10 +551,10 @@ const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& po
     conn = connections_.at(i);
 
     double distance;
-    bool in_conn;
-    pr = projectOnConnection(point,conn,distance,in_conn);
+    bool in_connection;
+    pr = projectOnConnection(point,conn,distance,in_connection);
 
-    if(in_conn)
+    if(in_connection)
     {
       if(distance<min_distance)
       {
@@ -539,6 +573,56 @@ const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& po
   {
     projection = past_prj;
     ROS_ERROR("projection on path not found");
+  }
+  else  n_conn = idx;
+
+  return projection;
+}
+
+const Eigen::VectorXd Path::projectOnClosestConnectionKeepingCurvilinearAbscissa(const Eigen::VectorXd& point, Eigen::VectorXd &past_prj, int &n_conn)
+{
+  //The point is projected on the connection on which its projection is between the parent and the child and from which the distance is the smallest one.
+  //The curvilinear abscissa of the point can't decrease. If it happens, the past projection is considered.
+
+  int idx;
+  Eigen::VectorXd pr;
+  Eigen::VectorXd projection;
+  double min_distance = std::numeric_limits<double>::infinity();
+
+  ConnectionPtr conn;
+  for(unsigned int i=0;i<connections_.size();i++)
+  {
+    conn = connections_.at(i);
+
+    double distance;
+    bool in_connection;
+    pr = projectOnConnection(point,conn,distance,in_connection);
+
+    if(in_connection)
+    {
+      if(distance<min_distance)
+      {
+        if(i==n_conn || i==n_conn+1)
+        {
+          double abscissa = curvilinearAbscissaOfPoint(pr);
+          double past_abscissa = curvilinearAbscissaOfPoint(past_prj);
+
+          if(abscissa>=past_abscissa)
+          {
+            min_distance = distance;
+            projection = pr;
+            idx = i;
+          }
+        }
+      }
+    }
+  }
+
+  if(min_distance == std::numeric_limits<double>::infinity())
+  {
+    projection = past_prj;
+    ROS_ERROR("projection on path not found");
+    //ROS_INFO_STREAM("projection: "<<projection.transpose());
   }
   else  n_conn = idx;
 
@@ -620,7 +704,7 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
   ROS_ERROR("Connection not found, the node can't be created");
 }
 
-NodePtr Path::findCloserNode(const Eigen::VectorXd& configuration)
+NodePtr Path::findCloserNode(const Eigen::VectorXd& configuration, double &dist)
 {
   if(connections_.size()<1)
   {
@@ -630,7 +714,6 @@ NodePtr Path::findCloserNode(const Eigen::VectorXd& configuration)
 
   NodePtr closest_node=connections_.at(0)->getParent();
   double min_dist = (closest_node->getConfiguration()-configuration).norm();
-  double dist;
   for (const ConnectionPtr& conn: connections_)
   {
     dist = (conn->getChild()->getConfiguration()-configuration).norm();
@@ -640,16 +723,26 @@ NodePtr Path::findCloserNode(const Eigen::VectorXd& configuration)
       min_dist=dist;
     }
   }
+  dist = min_dist;
   return closest_node;
+}
+
+NodePtr Path::findCloserNode(const Eigen::VectorXd& configuration)
+{
+  double distance;
+  return findCloserNode(configuration,distance);
 }
 
 NodePtr Path::findCloserNode(const NodePtr& node)
 {
   Eigen::VectorXd configuration = node->getConfiguration();
+  return findCloserNode(configuration);
+}
 
-  NodePtr closest_node = findCloserNode(configuration);
-
-  return closest_node;
+NodePtr Path::findCloserNode(const NodePtr& node, double &dist)
+{
+  Eigen::VectorXd configuration = node->getConfiguration();
+  return findCloserNode(configuration,dist);
 }
 
 PathPtr Path::getSubpathToNode(const Eigen::VectorXd& conf)
@@ -780,11 +873,6 @@ bool Path::isValid()
   Eigen::VectorXd parent;
   Eigen::VectorXd child;
   double cost;
-
-  if(cost_ == std::numeric_limits<double>::infinity())
-  {
-    return false;
-  }
 
   for(const ConnectionPtr& conn : connections_)
   {
