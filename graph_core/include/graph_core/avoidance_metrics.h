@@ -59,6 +59,7 @@ public:
   AvoidanceMetrics(const ros::NodeHandle& nh);
 
   void addPoint(const Eigen::Vector3d& point);
+  void cleanPoints();
 
   virtual double cost(const Eigen::VectorXd& configuration1,
                       const Eigen::VectorXd& configuration2);

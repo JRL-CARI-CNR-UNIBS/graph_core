@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   eigen_conversions
   geometry_msgs
   )
+
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES graph_core
@@ -32,6 +33,7 @@ include_directories(
   )
 add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/metrics.cpp
+  src/${PROJECT_NAME}/goal_cost_function.cpp
   src/${PROJECT_NAME}/avoidance_metrics.cpp
   src/${PROJECT_NAME}/occupancy_metrics.cpp
   src/${PROJECT_NAME}/speed_metrics.cpp

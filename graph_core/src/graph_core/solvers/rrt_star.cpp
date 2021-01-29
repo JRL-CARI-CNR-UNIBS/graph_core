@@ -42,7 +42,7 @@ bool RRTStar::addStartTree(const TreePtr &start_tree)
     init_ = true;
     solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
-    cost_ = solution_->cost();
+    path_cost_ = solution_->cost();
   }
   else
     init_ = false;
@@ -63,7 +63,7 @@ bool RRTStar::addGoal(const NodePtr &goal_node)
 
     solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
-    cost_ = solution_->cost();
+    path_cost_ = solution_->cost();
 
   }
   else
@@ -82,7 +82,7 @@ bool RRTStar::update(PathPtr& solution)
 {
   if (!init_)
     return false;
-  if (cost_ <= 1.003 * utopia_)
+  if (path_cost_ <= 1.003 * utopia_)
   {
     completed_=true;
     solution=solution_;
@@ -98,7 +98,7 @@ bool RRTStar::update(const Eigen::VectorXd& point, PathPtr& solution)
 {
   if (!init_)
     return false;
-  if (cost_ <= 1.003 * utopia_)
+  if (path_cost_ <= 1.003 * utopia_)
   {
     ROS_INFO("Already optimal");
     solution=solution_;
@@ -117,10 +117,10 @@ bool RRTStar::update(const Eigen::VectorXd& point, PathPtr& solution)
     solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
 
-    cost_ = solution_->cost();
+    path_cost_ = solution_->cost();
 
 
-    sampler_->setCost(cost_);
+    sampler_->setCost(path_cost_);
   }
   solution = solution_;
   return improved;
@@ -131,7 +131,7 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
 {
   if (!init_)
     return false;
-  if (cost_ <= 1.003 * utopia_)
+  if (path_cost_ <= 1.003 * utopia_)
   {
     completed_=true;
     solution=solution_;
@@ -150,10 +150,10 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
     solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
 
-    cost_ = solution_->cost();
+    path_cost_ = solution_->cost();
 
 
-    sampler_->setCost(cost_);
+    sampler_->setCost(path_cost_);
   }
   solution = solution_;
   return improved;

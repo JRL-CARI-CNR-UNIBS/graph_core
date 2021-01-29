@@ -26,33 +26,28 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/metrics.h>
-#include <rosdyn_core/primitives.h>
-#include <visualization_msgs/MarkerArray.h>
-#include <eigen_conversions/eigen_msg.h>
-
+#include <graph_core/util.h>
+#include <graph_core/graph/node.h>
 namespace pathplan
 {
 
-
-// Avoidance metrics
-class SpeedMetrics: public Metrics
+class GoalCostFunction
 {
-protected:
-  Eigen::VectorXd max_speed_;
-  Eigen::VectorXd inv_max_speed_;
-
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  SpeedMetrics(const Eigen::VectorXd& max_speed);
+GoalCostFunction()
+{
 
-  virtual double cost(const Eigen::VectorXd& configuration1,
-                      const Eigen::VectorXd& configuration2);
-  virtual double utopia(const Eigen::VectorXd& configuration1,
-                      const Eigen::VectorXd& configuration2);
-
-
+}
+double cost(const Eigen::VectorXd& q)
+{
+  return 0;
+}
+double cost(const NodePtr& node)
+{
+  return cost(node->getConfiguration());
+}
 };
-typedef std::shared_ptr<SpeedMetrics> SpeedMetricsPtr;
+
+typedef std::shared_ptr<GoalCostFunction> GoalCostFunctionPtr;
 
 }

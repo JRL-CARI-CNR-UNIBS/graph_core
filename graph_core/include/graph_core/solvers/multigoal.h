@@ -47,11 +47,17 @@ protected:
   std::vector<TubeInformedSamplerPtr> tube_samplers_;
   std::vector<GoalStatus> status_;
 
+  std::random_device rd_;
+  std::mt19937 gen_;
+  std::uniform_real_distribution<double> ud_;
+
   double cost_at_last_clean=std::numeric_limits<double>::infinity();
   double best_utopia_=std::numeric_limits<double>::infinity();
   int best_goal_index=-1;
   double max_distance_=1.0;
   double local_bias_=0.3;
+  double reward_=3.0;
+  double forgetting_factor_=0.999;
   double tube_radius_=0.01;
   bool extend_ = false;
   virtual bool setProblem();
@@ -65,7 +71,11 @@ public:
   MultigoalSolver(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
              const SamplerPtr& sampler):
-    TreeSolver(metrics, checker, sampler) {}
+    TreeSolver(metrics, checker, sampler),
+    gen_(time(0))
+  {
+    ud_ = std::uniform_real_distribution<double>(0, 1);
+  }
 
   virtual bool config(const ros::NodeHandle& nh);
   virtual bool update(PathPtr& solution);

@@ -57,7 +57,7 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node)
 
   double utopia=metrics_->utopia(goal_node,start_tree_->getRoot());
 //  double utopia=(goal_node->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
-  if (utopia>cost_)
+  if (utopia>path_cost_)
   {
     ROS_DEBUG("the utopia cost of this goal is already worst than the actual solution, skip it");
     return false;
@@ -108,7 +108,7 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node)
     status=GoalStatus::search;
   }
 
-  TubeInformedSamplerPtr tube_sampler = std::make_shared<TubeInformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler_->getLB(),sampler_->getUB(),cost_);
+  TubeInformedSamplerPtr tube_sampler = std::make_shared<TubeInformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler_->getLB(),sampler_->getUB(),path_cost_);
   tube_sampler->setLocalBias(local_bias_);
   tube_sampler->setRadius(tube_radius_);
   if (solution)
@@ -133,9 +133,9 @@ bool MultigoalSolver::isBestSolution(const int &index)
 {
   assert(status_.at(index)!=GoalStatus::discard);
 
-  if (costs_.at(index)>=(cost_-1e-8))
+  if (costs_.at(index)>=(path_cost_-1e-8))
     return false;
-  cost_=costs_.at(index);
+  path_cost_=costs_.at(index);
   best_goal_index=index;
   solution_=solutions_.at(index);
 
@@ -143,22 +143,22 @@ bool MultigoalSolver::isBestSolution(const int &index)
   {
     if (status_.at(igoal)==GoalStatus::discard)
       continue;
-    if (utopias_.at(igoal)>cost_)
+    if (utopias_.at(igoal)>path_cost_)
     {
       status_.at(igoal)=GoalStatus::discard;
-      ROS_DEBUG("Goal %u is discarded. utopia=%f, best cost=%f",igoal,utopias_.at(igoal),cost_);
+      ROS_DEBUG("Goal %u is discarded. utopia=%f, best cost=%f",igoal,utopias_.at(igoal),path_cost_);
       cleanTree();
       continue;
     }
     if (status_.at(igoal)==GoalStatus::done)
       continue;
 
-    tube_samplers_.at(igoal)->setCost(cost_);
+    tube_samplers_.at(igoal)->setCost(path_cost_);
   }
 
-  if ((cost_<0.9999*cost_at_last_clean) || start_tree_->needCleaning())
+  if ((path_cost_<0.9999*cost_at_last_clean) || start_tree_->needCleaning())
   {
-    cost_at_last_clean=cost_;
+    cost_at_last_clean=path_cost_;
     cleanTree();
   }
 
@@ -238,7 +238,7 @@ bool MultigoalSolver::update(PathPtr& solution)
 {
   if (!init_)
     return false;
-  if (cost_ <= 1.003 * best_utopia_)
+  if (path_cost_ <= 1.003 * best_utopia_)
   {
     solution=solution_;
     completed_=true;
@@ -248,12 +248,26 @@ bool MultigoalSolver::update(PathPtr& solution)
 
   bool global_improvement=false;
   double r_rewire = start_tree_->getMaximumDistance();
+  double old_cost=path_cost_;
+
 
   for (unsigned int igoal=0;igoal<goal_nodes_.size();igoal++)
   {
     NodePtr new_start_node, new_goal_node;
     bool add_to_start, add_to_goal;
     Eigen::VectorXd configuration = tube_samplers_.at(igoal)->sample();
+
+    double prob=1.0;
+    if ((costs_.at(igoal)-path_cost_)>2.0*path_cost_)
+    {
+      prob=0.1;
+    }
+    else
+    {
+      prob=1.0-0.9*((costs_.at(igoal)-path_cost_))/(2.0*path_cost_);
+    }
+    if (ud_(gen_)>prob)
+      continue;
     switch (status_.at(igoal))
     {
 
@@ -289,6 +303,7 @@ bool MultigoalSolver::update(PathPtr& solution)
         solutions_.at(igoal) = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_nodes_.at(igoal)), metrics_, checker_);
         solutions_.at(igoal)->setTree(start_tree_);
         tube_samplers_.at(igoal)->setPath(solutions_.at(igoal));
+        tube_samplers_.at(igoal)->setRadius(tube_radius_*solutions_.at(igoal)->cost());
         costs_.at(igoal) = solutions_.at(igoal)->cost();
 
         solved_ = true;
@@ -315,6 +330,7 @@ bool MultigoalSolver::update(PathPtr& solution)
         solutions_.at(igoal) = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_nodes_.at(igoal)), metrics_, checker_);
         solutions_.at(igoal)->setTree(start_tree_);
         tube_samplers_.at(igoal)->setPath(solutions_.at(igoal));
+        tube_samplers_.at(igoal)->setRadius(tube_radius_*solutions_.at(igoal)->cost());
         costs_.at(igoal) = solutions_.at(igoal)->cost();
         if (costs_.at(igoal)<=(utopias_.at(igoal)+1e-8))
         {
@@ -333,7 +349,14 @@ bool MultigoalSolver::update(PathPtr& solution)
     }
   }
 
-
+  if (solved_)
+  {
+    local_bias_=std::min(forgetting_factor_*local_bias_+reward_*(old_cost-path_cost_)/(old_cost-best_utopia_),1.0);
+    for (TubeInformedSamplerPtr& sampler: tube_samplers_)
+    {
+      sampler->setLocalBias(local_bias_);
+    }
+  }
   solution = solution_;
   return global_improvement;
 }
@@ -341,7 +364,7 @@ bool MultigoalSolver::update(PathPtr& solution)
 
 void MultigoalSolver::printMyself(std::ostream &os) const
 {
-  os << "Best cost: " << cost_ << ". Nodes of start tree: " << start_tree_->getNumberOfNodes() << "\nGoals:\n";
+  os << "Best cost: " << path_cost_ << ". Nodes of start tree: " << start_tree_->getNumberOfNodes() << "\nGoals:\n";
 
   for (unsigned int igoal=0;igoal<goal_nodes_.size();igoal++)
   {

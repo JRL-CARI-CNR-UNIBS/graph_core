@@ -34,9 +34,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/solvers/path_solver.h>
 #include <graph_core/metrics.h>
 #include <graph_core/speed_metrics.h>
+#include <graph_core/avoidance_metrics.h>
 #include <graph_core/moveit_collision_checker.h>
 #include <graph_core/tube_informed_sampler.h>
 #include <rosparam_utilities/rosparam_utilities.h>
+#include <geometry_msgs/PoseArray.h>
+#include <ros/callback_queue.h>
 
 #define COMMENT(...) ROS_LOG(::ros::console::levels::Debug, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
 
@@ -67,13 +70,16 @@ public:
   /** \brief Clear the data structures used by the planner */
   virtual void clear() override;
 
+  void centroidCb(const geometry_msgs::PoseArrayConstPtr& msg);
 protected:
   moveit::core::RobotModelConstPtr robot_model_;
   //planning_scene::PlanningSceneConstPtr pl
   ros::NodeHandle m_nh;
 
   ros::WallDuration m_max_refining_time;
+  ros::CallbackQueue m_queue;
 
+  bool use_avoidance_=false;
   unsigned int m_dof;
   std::vector<std::string> joint_names_;
   Eigen::VectorXd m_lb;
@@ -81,9 +87,11 @@ protected:
   Eigen::VectorXd m_max_speed_;
   std::string group_;
 
-  pathplan::MetricsPtr metrics;
+  pathplan::MetricsPtr metrics_;
+  pathplan::AvoidanceMetricsPtr avoidance_metrics_;
   pathplan::CollisionCheckerPtr checker;
 
+  ros::Subscriber m_centroid_sub;
 
   double collision_distance=0.04;
   bool m_is_running=false;

@@ -45,5 +45,10 @@ double SpeedMetrics::cost(const Eigen::VectorXd& configuration1,
   return cost;
 }
 
+double SpeedMetrics::utopia(const Eigen::VectorXd &configuration1, const Eigen::VectorXd &configuration2)
+{
+  return cost(configuration1,configuration2);
+}
+
 
 }

@@ -41,6 +41,8 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
   group_(group)
 {
   m_nh=ros::NodeHandle(name);
+  m_nh.setCallbackQueue(&m_queue);
+
   COMMENT("create MultigoalPlanner, name =%s, group = %s", name.c_str(),group.c_str());
   robot_model_=model;
   if (!robot_model_)
@@ -83,8 +85,22 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
   urdf_model.initParam("robot_description");
 
   COMMENT("create metrics");
-//  metrics=std::make_shared<pathplan::Metrics>();
-  metrics=std::make_shared<pathplan::SpeedMetrics>(m_max_speed_);
+
+  if (!m_nh.getParam("use_avoidance",use_avoidance_))
+  {
+    ROS_DEBUG("use_avoidance is not set, default=false");
+    use_avoidance_=false;
+  }
+  if (use_avoidance_)
+  {
+    avoidance_metrics_=std::make_shared<pathplan::AvoidanceMetrics>(m_nh);
+    m_centroid_sub=m_nh.subscribe("/centroids",1,&MultigoalPlanner::centroidCb,this);
+    metrics_=avoidance_metrics_;
+  }
+  else
+  {
+    metrics_=std::make_shared<pathplan::Metrics>();
+  }
 
 
   COMMENT("created MultigoalPlanner");
@@ -109,6 +125,8 @@ void MultigoalPlanner::clear()
 
 bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
 {
+  m_queue.callAvailable();
+
   ros::WallDuration max_planning_time=ros::WallDuration(request_.allowed_planning_time);
   ros::WallTime start_time = ros::WallTime::now();
   ros::WallTime refine_time = ros::WallTime::now();
@@ -170,7 +188,7 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
 
   pathplan::NodePtr start_node=std::make_shared<pathplan::Node>(start_conf);
   pathplan::SamplerPtr sampler = std::make_shared<pathplan::InformedSampler>(m_lb, m_ub, m_lb, m_ub);
-  pathplan::TreeSolverPtr solver=std::make_shared<pathplan::MultigoalSolver>(metrics, checker, sampler);
+  pathplan::TreeSolverPtr solver=std::make_shared<pathplan::MultigoalSolver>(metrics_, checker, sampler);
   if (!solver->config(m_nh))
   {
     ROS_ERROR("Unable to configure the planner");
@@ -292,6 +310,7 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
   {
     ROS_INFO("Stopped (cost=%f) after %f seconds (%u iterations)",solution->cost(),(ros::WallTime::now()-start_time).toSec(),iteration);
   }
+  ROS_INFO_STREAM(*solver);
 
   // =========================
   // END OF THE IMPORTANT PART
@@ -357,6 +376,23 @@ bool MultigoalPlanner::terminate()
     }
   }
   return false;
+}
+
+void MultigoalPlanner::centroidCb(const geometry_msgs::PoseArrayConstPtr& msg)
+{
+  if (!avoidance_metrics_)
+    return;
+
+  avoidance_metrics_->cleanPoints();
+  Eigen::Vector3d point;
+  for (const geometry_msgs::Pose& p: msg->poses)
+  {
+    point(0)=p.position.x;
+    point(1)=p.position.y;
+    point(2)=p.position.z;
+    ROS_INFO_STREAM("point = "<< point.transpose());
+    avoidance_metrics_->addPoint(point);
+  }
 }
 
 }

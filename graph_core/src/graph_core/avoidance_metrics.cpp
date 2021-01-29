@@ -52,7 +52,7 @@ AvoidanceMetrics::AvoidanceMetrics(const ros::NodeHandle &nh):
   }
   if (!nh_.getParam("max_penalty", max_penalty_))
   {
-    ROS_ERROR("%s/weight not defined, use 1.0", nh_.getNamespace().c_str());
+    ROS_ERROR("%s/max_penalty not defined, use 1.0", nh_.getNamespace().c_str());
     max_penalty_=1.0;
   }
   if (!nh_.getParam("max_distance", max_distance_))
@@ -81,6 +81,9 @@ AvoidanceMetrics::AvoidanceMetrics(const ros::NodeHandle &nh):
     ROS_ERROR("%s/links not defined, use all links", nh_.getNamespace().c_str());
     links_=chain_->getLinksName();
   }
+  else
+    for (const std::string& s: links_)
+      ROS_INFO("link %s",s.c_str());
 
   points_.resize(3,0);
   inv_delta_distance_=1.0/(max_distance_-min_distance_);
@@ -104,6 +107,23 @@ AvoidanceMetrics::AvoidanceMetrics(const ros::NodeHandle &nh):
 
 }
 
+void AvoidanceMetrics::cleanPoints()
+{
+  points_.resize(3,0);
+  visualization_msgs::Marker marker;
+  marker.type = visualization_msgs::Marker::SPHERE;
+
+  marker.ns = "avoidance";
+
+  marker.header.frame_id="world";
+  marker.header.stamp=ros::Time::now();
+  marker.action = visualization_msgs::Marker::DELETEALL;
+  marker_id_=0;
+
+  marker_pub_.publish(marker);
+  ros::Duration(0.1).sleep();
+
+}
 void AvoidanceMetrics::addPoint(const Eigen::Vector3d &point)
 {
   points_.conservativeResize(3, points_.cols()+1);
@@ -122,9 +142,9 @@ void AvoidanceMetrics::addPoint(const Eigen::Vector3d &point)
   marker.action = visualization_msgs::Marker::ADD;
   marker.id= marker_id_++;
 
-  marker.scale.x = max_distance_;
-  marker.scale.y = max_distance_;
-  marker.scale.z = max_distance_;
+  marker.scale.x = 2.0*max_distance_;
+  marker.scale.y = 2.0*max_distance_;
+  marker.scale.z = 2.0*max_distance_;
 
   marker.color.r = 1;
   marker.color.g = 0;
@@ -133,20 +153,20 @@ void AvoidanceMetrics::addPoint(const Eigen::Vector3d &point)
 
 
   marker_pub_.publish(marker);
-  ros::Duration(0.1).sleep();
+  ros::Duration(0.01).sleep();
 
   if (min_distance_>0)
   {
-  marker.scale.x = min_distance_;
-  marker.scale.y = min_distance_;
-  marker.scale.z = min_distance_;
+  marker.scale.x = 2.0*min_distance_;
+  marker.scale.y = 2.0*min_distance_;
+  marker.scale.z = 2.0*min_distance_;
   marker.id= marker_id_++;
   marker.color.r = 1;
   marker.color.g = 0;
   marker.color.b = 0;
   marker.color.a = 1;
   marker_pub_.publish(marker);
-  ros::Duration(0.1).sleep();
+  ros::Duration(0.01).sleep();
   }
 
 }
@@ -171,7 +191,7 @@ double AvoidanceMetrics::cost(const Eigen::VectorXd& configuration1,
       Eigen::Affine3d T_b_l=chain_->getTransformationLink(q,link);
       for (long ip=0;ip<points_.cols();ip++)
       {
-        double d=(T_b_l.translation()-points_.col(ip)).norm();
+        double d=(T_b_l.translation().head(2)-points_.col(ip).head(2)).norm();
         dist=(d<dist)?d:dist;
         if (dist<min_distance_)
           break;

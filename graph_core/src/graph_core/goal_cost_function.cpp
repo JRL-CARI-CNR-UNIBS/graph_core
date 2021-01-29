@@ -25,28 +25,11 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/metrics.h>
+#include <graph_core/goal_cost_function.h>
 
 
-namespace pathplan {
-
-Metrics::Metrics()
+namespace pathplan
 {
-
-}
-
-double Metrics::cost(const NodePtr& node1,
-                     const NodePtr& node2)
-{
-  return Metrics::cost(node1->getConfiguration(),node2->getConfiguration());
-}
-
-
-double Metrics::cost(const Eigen::VectorXd& configuration1,
-                     const Eigen::VectorXd& configuration2)
-{
-  return (configuration1-configuration2).norm();
-}
 
 
 }

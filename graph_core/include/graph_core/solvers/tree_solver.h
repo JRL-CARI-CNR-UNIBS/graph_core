@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/collision_checker.h>
 #include <graph_core/metrics.h>
 #include <graph_core/sampler.h>
+#include <graph_core/goal_cost_function.h>
 #include <ros/ros.h>
 #include <ros/duration.h>
 namespace pathplan
@@ -46,11 +47,12 @@ protected:
   MetricsPtr metrics_;
   CollisionCheckerPtr checker_;
   SamplerPtr sampler_;
+  GoalCostFunctionPtr goal_cost_fcn_;
   bool solved_ = false;
   bool completed_=false;
   bool init_ = false;
   bool configured_=false;
-  double cost_;
+  double path_cost_;
   TreePtr start_tree_;
   PathPtr solution_;
   unsigned int dof_;
@@ -72,10 +74,11 @@ public:
     checker_(checker),
     sampler_(sampler)
   {
-    cost_ = std::numeric_limits<double>::infinity();
+    path_cost_ = std::numeric_limits<double>::infinity();
+    goal_cost_fcn_=std::make_shared(GoalCostFunction());
   }
 
-  const double& cost(){return cost_;}
+  const double& cost(){return path_cost_;}
   virtual bool config(const ros::NodeHandle& nh)
   {
     return false;
@@ -89,6 +92,10 @@ public:
   virtual bool addGoal(const NodePtr& goal_node) = 0;
   virtual void resetProblem()=0;
 
+  void setGoalCostFunction(const GoalCostFunctionPtr& goal_cost_fcn)
+  {
+    goal_cost_fcn_=goal_cost_fcn;
+  }
 
   const bool& completed()const
   {
@@ -101,7 +108,7 @@ public:
   }
   const double& cost()const
   {
-    return cost_;
+    return path_cost_;
   }
   virtual bool setSolution(const PathPtr &solution, const bool& solved=false);
   TreePtr getStartTree() const

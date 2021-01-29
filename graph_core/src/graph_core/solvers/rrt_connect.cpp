@@ -94,8 +94,8 @@ bool RRTConnect::setProblem()
     solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
 
-    cost_ = solution_->cost();
-    sampler_->setCost(cost_);
+    path_cost_ = solution_->cost();
+    sampler_->setCost(path_cost_);
     start_tree_->addNode(goal_node_);
 
     solved_ = true;
@@ -103,7 +103,7 @@ bool RRTConnect::setProblem()
   }
   else
   {
-    cost_ = std::numeric_limits<double>::infinity();
+    path_cost_ = std::numeric_limits<double>::infinity();
   }
   return true;
 }
@@ -152,8 +152,8 @@ bool RRTConnect::update(const Eigen::VectorXd& point, PathPtr &solution)
         solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
         solution_->setTree(start_tree_);
         start_tree_->addNode(goal_node_);
-        cost_ = solution_->cost();
-        sampler_->setCost(cost_);
+        path_cost_ = solution_->cost();
+        sampler_->setCost(path_cost_);
         solution = solution_;
         solved_ = true;
         return true;
@@ -190,8 +190,8 @@ bool RRTConnect::update(const NodePtr& n, PathPtr &solution)
         solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
         solution_->setTree(start_tree_);
         start_tree_->addNode(goal_node_);
-        cost_ = solution_->cost();
-        sampler_->setCost(cost_);
+        path_cost_ = solution_->cost();
+        sampler_->setCost(path_cost_);
         solution = solution_;
         solved_ = true;
         return true;
