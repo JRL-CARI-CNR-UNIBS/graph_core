@@ -98,11 +98,11 @@ int main(int argc, char **argv)
   }
 
   Eigen::VectorXd start_conf(dof);
-  if(test == "panda") start_conf << 0.0,0.0,0.0,-1.5,0.0,1.5,0.50;
+  if(test == "panda") start_conf << 0.0,0.0,0.0,-1.5,0.0,1.5,-1.0;
   if(test == "cartesian") start_conf << 0.0,0.0,0.0;
 
   Eigen::VectorXd goal_conf(dof);
-  if(test == "panda") goal_conf <<  1.5,0.5,0.0,-1.0,0.0,2.0,1.0;
+  if(test == "panda") goal_conf <<  1.5,0.5,0.0,-1.0,0.0,2.0,-1.0;
   if(test == "cartesian") goal_conf <<  0.8,0.8,0.8;
 
   pathplan::NodePtr start_node = std::make_shared<pathplan::Node>(start_conf);

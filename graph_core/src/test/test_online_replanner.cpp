@@ -43,9 +43,10 @@ pathplan::DisplayPtr disp;
 moveit_msgs::RobotTrajectory trj_msg;
 double t=0;
 double dt=0.01;
+double dt_replan = 0.050;
 double main_frequency = 1/dt;
-double replan_frequency = 0.2*main_frequency;
-double replan_offset=20*dt;
+double replan_frequency = 1/dt_replan;
+double replan_offset=(dt_replan-dt)*2;
 double t_replan=t+replan_offset;
 trajectory_processing::SplineInterpolator interpolator;
 trajectory_msgs::JointTrajectoryPoint pnt;
@@ -55,14 +56,16 @@ int n_conn = 0;
 int n_conn_replan = 0;
 bool first_replan = true;
 
+std::string test;
+
 void replanning_fcn()
 {
   ros::Rate lp(replan_frequency);
 
   bool replan = true;
   bool success = 0;
-  int replanned_path_id = -5;
-  int node_id = -1;
+  int replanned_path_id = -1;
+  int node_id = -2;
   Eigen::VectorXd goal;
   Eigen::VectorXd point2project(pnt_replan.positions.size());
 
@@ -121,12 +124,12 @@ void replanning_fcn()
     {
       planning_mtx.lock();
       ros::WallTime tic_rep=ros::WallTime::now();
-      double time_informedOnlineRepl = 0.75/replan_frequency;
+      double time_informedOnlineRepl = 0.90/replan_frequency;
       success =  replanner->informedOnlineReplanning(2,1,time_informedOnlineRepl);
       ros::WallTime toc_rep=ros::WallTime::now();
       planning_mtx.unlock();
 
-      if((toc_rep-tic_rep).toSec()>=1/replan_frequency) ROS_WARN("informed duration: %f",(toc_rep-tic_rep).toSec());
+      if((toc_rep-tic_rep).toSec()>=dt_replan) ROS_WARN("informed duration: %f",(toc_rep-tic_rep).toSec());
 
       ROS_INFO_STREAM("success: "<<success);
       ros::WallTime tic_trj;
@@ -175,12 +178,12 @@ void replanning_fcn()
       ros::WallTime toc_tot=ros::WallTime::now();
       double duration = (toc_tot-tic_tot).toSec();
 
-      /*if(duration>(1/replan_frequency))
+      if(duration>(dt_replan))
       {
         ROS_WARN("CYCLE TIME SUPERATO: duration-> %f",duration);
         ROS_WARN("rep-> %f",(toc_rep-tic_rep).toSec());
         if(success) ROS_WARN("trj-> %f",(toc_trj-tic_trj).toSec());
-      }*/
+      }
     }
     lp.sleep();
   }
@@ -235,7 +238,8 @@ void collision_check_fcn()
       //Eigen::VectorXd obj_pos = obj_parent->getConfiguration();
 
       moveit::core::RobotState obj_pos_state = trajectory->fromWaypoints2State(obj_pos);
-      tf::poseEigenToMsg(obj_pos_state.getGlobalLinkTransform("panda_link8"),obj.pose.pose);
+      if(test == "panda") tf::poseEigenToMsg(obj_pos_state.getGlobalLinkTransform("panda_link8"),obj.pose.pose);
+      if(test == "cartesian") tf::poseEigenToMsg(obj_pos_state.getGlobalLinkTransform("end_effector"),obj.pose.pose);
       obj.pose.header.frame_id="world";
 
       srv.request.objects.push_back(obj);
@@ -247,7 +251,6 @@ void collision_check_fcn()
       {
         ROS_ERROR("srv error");
       }
-
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -287,11 +290,24 @@ int main(int argc, char **argv)
   ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("/marker_visualization_topic", 1);
   ros::Publisher display_publisher = nh.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
 
-  std::string test = "panda";
+  ros::ServiceClient ps_client=nh.serviceClient<moveit_msgs::GetPlanningScene>("/get_planning_scene");
+
+  if (!ps_client.waitForExistence(ros::Duration(10)))
+  {
+    ROS_ERROR("unable to connect to /get_planning_scene");
+  }
+
+  ros::Duration(5).sleep();
 
   std::string group_name;
   std::string base_link;
   std::string last_link;
+
+  if (!nh.getParam("group_name",test))
+  {
+    ROS_INFO("group_name not set, use panda");
+    test="panda";
+  }
 
   if(test == "sharework")
   {
@@ -299,11 +315,17 @@ int main(int argc, char **argv)
     base_link = "base_link";
     last_link = "open_tip";
   }
-  else
+  if(test == "panda")
   {
     group_name = "panda_arm";
     base_link = "panda_link0";
     last_link = "panda_link8";
+  }
+  if(test == "cartesian")
+  {
+    group_name = "cartesian_arm";
+    base_link = "world";
+    last_link = "end_effector";
   }
 
   moveit::planning_interface::MoveGroupInterface move_group(group_name);
@@ -331,21 +353,29 @@ int main(int argc, char **argv)
   Eigen::VectorXd start_conf(dof);
   if(test == "sharework")
   {
-    start_conf << 0.0,0.0,0.0,0.0,0.0,0.0; //sharework
+    start_conf << 0.0,0.0,0.0,0.0,0.0,0.0;
   }
-  else
+  if(test == "panda")
   {
-    start_conf << 0.0,0.0,0.0,-1.5,0.0,1.5,0.50; //panda
+    start_conf << 0.0,0.0,0.0,-1.5,0.0,1.5,-1.0;
+  }
+  if(test == "cartesian")
+  {
+    start_conf << 0.0,0.0,0.0;
   }
 
   Eigen::VectorXd goal_conf(dof);
   if(test == "sharework")
   {
-    goal_conf << -2.4568206461416158, -3.2888890061467357, 0.5022868201292561, -0.3550610439856255, 2.4569204968195355, 3.1415111410868053; //sharework
+    goal_conf << -2.4568206461416158, -3.2888890061467357, 0.5022868201292561, -0.3550610439856255, 2.4569204968195355, 3.1415111410868053;
   }
-  else
+  if(test == "panda");
   {
-    goal_conf <<  1.5, 0.5, 0.0, -1.0, 0.0, 2.0, 1.0; //panda
+    goal_conf <<  1.5, 0.5, 0.0, -1.0, 0.0, 2.0, -1.0;
+  }
+  if(test == "cartesian")
+  {
+    goal_conf << 0.8,0.8,0.8;
   }
 
   pathplan::NodePtr start_node = std::make_shared<pathplan::Node>(start_conf);
@@ -359,8 +389,8 @@ int main(int argc, char **argv)
   pathplan::PathPtr path = NULL;
   trajectory = std::make_shared<pathplan::Trajectory>(path,nh,planning_scn,group_name,base_link,last_link);
 
-  int current_node_id = -2;
-  int trj_node_id = -3;
+  int current_node_id = -3;
+  int trj_node_id = -4;
 
   std::vector<pathplan::PathPtr> path_vector;
 

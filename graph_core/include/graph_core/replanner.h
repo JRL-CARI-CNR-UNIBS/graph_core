@@ -50,6 +50,9 @@ protected:
   bool pathSwitch_disp_;
   DisplayPtr disp_;
 
+  bool informedOnlineReplanning_verbose_;
+  bool pathSwitch_verbose_;
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -78,6 +81,26 @@ public:
     return current_path_;
   }
 
+  void setInformedOnlineReplanningVerbose()
+  {
+    informedOnlineReplanning_verbose_ = true;
+  }
+
+  void setPathSwitchVerbose()
+  {
+    pathSwitch_verbose_ = true;
+  }
+
+  void resetInformedOnlineReplanningVerbose()
+  {
+    informedOnlineReplanning_verbose_ = false;
+  }
+
+  void resetPathSwitchVerbose()
+  {
+    pathSwitch_verbose_ = false;
+  }
+
   void setInformedOnlineReplanningDisp(const DisplayPtr &disp)
   {
     if(!disp) throw std::invalid_argument("Display not initialized");
@@ -92,6 +115,18 @@ public:
 
     disp_ = disp;
     pathSwitch_disp_ = true;
+  }
+
+  void resetInformedOnlineReplanningDisp()
+  {
+    disp_ = NULL;
+    informedOnlineReplanning_disp_ = false;
+  }
+
+  void resetPathSwitchDisp()
+  {
+    disp_ = NULL;
+    pathSwitch_disp_ = false;
   }
 
   void setCurrentPath(const PathPtr& path)

@@ -62,6 +62,11 @@ public:
           const std::string& group_name,
           const std::string& last_link);
 
+  DisplayPtr pointer()
+  {
+    return shared_from_this();
+  }
+
   void changeNodeSize(const std::vector<double>& marker_size)
   {
     node_marker_scale_ = marker_size;
