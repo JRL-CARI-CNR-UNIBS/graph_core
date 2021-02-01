@@ -103,23 +103,7 @@ double Path::curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf, int& idx)
   }
   else
   {
-    double euclidean_norm = 0;
-    double sub_euclidean_norm = -1;
-    for (const ConnectionPtr& conn : connections_)
-    {
-      if(connection == conn)
-      {
-        sub_euclidean_norm = euclidean_norm; //norma fino alla connessione precedente a quella dove si trova la configurazione
-      }
-      euclidean_norm += conn->norm();
-    }
-
-    if(sub_euclidean_norm == -1) assert(0);
-
-    double dist = (conf - connection->getParent()->getConfiguration()).norm();
-    abscissa = (sub_euclidean_norm+dist)/euclidean_norm;
-
-    return abscissa;
+    return curvilinearAbscissaOfPointGivenConnection(conf,idx);
   }
 }
 
@@ -127,6 +111,39 @@ double Path::curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf)
 {
   int idx;
   return curvilinearAbscissaOfPoint(conf,idx);
+}
+
+double Path::curvilinearAbscissaOfPointGivenConnection(const Eigen::VectorXd& conf, const int& conn_idx)
+{
+  double abscissa = std::numeric_limits<double>::infinity();
+
+  if(conn_idx < 0 || conn_idx >= connections_.size())
+  {
+    ROS_ERROR("The connection does not belong to the path -> the curvilinear abscissa can not be computed");
+    ROS_INFO_STREAM("conn_idx: "<<conn_idx);
+    assert(0);
+    return abscissa;
+  }
+
+  ConnectionPtr connection = connections_.at(conn_idx);
+
+  double euclidean_norm = 0;
+  double sub_euclidean_norm = -1;
+  for (const ConnectionPtr& conn : connections_)
+  {
+    if(connection == conn)
+    {
+      sub_euclidean_norm = euclidean_norm; //norma fino alla connessione precedente a quella dove si trova la configurazione
+    }
+    euclidean_norm += conn->norm();
+  }
+
+  if(sub_euclidean_norm == -1) assert(0);
+
+  double dist = (conf - connection->getParent()->getConfiguration()).norm();
+  abscissa = (sub_euclidean_norm+dist)/euclidean_norm;
+
+  return abscissa;
 }
 
 void Path::computeCost()
@@ -579,7 +596,7 @@ const Eigen::VectorXd Path::projectOnClosestConnectionKeepingPastPrj(const Eigen
   return projection;
 }
 
-const Eigen::VectorXd Path::projectOnClosestConnectionKeepingCurvilinearAbscissa(const Eigen::VectorXd& point, Eigen::VectorXd &past_prj, int &n_conn)
+const Eigen::VectorXd Path::projectOnClosestConnectionKeepingCurvilinearAbscissa(const Eigen::VectorXd& point, Eigen::VectorXd &past_prj, double &new_abscissa, double &past_abscissa, int &n_conn, const bool &verbose)
 {
   //The point is projected on the connection on which its projection is between the parent and the child and from which the distance is the smallest one.
   //The curvilinear abscissa of the point can't decrease. If it happens, the past projection is considered.
@@ -588,6 +605,11 @@ const Eigen::VectorXd Path::projectOnClosestConnectionKeepingCurvilinearAbscissa
   Eigen::VectorXd pr;
   Eigen::VectorXd projection;
   double min_distance = std::numeric_limits<double>::infinity();
+
+  if(verbose)
+  {
+    ROS_INFO_STREAM("last conn: "<<n_conn<<" point: "<<point.transpose()<<" past prj: "<<past_prj.transpose());
+  }
 
   ConnectionPtr conn;
   for(unsigned int i=0;i<connections_.size();i++)
@@ -598,28 +620,38 @@ const Eigen::VectorXd Path::projectOnClosestConnectionKeepingCurvilinearAbscissa
     bool in_connection;
     pr = projectOnConnection(point,conn,distance,in_connection);
 
+    if(verbose) ROS_INFO_STREAM("conn number: "<< i<<" in_conn: "<<in_connection);
+
     if(in_connection)
     {
-      if(distance<min_distance)
+      if(i==n_conn || i==n_conn+1)
       {
-        if(i==n_conn || i==n_conn+1)
+        if(distance<min_distance)
         {
-          double abscissa = curvilinearAbscissaOfPoint(pr);
-          double past_abscissa = curvilinearAbscissaOfPoint(past_prj);
+          double abscissa = curvilinearAbscissaOfPointGivenConnection(pr,i);
+
+          if(verbose) ROS_INFO_STREAM("distance: "<<distance<<" min_dist: "<<min_distance<< " abscissa: "<<abscissa<< " past_abscissa"<< past_abscissa);
 
           if(abscissa>=past_abscissa)
           {
+            if(verbose) ROS_INFO("New candidate");
+
+            new_abscissa = abscissa;
             min_distance = distance;
             projection = pr;
             idx = i;
           }
+          else if(verbose) ROS_WARN("Not a candidate");
         }
       }
     }
+
+    if(verbose) ROS_INFO("------------------------------");
   }
 
   if(min_distance == std::numeric_limits<double>::infinity())
   {
+    new_abscissa = past_abscissa;
     projection = past_prj;
     ROS_ERROR("projection on path not found");
     //ROS_INFO_STREAM("projection: "<<projection.transpose());

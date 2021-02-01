@@ -97,6 +97,7 @@ public:
   Eigen::VectorXd pointOnCurvilinearAbscissa(const double& abscissa);
   double curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf);
   double curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf, int& idx);
+  double curvilinearAbscissaOfPointGivenConnection(const Eigen::VectorXd& conf,const int& conn_idx);
 
 
 
@@ -127,7 +128,7 @@ public:
   Eigen::VectorXd projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool &in_conn);
   const Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point);
   const Eigen::VectorXd projectOnClosestConnectionKeepingPastPrj(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, int &n_conn);
-  const Eigen::VectorXd projectOnClosestConnectionKeepingCurvilinearAbscissa(const Eigen::VectorXd& point, Eigen::VectorXd &past_prj, int &n_conn);
+  const Eigen::VectorXd projectOnClosestConnectionKeepingCurvilinearAbscissa(const Eigen::VectorXd& point, Eigen::VectorXd& past_prj, double &new_abscissa,  double &past_abscissa, int &n_conn, const bool &verbose = false);
 
 
   // return true if improve

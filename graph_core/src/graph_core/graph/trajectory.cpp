@@ -38,8 +38,6 @@ PathPtr Trajectory::computeBiRRTPath(const NodePtr &start_node, NodePtr &goal_no
     assert(0);
   }
 
-  //ROS_INFO_STREAM("found a solution with cost = " << solution->cost());
-
   if(optimizePath)
   {
     pathplan::PathLocalOptimizer path_solver(checker, metrics);
@@ -48,7 +46,6 @@ PathPtr Trajectory::computeBiRRTPath(const NodePtr &start_node, NodePtr &goal_no
     solution->setTree(solver.getStartTree());
     path_solver.setPath(solution);
     path_solver.solve(solution);
-    //ROS_INFO_STREAM("improve the solution to cost = " << solution->cost());
 
     sampler->setCost(solution->cost());
     solver.getStartTree()->addBranch(solution->getConnections());
@@ -58,25 +55,10 @@ PathPtr Trajectory::computeBiRRTPath(const NodePtr &start_node, NodePtr &goal_no
     for (unsigned int isol = 0; isol < solution->getConnections().size() - 1; isol++)
     {
       pathplan::ConnectionPtr conn = solution->getConnections().at(isol);
-      if (conn->getChild()->getConfiguration().size() != start_node->getConfiguration().size())
-      {
-        ROS_ERROR_STREAM("size = " << conn->getChild()->getConfiguration().size());
-        ROS_WARN_STREAM("node " << conn->getChild());
-      }
-      try
-      {
-        local_sampler->addBall(conn->getChild()->getConfiguration(), solution->cost() * 0.1);
-      }
-      catch (...)
-      {
-        ROS_ERROR_STREAM("size = " << conn->getChild()->getConfiguration().size());
-        ROS_WARN_STREAM("node " << conn->getChild());
-        assert(0);
-      }
+      local_sampler->addBall(conn->getChild()->getConfiguration(), solution->cost() * 0.1);
     }
     local_sampler->setCost(solution->cost());
 
-    //ROS_INFO("Improving solution with RRT*");
     pathplan::RRTStar opt_solver(metrics, checker, local_sampler);
     opt_solver.addStartTree(solver.getStartTree());
     opt_solver.addGoal(goal_node);
@@ -102,11 +84,8 @@ PathPtr Trajectory::computeBiRRTPath(const NodePtr &start_node, NodePtr &goal_no
       if (opt_solver.update(solution))
       {
         stall_gen = 0;
-        //ROS_INFO_STREAM("Iteration = " << idx << " , rrt* reduce cost to = " << solution->cost());
         path_solver.setPath(solution);
         solution->setTree(opt_solver.getStartTree());
-        //      path_solver.solve(solution);
-        //ROS_INFO_STREAM("local solver improve the solution to cost = " << solution->cost());
 
         local_sampler->setCost(solution->cost());
         sampler->setCost(solution->cost());
@@ -116,24 +95,8 @@ PathPtr Trajectory::computeBiRRTPath(const NodePtr &start_node, NodePtr &goal_no
         for (unsigned int isol = 0; isol < solution->getConnections().size() - 1; isol++)
         {
           pathplan::ConnectionPtr conn = solution->getConnections().at(isol);
-          if (conn->getChild()->getConfiguration().size() != start_node->getConfiguration().size())
-          {
-            ROS_ERROR_STREAM("size = " << conn->getChild()->getConfiguration().size());
-            ROS_WARN_STREAM("node " << conn->getChild());
-          }
-          //if (conn->getCost()>1.01*conn->norm())
-          {
-            try
-            {
-              local_sampler->addBall(conn->getChild()->getConfiguration(), solution->cost() * 0.1);
-            }
-            catch (...)
-            {
-              ROS_ERROR_STREAM("size = " << conn->getChild()->getConfiguration().size());
-              ROS_WARN_STREAM("node " << conn->getChild());
-              assert(0);
-            }
-          }
+
+          local_sampler->addBall(conn->getChild()->getConfiguration(), solution->cost() * 0.1);
         }
       }
       else
@@ -142,9 +105,7 @@ PathPtr Trajectory::computeBiRRTPath(const NodePtr &start_node, NodePtr &goal_no
         stall_gen++;
       }
 
-
       if (idx % 10 == 0)
-        //ROS_INFO("iter=%u,tree with %u nodes", idx, opt_solver.getStartTree()->getNumberOfNodes());
 
         if (id(gen) < stall_gen)
           opt_solver.setSampler(sampler);
@@ -155,15 +116,8 @@ PathPtr Trajectory::computeBiRRTPath(const NodePtr &start_node, NodePtr &goal_no
         break;
     }
 
-    //ROS_INFO_STREAM("solution cost = " << solution->cost());
-    //ROS_INFO("tree with %u nodes", opt_solver.getStartTree()->getNumberOfNodes());
-
     path_solver.setPath(solution);
     path_solver.solve(solution);
-    //ROS_INFO_STREAM("local solver improve the solution to cost = " << solution->cost());
-
-    //ROS_INFO_STREAM("solution\n" << *solution);
-
   }
 
   return solution;

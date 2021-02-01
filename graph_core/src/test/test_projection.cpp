@@ -23,31 +23,9 @@
 #include <rviz_visual_tools/rviz_visual_tools.h>
 #include <eigen_conversions/eigen_msg.h>
 #include <moveit_planning_helper/spline_interpolator.h>
-#include <thread>
-#include <mutex>
-
-Eigen::VectorXd current_configuration;
-planning_scene::PlanningScenePtr planning_scn;
-pathplan::TrajectoryPtr trajectory;
-pathplan::DisplayPtr disp;
-moveit_msgs::RobotTrajectory trj_msg;
-double t=0;
-double dt=0.01;
-double main_frequency = 1/dt;
-
-trajectory_processing::SplineInterpolator interpolator;
-trajectory_msgs::JointTrajectoryPoint pnt;
-pathplan::MetricsPtr metrics = std::make_shared<pathplan::Metrics>();
-pathplan::CollisionCheckerPtr checker;
-
-pathplan::PathPtr current_path;
-
-int n_conn = 0;
-
 
 int main(int argc, char **argv)
 {
-  std::string test = "cartesian";
 
   ros::init(argc, argv, "node_prj");
   ros::AsyncSpinner spinner(1);
@@ -57,27 +35,32 @@ int main(int argc, char **argv)
   ros::Publisher target_pub=nh.advertise<sensor_msgs::JointState>("/joint_target",1);
   sensor_msgs::JointState jt_msg;
 
+  int prj_type;
+  if (!nh.getParam("prj",prj_type))
+  {
+    ROS_INFO("prj not set, use 0");
+    prj_type=0;
+  }
+
+  bool optimize_path;
+  if (!nh.getParam("opt_path",optimize_path))
+  {
+    ROS_INFO("opt_path not set, use true");
+    optimize_path=true;
+  }
+
   std::string group_name;
   std::string base_link;
   std::string last_link;
 
-  if(test == "panda")
-  {
-    group_name = "panda_arm";
-    base_link = "panda_link0";
-    last_link = "panda_link8";
-  }
-
-  if(test == "cartesian")
-  {
-    group_name = "cartesian_arm";
-    base_link = "world";
-    last_link = "end_effector";
-  }
+  group_name = "cartesian_arm";
+  base_link = "world";
+  last_link = "end_effector";
 
   moveit::planning_interface::MoveGroupInterface move_group(group_name);
   robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
   robot_model::RobotModelPtr kinematic_model = robot_model_loader.getModel();
+  planning_scene::PlanningScenePtr planning_scn;
   planning_scn = std::make_shared<planning_scene::PlanningScene>(kinematic_model);
 
   const robot_state::JointModelGroup* joint_model_group = move_group.getCurrentState()->getJointModelGroup(group_name);
@@ -97,41 +80,71 @@ int main(int argc, char **argv)
     }
   }
 
+  // ///////////////////////////////////////////////////UPDATING THE SCENE////////////////////////////////////////////////////////////////////
+  ros::ServiceClient ps_client=nh.serviceClient<moveit_msgs::GetPlanningScene>("/get_planning_scene");
+
+  if (!ps_client.waitForExistence(ros::Duration(10)))
+  {
+    ROS_ERROR("unable to connect to /get_planning_scene");
+    return 1;
+  }
+
+  moveit_msgs::GetPlanningScene ps_srv;
+
+  if (!ps_client.call(ps_srv))
+  {
+    ROS_ERROR("call to srv not ok");
+    return 1;
+  }
+
+  if (!planning_scn->setPlanningSceneMsg(ps_srv.response.scene))
+  {
+    ROS_ERROR("unable to update planning scene");
+    return 1;
+  }
+
+  // //////////////////////////////////////////PATH PLAN & VISUALIZATION//////////////////////////////////////////////////////////////////////////
+
   Eigen::VectorXd start_conf(dof);
-  if(test == "panda") start_conf << 0.0,0.0,0.0,-1.5,0.0,1.5,-1.0;
-  if(test == "cartesian") start_conf << 0.0,0.0,0.0;
+  start_conf << 0.0,0.0,0.0;
 
   Eigen::VectorXd goal_conf(dof);
-  if(test == "panda") goal_conf <<  1.5,0.5,0.0,-1.0,0.0,2.0,-1.0;
-  if(test == "cartesian") goal_conf <<  0.8,0.8,0.8;
+  goal_conf <<  0.8,0.8,0.8;
 
   pathplan::NodePtr start_node = std::make_shared<pathplan::Node>(start_conf);
 
-  checker = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scn, group_name);
+  pathplan::MetricsPtr metrics = std::make_shared<pathplan::Metrics>();
+  pathplan::CollisionCheckerPtr  checker = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scn, group_name);
 
-  // ///////////////////////////PATH PLAN & VISUALIZATION//////////////////////////////////////////////////////////////////////////
-
-  disp = std::make_shared<pathplan::Display>(planning_scn,group_name,last_link);
+  pathplan::DisplayPtr disp = std::make_shared<pathplan::Display>(planning_scn,group_name,last_link);
   pathplan::PathPtr path = NULL;
-  trajectory = std::make_shared<pathplan::Trajectory>(path,nh,planning_scn,group_name,base_link,last_link);
+  pathplan::TrajectoryPtr trajectory = std::make_shared<pathplan::Trajectory>(path,nh,planning_scn,group_name,base_link,last_link);
 
   int current_node_id = -1;
   int trj_node_id = -2;
 
   pathplan::NodePtr goal_node = std::make_shared<pathplan::Node>(goal_conf);
 
-  pathplan::PathPtr path1 = trajectory->computeBiRRTPath(start_node, goal_node, lb, ub, metrics, checker, 1);
-  pathplan::PathPtr path2 = trajectory->computeBiRRTPath(goal_node, start_node, lb, ub, metrics, checker, 1);
+  pathplan::PathPtr path1 = trajectory->computeBiRRTPath(start_node, goal_node, lb, ub, metrics, checker, optimize_path);
+  pathplan::PathPtr path2 = trajectory->computeBiRRTPath(goal_node, start_node, lb, ub, metrics, checker, optimize_path);
 
   // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   std::vector<pathplan::ConnectionPtr> conn = path1->getConnections();
   conn.insert(conn.end(),path2->getConnectionsConst().begin(),path2->getConnectionsConst().end()-1);
-  current_path = std::make_shared<pathplan::Path>(conn,metrics,checker);
+  pathplan::PathPtr current_path = std::make_shared<pathplan::Path>(conn,metrics,checker);
 
-  std::vector<double> marker_color;
+  conn = path2->getConnections();
+  conn.pop_back();
+  path2 = std::make_shared<pathplan::Path>(conn,metrics,checker);
+
+  std::vector<double> marker_color, marker_color1, marker_color2;
   marker_color = {0.5,0.5,0.0,1.0};
-  disp->displayPathAndWaypoints(current_path,"pathplan",marker_color);
+  marker_color1 = {1.0,0.0,0.0,1.0};
+  marker_color2 = {0.0,0.0,1.0,1.0};
+  //disp->displayPathAndWaypoints(current_path,"pathplan",marker_color);
+  disp->displayPathAndWaypoints(path1,"pathplan",marker_color1);
+  disp->displayPathAndWaypoints(path2,"pathplan",marker_color2);
 
   pathplan::SamplerPtr samp = std::make_shared<pathplan::InformedSampler>(start_conf, goal_conf, lb, ub);
   pathplan::BiRRTPtr solver = std::make_shared<pathplan::BiRRT>(metrics, checker, samp);
@@ -143,26 +156,26 @@ int main(int argc, char **argv)
   trj->getRobotTrajectoryMsg(tmp_trj_msg);
 
   double MAX_TIME = trj->getDuration();
+  double t=0;
+  double dt=0.01;
+  int n_conn = 0;
+  double abscissa = 0;
+  double past_abscissa = 0;
 
+  trajectory_processing::SplineInterpolator interpolator;
   interpolator.setTrajectory(tmp_trj_msg);
   interpolator.setSplineOrder(1);
 
   Eigen::VectorXd point2project(dof);
+  Eigen::VectorXd current_configuration;
 
+  trajectory_msgs::JointTrajectoryPoint pnt;
   interpolator.interpolate(ros::Duration(t),pnt);
   current_configuration = start_conf;
   Eigen::VectorXd past_configuration = current_configuration;
 
-  for(unsigned int i=0;i<current_path->getConnections().size()-1;i++)
-  {
-    if(current_path->getConnections().at(i)->getChild()->getConfiguration() != current_path->getConnections().at(i+1)->getParent()->getConfiguration())
-    {
-      ROS_ERROR("Current_path disconnesso!");
-      assert(0);
-    }
-  }
-
   double stop = false;
+  double main_frequency = 1/dt;
   ros::Rate lp(main_frequency);
   while (ros::ok() && !stop)
   {
@@ -176,9 +189,34 @@ int main(int argc, char **argv)
     target_pub.publish(jt_msg);
 
     past_configuration = current_configuration;
-    current_configuration = current_path->projectOnClosestConnectionKeepingCurvilinearAbscissa(point2project,past_configuration,n_conn);
-    //current_configuration = current_path->projectOnClosestConnectionKeepingPastPrj(point2project,past_configuration,n_conn);
-    //current_configuration = current_path->projectOnClosestConnection(point2project);
+    if(prj_type == 0)
+    {
+      past_abscissa = abscissa;
+      current_configuration = current_path->projectOnClosestConnectionKeepingCurvilinearAbscissa(point2project,past_configuration,abscissa,past_abscissa,n_conn);
+      if(current_configuration == past_configuration && (current_configuration - goal_conf).norm()>1e-02 && (current_configuration - current_path->getConnections().back()->getChild()->getConfiguration()).norm()>1e-02 )
+      {
+        std::vector<double> marker_scale_sphere_actual(3,0.02);
+        std::vector<double> marker_color_sphere_actual = {0.0,1.0,0.0,1.0};
+
+        disp->changeNodeSize(marker_scale_sphere_actual);
+        disp->displayNode(std::make_shared<pathplan::Node>(point2project),trj_node_id,"pathplan",marker_color_sphere_actual);
+        disp->displayNode(std::make_shared<pathplan::Node>(start_conf),current_node_id,"pathplan",marker_color_sphere_actual);
+        disp->defaultNodeSize();
+
+        current_configuration = current_path->projectOnClosestConnectionKeepingCurvilinearAbscissa(point2project,past_configuration,abscissa,past_abscissa,n_conn,1);
+
+        ROS_WARN("ATTENZIONE");
+        while(true) ros::Duration(1).sleep();
+      }
+    }
+    else if(prj_type == 1)
+    {
+      current_configuration = current_path->projectOnClosestConnectionKeepingPastPrj(point2project,past_configuration,n_conn);
+    }
+    else
+    {
+      current_configuration = current_path->projectOnClosestConnection(point2project);
+    }
 
     if(t>=MAX_TIME) stop = true;
     else

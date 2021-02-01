@@ -44,8 +44,8 @@ moveit_msgs::RobotTrajectory trj_msg;
 double t=0;
 double dt=0.01;
 double dt_replan = 0.050;
-double main_frequency = 1/dt;
-double replan_frequency = 1/dt_replan;
+double main_frequency = 0.1*1/dt;
+double replan_frequency = 0.1*1/dt_replan;
 double replan_offset=(dt_replan-dt)*2;
 double t_replan=t+replan_offset;
 trajectory_processing::SplineInterpolator interpolator;
@@ -68,6 +68,8 @@ void replanning_fcn()
   int node_id = -2;
   Eigen::VectorXd goal;
   Eigen::VectorXd point2project(pnt_replan.positions.size());
+  double past_abscissa;
+  double abscissa;
 
   while (!stop)
   {
@@ -81,9 +83,10 @@ void replanning_fcn()
     for(unsigned int i=0; i<pnt_replan.positions.size();i++) point2project[i] = pnt_replan.positions.at(i);
 
     past_configuration_replan = configuration_replan;
-    configuration_replan = replanner->getCurrentPath()->projectOnClosestConnectionKeepingCurvilinearAbscissa(point2project,past_configuration_replan,n_conn_replan);
+    past_abscissa = abscissa;
+    configuration_replan = replanner->getCurrentPath()->projectOnClosestConnectionKeepingCurvilinearAbscissa(point2project,past_configuration_replan,abscissa,past_abscissa,n_conn_replan);
 
-    if(replanner->getCurrentPath()->curvilinearAbscissaOfPoint(configuration_replan)<=replanner->getCurrentPath()->curvilinearAbscissaOfPoint(current_configuration) & current_configuration != replanner->getCurrentPath()->getConnections().at(0)->getParent()->getConfiguration())
+    /*if(replanner->getCurrentPath()->curvilinearAbscissaOfPoint(configuration_replan)<=replanner->getCurrentPath()->curvilinearAbscissaOfPoint(current_configuration) & current_configuration != replanner->getCurrentPath()->getConnections().at(0)->getParent()->getConfiguration())
     {
       ROS_INFO_STREAM("shifting the replan config");
       do
@@ -94,13 +97,14 @@ void replanning_fcn()
         for(unsigned int i=0; i<pnt_replan.positions.size();i++) point2project[i] = pnt_replan.positions.at(i);
 
         past_configuration_replan = configuration_replan;
-        configuration_replan = replanner->getCurrentPath()->projectOnClosestConnectionKeepingCurvilinearAbscissa(point2project,past_configuration_replan,n_conn_replan);
+        //configuration_replan = replanner->getCurrentPath()->projectOnClosestConnectionKeepingCurvilinearAbscissa(point2project,past_configuration_replan,n_conn_replan);
+        //SISTEMA
       }
       while(replanner->getCurrentPath()->curvilinearAbscissaOfPoint(configuration_replan)<=replanner->getCurrentPath()->curvilinearAbscissaOfPoint(current_configuration));
-    }
+    }*/
 
     goal = replanner->getCurrentPath()->getConnections().back()->getChild()->getConfiguration();
-    replan = ((current_configuration-goal).norm()>1e-06 && (configuration_replan-goal).norm()>1e-06);
+    replan = ((current_configuration-goal).norm()>1e-03 && (configuration_replan-goal).norm()>1e-03);
     if(replan) replanner->setCurrentConf(configuration_replan);
     else stop = true;
     trj_mtx.unlock();
@@ -124,7 +128,7 @@ void replanning_fcn()
     {
       planning_mtx.lock();
       ros::WallTime tic_rep=ros::WallTime::now();
-      double time_informedOnlineRepl = 0.90/replan_frequency;
+      double time_informedOnlineRepl = 0.90*dt_replan;
       success =  replanner->informedOnlineReplanning(2,1,time_informedOnlineRepl);
       ros::WallTime toc_rep=ros::WallTime::now();
       planning_mtx.unlock();
@@ -336,6 +340,30 @@ int main(int argc, char **argv)
   const robot_state::JointModelGroup* joint_model_group = move_group.getCurrentState()->getJointModelGroup(group_name);
   std::vector<std::string> joint_names = joint_model_group->getActiveJointModelNames();
 
+
+  // UPDATING PLANNING SCENE
+  ps_client=nh.serviceClient<moveit_msgs::GetPlanningScene>("/get_planning_scene");
+
+  if (!ps_client.waitForExistence(ros::Duration(10)))
+  {
+    ROS_ERROR("unable to connect to /get_planning_scene");
+    return 1;
+  }
+
+  moveit_msgs::GetPlanningScene ps_srv;
+
+  if (!ps_client.call(ps_srv))
+  {
+    ROS_ERROR("call to srv not ok");
+    return 1;
+  }
+
+  if (!planning_scn->setPlanningSceneMsg(ps_srv.response.scene))
+  {
+    ROS_ERROR("unable to update planning scene");
+    return 1;
+  }
+
   unsigned int dof = joint_names.size();
   Eigen::VectorXd lb(dof);
   Eigen::VectorXd ub(dof);
@@ -369,9 +397,9 @@ int main(int argc, char **argv)
   {
     goal_conf << -2.4568206461416158, -3.2888890061467357, 0.5022868201292561, -0.3550610439856255, 2.4569204968195355, 3.1415111410868053;
   }
-  if(test == "panda");
+  if(test == "panda")
   {
-    goal_conf <<  1.5, 0.5, 0.0, -1.0, 0.0, 2.0, -1.0;
+    goal_conf << 1.5,0.5,0.0,-1.0,0.0,2.0,-1.0;
   }
   if(test == "cartesian")
   {
@@ -465,7 +493,7 @@ int main(int argc, char **argv)
 
     trj_mtx.unlock();
 
-    if((current_configuration-goal_conf).norm()<1e-6) stop = true;
+    if((current_configuration-goal_conf).norm()<1e-3 || (configuration_replan-goal_conf).norm()<1e-3) stop = true;
     else
     {
       std::vector<double> marker_scale_sphere_actual(3,0.02);
