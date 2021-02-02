@@ -95,9 +95,6 @@ public:
   //To trasform a path to a RobotTrajectory with initial condition
   robot_trajectory::RobotTrajectoryPtr fromPath2Trj(const trajectory_msgs::JointTrajectoryPoint& pnt);
 
-  //To trasform a path to a RobotTrajectory with initial conditions and a defined waypoint
-  robot_trajectory::RobotTrajectoryPtr fromPath2Trj(const trajectory_msgs::JointTrajectoryPoint& pnt, const trajectory_msgs::JointTrajectoryPoint& pnt2, const int &index, const double &dt);
-
   //To display the execution of the trj on Rviz
   void displayTrj();
 

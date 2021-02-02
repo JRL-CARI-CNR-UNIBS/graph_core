@@ -55,7 +55,7 @@ bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const do
 
     if(time<0.8*mean || time<=0.0)
     {
-      ROS_ERROR("TIME OUT->time: %f",time);
+      //ROS_ERROR("TIME OUT->time: %f",time);
       break;
     }
   }

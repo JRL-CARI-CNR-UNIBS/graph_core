@@ -589,7 +589,7 @@ const Eigen::VectorXd Path::projectOnClosestConnectionKeepingPastPrj(const Eigen
   if(min_distance == std::numeric_limits<double>::infinity())
   {
     projection = past_prj;
-    ROS_ERROR("projection on path not found");
+    //ROS_ERROR("projection on path not found");
   }
   else  n_conn = idx;
 
@@ -901,32 +901,113 @@ bool Path::simplify(const double& distance)
 
 bool Path::isValid()
 {
-  bool valid = true;
-  Eigen::VectorXd parent;
-  Eigen::VectorXd child;
-  double cost;
-
-  for(const ConnectionPtr& conn : connections_)
-  {
-    assert(conn);
-    if(!checker_->checkPath(conn->getParent()->getConfiguration(), conn->getChild()->getConfiguration()))
-    {
-      conn->setCost(std::numeric_limits<double>::infinity());
-      valid = false;
-    }
-    else
-    {
-      parent = conn->getParent()->getConfiguration();
-      child = conn->getChild()->getConfiguration();
-      cost = metrics_->cost(parent,child);
-      conn->setCost(cost);
-    }
-  }
+  bool valid = isValidFromConn(connections_.at(0));
 
   if(!valid) cost_ = std::numeric_limits<double>::infinity();
   else computeCost();
 
   return valid;
+}
+
+bool Path::isValidFromConn(const ConnectionPtr& this_conn)
+{
+  bool valid = true;
+  Eigen::VectorXd parent;
+  Eigen::VectorXd child;
+  double cost;
+  bool from_here = false;
+
+  for(const ConnectionPtr &conn : connections_)
+  {
+    if(this_conn == conn) from_here = true;
+
+    if(from_here)
+    {
+      parent = conn->getParent()->getConfiguration();
+      child = conn->getChild()->getConfiguration();
+
+      if(!checker_->checkPath(parent,child))
+      {
+        conn->setCost(std::numeric_limits<double>::infinity());
+        valid = false;
+      }
+      else
+      {
+        cost = metrics_->cost(parent,child);
+        conn->setCost(cost);
+      }
+    }
+  }
+
+  return valid;
+}
+
+bool Path::isValidFromConf(const Eigen::VectorXd &conf)
+{
+  bool validity = true;
+  int idx;
+  ConnectionPtr conn = findConnection(conf,idx);
+
+  if(conf == conn->getParent()->getConfiguration())
+  {
+    validity = isValidFromConn(conn);
+  }
+  else if(conf == conn->getChild()->getConfiguration())
+  {
+    if(idx<connections_.size()-1)
+    {
+      conn = connections_.at(idx+1);
+      validity = isValidFromConn(conn);
+    }
+    else
+    {
+      ROS_INFO("conf is equal to goal, no connection to validate from here");
+      validity = true;
+      assert(0);
+    }
+  }
+  else
+  {
+    if(!checker_->checkPathFromConf(conn->getParent()->getConfiguration(),conn->getChild()->getConfiguration(),conf))
+    {
+      /*ROS_WARN("CONF->CHILD OBSTRUCTED");
+      if(cost() !=std::numeric_limits<double>::infinity())
+      {
+        ROS_INFO_STREAM("CHILD: "<<conn->getChild()->getConfiguration().transpose());
+        std::vector<Eigen::VectorXd> waypoints = getWaypoints();
+        for(const Eigen::VectorXd wp: waypoints)
+        {
+          ROS_INFO_STREAM("WP: "<<wp.transpose());
+        }
+
+        Eigen::VectorXd parent = conn->getParent()->getConfiguration();
+        Eigen::VectorXd child = conn->getChild()->getConfiguration();
+
+        double step = (parent-child).norm()/100.0;
+
+        for(unsigned int i=0; i<100;i++)
+        {
+          Eigen::VectorXd point = ((child-parent)/(child-parent).norm())*i*step +parent;
+          if(!checker_->check(point))
+          {
+            double perc = (point-parent).norm()/(child-parent).norm();
+            ROS_WARN("collision at %f",perc);
+          }
+        }
+      }*/
+
+      validity = false;
+    }
+    else
+    {
+      if(idx<connections_.size()-1)
+      {
+        validity = isValidFromConn(connections_.at(idx+1));
+      }
+    }
+  }
+
+  return validity;
 }
 
 std::ostream& operator<<(std::ostream& os, const Path& path)

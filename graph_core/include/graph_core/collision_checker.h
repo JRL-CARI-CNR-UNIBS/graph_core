@@ -119,6 +119,59 @@ public:
     return true;
   }
 
+  bool checkPathFromConf(const Eigen::VectorXd& parent,
+                         const Eigen::VectorXd& child,
+                         const Eigen::VectorXd& this_conf)
+  {
+    double dist_child = (this_conf-child).norm();
+    double dist_parent = (parent-this_conf).norm();
+    double dist = (parent-child).norm();
+
+    if((dist-dist_child-dist_parent)>1e-04)
+    {
+      ROS_ERROR("The conf is not on the connection between parent and child");
+      assert(0);
+      return false;
+    }
+
+    if (!check(this_conf))
+    {
+      ROS_WARN("IN CONF");
+      return false;
+    }
+    if (!check(child))
+    {
+      ROS_WARN("IN CHILD");
+      return false;
+    }
+
+    double distance = (this_conf - child).norm();
+    if(distance < min_distance_) return true;
+
+    double this_abscissa = (parent-this_conf).norm()/(parent-child).norm();
+    double abscissa;
+    double n = 2;
+    Eigen::VectorXd conf;
+    while (distance > n * min_distance_)
+    {
+      for (double idx = 1; idx < n; idx += 2)
+      {
+        abscissa = idx/n;
+        if(abscissa>=this_abscissa)
+        {
+          conf = parent + (child - parent) * abscissa;
+          if (!check(conf))
+          {
+            ROS_WARN("IN CONF:");
+            ROS_INFO_STREAM("CONF: "<<conf.transpose());
+            return false;
+          }
+        }
+      }
+      n *= 2;
+    }
+    return true;
+  }
 };
 
 typedef std::shared_ptr<CollisionChecker> CollisionCheckerPtr;

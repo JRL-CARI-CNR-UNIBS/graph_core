@@ -200,40 +200,6 @@ robot_trajectory::RobotTrajectoryPtr Trajectory::fromPath2Trj(const trajectory_m
   return trj_;
 }
 
-robot_trajectory::RobotTrajectoryPtr Trajectory::fromPath2Trj(const trajectory_msgs::JointTrajectoryPoint& pnt, const trajectory_msgs::JointTrajectoryPoint& pnt2, const int &index, const double &dt)
-{
-  if(path_ == NULL)
-  {
-    throw std::invalid_argument("Path not assigned");
-  }
-
-  Eigen::VectorXd intermediate_pt(pnt.positions.size());
-  for(unsigned int i=0; i<pnt2.positions.size();i++) intermediate_pt[i] = pnt2.positions.at(i);
-  moveit::core::RobotState intermediate_state = fromWaypoints2State(intermediate_pt);
-
-  std::vector<Eigen::VectorXd> waypoints=path_->getWaypoints();
-  std::vector<moveit::core::RobotState> wp_state_vector = fromWaypoints2State(waypoints);
-
-  //Definizione della traiettoria, noti i waypoints del path
-  trj_ = std::make_shared<robot_trajectory::RobotTrajectory>(kinematic_model_,group_name_);
-  for(unsigned int j=0; j<waypoints.size();j++)
-  {
-    if (j==0)
-    {
-      wp_state_vector.at(j).setJointGroupPositions(group_name_,pnt.positions);
-      wp_state_vector.at(j).setJointGroupVelocities(group_name_,pnt.velocities);
-      wp_state_vector.at(j).setJointGroupAccelerations(group_name_,pnt.accelerations);
-    }
-    trj_->addSuffixWayPoint(wp_state_vector.at(j),0); //time parametrization
-  }
-
-  trj_->insertWayPoint(index,intermediate_state,dt);
-
-  trajectory_processing::IterativeParabolicTimeParameterization iptp;
-  iptp.computeTimeStamps(*trj_);
-
-  return trj_;
-}
 
 void Trajectory::displayTrj()
 {

@@ -68,6 +68,7 @@ public:
   Path(std::vector<ConnectionPtr> connections, const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
   const double& cost()
   {
+    computeCost();
     return cost_;
   }
 
@@ -125,6 +126,8 @@ public:
 
   bool simplify(const double& distance = 0.02);
   bool isValid();
+  bool isValidFromConf(const Eigen::VectorXd &conf);
+  bool isValidFromConn(const ConnectionPtr &this_conn);
   Eigen::VectorXd projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool &in_conn);
   const Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point);
   const Eigen::VectorXd projectOnClosestConnectionKeepingPastPrj(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, int &n_conn);
