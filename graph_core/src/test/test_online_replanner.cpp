@@ -114,6 +114,7 @@ void replanning_fcn()
     past_abscissa = abscissa;
     configuration_replan = replanner->getCurrentPath()->projectOnClosestConnectionKeepingCurvilinearAbscissa(point2project,past_configuration_replan,abscissa,past_abscissa,n_conn_replan);
 
+    trj_mtx.unlock();
     std::vector<double> marker_scale_sphere_actual(3,0.02);
     std::vector<double> marker_color_sphere_actual = {0.0,0.0,0.0,1.0};
     display_mtx.lock();
@@ -128,6 +129,7 @@ void replanning_fcn()
     disp->displayNode(std::make_shared<pathplan::Node>(point2project),node_id-8,"pathplan",marker_color_sphere_actual);
     disp->defaultNodeSize();
     display_mtx.unlock();
+    trj_mtx.lock();
     /*if(replanner->getCurrentPath()->curvilinearAbscissaOfPointGivenConnection(configuration_replan,n_conn_replan)<=replanner->getCurrentPath()->curvilinearAbscissaOfPointGivenConnection(current_configuration,n_conn) & current_configuration != replanner->getCurrentPath()->getConnections().at(0)->getParent()->getConfiguration())
     {
       ROS_INFO_STREAM("shifting the replan config");
@@ -176,7 +178,7 @@ void replanning_fcn()
 
       if((toc_rep-tic_rep).toSec()>=time_informedOnlineRepl/0.9) ROS_WARN("informed duration: %f",(toc_rep-tic_rep).toSec());
 
-      ROS_INFO_STREAM("success: "<<success<< string_dt);
+      ROS_INFO_STREAM("success: "<<success<< string_dt<<": "<<(toc_rep-tic_rep).toSec());
       ros::WallTime tic_trj;
       ros::WallTime toc_trj;
 
@@ -191,7 +193,7 @@ void replanning_fcn()
         checker_mtx.lock();
         trj_mtx.lock();
         replanner->startReplannedPathFromNewCurrentConf(current_configuration);
-        replanner->getReplannedPath()->simplify(0.01);
+        replanner->simplifyReplannedPath(0.05);
         replanner->setCurrentPath(replanner->getReplannedPath());
 
         std::vector<double> marker_scale(3,0.01);
@@ -203,7 +205,6 @@ void replanning_fcn()
         display_mtx.unlock();
 
         path_obstructed = false;
-
         computing_avoiding_path = false;
         n_conn = 0;
         n_conn_replan = 0;
@@ -258,19 +259,26 @@ void collision_check_fcn()
   bool object_spawned = false;
   bool second_object_spawned = false;
   bool third_object_spawned = false;
+  bool fourth_object_spawned = false;
   while (!stop)
   {
     // ////////////////////////////////////////////SPAWNING THE OBJECT/////////////////////////////////////////////
 
     ros::ServiceClient add_obj;
 
-    if(t>=0.45 && !third_object_spawned)
+    if(t>=0.40 && !fourth_object_spawned)
+    {
+      fourth_object_spawned = true;
+      object_spawned = false;
+    }
+
+    if(t>=0.30 && !third_object_spawned)
     {
       third_object_spawned = true;
       object_spawned = false;
     }
 
-    if(t>=0.35 && !second_object_spawned)
+    if(t>=0.20 && !second_object_spawned)
     {
       second_object_spawned = true;
       object_spawned = false;

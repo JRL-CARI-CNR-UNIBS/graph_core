@@ -855,15 +855,26 @@ PathPtr Path::getSubpathFromNode(const NodePtr& node)
 
 bool Path::simplify(const double& distance)
 {
-  bool simplified;
+  bool simplified=false;
+  bool reconnect_first_conn = false;
+
+  if(connections_.size()>1)
+  {
+    double dist = (connections_.at(0)->getParent()->getConfiguration() - connections_.at(1)->getChild()->getConfiguration()).norm();
+    if (dist < distance) reconnect_first_conn = true;
+  }
+
   unsigned int ic = 1;
   while (ic < connections_.size())
   {
     double dist = (connections_.at(ic)->getParent()->getConfiguration() - connections_.at(ic)->getChild()->getConfiguration()).norm();
-    if (dist > distance)
+    if (dist > distance )
     {
-      ic++;
-      continue;
+      if(!(ic == 1 && reconnect_first_conn))
+      {
+        ic++;
+        continue;
+      }
     }
     if (checker_->checkPath(connections_.at(ic - 1)->getParent()->getConfiguration(),
                             connections_.at(ic)->getChild()->getConfiguration()))

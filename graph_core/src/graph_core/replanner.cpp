@@ -923,8 +923,8 @@ bool Replanner::informedOnlineReplanning(const int& informed,
   {
     double dist1 = (current_configuration_ - current_path_->getWaypoints().at(1)).norm();
     double dist2 = (current_path_->getWaypoints().at(0) - current_path_->getWaypoints().at(1)).norm();
-    ROS_INFO_STREAM("current conf: "<< current_configuration_.transpose()<< " dist: "<<dist1);
-    ROS_INFO_STREAM("start conf: "<< current_path_->getWaypoints().at(0).transpose() << " dist: "<<dist2);
+    ROS_INFO_STREAM("current conf: "<< current_configuration_.transpose()<< " dist1: "<<dist1);
+    ROS_INFO_STREAM("start conf: "<< current_path_->getWaypoints().at(0).transpose() << " lenght_conn: "<<dist2);
     ROS_INFO_STREAM("DIFF: "<<std::abs(dist1-dist2));
     ROS_INFO_STREAM("idx: "<<idx);
 

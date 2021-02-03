@@ -155,6 +155,10 @@ public:
   {
     return metrics_;
   }
+  CollisionCheckerPtr getChecker()
+  {
+    return checker_;
+  }
 
   void addOtherPath(const PathPtr& path)
   {
@@ -169,6 +173,48 @@ public:
   bool getSuccess()
   {
     return success_;
+  }
+
+  bool simplifyReplannedPath(const double& distance)
+  {
+
+    for(unsigned int i=0;i<replanned_path_->getConnections().size();i++)
+    {
+      if(replanned_path_->getConnections().at(i)->norm()<distance)
+      {
+        ROS_INFO_STREAM("conn number: "<<i<<" length: "<<replanned_path_->getConnections().at(i)->norm());
+      }
+    }
+    int count = 0;
+
+    bool simplify = false;
+    bool simplified = false;
+    do
+    {
+      simplify = replanned_path_->simplify(distance);
+      if(simplify)
+      {
+        count ++;
+        simplified = true;
+      }
+    }
+    while(simplify);
+
+    ROS_INFO_STREAM("simplified: "<<simplified<< " n time: "<<count);
+
+    if(simplified)
+    {
+      for(unsigned int i=0;i<replanned_path_->getConnections().size();i++)
+      {
+        if(replanned_path_->getConnections().at(i)->norm()<distance)
+        {
+          ROS_WARN("NOT SIMPLIFIED CORRECTLY");
+          ROS_INFO_STREAM("conn number: "<<i<<" length: "<<replanned_path_->getConnections().at(i)->norm());
+        }
+      }
+    }
+
+    return simplified;
   }
 
   bool checkPathValidity();
