@@ -34,12 +34,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/solvers/path_solver.h>
 #include <graph_core/metrics.h>
 #include <graph_core/speed_metrics.h>
-#include <graph_core/avoidance_metrics.h>
+#include <graph_core/avoidance_goal_cost_function.h>
 #include <graph_core/moveit_collision_checker.h>
 #include <graph_core/tube_informed_sampler.h>
 #include <rosparam_utilities/rosparam_utilities.h>
 #include <geometry_msgs/PoseArray.h>
 #include <ros/callback_queue.h>
+
+#include <graph_core/graph/graph_display.h>
 
 #define COMMENT(...) ROS_LOG(::ros::console::levels::Debug, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
 
@@ -75,6 +77,7 @@ protected:
   moveit::core::RobotModelConstPtr robot_model_;
   //planning_scene::PlanningSceneConstPtr pl
   ros::NodeHandle m_nh;
+  std::shared_ptr<pathplan::Display> display;
 
   ros::WallDuration m_max_refining_time;
   ros::CallbackQueue m_queue;
@@ -88,7 +91,7 @@ protected:
   std::string group_;
 
   pathplan::MetricsPtr metrics_;
-  pathplan::AvoidanceMetricsPtr avoidance_metrics_;
+  pathplan::AvoidanceGoalCostFunctionPtr m_avoidance_goal_cost_fcn;
   pathplan::CollisionCheckerPtr checker;
 
   ros::Subscriber m_centroid_sub;

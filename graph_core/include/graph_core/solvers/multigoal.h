@@ -41,6 +41,8 @@ protected:
   enum GoalStatus { search, refine, done, discard};
   std::vector<NodePtr> goal_nodes_;
   std::vector<TreePtr> goal_trees_;
+  std::vector<double> path_costs_;
+  std::vector<double> goal_costs_;
   std::vector<double> costs_;
   std::vector<double> utopias_;
   std::vector<PathPtr> solutions_;
@@ -59,6 +61,7 @@ protected:
   double reward_=3.0;
   double forgetting_factor_=0.999;
   double tube_radius_=0.01;
+  double utopia_tolerance=1.003;
   bool extend_ = false;
   virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity());
   virtual void clean(){}

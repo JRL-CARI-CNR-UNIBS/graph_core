@@ -30,7 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-
 namespace pathplan {
 namespace dirrt_star {
 
@@ -42,6 +41,7 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
 {
   m_nh=ros::NodeHandle(name);
   m_nh.setCallbackQueue(&m_queue);
+
 
   COMMENT("create MultigoalPlanner, name =%s, group = %s", name.c_str(),group.c_str());
   robot_model_=model;
@@ -93,14 +93,11 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
   }
   if (use_avoidance_)
   {
-    avoidance_metrics_=std::make_shared<pathplan::AvoidanceMetrics>(m_nh);
-    m_centroid_sub=m_nh.subscribe("/centroids",1,&MultigoalPlanner::centroidCb,this);
-    metrics_=avoidance_metrics_;
+    m_avoidance_goal_cost_fcn=std::make_shared<pathplan::AvoidanceGoalCostFunction>(m_nh);
+    m_centroid_sub=m_nh.subscribe("/centroids",2,&MultigoalPlanner::centroidCb,this);
   }
-  else
-  {
-    metrics_=std::make_shared<pathplan::Metrics>();
-  }
+
+  metrics_=std::make_shared<pathplan::Metrics>();
 
 
   COMMENT("created MultigoalPlanner");
@@ -125,8 +122,6 @@ void MultigoalPlanner::clear()
 
 bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
 {
-  m_queue.callAvailable();
-
   ros::WallDuration max_planning_time=ros::WallDuration(request_.allowed_planning_time);
   ros::WallTime start_time = ros::WallTime::now();
   ros::WallTime refine_time = ros::WallTime::now();
@@ -139,6 +134,10 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
     m_is_running=false;
     return false;
   }
+  if (!display)
+    display=std::make_shared<pathplan::Display>(planning_scene_,group_,"open_tip");
+  else
+    display->clearMarkers();
 
   planning_scene::PlanningScenePtr ptr=planning_scene::PlanningScene::clone(planning_scene_);
   checker=std::make_shared<pathplan::MoveitCollisionChecker>(ptr,group_,collision_distance);
@@ -196,13 +195,17 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
     m_is_running=false;
     return false;
   }
+  if (use_avoidance_)
+    solver->setGoalCostFunction(m_avoidance_goal_cost_fcn);
   solver->addStart(start_node);
 
+  m_queue.callAvailable();
   // computing minimum time
   bool at_least_a_goal=false;
   for (unsigned int iGoal=0;iGoal<request_.goal_constraints.size();iGoal++)
   {
     ROS_DEBUG("Processing goal %u",iGoal++);
+
     moveit_msgs::Constraints goal=request_.goal_constraints.at(iGoal);
 
     Eigen::VectorXd goal_configuration( goal.joint_constraints.size() );
@@ -250,6 +253,8 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
     at_least_a_goal=true;
   }
 
+
+
   if (!at_least_a_goal)
   {
     ROS_ERROR("All goals are in collision");
@@ -280,23 +285,27 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
     solver->update(solution);
     if (!found_a_solution && solver->solved())
     {
-      ROS_INFO("Find a first solution (cost=%f) in %f seconds",solution->cost(),(ros::WallTime::now()-start_time).toSec());
+      assert(solution);
+      ROS_INFO("Find a first solution (cost=%f) in %f seconds",solver->cost(),(ros::WallTime::now()-start_time).toSec());
       found_a_solution=true;
       refine_time = ros::WallTime::now();
     }
     if (solver->completed())
     {
-      ROS_INFO("Optimization completed (cost=%f) in %f seconds (%u iterations)",solution->cost(),(ros::WallTime::now()-start_time).toSec(),iteration);
+      ROS_INFO("Optimization completed (cost=%f) in %f seconds (%u iterations)",solver->cost(),(ros::WallTime::now()-start_time).toSec(),iteration);
       break;
     }
 
     if (found_a_solution && ((ros::WallTime::now()-refine_time)>m_max_refining_time))
     {
-      ROS_INFO("Refine time expired (cost=%f) in %f seconds (%u iterations)",solution->cost(),(ros::WallTime::now()-start_time).toSec(),iteration);
+      ROS_INFO("Refine time expired (cost=%f) in %f seconds (%u iterations)",solver->cost(),(ros::WallTime::now()-start_time).toSec(),iteration);
       break;
     }
   }
 
+  ROS_INFO_STREAM(*solver);
+
+  display->displayTree(solver->getStartTree());
 
   if (!found_a_solution)
   {
@@ -308,9 +317,8 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
 
   if (!solver->completed())
   {
-    ROS_INFO("Stopped (cost=%f) after %f seconds (%u iterations)",solution->cost(),(ros::WallTime::now()-start_time).toSec(),iteration);
+    ROS_INFO("Stopped (cost=%f) after %f seconds (%u iterations)",solver->cost(),(ros::WallTime::now()-start_time).toSec(),iteration);
   }
-  ROS_INFO_STREAM(*solver);
 
   // =========================
   // END OF THE IMPORTANT PART
@@ -380,18 +388,17 @@ bool MultigoalPlanner::terminate()
 
 void MultigoalPlanner::centroidCb(const geometry_msgs::PoseArrayConstPtr& msg)
 {
-  if (!avoidance_metrics_)
-    return;
 
-  avoidance_metrics_->cleanPoints();
+  if (!m_avoidance_goal_cost_fcn)
+    return;
+  m_avoidance_goal_cost_fcn->cleanPoints();
   Eigen::Vector3d point;
   for (const geometry_msgs::Pose& p: msg->poses)
   {
     point(0)=p.position.x;
     point(1)=p.position.y;
     point(2)=p.position.z;
-    ROS_INFO_STREAM("point = "<< point.transpose());
-    avoidance_metrics_->addPoint(point);
+    m_avoidance_goal_cost_fcn->addPoint(point);
   }
 }
 

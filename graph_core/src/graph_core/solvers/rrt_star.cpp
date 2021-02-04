@@ -38,11 +38,12 @@ bool RRTStar::addStartTree(const TreePtr &start_tree)
 
   if (goal_node_)
   {
-    utopia_ = (goal_node_->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
+    utopia_ = goal_cost_+(goal_node_->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
     init_ = true;
     solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
     path_cost_ = solution_->cost();
+    cost_=path_cost_+goal_cost_;
   }
   else
     init_ = false;
@@ -55,16 +56,16 @@ bool RRTStar::addGoal(const NodePtr &goal_node)
 {
   solved_ = false;
   goal_node_ = goal_node;
-
+  goal_cost_ = goal_cost_fcn_->cost(goal_node);
   if (start_tree_)
   {
-    utopia_ = (goal_node_->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
+    utopia_ = goal_cost_+(goal_node_->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
     init_ = true;
 
     solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
     path_cost_ = solution_->cost();
-
+    cost_=path_cost_+goal_cost_;
   }
   else
     init_ = false;
@@ -82,7 +83,7 @@ bool RRTStar::update(PathPtr& solution)
 {
   if (!init_)
     return false;
-  if (path_cost_ <= 1.003 * utopia_)
+  if (cost_ <= 1.003 * utopia_)
   {
     completed_=true;
     solution=solution_;

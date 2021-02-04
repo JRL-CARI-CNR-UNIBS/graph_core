@@ -43,6 +43,7 @@ protected:
   double length_;
   double local_bias_=0.8;
 
+  bool couldImprove(const Eigen::VectorXd &q);
 
 
 public:

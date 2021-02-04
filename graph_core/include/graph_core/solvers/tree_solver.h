@@ -53,6 +53,8 @@ protected:
   bool init_ = false;
   bool configured_=false;
   double path_cost_;
+  double goal_cost_=0;
+  double cost_=0;
   TreePtr start_tree_;
   PathPtr solution_;
   unsigned int dof_;
@@ -75,10 +77,16 @@ public:
     sampler_(sampler)
   {
     path_cost_ = std::numeric_limits<double>::infinity();
+    goal_cost_ = 0.0;
+    cost_ = std::numeric_limits<double>::infinity();
     goal_cost_fcn_=std::make_shared<GoalCostFunction>();
   }
 
-  const double& cost(){return path_cost_;}
+  const double& cost() const
+  {
+    return cost_;
+  }
+
   virtual bool config(const ros::NodeHandle& nh)
   {
     return false;
@@ -106,10 +114,7 @@ public:
   {
     return solved_;
   }
-  const double& cost()const
-  {
-    return path_cost_;
-  }
+
   virtual bool setSolution(const PathPtr &solution, const bool& solved=false);
   TreePtr getStartTree() const
   {

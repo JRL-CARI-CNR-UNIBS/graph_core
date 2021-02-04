@@ -46,7 +46,7 @@ bool RRTConnect::addGoal(const NodePtr &goal_node, const double &max_time)
   }
   solved_ = false;
   goal_node_ = goal_node;
-
+  goal_cost_=goal_cost_fcn_->cost(goal_node);
   setProblem(max_time);
 
   return true;
@@ -100,6 +100,7 @@ bool RRTConnect::setProblem(const double &max_time)
     solution_->setTree(start_tree_);
 
     path_cost_ = solution_->cost();
+
     sampler_->setCost(path_cost_);
     start_tree_->addNode(goal_node_);
 
@@ -110,7 +111,7 @@ bool RRTConnect::setProblem(const double &max_time)
   {
     path_cost_ = std::numeric_limits<double>::infinity();
   }
-
+  cost_=path_cost_+goal_cost_;
   return true;
 }
 
@@ -159,6 +160,7 @@ bool RRTConnect::update(const Eigen::VectorXd& point, PathPtr &solution)
         solution_->setTree(start_tree_);
         start_tree_->addNode(goal_node_);
         path_cost_ = solution_->cost();
+        cost_=path_cost_+goal_cost_;
         sampler_->setCost(path_cost_);
         solution = solution_;
         solved_ = true;
@@ -197,6 +199,7 @@ bool RRTConnect::update(const NodePtr& n, PathPtr &solution)
         solution_->setTree(start_tree_);
         start_tree_->addNode(goal_node_);
         path_cost_ = solution_->cost();
+        cost_=path_cost_+goal_cost_;
         sampler_->setCost(path_cost_);
         solution = solution_;
         solved_ = true;

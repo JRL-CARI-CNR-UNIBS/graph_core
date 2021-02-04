@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
-Display::Display(const planning_scene::PlanningScenePtr planning_scene,
+Display::Display(const planning_scene::PlanningSceneConstPtr planning_scene,
                  const std::string& group_name,
                  const std::string& last_link):
   planning_scene_(planning_scene),

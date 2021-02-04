@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(graph_core)
 add_compile_options(-std=c++11 -funroll-loops -Wall -Ofast)
 set(CMAKE_BUILD_TYPE Release)
+#add_compile_options(-std=c++14)
 #set(CMAKE_BUILD_TYPE Debug)
 
 
@@ -34,6 +35,7 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/metrics.cpp
   src/${PROJECT_NAME}/goal_cost_function.cpp
+  src/${PROJECT_NAME}/avoidance_goal_cost_function.cpp
   src/${PROJECT_NAME}/avoidance_metrics.cpp
   src/${PROJECT_NAME}/occupancy_metrics.cpp
   src/${PROJECT_NAME}/speed_metrics.cpp

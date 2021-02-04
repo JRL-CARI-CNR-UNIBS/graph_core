@@ -42,7 +42,7 @@ typedef std::shared_ptr<Display> DisplayPtr;
 class Display: public std::enable_shared_from_this<Display>
 {
 protected:
-  planning_scene::PlanningScenePtr planning_scene_;
+  planning_scene::PlanningSceneConstPtr planning_scene_;
   std::string group_name_;
   std::string last_link_;
   int marker_id_;
@@ -58,7 +58,7 @@ protected:
                        std::vector<geometry_msgs::Point> &points
                        );
 public:
-  Display(const planning_scene::PlanningScenePtr planning_scene,
+  Display(const planning_scene::PlanningSceneConstPtr planning_scene,
           const std::string& group_name,
           const std::string& last_link);
 

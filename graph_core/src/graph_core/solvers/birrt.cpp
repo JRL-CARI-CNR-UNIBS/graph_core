@@ -111,6 +111,7 @@ bool BiRRT::update(const Eigen::VectorXd& point, PathPtr& solution)
     solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
     path_cost_ = solution_->cost();
+    cost_=path_cost_+goal_cost_;
     sampler_->setCost(path_cost_);
     solution = solution_;
     solved_ = true;
@@ -167,6 +168,7 @@ bool BiRRT::update(const NodePtr& n, PathPtr& solution)
     solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
     path_cost_ = solution_->cost();
+    cost_=path_cost_+goal_cost_;
     sampler_->setCost(path_cost_);
     solution = solution_;
     solved_ = true;
