@@ -25,6 +25,7 @@
 #include <graph_core/replanner.h>
 #include <moveit_planning_helper/spline_interpolator.h>
 #include <object_loader_msgs/addObjects.h>
+#include <object_loader_msgs/removeObjects.h>
 #include <thread>
 #include <mutex>
 
@@ -59,11 +60,13 @@ bool first_replan = true;
 bool path_obstructed;
 bool computing_avoiding_path = false;
 double checker_frequency = 30;
+double k_freq;
 
 std::string test;
 
 void replanning_fcn()
 {
+  replan_frequency = k_freq*replan_frequency;
   ros::Rate lp(replan_frequency);
 
   bool replan = true;
@@ -114,46 +117,13 @@ void replanning_fcn()
     past_abscissa = abscissa;
     configuration_replan = replanner->getCurrentPath()->projectOnClosestConnectionKeepingCurvilinearAbscissa(point2project,past_configuration_replan,abscissa,past_abscissa,n_conn_replan);
 
-    trj_mtx.unlock();
-    std::vector<double> marker_scale_sphere_actual(3,0.02);
-    std::vector<double> marker_color_sphere_actual = {0.0,0.0,0.0,1.0};
-    display_mtx.lock();
-    disp->changeNodeSize(marker_scale_sphere_actual);
-    disp->displayNode(std::make_shared<pathplan::Node>(configuration_replan),node_id,"pathplan",marker_color_sphere_actual);
-    disp->defaultNodeSize();
-    display_mtx.unlock();
-
-    marker_color_sphere_actual = {0.5,0.5,0.5,1.0};
-    display_mtx.lock();
-    disp->changeNodeSize(marker_scale_sphere_actual);
-    disp->displayNode(std::make_shared<pathplan::Node>(point2project),node_id-8,"pathplan",marker_color_sphere_actual);
-    disp->defaultNodeSize();
-    display_mtx.unlock();
-    trj_mtx.lock();
-    /*if(replanner->getCurrentPath()->curvilinearAbscissaOfPointGivenConnection(configuration_replan,n_conn_replan)<=replanner->getCurrentPath()->curvilinearAbscissaOfPointGivenConnection(current_configuration,n_conn) & current_configuration != replanner->getCurrentPath()->getConnections().at(0)->getParent()->getConfiguration())
-    {
-      ROS_INFO_STREAM("shifting the replan config");
-      do
-      {
-        t_replan+=replan_offset;
-
-        interpolator.interpolate(ros::Duration(t_replan),pnt_replan);
-        for(unsigned int i=0; i<pnt_replan.positions.size();i++) point2project[i] = pnt_replan.positions.at(i);
-
-        past_configuration_replan = configuration_replan;
-        past_abscissa = abscissa;
-        configuration_replan = replanner->getCurrentPath()->projectOnClosestConnectionKeepingCurvilinearAbscissa(point2project,past_configuration_replan,abscissa,past_abscissa,n_conn_replan);
-      }
-      while(replanner->getCurrentPath()->curvilinearAbscissaOfPointGivenConnection(configuration_replan,n_conn_replan)<=replanner->getCurrentPath()->curvilinearAbscissaOfPointGivenConnection(current_configuration,n_conn));
-    }*/
-
     goal = replanner->getCurrentPath()->getConnections().back()->getChild()->getConfiguration();
     replan = ((current_configuration-goal).norm()>1e-03 && (configuration_replan-goal).norm()>1e-03);
     if(replan) replanner->setCurrentConf(configuration_replan);
     //else stop = true;
     trj_mtx.unlock();
 
-    /*std::vector<double> marker_scale_sphere_actual(3,0.02);
+    std::vector<double> marker_scale_sphere_actual(3,0.02);
     std::vector<double> marker_color_sphere_actual = {0.0,0.0,0.0,1.0};
     display_mtx.lock();
     disp->changeNodeSize(marker_scale_sphere_actual);
@@ -166,7 +136,7 @@ void replanning_fcn()
     disp->changeNodeSize(marker_scale_sphere_actual);
     disp->displayNode(std::make_shared<pathplan::Node>(point2project),node_id-8,"pathplan",marker_color_sphere_actual);
     disp->defaultNodeSize();
-    display_mtx.unlock();*/
+    display_mtx.unlock();
 
     if(replan)
     {
@@ -253,6 +223,14 @@ void collision_check_fcn()
     ROS_ERROR("unable to connect to /get_planning_scene");
   }
 
+  ros::ServiceClient add_obj;
+  add_obj=nh.serviceClient<object_loader_msgs::addObjects>("add_object_to_scene");
+  object_loader_msgs::addObjects srv_add_object;
+
+  ros::ServiceClient remove_obj;
+  remove_obj=nh.serviceClient<object_loader_msgs::removeObjects>("/remove_object_from_scene");
+  object_loader_msgs::removeObjects srv_remove_object;
+
   moveit_msgs::GetPlanningScene ps_srv;
 
   ros::Rate lp(checker_frequency);
@@ -263,8 +241,6 @@ void collision_check_fcn()
   while (!stop)
   {
     // ////////////////////////////////////////////SPAWNING THE OBJECT/////////////////////////////////////////////
-
-    ros::ServiceClient add_obj;
 
     if(t>=0.40 && !fourth_object_spawned)
     {
@@ -289,24 +265,31 @@ void collision_check_fcn()
       object_spawned = true;
       ROS_WARN("OGGETTO SPOWNATO");
 
-      add_obj=nh.serviceClient<object_loader_msgs::addObjects>("add_object_to_scene");
-
       if (!add_obj.waitForExistence(ros::Duration(10)))
       {
         ROS_FATAL("srv not found");
       }
-
-      object_loader_msgs::addObjects srv;
       object_loader_msgs::object obj;
       obj.object_type="scatola";
 
       int obj_conn_pos;
-      if(!second_object_spawned) obj_conn_pos = replanner->getCurrentPath()->getConnections().size()-2;
+      if(!second_object_spawned)
+      {
+        obj_conn_pos = replanner->getCurrentPath()->getConnections().size()-2;
+      }
+      else if(fourth_object_spawned)
+      {
+        trj_mtx.lock();
+        replanner->getCurrentPath()->findConnection(replanner->getCurrentConf(),obj_conn_pos);
+        trj_mtx.unlock();
+      }
       else obj_conn_pos = replanner->getCurrentPath()->getConnections().size()-1;
       pathplan::ConnectionPtr obj_conn = replanner->getCurrentPath()->getConnections().at(obj_conn_pos);
       pathplan::NodePtr obj_parent = obj_conn->getParent();
       pathplan::NodePtr obj_child = obj_conn->getChild();
-      Eigen::VectorXd obj_pos = (obj_child->getConfiguration()+obj_parent->getConfiguration())/2;
+      Eigen::VectorXd obj_pos;
+      if(fourth_object_spawned) obj_pos = obj_child->getConfiguration();
+      else obj_pos =  (obj_child->getConfiguration() +  obj_parent->getConfiguration())/2;
       //Eigen::VectorXd obj_pos = obj_parent->getConfiguration();
 
       moveit::core::RobotState obj_pos_state = trajectory->fromWaypoints2State(obj_pos);
@@ -314,14 +297,22 @@ void collision_check_fcn()
       if(test == "cartesian") tf::poseEigenToMsg(obj_pos_state.getGlobalLinkTransform("end_effector"),obj.pose.pose);
       obj.pose.header.frame_id="world";
 
-      srv.request.objects.push_back(obj);
-      if (!add_obj.call(srv))
+      srv_add_object.request.objects.clear();
+      srv_add_object.request.objects.push_back(obj);
+      if (!add_obj.call(srv_add_object))
       {
         ROS_ERROR("call to srv not ok");
       }
-      if (!srv.response.success)
+      if (!srv_add_object.response.success)
       {
         ROS_ERROR("srv error");
+      }
+      else
+      {
+        for (const std::string& str: srv_add_object.response.ids)
+        {
+          srv_remove_object.request.obj_ids.push_back(str);   //per rimuovere gli oggetti alla fine
+        }
       }
     }
 
@@ -343,24 +334,21 @@ void collision_check_fcn()
     checker_mtx.lock();
     replanner->checkPathValidity();
     trj_mtx.lock();
-    if(!computing_avoiding_path)
-    {
-      path_obstructed = !(replanner->getCurrentPath()->isValidFromConf(current_configuration));
-      if(path_obstructed)
-      {
-        double costo = replanner->getCurrentPath()->cost();
-        ROS_WARN("COST: %f",costo);
-        /*if(costo != std::numeric_limits<double>::infinity())
-        {
-          while(true)
-          {ros::Duration(1).sleep();}
-        }*/
-      }
-    }
+    if(!computing_avoiding_path) path_obstructed = !(replanner->getCurrentPath()->isValidFromConf(current_configuration));
     trj_mtx.unlock();
     checker_mtx.unlock();
     planning_mtx.unlock();
     lp.sleep();
+  }
+
+  ros::Duration(2).sleep();
+  if (!remove_obj.call(srv_remove_object))
+  {
+    ROS_ERROR("call to srv not ok");
+  }
+  if (!srv_remove_object.response.success)
+  {
+    ROS_ERROR("srv error");
   }
 }
 
@@ -382,7 +370,13 @@ int main(int argc, char **argv)
     ROS_ERROR("unable to connect to /get_planning_scene");
   }
 
-  ros::Duration(5).sleep();
+  ros::Duration(2).sleep();
+
+  if (!nh.getParam("k_freq",k_freq))
+  {
+    ROS_INFO("k_freq not set, use 1");
+    k_freq=1;
+  }
 
   std::string group_name;
   std::string base_link;
@@ -502,7 +496,7 @@ int main(int argc, char **argv)
 
   std::vector<pathplan::PathPtr> path_vector;
 
-  for (unsigned int i =0; i<3; i++)
+  for (unsigned int i =0; i<4; i++)
   {
     pathplan::NodePtr goal_node = std::make_shared<pathplan::Node>(goal_conf);
 
@@ -513,6 +507,7 @@ int main(int argc, char **argv)
     if(i==0) marker_color = {0.5,0.5,0.0,1.0};
     if(i==1) marker_color = {0.0f,0.0f,1.0,1.0};
     if(i==2) marker_color = {1.0,0.0f,0.0f,1.0};
+    if(i==3) marker_color = {0.0,0.5,0.5,1.0};
 
     disp->displayPathAndWaypoints(solution,"pathplan",marker_color);
   }
@@ -520,7 +515,7 @@ int main(int argc, char **argv)
   // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   pathplan::PathPtr current_path = path_vector.front();
-  std::vector<pathplan::PathPtr> other_paths = {current_path,path_vector.at(1),path_vector.at(2)};
+  std::vector<pathplan::PathPtr> other_paths = {current_path,path_vector.at(1),path_vector.at(2),path_vector.at(3)};
 
   path_obstructed = false;
 
@@ -561,6 +556,7 @@ int main(int argc, char **argv)
   std::thread replanning_thread=std::thread(&replanning_fcn);
   std::thread col_check_thread=std::thread(&collision_check_fcn);
 
+  main_frequency = k_freq*main_frequency;
   ros::Rate lp(main_frequency);
   while (ros::ok() && !stop)
   {

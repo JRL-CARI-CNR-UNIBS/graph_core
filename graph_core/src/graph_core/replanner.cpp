@@ -570,14 +570,24 @@ bool Replanner::pathSwitch(const PathPtr &current_path,
     PathPtr path2 = p.second;
 
     //Finding the closest node
-    path2_node_vector.clear();
-    path2_node_vector.push_back(path2->findCloserNode(path1_node->getConfiguration()));
-
-    if((path2_node_vector.back()->getConfiguration() - path2->getConnections().back()->getChild()->getConfiguration()).norm()<1e-06 && path2->getConnections().size()>1) //if the cloest node is the GOAL, the second closest node is considered
+    PathPtr path2_support;
+    if(path2->getConnections().size()>1)
     {
-      PathPtr path_support = path2->getSubpathToNode(path2->getConnections().back()->getParent());
-      path2_node_vector.clear();
-      path2_node_vector.push_back(path_support->findCloserNode(path1_node->getConfiguration()));
+      path2_support = path2->getSubpathToNode(path2->getConnections().back()->getParent());
+    }
+    else
+    {
+      path2_support = path2;
+    }
+
+    path2_node_vector.clear();
+    if(path2_support->getConnections().size()>1)
+    {
+      path2_node_vector.push_back(path2_support->findCloserNode(path1_node->getConfiguration()));
+    }
+    else
+    {
+      path2_node_vector.push_back(path2_support->getConnections().at(0)->getParent());
     }
 
     if(succ_node)
@@ -590,6 +600,11 @@ bool Replanner::pathSwitch(const PathPtr &current_path,
           path2_node_vector.push_back(path2_conn.at(t)->getParent());
         }
       }
+    }
+
+    for(const NodePtr& conf_node : path2_node_vector)  //DA ELIMINARE
+    {
+      if(conf_node->getConfiguration() == path2->getConnections().back()->getChild()->getConfiguration()) assert(0);
     }
 
     for(const NodePtr& path2_node : path2_node_vector)

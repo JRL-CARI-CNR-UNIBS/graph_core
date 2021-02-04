@@ -860,8 +860,8 @@ bool Path::simplify(const double& distance)
 
   if(connections_.size()>1)
   {
-    double dist = (connections_.at(0)->getParent()->getConfiguration() - connections_.at(1)->getChild()->getConfiguration()).norm();
-    if (dist < distance) reconnect_first_conn = true;
+    double dist = (connections_.at(0)->getParent()->getConfiguration() - connections_.at(0)->getChild()->getConfiguration()).norm();
+    if(dist < distance) reconnect_first_conn = true;
   }
 
   unsigned int ic = 1;
