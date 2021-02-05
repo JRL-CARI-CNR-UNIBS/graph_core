@@ -65,6 +65,7 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd &configurat
   {
     if(wp == configuration)
     {
+      if(wp == path->getWaypoints().back()) assert(0);
       replanned_path_ = path->getSubpathFromNode(current_node);
       return;
     }
@@ -103,22 +104,27 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd &configurat
       //Adding the connections between the two configurations
       for(unsigned int z = idx_current_conf+1; z<idx_path_start; z++) connections.push_back(current_path_->getConnections().at(z));
 
-      NodePtr parent = current_path_->getConnections().at(idx_path_start)->getParent();
-      if(parent->getConfiguration() != path_start->getConfiguration())
+      if(path_start->getConfiguration() == current_path_->getConnections().at(idx_path_start)->getChild()->getConfiguration())
       {
-        ConnectionPtr conn = std::make_shared<Connection>(parent,path_start);
-        double cost_conn = metrics_->cost(parent->getConfiguration(),path_start->getConfiguration());
-        conn->setCost(cost_conn);
-        conn->add();
+        connections.push_back(current_path_->getConnections().at(idx_path_start));
+      }
+      else
+      {
+        NodePtr parent = current_path_->getConnections().at(idx_path_start)->getParent();
+        if(parent->getConfiguration() != path_start->getConfiguration())
+        {
+          ConnectionPtr conn = std::make_shared<Connection>(parent,path_start);
+          double cost_conn = metrics_->cost(parent->getConfiguration(),path_start->getConfiguration());
+          conn->setCost(cost_conn);
+          conn->add();
 
-        connections.push_back(conn);
+          connections.push_back(conn);
+        }
       }
     }
 
     for(const ConnectionPtr& replanned_connection:path->getConnections()) connections.push_back(replanned_connection);
-
     path->setConnections(connections);
-
     replanned_path_ = path;
 
     return;
@@ -185,13 +191,16 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd &configurat
         }
         else
         {
-          node = current_path_->getConnections().at(idx_path_start)->getChild();
+          if(idx_current_conf == idx_path_start) node = current_node;
+          else node = current_path_->getConnections().at(idx_path_start)->getChild();
           path_connections = path->getConnections();
           add_conn = true;
         }
       }
 
       bool connected = false;
+      if(add_conn && idx_path_start == idx_current_conf) connected = true;  //if the current conf is near after the pat start, you only have to connect these two confs
+
       int t = idx_current_conf;
       pathplan::NodePtr child;
       pathplan::NodePtr parent;
@@ -224,8 +233,8 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd &configurat
 
       if(add_conn)
       {
-        pathplan::ConnectionPtr conn = std::make_shared<pathplan::Connection>(node,current_node); //you are moving backwards
-        double cost = metrics_->cost(node,current_node);
+        pathplan::ConnectionPtr conn = std::make_shared<pathplan::Connection>(node,path_start); //you are moving backwards
+        double cost = metrics_->cost(node,path_start);
         conn->setCost(cost);
         conn->add();
 

@@ -233,12 +233,12 @@ int main(int argc, char **argv)
       object_loader_msgs::object obj;
       obj.object_type="scatola";
 
-      int obj_conn_pos = current_path->getConnections().size()/2;
+      int obj_conn_pos = 1;// current_path->getConnections().size()/2;
       pathplan::ConnectionPtr obj_conn = current_path->getConnections().at(obj_conn_pos);
       pathplan::NodePtr obj_parent = obj_conn->getParent();
       pathplan::NodePtr obj_child = obj_conn->getChild();
-      Eigen::VectorXd obj_pos = (obj_child->getConfiguration()+obj_parent->getConfiguration())/2;
-      //Eigen::VectorXd obj_pos = obj_parent->getConfiguration();
+      //Eigen::VectorXd obj_pos = (obj_child->getConfiguration()+obj_parent->getConfiguration())/2;
+      Eigen::VectorXd obj_pos = obj_parent->getConfiguration();
 
       moveit::core::RobotState obj_pos_state = trajectory.fromWaypoints2State(obj_pos);
       tf::poseEigenToMsg(obj_pos_state.getGlobalLinkTransform(last_link),obj.pose.pose);
@@ -304,6 +304,7 @@ int main(int argc, char **argv)
       path_vector.at(2)->setConnections(conn_v);*/
     }
 
+
     // ///////////////////////////////////////////////////PATH CHECKING & REPLANNING/////////////////////////////////////////////////////
     bool valid;
     valid =current_path->isValid();
@@ -351,6 +352,21 @@ int main(int argc, char **argv)
       std::vector<double> marker_scale(3,0.01);
       disp.changeConnectionSize(marker_scale);
       disp.displayPath(replanner.getReplannedPath(),"pathplan",marker_color);
+
+      ROS_INFO_STREAM("N CONN PRIMA: "<<replanner.getReplannedPath()->getConnections().size());
+
+      Eigen::VectorXd new_current_configuration = (current_path->getConnections().at(idx)->getChild()->getConfiguration() + current_path->getConnections().at(idx)->getParent()->getConfiguration())/1.5;
+      //Eigen::VectorXd new_current_configuration = current_path->getConnections().at(idx+1)->getChild()->getConfiguration();
+      replanner.startReplannedPathFromNewCurrentConf(new_current_configuration);
+
+      marker_color = {0.0,0.5,0.5,1.0};
+      marker_id.clear();
+      marker_id.push_back(-105);
+      disp.changeConnectionSize(marker_scale);
+      disp.displayPath(replanner.getReplannedPath(),"pathplan",marker_color);
+
+
+      ROS_INFO_STREAM("N CONN DOPO: "<<replanner.getReplannedPath()->getConnections().size());
     }
 
     //success =  replanner.informedOnlineReplanning(informed, succ_node);

@@ -405,8 +405,6 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
 
   double dist, dist1, dist2;
 
-  double dist_error=std::numeric_limits<double>::infinity();
-
   for(unsigned int i=0; i<connections_.size(); i++)
   {
     parent = connections_.at(i)->getParent()->getConfiguration();
@@ -416,10 +414,6 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
     dist1 = (parent - configuration).norm();
     dist2 = (configuration-child).norm();
 
-    if (dist_error>=std::abs(dist-dist1-dist2))
-    {
-      dist_error=std::abs(dist-dist1-dist2);
-    }
     if(std::abs(dist-dist1-dist2)<1.0e-04)
     {
       conn = connections_.at(i);
@@ -428,7 +422,7 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
     }
   }
 
-  ROS_ERROR("Connection not found. minimum error %f",dist_error);
+  ROS_ERROR("Connection not found");
 }
 
 Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool& in_conn)
