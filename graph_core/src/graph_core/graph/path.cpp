@@ -146,6 +146,54 @@ double Path::curvilinearAbscissaOfPointGivenConnection(const Eigen::VectorXd& co
   return abscissa;
 }
 
+double Path::getCostFromConf(const Eigen::VectorXd &conf)
+{
+  double cost = 0;
+  int idx;
+  ConnectionPtr this_conn = findConnection(conf,idx);
+
+  if(this_conn == NULL)
+  {
+    ROS_ERROR("cost can't be computed");
+    assert(0);
+    return 0;
+  }
+  else
+  {
+    cost += metrics_->cost(conf,this_conn->getChild()->getConfiguration());
+    if(idx < connections_.size()-1)
+    {
+      for(unsigned int i=idx+1;i<connections_.size();i++) cost += connections_.at(i)->getCost();
+    }
+  }
+
+  return cost;
+}
+
+double Path::getNormFromConf(const Eigen::VectorXd &conf)
+{
+  double norm = 0;
+  int idx;
+  ConnectionPtr this_conn = findConnection(conf,idx);
+
+  if(this_conn == NULL)
+  {
+    ROS_ERROR("norm can't be computed");
+    assert(0);
+    return 0;
+  }
+  else
+  {
+    norm += (conf-this_conn->getChild()->getConfiguration()).norm();
+    if(idx < connections_.size()-1)
+    {
+      for(unsigned int i=idx+1;i<connections_.size();i++) norm += connections_.at(i)->norm();
+    }
+  }
+
+  return norm;
+}
+
 void Path::computeCost()
 {
   cost_ = 0;

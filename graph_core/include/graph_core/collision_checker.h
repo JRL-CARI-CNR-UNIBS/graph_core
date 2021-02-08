@@ -136,12 +136,10 @@ public:
 
     if (!check(this_conf))
     {
-      ROS_WARN("IN THIS CONF");
       return false;
     }
     if (!check(child))
     {
-      ROS_WARN("IN CHILD");
       return false;
     }
 
@@ -162,7 +160,6 @@ public:
           conf = parent + (child - parent) * abscissa;
           if (!check(conf))
           {
-            ROS_INFO_STREAM("CONF: "<<conf.transpose());
             return false;
           }
         }

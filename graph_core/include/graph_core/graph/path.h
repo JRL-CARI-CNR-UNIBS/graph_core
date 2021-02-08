@@ -99,6 +99,9 @@ public:
   double curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf);
   double curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf, int& idx);
   double curvilinearAbscissaOfPointGivenConnection(const Eigen::VectorXd& conf,const int& conn_idx);
+  double getCostFromConf(const Eigen::VectorXd& conf);
+  double getNormFromConf(const Eigen::VectorXd& conf);
+
 
 
 
