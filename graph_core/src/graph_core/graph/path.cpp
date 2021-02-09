@@ -939,6 +939,13 @@ bool Path::simplify(const double& distance)
       change_slip_child_.erase(change_slip_child_.begin() + ic);
       change_slip_child_.at(ic - 1) = 1;
 
+      /*change_warp_.erase(change_warp_.begin() + ic-1);   //se da ancora problemi prova a usare questi anziche quelli sopra
+      change_warp_.at(ic - 1) = 1;
+      change_slip_parent_.erase(change_slip_parent_.begin() + ic-1);
+      change_slip_parent_.at(ic - 1) = 1;
+      change_slip_child_.erase(change_slip_child_.begin() + ic-1);
+      change_slip_child_.at(ic - 1) = 1;*/
+
 #ifndef NO_SPIRAL
       change_spiral_.erase(change_spiral_.begin() + ic);
       change_spiral_.begin() + (ic - 1) = 1;

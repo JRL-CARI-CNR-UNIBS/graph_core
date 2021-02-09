@@ -103,9 +103,8 @@ public:
   double getNormFromConf(const Eigen::VectorXd& conf);
 
 
-
-
   std::vector<Eigen::VectorXd> getWaypoints();
+
   void setTree(const TreePtr& tree)
   {
     tree_ = tree;
@@ -130,7 +129,7 @@ public:
 
     cost_ = 0;
 
-    for (const ConnectionPtr& connection : connections_)
+    for(const ConnectionPtr& connection : conn)
     {
       cost_ += connection->getCost();
       change_warp_.push_back(true);
