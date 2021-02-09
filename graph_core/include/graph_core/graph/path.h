@@ -123,8 +123,31 @@ public:
 
   void setConnections(const std::vector<ConnectionPtr>& conn)
   {
-     connections_ = conn;
-     this->computeCost();
+    change_warp_.clear();
+    change_slip_child_.clear();
+    change_slip_parent_.clear();
+    change_spiral_.clear();
+
+    cost_ = 0;
+
+    for (const ConnectionPtr& connection : connections_)
+    {
+      cost_ += connection->getCost();
+      change_warp_.push_back(true);
+      change_slip_child_.push_back(true);
+      change_slip_parent_.push_back(true);
+#ifdef NO_SPIRAL
+      change_spiral_.push_back(true);
+#endif
+    }
+    change_warp_.at(0) = false;
+    change_slip_child_.at(0) = false;
+    change_slip_parent_.at(0) = false;
+#ifdef NO_SPIRAL
+    change_spiral_.at(0) = false;
+#endif
+
+    connections_ = conn;
   }
 
   bool simplify(const double& distance = 0.02);

@@ -66,6 +66,7 @@ public:
       ROS_FATAL("Out of bound");
       return false;
     }
+    state_->update();
     state_->updateCollisionBodyTransforms();
     return planning_scene_->isStateValid(*state_,group_name_);
 

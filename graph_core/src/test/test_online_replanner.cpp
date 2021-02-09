@@ -29,6 +29,7 @@
 #include <thread>
 #include <mutex>
 #include <std_msgs/Float64.h>
+#include <std_srvs/Empty.h>
 
 volatile bool stop=false;
 pathplan::ReplannerPtr replanner;
@@ -70,13 +71,13 @@ void replanning_fcn()
   ros::Rate lp(replan_frequency);
 
   ros::NodeHandle nh;
-  ros::Publisher current_norm_pub = nh.advertise<std_msgs::Float64>("current_norm_topic", 1000);
-  ros::Publisher new_norm_pub = nh.advertise<std_msgs::Float64>("new_norm_topic", 1000);
-  ros::Publisher time_replanning_pub = nh.advertise<std_msgs::Float64>("time_replanning_topic", 1000);
+  ros::Publisher current_norm_pub = nh.advertise<std_msgs::Float64>("/current_norm_topic", 1000);
+  ros::Publisher new_norm_pub = nh.advertise<std_msgs::Float64>("/new_norm_topic", 1000);
+  ros::Publisher time_replanning_pub = nh.advertise<std_msgs::Float64>("/time_replanning_topic", 1000);
 
-  ros::Publisher obs_current_norm_pub = nh.advertise<std_msgs::Float64>("obs_current_norm_topic", 1000);
-  ros::Publisher obs_new_norm_pub = nh.advertise<std_msgs::Float64>("obs_new_norm_topic", 1000);
-  ros::Publisher obs_time_replanning_pub = nh.advertise<std_msgs::Float64>("obs_time_replanning_topic", 1000);
+  ros::Publisher obs_current_norm_pub = nh.advertise<std_msgs::Float64>("/obs_current_norm_topic", 1000);
+  ros::Publisher obs_new_norm_pub = nh.advertise<std_msgs::Float64>("/obs_new_norm_topic", 1000);
+  ros::Publisher obs_time_replanning_pub = nh.advertise<std_msgs::Float64>("/obs_time_replanning_topic", 1000);
 
   bool replan = true;
   bool success = 0;
@@ -183,14 +184,12 @@ void replanning_fcn()
 
         if(path_obstructed)
         {
-          ROS_WARN("PUBBLICO IN OBS");
           obs_current_norm_pub.publish(current_norm);
           obs_new_norm_pub.publish(new_norm);
           obs_time_replanning_pub.publish(time_replanning);
         }
         else
         {
-          ROS_WARN("PUBBLICO");
           current_norm_pub.publish(current_norm);
           new_norm_pub.publish(new_norm);
           time_replanning_pub.publish(time_replanning);
@@ -273,7 +272,6 @@ void collision_check_fcn()
   while (!stop)
   {
     // ////////////////////////////////////////////SPAWNING THE OBJECT/////////////////////////////////////////////
-
     if(t>=0.40 && !fourth_object_spawned)
     {
       fourth_object_spawned = true;
@@ -315,7 +313,7 @@ void collision_check_fcn()
       else
       {
         int size = replanner->getCurrentPath()->getConnections().size();
-        std::srand(ros::WallTime::now().toNSec());
+        std::srand(time(NULL));
         obj_conn_pos = rand() % (size-idx_current_conn) + idx_current_conn;
         ROS_ERROR("rand: %d",obj_conn_pos);
       }
@@ -327,19 +325,17 @@ void collision_check_fcn()
       {
         obj_conn = replanner->getCurrentPath()->getConnections().at(obj_conn_pos);
         obj_child = obj_conn->getChild();
-
         obj_pos = obj_child->getConfiguration();
 
         if((obj_pos-replanner->getCurrentConf()).norm()<0.15 && ((obj_conn_pos+1)<replanner->getCurrentPath()->getConnections().size()))
         {
-          ROS_WARN("QUA");
+          ROS_WARN("Shifting the object..");
           obj_conn = replanner->getCurrentPath()->getConnections().at(obj_conn_pos+1);
           obj_parent = obj_conn->getParent();
           obj_child = obj_conn->getChild();
 
           Eigen::VectorXd conn_vect = obj_child->getConfiguration()-obj_parent->getConfiguration();
-          double conn_vect_norm = conn_vect.norm();
-          obj_pos = obj_parent->getConfiguration()+0.5*conn_vect/conn_vect_norm;
+          obj_pos = obj_parent->getConfiguration()+0.5*conn_vect;
         }
       }
       else
@@ -420,6 +416,9 @@ int main(int argc, char **argv)
 
   ros::NodeHandle nh;
   ros::Publisher target_pub=nh.advertise<sensor_msgs::JointState>("/joint_target",1);
+  ros::Publisher time_pub=nh.advertise<std_msgs::Float64>("/time_topic",1);
+  ros::ServiceClient start_log = nh.serviceClient<std_srvs::Empty> ("/start_log");
+  ros::ServiceClient stop_log  = nh.serviceClient<std_srvs::Empty> ("/stop_log");
   //ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("/marker_visualization_topic", 1);
   //ros::Publisher display_publisher = nh.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
 
@@ -438,13 +437,20 @@ int main(int argc, char **argv)
     k_freq=1;
   }
 
+  std::string test_name;
+  if (!nh.getParam("/binary_logger/test_name", test_name))
+  {
+    ROS_INFO("test_name not set, used no_name");
+    test_name = "no_name";
+  }
+
   for(unsigned int n_iter = 0; n_iter<20; n_iter++)
   {
     ROS_WARN("ITER n: %d",n_iter);
     ros::Duration(5).sleep();
 
     // //////////////////INITIALIZATION//////////////////////////////////////
-    t=0;
+    t=0.0;
     dt=0.01;
     dt_replan = 0.050;
     dt_replan_no_obstruction = 0.10;
@@ -458,7 +464,7 @@ int main(int argc, char **argv)
     path_obstructed = false;
     computing_avoiding_path = false;
     checker_frequency = 30;
-    // //////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////
 
     std::string group_name;
     std::string base_link;
@@ -634,8 +640,14 @@ int main(int argc, char **argv)
     joint_state.velocity = pnt.velocities;
     joint_state.name = joint_names;
     joint_state.header.frame_id = kinematic_model->getModelFrame();
+    joint_state.header.stamp=ros::Time::now();
 
     target_pub.publish(joint_state);
+
+    std_srvs::Empty srv_log;
+    start_log.call(srv_log);
+
+    nh.setParam("/binary_logger/test_name", std::to_string(n_iter) + "_" + test_name);
 
     stop=false;
     std::thread replanning_thread=std::thread(&replanning_fcn);
@@ -643,10 +655,14 @@ int main(int argc, char **argv)
 
     main_frequency = k_freq*main_frequency;
     ros::Rate lp(main_frequency);
+
+    double time_for_topic = 0.0;
+
     while (ros::ok() && !stop)
     {
       trj_mtx.lock();
 
+      time_for_topic += dt;
       t+=dt;
 
       interpolator.interpolate(ros::Duration(t),pnt);
@@ -676,8 +692,14 @@ int main(int argc, char **argv)
         joint_state.velocity = pnt.velocities;
         joint_state.name = joint_names;
         joint_state.header.frame_id = kinematic_model->getModelFrame();
+        joint_state.header.stamp=ros::Time::now();
+
 
         target_pub.publish(joint_state);
+
+        std_msgs::Float64 time_msg;
+        time_msg.data = time_for_topic;
+        time_pub.publish(time_msg);
       }
       lp.sleep();
     }
@@ -689,6 +711,7 @@ int main(int argc, char **argv)
     if (col_check_thread.joinable())
       col_check_thread.join();
 
+    stop_log.call(srv_log);
   }
 
   return 0;

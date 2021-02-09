@@ -1,0 +1,68 @@
+binary_logger:
+  num_worker_threads: 10
+  # test_path: is the path where the binary file will be saved (if empty the destination directory will be '/home/user/.ros' )
+  test_path: ""
+
+  # test_name: is the name of the test. The final file name will be [test_name]_[topic_type]_[topic_name].bin
+  # NOTE '/' will be substitute with '_'
+  test_name: "test_log_online_rep"
+
+  # manager_name: name of the nodlet manager (need to be equal to the name in the launch file)
+  manager_name: 'binary_logger'
+
+  # list of nodelet (unrelated to binary_logger package) that the user do not want to stop
+  unstoppable_nodelets: []
+
+  # Type of the topic that need to be logged (supported JointState, Imu, PoseStamped, WrenchStamped, Float64MultiArray)
+  topic_type:
+    - 'Float64'
+    - 'JointState'
+
+  ##################################
+  # For each topic type:
+  ##################################
+
+  # Topic type
+  Float64:
+    # List of the topic to be acquired
+    topic_names:
+      - '/current_norm_topic'
+      - '/new_norm_topic'
+      - '/time_replanning_topic'
+      - '/obs_current_norm_topic'
+      - '/obs_new_norm_topic'
+      - '/obs_time_replanning_topic'
+      - '/time_topic'
+
+    # Acquisition time (to be specified for each topic)
+    duration:
+      - 1000 #[s]
+      - 1000 #[s]
+      - 1000 #[s]
+      - 1000 #[s]
+      - 1000 #[s]
+      - 1000 #[s]
+      - 1000 #[s]
+
+    # Message decimation (to be specified for each topic)
+    decimation:
+      - 1
+      - 1
+      - 1
+      - 1
+      - 1
+      - 1
+      - 1
+
+  # Topic type
+  JointState:
+    # List of the topic to be acquired
+    topic_names:
+      - '/joint_target'
+    # Acquisition time (to be specified for each topic)
+    duration:
+      - 1000 #[s]
+
+    # Message decimation (to be specified for each topic)
+    decimation:
+      - 1
