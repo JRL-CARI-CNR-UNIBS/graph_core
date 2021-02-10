@@ -182,7 +182,7 @@ public:
     {
       if(replanned_path_->getConnections().at(i)->norm()<distance)
       {
-        ROS_INFO_STREAM("conn number: "<<i<<" length: "<<replanned_path_->getConnections().at(i)->norm());
+        //ROS_INFO_STREAM("conn number: "<<i<<" length: "<<replanned_path_->getConnections().at(i)->norm());
       }
     }
     int count = 0;
@@ -200,7 +200,7 @@ public:
     }
     while(simplify);
 
-    ROS_INFO_STREAM("simplified: "<<simplified<< " n time: "<<count);
+    //ROS_INFO_STREAM("simplified: "<<simplified<< " n time: "<<count);
 
     if(simplified)
     {
@@ -208,8 +208,8 @@ public:
       {
         if(replanned_path_->getConnections().at(i)->norm()<distance)
         {
-          ROS_WARN("NOT SIMPLIFIED CORRECTLY");
-          ROS_INFO_STREAM("conn number: "<<i<<" length: "<<replanned_path_->getConnections().at(i)->norm());
+          //ROS_WARN("NOT SIMPLIFIED CORRECTLY");
+          //ROS_INFO_STREAM("conn number: "<<i<<" length: "<<replanned_path_->getConnections().at(i)->norm());
         }
       }
     }

@@ -65,19 +65,23 @@ double k_freq;
 
 std::string test;
 
+ros::Publisher current_norm_pub;
+ros::Publisher new_norm_pub;
+ros::Publisher time_replanning_pub;
+ros::Publisher obs_current_norm_pub;
+ros::Publisher obs_new_norm_pub;
+ros::Publisher obs_time_replanning_pub;
+
+ros::ServiceClient plannning_scene_client;
+ros::ServiceClient add_obj;
+ros::ServiceClient remove_obj;
+
+int cont_obs=0; //elimina
+
 void replanning_fcn()
 {
   replan_frequency = k_freq*replan_frequency;
   ros::Rate lp(replan_frequency);
-
-  ros::NodeHandle nh;
-  ros::Publisher current_norm_pub = nh.advertise<std_msgs::Float64>("/current_norm_topic", 1000);
-  ros::Publisher new_norm_pub = nh.advertise<std_msgs::Float64>("/new_norm_topic", 1000);
-  ros::Publisher time_replanning_pub = nh.advertise<std_msgs::Float64>("/time_replanning_topic", 1000);
-
-  ros::Publisher obs_current_norm_pub = nh.advertise<std_msgs::Float64>("/obs_current_norm_topic", 1000);
-  ros::Publisher obs_new_norm_pub = nh.advertise<std_msgs::Float64>("/obs_new_norm_topic", 1000);
-  ros::Publisher obs_time_replanning_pub = nh.advertise<std_msgs::Float64>("/obs_time_replanning_topic", 1000);
 
   bool replan = true;
   bool success = 0;
@@ -89,14 +93,15 @@ void replanning_fcn()
   double abscissa;
   bool old_path_obstructed = path_obstructed;
 
+  cont_obs = 0;
+
   while (!stop)
   {
     ros::WallTime tic_tot=ros::WallTime::now();
 
-    trj_mtx.lock();
-
     double time_informedOnlineRepl;
     std::string string_dt;
+    checker_mtx.lock();
     if(path_obstructed)
     {
       replan_offset=(dt_replan-dt)*1.2;
@@ -117,7 +122,9 @@ void replanning_fcn()
       past_abscissa = 0;
     }
     old_path_obstructed = path_obstructed;
+    checker_mtx.unlock();
 
+    trj_mtx.lock();
     t_replan=t+replan_offset;
 
     interpolator.interpolate(ros::Duration(t_replan),pnt_replan);
@@ -182,14 +189,18 @@ void replanning_fcn()
         new_norm.data = replanner->getReplannedPath()->cost();
         time_replanning.data = (toc_rep-tic_rep).toSec();
 
-        if(path_obstructed)
+        if(computing_avoiding_path)
         {
+          cont_obs++;
+          ROS_WARN("cont_obs: %d",cont_obs);
+          //ROS_WARN("pubblico caso OBS");
           obs_current_norm_pub.publish(current_norm);
           obs_new_norm_pub.publish(new_norm);
           obs_time_replanning_pub.publish(time_replanning);
         }
         else
         {
+          //ROS_WARN("pubblico caso FREE");
           current_norm_pub.publish(current_norm);
           new_norm_pub.publish(new_norm);
           time_replanning_pub.publish(time_replanning);
@@ -246,10 +257,10 @@ void replanning_fcn()
 
 void collision_check_fcn()
 {
-  ros::NodeHandle nh;
+  /*ros::NodeHandle nh;
   ros::ServiceClient ps_client=nh.serviceClient<moveit_msgs::GetPlanningScene>("/get_planning_scene");
 
-  if (!ps_client.waitForExistence(ros::Duration(10)))
+  if (!plannning_scene_client.waitForExistence(ros::Duration(10)))
   {
     ROS_ERROR("unable to connect to /get_planning_scene");
   }
@@ -262,6 +273,13 @@ void collision_check_fcn()
   remove_obj=nh.serviceClient<object_loader_msgs::removeObjects>("/remove_object_from_scene");
   object_loader_msgs::removeObjects srv_remove_object;
 
+  if (!plannning_scene_client.waitForExistence(ros::Duration(10)))
+  {
+    ROS_ERROR("unable to connect to /get_planning_scene");
+  }*/
+
+  object_loader_msgs::addObjects srv_add_object;
+  object_loader_msgs::removeObjects srv_remove_object;
   moveit_msgs::GetPlanningScene ps_srv;
 
   ros::Rate lp(checker_frequency);
@@ -290,11 +308,9 @@ void collision_check_fcn()
       object_spawned = false;
     }
 
+    bool flag_obj = false;
     if(!object_spawned && t>=0.10)
     {
-      object_spawned = true;
-      ROS_WARN("OBJECT SPAWNED");
-
       if (!add_obj.waitForExistence(ros::Duration(10)))
       {
         ROS_FATAL("srv not found");
@@ -315,7 +331,7 @@ void collision_check_fcn()
         int size = replanner->getCurrentPath()->getConnections().size();
         std::srand(time(NULL));
         obj_conn_pos = rand() % (size-idx_current_conn) + idx_current_conn;
-        ROS_ERROR("rand: %d",obj_conn_pos);
+        //ROS_ERROR("rand: %d",obj_conn_pos);
       }
       pathplan::ConnectionPtr obj_conn;
       pathplan::NodePtr obj_parent;
@@ -329,7 +345,7 @@ void collision_check_fcn()
 
         if((obj_pos-replanner->getCurrentConf()).norm()<0.15 && ((obj_conn_pos+1)<replanner->getCurrentPath()->getConnections().size()))
         {
-          ROS_WARN("Shifting the object..");
+          //ROS_WARN("Shifting the object..");
           obj_conn = replanner->getCurrentPath()->getConnections().at(obj_conn_pos+1);
           obj_parent = obj_conn->getParent();
           obj_child = obj_conn->getChild();
@@ -370,10 +386,14 @@ void collision_check_fcn()
           srv_remove_object.request.obj_ids.push_back(str);   //per rimuovere gli oggetti alla fine
         }
       }
+      object_spawned = true;
+      ROS_WARN("OBJECT SPAWNED");
+
+      flag_obj = true;
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    if (!ps_client.call(ps_srv))
+    if (!plannning_scene_client.call(ps_srv))
     {
       ROS_ERROR("call to srv not ok");
       continue;
@@ -390,7 +410,11 @@ void collision_check_fcn()
     checker_mtx.lock();
     replanner->checkPathValidity();
     trj_mtx.lock();
-    if(!computing_avoiding_path) path_obstructed = !(replanner->getCurrentPath()->isValidFromConf(current_configuration));
+    if(!computing_avoiding_path)
+    {
+      path_obstructed = !(replanner->getCurrentPath()->isValidFromConf(current_configuration));
+      if(path_obstructed) ROS_INFO("current path obstructed");
+    }
     trj_mtx.unlock();
     checker_mtx.unlock();
     planning_mtx.unlock();
@@ -398,6 +422,11 @@ void collision_check_fcn()
   }
 
   ros::Duration(5).sleep();
+
+  if (!remove_obj.waitForExistence(ros::Duration(10)))
+  {
+    ROS_FATAL("srv not found");
+  }
   if (!remove_obj.call(srv_remove_object))
   {
     ROS_ERROR("call to srv not ok");
@@ -422,14 +451,23 @@ int main(int argc, char **argv)
   //ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("/marker_visualization_topic", 1);
   //ros::Publisher display_publisher = nh.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
 
-  ros::ServiceClient ps_client=nh.serviceClient<moveit_msgs::GetPlanningScene>("/get_planning_scene");
+  plannning_scene_client=nh.serviceClient<moveit_msgs::GetPlanningScene>("/get_planning_scene");
+  add_obj=nh.serviceClient<object_loader_msgs::addObjects>("add_object_to_scene");
+  remove_obj=nh.serviceClient<object_loader_msgs::removeObjects>("/remove_object_from_scene");
 
-  if (!ps_client.waitForExistence(ros::Duration(10)))
+  current_norm_pub = nh.advertise<std_msgs::Float64>("/current_norm_topic", 1000);
+  new_norm_pub = nh.advertise<std_msgs::Float64>("/new_norm_topic", 1000);
+  time_replanning_pub = nh.advertise<std_msgs::Float64>("/time_replanning_topic", 1000);
+  obs_current_norm_pub = nh.advertise<std_msgs::Float64>("/obs_current_norm_topic", 1000);
+  obs_new_norm_pub = nh.advertise<std_msgs::Float64>("/obs_new_norm_topic", 1000);
+  obs_time_replanning_pub = nh.advertise<std_msgs::Float64>("/obs_time_replanning_topic", 1000);
+
+  if (!plannning_scene_client.waitForExistence(ros::Duration(10)))
   {
     ROS_ERROR("unable to connect to /get_planning_scene");
   }
 
-  ros::Duration(2).sleep();
+  ros::Duration(0.5).sleep();
 
   if (!nh.getParam("k_freq",k_freq))
   {
@@ -444,10 +482,10 @@ int main(int argc, char **argv)
     test_name = "no_name";
   }
 
-  for(unsigned int n_iter = 0; n_iter<20; n_iter++)
+  for(unsigned int n_iter = 0; n_iter<30; n_iter++)
   {
-    ROS_WARN("ITER n: %d",n_iter);
-    ros::Duration(5).sleep();
+    ROS_WARN("ITER n: %d",n_iter+1);
+    ros::Duration(1).sleep();
 
     // //////////////////INITIALIZATION//////////////////////////////////////
     t=0.0;
@@ -504,17 +542,8 @@ int main(int argc, char **argv)
     std::vector<std::string> joint_names = joint_model_group->getActiveJointModelNames();
 
     // UPDATING PLANNING SCENE
-    ps_client=nh.serviceClient<moveit_msgs::GetPlanningScene>("/get_planning_scene");
-
-    if (!ps_client.waitForExistence(ros::Duration(10)))
-    {
-      ROS_ERROR("unable to connect to /get_planning_scene");
-      return 1;
-    }
-
     moveit_msgs::GetPlanningScene ps_srv;
-
-    if (!ps_client.call(ps_srv))
+    if (!plannning_scene_client.call(ps_srv))
     {
       ROS_ERROR("call to srv not ok");
       return 1;
@@ -647,7 +676,7 @@ int main(int argc, char **argv)
     std_srvs::Empty srv_log;
     start_log.call(srv_log);
 
-    nh.setParam("/binary_logger/test_name", std::to_string(n_iter) + "_" + test_name);
+    nh.setParam("/binary_logger/test_name", std::to_string(n_iter+1)+"_"+test+ + "_" + test_name);
 
     stop=false;
     std::thread replanning_thread=std::thread(&replanning_fcn);
@@ -694,7 +723,6 @@ int main(int argc, char **argv)
         joint_state.header.frame_id = kinematic_model->getModelFrame();
         joint_state.header.stamp=ros::Time::now();
 
-
         target_pub.publish(joint_state);
 
         std_msgs::Float64 time_msg;
@@ -712,6 +740,8 @@ int main(int argc, char **argv)
       col_check_thread.join();
 
     stop_log.call(srv_log);
+
+    ROS_ERROR("ITER n: %d -->obs pub: %d",n_iter+1,cont_obs);
   }
 
   return 0;
