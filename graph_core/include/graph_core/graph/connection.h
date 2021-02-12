@@ -69,6 +69,7 @@ public:
   {
     return child_;
   }
+  ConnectionPtr clone();
 
 
   friend std::ostream& operator<<(std::ostream& os, const Connection& connection);

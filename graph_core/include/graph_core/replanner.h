@@ -81,6 +81,11 @@ public:
     return current_path_;
   }
 
+  std::vector<PathPtr> getOtherPaths()
+  {
+    return other_paths_;
+  }
+
   void setInformedOnlineReplanningVerbose()
   {
     informedOnlineReplanning_verbose_ = true;
@@ -137,6 +142,14 @@ public:
     success_ = 0;
   }
 
+  void setOtherPaths(const std::vector<PathPtr> &other_paths)
+  {
+    other_paths_ = other_paths;
+    admissible_other_paths_ = other_paths_;
+    examined_nodes_.clear();
+    success_ = 0;
+  }
+
   void setCurrentConf(const Eigen::VectorXd& q)
   {
     current_configuration_ = q;
@@ -160,6 +173,11 @@ public:
     return checker_;
   }
 
+  void setChecker(const CollisionCheckerPtr &checker)
+  {
+    checker_ = checker;
+  }
+
   void addOtherPath(const PathPtr& path)
   {
     other_paths_.push_back(path);
@@ -175,49 +193,9 @@ public:
     return success_;
   }
 
-  bool simplifyReplannedPath(const double& distance)
-  {
+  bool simplifyReplannedPath(const double& distance);
 
-    for(unsigned int i=0;i<replanned_path_->getConnections().size();i++)
-    {
-      if(replanned_path_->getConnections().at(i)->norm()<distance)
-      {
-        //ROS_INFO_STREAM("conn number: "<<i<<" length: "<<replanned_path_->getConnections().at(i)->norm());
-      }
-    }
-    int count = 0;
-
-    bool simplify = false;
-    bool simplified = false;
-    do
-    {
-      simplify = replanned_path_->simplify(distance);
-      if(simplify)
-      {
-        count ++;
-        simplified = true;
-      }
-    }
-    while(simplify);
-
-    //ROS_INFO_STREAM("simplified: "<<simplified<< " n time: "<<count);
-
-    if(simplified)
-    {
-      for(unsigned int i=0;i<replanned_path_->getConnections().size();i++)
-      {
-        if(replanned_path_->getConnections().at(i)->norm()<distance)
-        {
-          //ROS_WARN("NOT SIMPLIFIED CORRECTLY");
-          //ROS_INFO_STREAM("conn number: "<<i<<" length: "<<replanned_path_->getConnections().at(i)->norm());
-        }
-      }
-    }
-
-    return simplified;
-  }
-
-  bool checkPathValidity();
+  bool checkPathValidity(const CollisionCheckerPtr &this_checker = NULL);
 
   void startReplannedPathFromNewCurrentConf(Eigen::VectorXd &configuration);
 

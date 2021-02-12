@@ -37,18 +37,48 @@ Replanner::Replanner(Eigen::VectorXd& current_configuration,
   pathSwitch_verbose_ = false;
 }
 
-bool Replanner::checkPathValidity()
+bool Replanner::checkPathValidity(const CollisionCheckerPtr &this_checker)
 {
+  CollisionCheckerPtr checker = checker_;
+  if(this_checker != NULL) checker = this_checker;
+
   bool validity = true;
 
-  if(!current_path_->isValid()) validity = false;
+  if(!current_path_->isValid(checker)) validity = false;
 
   for(const PathPtr& path: other_paths_)
   {
-    if(!path->isValid()) validity = false;
+    if(!path->isValid(checker)) validity = false;
   }
 
   return validity;
+}
+
+bool Replanner::simplifyReplannedPath(const double& distance)
+{
+  for(unsigned int i=0;i<replanned_path_->getConnections().size();i++)
+  {
+    if(replanned_path_->getConnections().at(i)->norm()<distance)
+    {
+      //ROS_INFO_STREAM("conn number: "<<i<<" length: "<<replanned_path_->getConnections().at(i)->norm());
+    }
+  }
+  int count = 0;
+
+  bool simplify = false;
+  bool simplified = false;
+  do
+  {
+    simplify = replanned_path_->simplify(distance);
+    if(simplify)
+    {
+      count ++;
+      simplified = true;
+    }
+  }
+  while(simplify);
+
+  return simplified;
 }
 
 void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd &configuration)

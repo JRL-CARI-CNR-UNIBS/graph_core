@@ -60,6 +60,27 @@ Path::Path(std::vector<ConnectionPtr> connections,
 }
 
 
+PathPtr Path::clone()
+{
+  std::vector<ConnectionPtr> new_conn_vector;
+
+  for(const ConnectionPtr &conn: connections_)
+  {
+    ConnectionPtr new_conn = conn->clone();
+    new_conn_vector.push_back(new_conn);
+  }
+
+  PathPtr new_path = std::make_shared<Path>(new_conn_vector,metrics_,checker_);
+
+  new_path->setChangeSpiral(change_spiral_);
+  new_path->setChangeWarp(change_warp_);
+  new_path->setgChangeSlipChild(change_slip_child_);
+  new_path->setgChangeSlipParent(change_slip_parent_);
+  //new_path->setTree(tree_);
+
+  return new_path;
+}
+
 double Path::computeEuclideanNorm()
 {
   double euclidean_norm = 0;
@@ -471,6 +492,10 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
   }
 
   ROS_ERROR("Connection not found");
+  ROS_INFO_STREAM("conf: "<<configuration.transpose());
+  ROS_INFO_STREAM("parent0: "<<connections_.at(0)->getParent()->getConfiguration().transpose());
+  ROS_INFO_STREAM("child0: "<<connections_.at(0)->getChild()->getConfiguration().transpose());
+
 }
 
 Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool& in_conn)
@@ -959,9 +984,12 @@ bool Path::simplify(const double& distance)
 }
 
 
-bool Path::isValid()
+bool Path::isValid(const CollisionCheckerPtr &this_checker)
 {
-  bool valid = isValidFromConn(connections_.at(0));
+  CollisionCheckerPtr checker = checker_;
+  if(this_checker != NULL) checker = this_checker;
+
+  bool valid = isValidFromConn(connections_.at(0),checker);
 
   if(!valid) cost_ = std::numeric_limits<double>::infinity();
   else computeCost();
@@ -969,8 +997,11 @@ bool Path::isValid()
   return valid;
 }
 
-bool Path::isValidFromConn(const ConnectionPtr& this_conn)
+bool Path::isValidFromConn(const ConnectionPtr& this_conn, const CollisionCheckerPtr &this_checker)
 {
+  CollisionCheckerPtr checker = checker_;
+  if(this_checker != NULL) checker = this_checker;
+
   bool valid = true;
   Eigen::VectorXd parent;
   Eigen::VectorXd child;
@@ -986,7 +1017,7 @@ bool Path::isValidFromConn(const ConnectionPtr& this_conn)
       parent = conn->getParent()->getConfiguration();
       child = conn->getChild()->getConfiguration();
 
-      if(!checker_->checkPath(parent,child))
+      if(!checker->checkPath(parent,child))
       {
         conn->setCost(std::numeric_limits<double>::infinity());
         valid = false;
@@ -1002,22 +1033,27 @@ bool Path::isValidFromConn(const ConnectionPtr& this_conn)
   return valid;
 }
 
-bool Path::isValidFromConf(const Eigen::VectorXd &conf)
+bool Path::isValidFromConf(const Eigen::VectorXd &conf, const CollisionCheckerPtr &this_checker)
 {
+  CollisionCheckerPtr checker = checker_;
+  if(this_checker != NULL) checker = this_checker;
+
   bool validity = true;
   int idx;
   ConnectionPtr conn = findConnection(conf,idx);
 
+  if(conn == NULL) assert(0);
+
   if(conf == conn->getParent()->getConfiguration())
   {
-    validity = isValidFromConn(conn);
+    validity = isValidFromConn(conn,checker);
   }
   else if(conf == conn->getChild()->getConfiguration())
   {
     if(idx<connections_.size()-1)
     {
       conn = connections_.at(idx+1);
-      validity = isValidFromConn(conn);
+      validity = isValidFromConn(conn,checker);
     }
     else
     {
@@ -1028,7 +1064,7 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf)
   }
   else
   {
-    if(!checker_->checkPathFromConf(conn->getParent()->getConfiguration(),conn->getChild()->getConfiguration(),conf))
+    if(!checker->checkPathFromConf(conn->getParent()->getConfiguration(),conn->getChild()->getConfiguration(),conf))
     {
       /*ROS_WARN("CONF->CHILD OBSTRUCTED");
       if(cost() !=std::numeric_limits<double>::infinity())
@@ -1062,7 +1098,7 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf)
     {
       if(idx<connections_.size()-1)
       {
-        validity = isValidFromConn(connections_.at(idx+1));
+        validity = isValidFromConn(connections_.at(idx+1),checker);
       }
     }
   }

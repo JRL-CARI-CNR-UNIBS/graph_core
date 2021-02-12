@@ -72,5 +72,10 @@ public:
 
   }
 
+  void setPlanningScene(planning_scene::PlanningSceneConstPtr &planning_scene)
+  {
+    planning_scene_ = planning_scene;
+  }
+
 };
 }

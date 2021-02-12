@@ -105,6 +105,57 @@ public:
 
   std::vector<Eigen::VectorXd> getWaypoints();
 
+  /*std::vector<bool> change_warp_;
+  std::vector<bool> change_slip_parent_;
+  std::vector<bool> change_slip_child_;
+#ifdef NO_SPIRAL
+  std::vector<bool> change_spiral_;*/
+
+  std::vector<bool> getChangeWarp()
+  {
+    return change_warp_;
+  }
+
+  std::vector<bool> getChangeSlipParent()
+  {
+    return change_slip_parent_;
+  }
+
+  std::vector<bool> getChangeSlipChild()
+  {
+    return change_slip_child_;
+  }
+
+  std::vector<bool> getChangeSpiral()
+  {
+    return change_spiral_;
+  }
+
+  TreePtr getTree()
+  {
+    return tree_;
+  }
+
+  void setChangeWarp(const std::vector<bool>& change_warp)
+  {
+    change_warp_ = change_warp;
+  }
+
+  void setgChangeSlipParent(const std::vector<bool>& change_slip_parent)
+  {
+    change_slip_parent_ = change_slip_parent;
+  }
+
+  void setgChangeSlipChild(const std::vector<bool>& change_slip_child)
+  {
+    change_slip_parent_ = change_slip_child;
+  }
+
+  void setChangeSpiral(const std::vector<bool>& change_spiral)
+  {
+    change_spiral_ = change_spiral;
+  }
+
   void setTree(const TreePtr& tree)
   {
     tree_ = tree;
@@ -149,10 +200,11 @@ public:
     connections_ = conn;
   }
 
+  PathPtr clone();
   bool simplify(const double& distance = 0.02);
-  bool isValid();
-  bool isValidFromConf(const Eigen::VectorXd &conf);
-  bool isValidFromConn(const ConnectionPtr &this_conn);
+  bool isValid(const CollisionCheckerPtr &this_checker = NULL);
+  bool isValidFromConf(const Eigen::VectorXd &conf, const CollisionCheckerPtr &this_checker = NULL);
+  bool isValidFromConn(const ConnectionPtr &this_conn, const CollisionCheckerPtr &this_checker = NULL);
   Eigen::VectorXd projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool &in_conn);
   const Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point);
   const Eigen::VectorXd projectOnClosestConnectionKeepingPastPrj(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, int &n_conn);

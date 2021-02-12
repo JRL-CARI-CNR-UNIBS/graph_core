@@ -1,2 +1,6 @@
 group_name: "panda"
-k_freq: 01
+k_freq: 1
+init_test: 0
+end_test: 30
+dt_replan: 0.100
+dt_replan_no_obstruction: 0.200
