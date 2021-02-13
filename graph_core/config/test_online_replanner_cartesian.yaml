@@ -4,3 +4,4 @@ init_test: 0
 end_test: 30
 dt_replan: 0.050
 dt_replan_no_obstruction: 0.100
+optimize_path: 1

@@ -66,8 +66,7 @@ PathPtr Path::clone()
 
   for(const ConnectionPtr &conn: connections_)
   {
-    ConnectionPtr new_conn = conn->clone();
-    new_conn_vector.push_back(new_conn);
+    new_conn_vector.push_back(conn->clone());
   }
 
   PathPtr new_path = std::make_shared<Path>(new_conn_vector,metrics_,checker_);
@@ -76,7 +75,7 @@ PathPtr Path::clone()
   new_path->setChangeWarp(change_warp_);
   new_path->setgChangeSlipChild(change_slip_child_);
   new_path->setgChangeSlipParent(change_slip_parent_);
-  //new_path->setTree(tree_);
+  new_path->setTree(tree_);
 
   return new_path;
 }
@@ -1066,32 +1065,6 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const CollisionCheckerPt
   {
     if(!checker->checkPathFromConf(conn->getParent()->getConfiguration(),conn->getChild()->getConfiguration(),conf))
     {
-      /*ROS_WARN("CONF->CHILD OBSTRUCTED");
-      if(cost() !=std::numeric_limits<double>::infinity())
-      {
-        ROS_INFO_STREAM("CHILD: "<<conn->getChild()->getConfiguration().transpose());
-        std::vector<Eigen::VectorXd> waypoints = getWaypoints();
-        for(const Eigen::VectorXd wp: waypoints)
-        {
-          ROS_INFO_STREAM("WP: "<<wp.transpose());
-        }
-
-        Eigen::VectorXd parent = conn->getParent()->getConfiguration();
-        Eigen::VectorXd child = conn->getChild()->getConfiguration();
-
-        double step = (parent-child).norm()/100.0;
-
-        for(unsigned int i=0; i<100;i++)
-        {
-          Eigen::VectorXd point = ((child-parent)/(child-parent).norm())*i*step +parent;
-          if(!checker_->check(point))
-          {
-            double perc = (point-parent).norm()/(child-parent).norm();
-            ROS_WARN("collision at %f",perc);
-          }
-        }
-      }*/
-
       validity = false;
     }
     else

@@ -1,4 +1,4 @@
-﻿#include <ros/ros.h>
+#include <ros/ros.h>
 #include <graph_core/metrics.h>
 #include <graph_core/occupancy_metrics.h>
 #include <graph_core/graph/node.h>
@@ -107,48 +107,6 @@ void replanning_fcn()
   {
     ros::WallTime tic_tot=ros::WallTime::now();
 
-    double time_informedOnlineRepl;
-    std::string string_dt;
-
-    //scene_mtx.lock();
-    //planning_scn_replanning = planning_scene::PlanningScene::clone(planning_scn);
-    //scene_mtx.unlock();
-
-    checker_mtx.lock();
-    //checker_replanning = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scn_replanning, group_name);
-
-    //pathplan::PathPtr current_path_copy = current_path->clone();
-    //std::vector<pathplan::PathPtr> other_paths_copy;
-    //for(const pathplan::PathPtr path:other_paths) other_paths_copy.push_back(path->clone());
-
-    //replanner_mtx.lock();
-    //replanner->setChecker(checker_replanning);
-    //replanner->setCurrentPath(current_path_copy);
-    //replanner->setOtherPaths(other_paths_copy);
-    //replanner_mtx.unlock();
-
-    if(path_obstructed)
-    {
-      replan_offset=(dt_replan-dt)*1.2;
-      time_informedOnlineRepl = 0.90*dt_replan;
-      string_dt = " dt ridotto";
-      computing_avoiding_path = true;
-    }
-    else
-    {
-      replan_offset=(dt_replan_no_obstruction-dt)*1.2;
-      time_informedOnlineRepl = 0.90*dt_replan_no_obstruction;
-      string_dt = " dt rilassato";
-    }
-
-    if(old_path_obstructed != path_obstructed)
-    {
-      abscissa = 0;
-      past_abscissa = 0;
-    }
-    old_path_obstructed = path_obstructed;
-    checker_mtx.unlock();
-
     trj_mtx.lock();
     t_replan=t+replan_offset;
 
@@ -159,7 +117,7 @@ void replanning_fcn()
     past_abscissa = abscissa;
     trj_mtx.unlock();
 
-    replanner_mtx.lock();
+    //replanner_mtx.lock();
     trj_mtx.lock();
     configuration_replan = replanner->getCurrentPath()->projectOnClosestConnectionKeepingCurvilinearAbscissa(point2project,past_configuration_replan,abscissa,past_abscissa,n_conn_replan);
 
@@ -167,7 +125,7 @@ void replanning_fcn()
     replan = ((current_configuration-goal).norm()>1e-03 && (configuration_replan-goal).norm()>1e-03);
     if(replan) replanner->setCurrentConf(configuration_replan);
     trj_mtx.unlock();
-    replanner_mtx.unlock();
+    //replanner_mtx.unlock();
 
     std::vector<double> marker_scale_sphere_actual(3,0.02);
     std::vector<double> marker_color_sphere_actual = {0.0,0.0,0.0,1.0};
@@ -186,6 +144,48 @@ void replanning_fcn()
 
     if(replan)
     {
+      double time_informedOnlineRepl;
+      std::string string_dt;
+
+//      scene_mtx.lock();
+//      planning_scn_replanning = planning_scene::PlanningScene::clone(planning_scn);
+//      scene_mtx.unlock();
+
+      checker_mtx.lock();
+//      checker_replanning = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scn_replanning, group_name);
+
+//      pathplan::PathPtr current_path_copy = current_path->clone();
+//      std::vector<pathplan::PathPtr> other_paths_copy;
+//      for(const pathplan::PathPtr path:other_paths) other_paths_copy.push_back(path->clone());
+
+//      replanner_mtx.lock();
+//      replanner->setChecker(checker_replanning);
+//      replanner->setCurrentPath(current_path_copy);
+//      replanner->setOtherPaths(other_paths_copy);
+//      replanner_mtx.unlock();
+
+      if(path_obstructed)
+      {
+        replan_offset=(dt_replan-dt)*1.2;
+        time_informedOnlineRepl = 0.90*dt_replan;
+        string_dt = " dt ridotto";
+        computing_avoiding_path = true;
+      }
+      else
+      {
+        replan_offset=(dt_replan_no_obstruction-dt)*1.2;
+        time_informedOnlineRepl = 0.90*dt_replan_no_obstruction;
+        string_dt = " dt rilassato";
+      }
+
+      if(old_path_obstructed != path_obstructed)
+      {
+        abscissa = 0;
+        past_abscissa = 0;
+      }
+      old_path_obstructed = path_obstructed;
+      checker_mtx.unlock();
+
       planning_mtx.lock();
       ros::WallTime tic_rep=ros::WallTime::now();
       success =  replanner->informedOnlineReplanning(2,1,time_informedOnlineRepl);
@@ -208,19 +208,20 @@ void replanning_fcn()
           replanner->addOtherPath(replanner->getCurrentPath());
           replanner_mtx.unlock();
 
-          //checker_mtx.lock();
-          //other_paths.push_back(current_path);
-          //checker_mtx.unlock();
+//          checker_mtx.lock();
+//          other_paths.push_back(current_path_copy);
+//          checker_mtx.unlock();
         }
 
         std_msgs::Float64 current_norm;
         std_msgs::Float64 new_norm;
         std_msgs::Float64 time_replanning;
 
+        checker_mtx.lock();
         replanner_mtx.lock();
         trj_mtx.lock();
         replanner->startReplannedPathFromNewCurrentConf(current_configuration);
-        //replanner->simplifyReplannedPath(0.05);
+        replanner->simplifyReplannedPath(0.05);
         if(replanner->getReplannedPath()->findConnection(current_configuration) == NULL) ROS_ERROR("QUA");
 
         current_norm.data = replanner->getCurrentPath()->getNormFromConf(current_configuration);
@@ -228,7 +229,11 @@ void replanning_fcn()
         time_replanning.data = (toc_rep-tic_rep).toSec();
 
         replanner->setCurrentPath(replanner->getReplannedPath());
-        //current_path = replanner->getReplannedPath();
+//        current_path = replanner->getReplannedPath();
+//        ROS_INFO_STREAM("curr path valid: "<<current_path->isValidFromConf(current_configuration,checker));
+//        ROS_INFO_STREAM("curr path valid2: "<<current_path->isValidFromConf(current_configuration,checker_replanning));
+//        if(current_path->isValidFromConf(current_configuration,checker) != current_path->isValidFromConf(current_configuration,checker_replanning)) ROS_ERROR("DIVERSI");
+        checker_mtx.unlock();
 
         tic_trj=ros::WallTime::now();
         moveit_msgs::RobotTrajectory tmp_trj_msg;
@@ -369,12 +374,12 @@ void replanning_fcn()
       ros::WallTime toc_tot=ros::WallTime::now();
       double duration = (toc_tot-tic_tot).toSec();
 
-      /*if(duration>(time_informedOnlineRepl/0.9))
+      if(duration>(time_informedOnlineRepl/0.9))
       {
         ROS_WARN("CYCLE TIME SUPERATO: duration-> %f",duration);
         ROS_WARN("rep-> %f",(toc_rep-tic_rep).toSec());
         if(success) ROS_WARN("trj-> %f",(toc_trj-tic_trj).toSec());
-      }*/
+      }
     }
     lp.sleep();
   }
@@ -390,32 +395,32 @@ void collision_check_fcn()
 
   ros::Rate lp(checker_frequency);
   bool object_spawned = false;
-  bool second_object_spawned = true;
+  bool second_object_spawned = false;
   bool third_object_spawned = true;
-  bool fourth_object_spawned = true;
+  bool fourth_object_spawned = false;
   while (!stop)
   {
     // ////////////////////////////////////////////SPAWNING THE OBJECT/////////////////////////////////////////////
-    /*if(real_time>=0.80 && !fourth_object_spawned)
+    if(real_time>=1.5 && !fourth_object_spawned)
     {
       fourth_object_spawned = true;
       object_spawned = false;
     }
 
-    if(real_time>=0.60 && !third_object_spawned)
+    if(real_time>=1.7 && !third_object_spawned)
     {
       third_object_spawned = true;
       object_spawned = false;
     }
 
-    if(real_time>=0.40 && !second_object_spawned)
+    if(real_time>=1 && !second_object_spawned)
     {
       second_object_spawned = true;
       object_spawned = false;
-    }*/
+    }
 
     bool flag_obj = false;
-    if(!object_spawned && real_time>=0.20)
+    if(!object_spawned && real_time>=0.50)
     {
       if (!add_obj.waitForExistence(ros::Duration(10)))
       {
@@ -431,7 +436,7 @@ void collision_check_fcn()
       replanner->getCurrentPath()->findConnection(replanner->getCurrentConf(),idx_current_conn);
       replanner_mtx.unlock();
 
-      /*if(fourth_object_spawned)
+      if(fourth_object_spawned)
       {
         obj_conn_pos = idx_current_conn;
       }
@@ -477,9 +482,9 @@ void collision_check_fcn()
         obj_child = obj_conn->getChild();
         obj_pos =  (obj_child->getConfiguration() +  obj_parent->getConfiguration())/2;
         replanner_mtx.unlock();
-      }*/
+      }
 
-      pathplan::ConnectionPtr obj_conn;
+      /*pathplan::ConnectionPtr obj_conn;
       pathplan::NodePtr obj_parent;
       pathplan::NodePtr obj_child;
       Eigen::VectorXd obj_pos;
@@ -490,12 +495,14 @@ void collision_check_fcn()
       replanner_mtx.unlock();
       obj_parent = obj_conn->getParent();
       obj_child = obj_conn->getChild();
-      obj_pos =  (obj_child->getConfiguration() +  obj_parent->getConfiguration())/2;
+      obj_pos = (obj_child->getConfiguration() +  obj_parent->getConfiguration())/2;*/
 
       moveit::core::RobotState obj_pos_state = trajectory->fromWaypoints2State(obj_pos);
 
       if(test == "panda") tf::poseEigenToMsg(obj_pos_state.getGlobalLinkTransform("panda_link8"),obj.pose.pose);
       if(test == "cartesian") tf::poseEigenToMsg(obj_pos_state.getGlobalLinkTransform("end_effector"),obj.pose.pose);
+      if(test == "6dof") tf::poseEigenToMsg(obj_pos_state.getGlobalLinkTransform("flange"),obj.pose.pose);
+
       obj.pose.header.frame_id="world";
 
       srv_add_object.request.objects.clear();
@@ -540,18 +547,19 @@ void collision_check_fcn()
     planning_scn->getCollisionObjectMsgs(collision_objs);
     scene_mtx.unlock();
 
+
     planning_mtx.lock();
     checker_mtx.lock();
-    //current_path->isValid(checker);
-    //for(const pathplan::PathPtr& path: other_paths) path->isValid(checker);
+//    current_path->isValid(checker);
+//    for(const pathplan::PathPtr& path: other_paths) path->isValid(checker);
 
     replanner_mtx.lock();
     replanner->checkPathValidity(checker);
     if(!computing_avoiding_path)
     {
+
       trj_mtx.lock();
-      //path_obstructed = !(current_path->isValidFromConf(current_configuration));
-      //path_obstructed = !(replanner->getCurrentPath()->isValidFromConf(current_configuration,checker));
+//      path_obstructed = !(current_path->isValidFromConf(current_configuration));
       path_obstructed = !(replanner->getCurrentPath()->isValidFromConf(current_configuration,checker));
       trj_mtx.unlock();
       if(path_obstructed) ROS_INFO("current path obstructed");
@@ -652,6 +660,13 @@ int main(int argc, char **argv)
     dt_replan_no_obstruction = 0.10;
   }
 
+  bool optimize_path;
+  if (!nh.getParam("optimize_path", optimize_path))
+  {
+    ROS_INFO("optimize_path not set, used 1");
+    optimize_path = 1;
+  }
+
   for(unsigned int n_iter = init_test; n_iter<end_test; n_iter++)
   {
     ROS_WARN("ITER n: %d",n_iter+1);
@@ -699,6 +714,12 @@ int main(int argc, char **argv)
       group_name = "cartesian_arm";
       base_link = "world";
       last_link = "end_effector";
+    }
+    if(test == "6dof")
+    {
+      group_name = "manipulator";
+      base_link = "world";
+      last_link = "flange";
     }
 
     moveit::planning_interface::MoveGroupInterface move_group(group_name);
@@ -752,6 +773,10 @@ int main(int argc, char **argv)
     {
       start_conf << 0.0,0.0,0.0;
     }
+    if(test == "6dof")
+    {
+      start_conf << 1.5,0.5,-0.5,-1.5,-0.7,0.7;
+    }
 
     Eigen::VectorXd goal_conf(dof);
     if(test == "sharework")
@@ -768,13 +793,17 @@ int main(int argc, char **argv)
     {
       goal_conf << 0.8,0.8,0.8;
     }
+    if(test == "6dof")
+    {
+      goal_conf << 0.0,0.0,-1.0,0.0,-1.5,1.0;
+    }
 
     pathplan::NodePtr start_node = std::make_shared<pathplan::Node>(start_conf);
 
     pathplan::MetricsPtr metrics = std::make_shared<pathplan::Metrics>();
     checker = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scn, group_name);
 
-    //planning_scn_replanning = planning_scene::PlanningScene::clone(planning_scn);
+    planning_scn_replanning = planning_scene::PlanningScene::clone(planning_scn);
     //checker_replanning = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scn_replanning, group_name);
     //checker_replanning = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scn, group_name);
     checker_replanning = checker;
@@ -796,7 +825,7 @@ int main(int argc, char **argv)
     {
       pathplan::NodePtr goal_node = std::make_shared<pathplan::Node>(goal_conf);
 
-      pathplan::PathPtr solution = trajectory->computeBiRRTPath(start_node, goal_node, lb, ub, metrics, checker, 1);
+      pathplan::PathPtr solution = trajectory->computeBiRRTPath(start_node, goal_node, lb, ub, metrics, checker, optimize_path);
       path_vector.push_back(solution);
 
       std::vector<double> marker_color;
@@ -816,10 +845,6 @@ int main(int argc, char **argv)
     current_path = path_vector.front();
     other_paths = {path_vector.at(1),path_vector.at(2),path_vector.at(3)};
 
-    pathplan::SamplerPtr samp = std::make_shared<pathplan::InformedSampler>(start_conf, goal_conf, lb, ub);
-    pathplan::BiRRTPtr solver = std::make_shared<pathplan::BiRRT>(metrics, checker_replanning, samp);
-    solver->config(nh);
-
     trajectory->setPath(current_path);
     robot_trajectory::RobotTrajectoryPtr trj= trajectory->fromPath2Trj();
     moveit_msgs::RobotTrajectory tmp_trj_msg;
@@ -827,6 +852,10 @@ int main(int argc, char **argv)
 
     interpolator.setTrajectory(tmp_trj_msg);
     interpolator.setSplineOrder(1);
+
+    pathplan::SamplerPtr samp = std::make_shared<pathplan::InformedSampler>(start_conf, goal_conf, lb, ub);
+    pathplan::BiRRTPtr solver = std::make_shared<pathplan::BiRRT>(metrics, checker_replanning, samp);
+    solver->config(nh);
 
     Eigen::VectorXd point2project(dof);
     interpolator.interpolate(ros::Duration(t_replan),pnt_replan);
@@ -865,6 +894,8 @@ int main(int argc, char **argv)
     while (ros::ok() && !stop)
     {
       ros::WallTime inizio = ros::WallTime::now();
+
+      replanner_mtx.lock();
       trj_mtx.lock();
       real_time += dt;
       t+=dt;
@@ -872,12 +903,7 @@ int main(int argc, char **argv)
       interpolator.interpolate(ros::Duration(t),pnt);
       for(unsigned int i=0; i<pnt.positions.size();i++) point2project[i] = pnt.positions.at(i);
       past_current_configuration = current_configuration;
-      trj_mtx.unlock();
-
-      replanner_mtx.lock();
-      trj_mtx.lock();
       current_configuration = replanner->getCurrentPath()->projectOnClosestConnectionKeepingPastPrj(point2project,past_current_configuration,n_conn);
-      //ROS_INFO_STREAM("new current conf: "<<current_configuration.transpose());
       trj_mtx.unlock();
       replanner_mtx.unlock();
 
@@ -917,10 +943,30 @@ int main(int argc, char **argv)
 
     ROS_ERROR("STOP");
     stop=true;
+
     if (replanning_thread.joinable())
       replanning_thread.join();
     if (col_check_thread.joinable())
       col_check_thread.join();
+
+    // BINARY LOGGER SALVA FINO A I-1 ESIMO DATO PUBBLICATO, QUESTO AIUTA A SALVARLI TUTTI
+    std_msgs::Float64 fake_data;
+    sensor_msgs::JointState joint_fake;
+    joint_fake.position = pnt.positions;
+    joint_fake.velocity = pnt.velocities;
+    joint_fake.name = joint_names;
+    joint_fake.header.frame_id = kinematic_model->getModelFrame();
+    joint_fake.header.stamp=ros::Time::now();
+    fake_data.data = 0.0;
+    obs_current_norm_pub.publish(fake_data);
+    obs_new_norm_pub.publish(fake_data);
+    obs_time_replanning_pub.publish(fake_data);
+    current_norm_pub.publish(fake_data);
+    new_norm_pub.publish(fake_data);
+    time_replanning_pub.publish(fake_data);
+    time_pub.publish(fake_data);
+    target_pub.publish(joint_fake);
+
 
     stop_log.call(srv_log);
 

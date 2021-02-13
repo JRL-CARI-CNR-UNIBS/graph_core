@@ -1,0 +1,7 @@
+group_name: "6dof"
+k_freq: 1
+init_test: 28
+end_test: 30
+dt_replan: 0.070
+dt_replan_no_obstruction: 0.120
+optimize_path: 0
