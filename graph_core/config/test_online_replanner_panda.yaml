@@ -1,4 +1,9 @@
-group_name: "panda"
+test_name: "panda"
+group_name: "panda_arm"
+base_link: "panda_link0"
+last_link: "panda_link8"
+start_configuration: [-0.8, 0.3, 0.0, -2.0, 0.0, 2.5, -0.5]
+stop_configuration: [0.8, 0.3, 0.0, -2.0, 0.0, 2.5, -0.5]
 k_freq: 1
 init_test: 0
 end_test: 30

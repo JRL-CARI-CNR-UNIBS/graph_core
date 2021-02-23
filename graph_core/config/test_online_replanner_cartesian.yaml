@@ -1,4 +1,9 @@
-group_name: "cartesian"
+test_name: "cartesian"
+group_name: "cartesian_arm"
+base_link: "world"
+last_link: "end_effector"
+start_configuration: [0.0, 0.0, 0.0]
+stop_configuration: [0.8, 0.8, 0.8]
 k_freq: 1
 init_test: 0
 end_test: 30
