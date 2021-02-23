@@ -49,67 +49,66 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/solvers/rrt_star.cpp
   src/${PROJECT_NAME}/solvers/path_solver.cpp
   src/${PROJECT_NAME}/replanner.cpp
-  src/${PROJECT_NAME}/test_util.cpp
+  #src/${PROJECT_NAME}/test_util.cpp
   )
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_executable(       test_classes src/test/test_classes.cpp)
-add_dependencies(     test_classes ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(test_classes
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+#add_executable(       test_classes src/test/test_classes.cpp)
+#add_dependencies(     test_classes ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(test_classes
+#  ${PROJECT_NAME}
+#  ${catkin_LIBRARIES}
+#)
 
-add_executable(       test_tree src/test/test_tree.cpp)
-add_dependencies(     test_tree ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(test_tree
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
-
-
-add_executable(       test_moveit src/test/test_moveit.cpp)
-add_dependencies(     test_moveit ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(test_moveit
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
-
-add_executable(       test_replanner src/test/test_replanner.cpp)
-add_dependencies(     test_replanner ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(test_replanner
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
-
-add_executable(       test_replanner_with_moving_obstacle src/test/test_replanner_with_moving_obstacle.cpp)
-add_dependencies(     test_replanner_with_moving_obstacle ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(test_replanner_with_moving_obstacle
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
-
-add_executable(       test_tube_sampling src/test/test_tube_sampling.cpp)
-add_dependencies(     test_tube_sampling ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(test_tube_sampling
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+#add_executable(       test_tree src/test/test_tree.cpp)
+#add_dependencies(     test_tree ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(test_tree
+#  ${PROJECT_NAME}
+#  ${catkin_LIBRARIES}
+#)
 
 
-add_executable(       narrow_pass_test src/test/narrow_pass_test.cpp)
-add_dependencies(     narrow_pass_test ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(narrow_pass_test
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+#add_executable(       test_moveit src/test/test_moveit.cpp)
+#add_dependencies(     test_moveit ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(test_moveit
+#  ${PROJECT_NAME}
+#  ${catkin_LIBRARIES}
+#)
 
-add_executable(       test_online_replanner src/test/test_online_replanner.cpp)
-add_dependencies(     test_online_replanner ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(test_online_replanner
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+#add_executable(       test_replanner src/test/test_replanner.cpp)
+#add_dependencies(     test_replanner ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(test_replanner
+#  ${PROJECT_NAME}
+#  ${catkin_LIBRARIES}
+#)
+
+#add_executable(       test_replanner_with_moving_obstacle src/test/test_replanner_with_moving_obstacle.cpp)
+#add_dependencies(     test_replanner_with_moving_obstacle ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(test_replanner_with_moving_obstacle
+#  ${PROJECT_NAME}
+#  ${catkin_LIBRARIES}
+#)
+
+#add_executable(       test_tube_sampling src/test/test_tube_sampling.cpp)
+#add_dependencies(     test_tube_sampling ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(test_tube_sampling
+#  ${PROJECT_NAME}
+#  ${catkin_LIBRARIES}
+#)
+
+#add_executable(       narrow_pass_test src/test/narrow_pass_test.cpp)
+#add_dependencies(     narrow_pass_test ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(narrow_pass_test
+#  ${PROJECT_NAME}
+#  ${catkin_LIBRARIES}
+#)
+
+#add_executable(       test_online_replanner src/test/test_online_replanner.cpp)
+#add_dependencies(     test_online_replanner ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(test_online_replanner
+#  ${PROJECT_NAME}
+#  ${catkin_LIBRARIES}
+#)
 
 
 
