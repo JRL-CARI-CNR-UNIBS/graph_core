@@ -9,4 +9,4 @@ init_test: 0
 end_test: 200
 dt_replan: 0.070
 dt_replan_no_obstruction: 0.120
-optimize_path: 0
+opt_path: true

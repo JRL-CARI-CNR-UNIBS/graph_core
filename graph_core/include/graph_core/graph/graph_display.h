@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
-#define DISPLAYTIME 0.00001
+#define DISPLAYTIME 0.0001
 class Display;
 typedef std::shared_ptr<Display> DisplayPtr;
 class Display: public std::enable_shared_from_this<Display>

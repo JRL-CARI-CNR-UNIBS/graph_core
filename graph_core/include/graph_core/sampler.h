@@ -74,7 +74,8 @@ public:
     lower_bound_(lower_bound),
     upper_bound_(upper_bound),
     cost_(cost),
-    gen_{rd_()}//gen_(time(0))
+    //gen_{rd_()}
+    gen_(time(0))
   {
     ud_ = std::uniform_real_distribution<double>(0, 1);
 

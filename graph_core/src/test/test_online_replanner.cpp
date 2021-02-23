@@ -523,6 +523,13 @@ int main(int argc, char **argv)
 
   ros::Duration(0.5).sleep();
 
+  bool optimize_path;
+  if (!nh.getParam("opt_path", optimize_path))
+  {
+    ROS_INFO("optimize_path not set, used 1");
+    optimize_path = 1;
+  }
+
   if (!nh.getParam("k_freq",k_freq))
   {
     ROS_INFO("k_freq not set, use 1");
@@ -560,13 +567,6 @@ int main(int argc, char **argv)
   {
     ROS_INFO("dt_replan_no_obstruction not set, used 0.10");
     dt_replan_no_obstruction = 0.10;
-  }
-
-  bool optimize_path;
-  if (!nh.getParam("optimize_path", optimize_path))
-  {
-    ROS_INFO("optimize_path not set, used 1");
-    optimize_path = 1;
   }
 
   if (!nh.getParam("group_name",group_name))
@@ -647,6 +647,11 @@ int main(int argc, char **argv)
       ROS_ERROR("unable to update planning scene");
       return 1;
     }
+    if (!planning_scn_replanning->setPlanningSceneMsg(ps_srv.response.scene))
+    {
+      ROS_ERROR("unable to update planning scene");
+      return 1;
+    }
 
     unsigned int dof = joint_names.size();
     Eigen::VectorXd lb(dof);
@@ -673,13 +678,14 @@ int main(int argc, char **argv)
     // ///////////////////////////PATH PLAN & VISUALIZATION//////////////////////////////////////////////////////////////////////////
 
     disp = std::make_shared<pathplan::Display>(planning_scn,group_name,last_link);
+    ros::Duration(0.5).sleep();
     pathplan::PathPtr path = NULL;
-    trajectory = std::make_shared<pathplan::Trajectory>(path,nh,planning_scn,group_name,base_link,last_link);
+    trajectory = std::make_shared<pathplan::Trajectory>(path,nh,planning_scn_replanning,group_name,base_link,last_link);
 
     int current_node_id = -3;
     int trj_node_id = -4;
     int path_id = -325;
-    int wp_id = -525;
+    int wp_id = -653;
 
     std::vector<pathplan::PathPtr> path_vector;
 
@@ -699,7 +705,9 @@ int main(int argc, char **argv)
       path_id -=1;
       wp_id -=1;
 
+      ros::Duration(0.1).sleep();
       disp->displayPathAndWaypoints(solution,path_id,wp_id,"pathplan",marker_color);
+      ROS_INFO_STREAM("cost:"<<solution->cost());
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
