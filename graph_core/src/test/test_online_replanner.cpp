@@ -684,7 +684,7 @@ int main(int argc, char **argv)
 
     int current_node_id = -3;
     int trj_node_id = -4;
-    int path_id = -325;
+    int path_id = -324;
     int wp_id = -653;
 
     std::vector<pathplan::PathPtr> path_vector;
