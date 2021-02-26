@@ -39,9 +39,9 @@ Display::Display(const planning_scene::PlanningScenePtr planning_scene,
   group_name_(group_name),
   last_link_(last_link)
 {
-  node_marker_scale_.resize(3,0.02);
-  connection_marker_scale_.resize(3,0.005);
-  tree_marker_scale_.resize(3,0.005);
+  node_marker_scale_.resize(3,DEFAULTNODESIZE);
+  connection_marker_scale_.resize(3,DEFAULTCONNECTIONSIZE);
+  tree_marker_scale_.resize(3,DEFAULTTREESIZE);
   marker_id_=0;
   state_=std::make_shared<moveit::core::RobotState>(planning_scene_->getCurrentState());
   marker_pub_ = nh_.advertise<visualization_msgs::Marker>("/marker_visualization_topic", 1000);

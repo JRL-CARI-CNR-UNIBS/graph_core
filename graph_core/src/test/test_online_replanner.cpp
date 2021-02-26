@@ -161,7 +161,6 @@ void replanning_fcn()
       {
         trj_mtx.lock();
         configuration_replan = current_configuration;  //può essere che non venga trovata la repl conf e rimanga ferma per qualche ciclo, intanto la current conf va avanti, la supera e il replanned path partirà da questa e non includera la repl conf
-        ROS_ERROR("SALVATO");
         trj_mtx.unlock();
       }
       replanner->setCurrentConf(configuration_replan);
@@ -318,7 +317,7 @@ void collision_check_fcn()
   while (!stop)
   {
     // ////////////////////////////////////////////SPAWNING THE OBJECT/////////////////////////////////////////////
-    if(real_time>=1.7 && !fourth_object_spawned)
+    if(real_time>=1.85 && !fourth_object_spawned)  //CAMBIA
     {
       fourth_object_spawned = true;
       object_spawned = false;
@@ -715,6 +714,13 @@ int main(int argc, char **argv)
     current_path = path_vector.front();
     other_paths = {path_vector.at(1),path_vector.at(2),path_vector.at(3)};
 
+    // //////////////////ELIMINA/////////////////////////
+    pathplan::PathPtr path1 = current_path->clone();
+    pathplan::PathPtr path2 = path_vector.at(1)->clone();
+    pathplan::PathPtr path3 = path_vector.at(2)->clone();
+    pathplan::PathPtr path4 = path_vector.at(3)->clone();
+    // /////////////////////////////////////////////////
+
     trajectory->setPath(current_path);
     robot_trajectory::RobotTrajectoryPtr trj= trajectory->fromPath2Trj();
     moveit_msgs::RobotTrajectory tmp_trj_msg;
@@ -761,6 +767,8 @@ int main(int argc, char **argv)
     main_frequency = k_freq*main_frequency;
     ros::Rate lp(main_frequency);
 
+    std::vector<Eigen::VectorXd> pos_vec; //ELIMINA
+
     while (ros::ok() && !stop)
     {
       ros::WallTime inizio = ros::WallTime::now();
@@ -777,6 +785,7 @@ int main(int argc, char **argv)
       trj_mtx.unlock();
       replanner_mtx.unlock();
 
+      pos_vec.push_back(current_configuration);
 
       if((current_configuration-goal_conf).norm()<1e-3) stop = true;
       else
@@ -810,6 +819,65 @@ int main(int argc, char **argv)
       bool in_time = lp.sleep();
       if(!in_time) ROS_ERROR("durata main %f",(fine-inizio).toSec());
     }
+
+    // ///////// ELIMINA DA QUA ////////////////////////////////////////////
+
+    std::vector<Eigen::VectorXd> versori;
+    for(unsigned int i=1;i < pos_vec.size(); i++)
+    {
+      Eigen::VectorXd vers = (pos_vec.at(i)-pos_vec.at(i-1))/(pos_vec.at(i)-pos_vec.at(i-1)).norm();
+      versori.push_back(vers);
+    }
+
+    std::vector<Eigen::VectorXd> nodi;
+    nodi.push_back(start_conf);
+    for(unsigned int i=1;i < versori.size(); i++)
+    {
+      nodi.push_back(pos_vec.at(i));
+    }
+    nodi.push_back(goal_conf);
+
+    std::vector<pathplan::ConnectionPtr> con_vec;
+    for(unsigned int i=1;i < nodi.size(); i++)
+    {
+      pathplan::NodePtr parent = std::make_shared<pathplan::Node>(nodi.at(i-1));
+      pathplan::NodePtr child = std::make_shared<pathplan::Node>(nodi.at(i));
+      pathplan::ConnectionPtr conn = std::make_shared<pathplan::Connection>(parent,child);
+      conn->setCost(1);
+      conn->add();
+
+      con_vec.push_back(conn);
+    }
+
+    pathplan::PathPtr path_fake = std::make_shared<pathplan::Path>(con_vec,metrics,checker);
+
+    ros::Duration(0.1).sleep();
+    disp->clearMarkers();
+
+    std::vector<double> marker_scale(3,0.01);
+    std::vector<double> marker_color = {1.0,0.5,0.5,1.0};
+    display_mtx.lock();
+    disp->changeConnectionSize(marker_scale);
+    disp->displayPath(path_fake,0,"pathplan",marker_color);
+    disp->displayPath(path_fake,-10,"pathplan",marker_color);
+
+    disp->defaultConnectionSize();
+    disp->defaultNodeSize();
+    ros::Duration(1).sleep();
+    marker_color = {0.5,0.5,0.0,1.0};
+    disp->displayPathAndWaypoints(path1,-1,-100,"pathplan",marker_color);
+    marker_color = {0.0f,0.0f,1.0,1.0};
+    disp->displayPathAndWaypoints(path2,-2,-200,"pathplan",marker_color);
+    marker_color = {1.0,0.0f,0.0f,1.0};
+    disp->displayPathAndWaypoints(path3,-3,-300,"pathplan",marker_color);
+    marker_color = {0.0,0.5,0.5,1.0};
+    disp->displayPathAndWaypoints(path4,-4,-400,"pathplan",marker_color);
+
+    display_mtx.unlock();
+
+    ros::Duration(10).sleep();
+
+    // ////////// FINO A QUA //////////////////////////////////////////////
 
     ROS_ERROR("STOP");
     stop=true;

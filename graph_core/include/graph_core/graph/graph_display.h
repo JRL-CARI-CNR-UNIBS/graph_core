@@ -37,6 +37,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 #define DISPLAYTIME 0.0001
+#define DEFAULTNODESIZE 0.02
+#define DEFAULTCONNECTIONSIZE 0.005
+#define DEFAULTTREESIZE 0.005
 class Display;
 typedef std::shared_ptr<Display> DisplayPtr;
 class Display: public std::enable_shared_from_this<Display>
@@ -73,7 +76,7 @@ public:
   }
   void defaultNodeSize()
   {
-    node_marker_scale_.resize(3,0.02);
+    node_marker_scale_ = {DEFAULTNODESIZE, DEFAULTNODESIZE, DEFAULTNODESIZE};
   }
 
   void changeConnectionSize(const std::vector<double>& marker_size)
@@ -82,7 +85,7 @@ public:
   }
   void defaultConnectionSize()
   {
-    connection_marker_scale_.resize(3,0.005);;
+    connection_marker_scale_ = {DEFAULTCONNECTIONSIZE, DEFAULTCONNECTIONSIZE, DEFAULTCONNECTIONSIZE};
   }
 
   void clearMarkers(const std::string &ns="pathplan");
