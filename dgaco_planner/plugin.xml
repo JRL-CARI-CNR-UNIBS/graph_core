@@ -1,7 +1,0 @@
-<library path="libdgaco_planner">
-  <class name="ha_planner/DgacoPlannerManager" type="ha_planner::DgacoPlannerManager" base_class_type="planning_interface::PlannerManager">
-    <description>
-      Dgaco Planner Manager
-    </description>
-  </class>
-</library>
