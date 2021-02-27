@@ -1,0 +1,7 @@
+group_name: "panda"
+moving_obs: true
+disp_verb_informed: false
+disp_verb_pathSwitch: false
+time_verb: false
+time_for_repl: 0.1
+opt_path: true

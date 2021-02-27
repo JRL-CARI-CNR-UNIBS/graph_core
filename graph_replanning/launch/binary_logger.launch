@@ -1,0 +1,5 @@
+<launch>
+  <rosparam command="load" file="$(find graph_replanning)/config/binary_logger_cfg.yaml" />
+  <node pkg="nodelet" type="nodelet" name="binary_logger"  args="manager" output="screen"/>
+  <node pkg="binary_logger" type="automatic_logger_node" name="automatic_logger_node" output="screen"/>
+</launch>

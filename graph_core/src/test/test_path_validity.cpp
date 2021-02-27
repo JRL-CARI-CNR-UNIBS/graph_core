@@ -12,7 +12,6 @@
 #include <graph_core/solvers/path_solver.h>
 #include <graph_core/moveit_collision_checker.h>
 #include <graph_core/local_informed_sampler.h>
-#include <graph_core/test_util.h>
 #include <moveit/planning_scene/planning_scene.h>
 #include <moveit/planning_interface/planning_interface.h>
 #include <moveit/move_group_interface/move_group_interface.h>

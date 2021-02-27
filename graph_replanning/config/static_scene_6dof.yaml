@@ -1,0 +1,2 @@
+scene_objects:
+- {type: "big_box_6dof", frame: "world", position: [0.4, 0.4,0.8], quaternion: [0, 0, 0, 1]}
