@@ -86,16 +86,40 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
 
   COMMENT("create metrics");
 
-  if (!m_nh.getParam("use_avoidance",use_avoidance_goal_))
+  if (!m_nh.getParam("use_avoidance_path",use_avoidance_goal_))
+  {
+    ROS_DEBUG("use_avoidance_path is not set, default=false");
+    use_avoidance_metrics_=false;
+  }
+  if (use_avoidance_metrics_)
+  {
+    avoidance_metrics_=std::make_shared<pathplan::AvoidanceMetrics>(m_nh);
+    metrics_=avoidance_metrics_;
+  }
+  else
+    metrics_=std::make_shared<pathplan::Metrics>();
+
+  if (!m_nh.getParam("use_avoidance_goal",use_avoidance_goal_))
   {
     ROS_DEBUG("use_avoidance is not set, default=false");
     use_avoidance_goal_=false;
   }
+  else if (use_avoidance_metrics_)
+  {
+    ROS_DEBUG("both use_avoidance_goal and use_avoidance_path are set, using use_avoidance_path");
+    use_avoidance_goal_=false;
+  }
+
   if (use_avoidance_goal_)
   {
-    bool use_detector=false;
-    std::string detector_topic;
     m_avoidance_goal_cost_fcn=std::make_shared<pathplan::AvoidanceGoalCostFunction>(m_nh);
+  }
+
+
+  bool use_detector=false;
+  std::string detector_topic;
+  if (use_avoidance_goal_ || use_avoidance_metrics_)
+  {
     if (!m_nh.getParam("detector_topic",detector_topic))
     {
       use_detector=false;
@@ -107,19 +131,9 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
       m_centroid_sub=m_nh.subscribe(detector_topic,2,&MultigoalPlanner::humansCb,this);
     }
   }
-  if (!m_nh.getParam("use_avoidance_path",use_avoidance_goal_))
-  {
-    ROS_DEBUG("use_avoidance_path is not set, default=false");
-    use_avoidance_metrics_=false;
-  }
 
-  if (use_avoidance_metrics_)
-  {
-    avoidance_metrics_=std::make_shared<pathplan::AvoidanceMetrics>(m_nh);
-    metrics_=avoidance_metrics_;
-  }
-  else
-    metrics_=std::make_shared<pathplan::Metrics>();
+
+
 
 
   COMMENT("created MultigoalPlanner");
@@ -222,8 +236,9 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
   solver->addStart(start_node);
 
   m_queue.callAvailable();
-  // computing minimum time
   bool at_least_a_goal=false;
+
+  // joint goal
   for (unsigned int iGoal=0;iGoal<request_.goal_constraints.size();iGoal++)
   {
     ROS_DEBUG("Processing goal %u",iGoal++);
