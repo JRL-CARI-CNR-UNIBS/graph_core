@@ -1,9 +1,9 @@
 <!--
 #__  .___  ___. .______     ______   .______     .___________.    ___      .__   __. .___________.
 #|  | |   \/   | |   _  \   /  __  \  |   _  \    |           |   /   \     |  \ |  | |           |
-#|  | |  \  /  | |  |_)  | |  |  |  | |  |_)  |   `---|  |----`  /  ^  \    |   \|  | `---|  |----`
+#|  | |  \  /  | |  |_)  | |  |  |  | |  |_)  |   `-__|  |____`  /  ^  \    |   \|  | `-__|  |___-`
 #|  | |  |\/|  | |   ___/  |  |  |  | |      /        |  |      /  /_\  \   |  . `  |     |  |
-#|  | |  |  |  | |  |      |  `--'  | |  |\  \----.   |  |     /  _____  \  |  |\   |     |  |
+#|  | |  |  |  | |  |      |  `__'  | |  |\  \___-.   |  |     /  _____  \  |  |\   |     |  |
 #|__| |__|  |__| | _|       \______/  | _| `._____|   |__|    /__/     \__\ |__| \__|     |__|
 #
 # ========================================================================
@@ -27,7 +27,7 @@
   <param name="planning_plugin" value="$(arg planning_plugin)" />
   <param name="request_adapters" value="$(arg planning_adapters)" />
   <param name="start_state_max_bounds_error" value="$(arg start_state_max_bounds_error)" />
-  <rosparam command="load" file="$(find YOUR_PACKAGE_moveit_config)/config/dirrt_planning.yaml"/>
+  <rosparam command="load" file="$(find YOUR_PACKAGE_moveit_config)/config/dirrt_planning.yaml"/> <!-- <================change package name!!!!-->
 </launch>
 
 

@@ -38,7 +38,7 @@
 # DON'T MODIFY THIS FILE, COPY IT IN THE [YOUR_CELL]_moveit_config PACKAGE
 # ========================================================================
 group_names_map:
-  planner_name: group_name  # one planner_name for each group
+  planner_name: group_name  # one planner_name for each group. CHANGE IT
   
 planner_name:
   type: Multigoal
@@ -47,19 +47,19 @@ planner_name:
   extend: false # use RRT-extend instead of RRT-Connect. Default value is ok
   local_bias: 0.25 # sampling bias on the actual solution.  Default value is ok
   tube_radius: 0.02 # tube of the local sampling.  Default value is ok
-  use_avoidance_goal: true # set true if the human avoidance is done only at the goal. Useful in Multigoal planning
+  use_avoidance_goal: true # set true if the human avoidance is done only at the goal. Useful in Multigoal planning.
   use_avoidance_path: false # set true if the human avoidance is done during the path. It is slower than use_avoidance_goal.
   #If use_avoidance_goal and use_avoidance_path are both true, use_avoidance_path is used.
 
-  detector_topic: topic_name #topic name of the message type detector_ros::xyzData
-  base_frame: world #base_frame of the chain
-  tool_frame: open_tip #tool_frame of the chain
+  detector_topic: topic_name #topic name of the message type detector_ros::xyzData. CHANGE IT
+  base_frame: world #base_frame of the chain. CHANGE IT
+  tool_frame: open_tip #tool_frame of the chain. CHANGE IT
 
   min_distance: 0.4 # minimum distance between robot and human in meters. if distance<=min_distance the penalty is equal to the max_penalty
   max_distance: 0.6 # maximum distance  between robot and human in meters. if distance>=max_distance the penalty is 0.
   max_penalty: 10.0 # maximum penalty due to the distance between robot and human.
   display_bubbles: false #display penalty bubbles in rviz on topic "/goal_cost_function/avoidance_points"
-  links: # links used for measuring the distance between robot and human
+  links: # links used for measuring the distance between robot and human. CHANGE IT
   - open_tip
   - tool0
   - wrist_1_link
