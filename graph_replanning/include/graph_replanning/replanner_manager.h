@@ -1,6 +1,5 @@
-#pragma once
-#ifndef REPLANNER_MANAGER_H
-#define REPLANNER_MANAGER_H
+#ifndef REPLANNER_MANAGER_H__
+#define REPLANNER_MANAGER_H__
 
 #include <graph_replanning/trajectory.h>
 #include <moveit/robot_state/robot_state.h>
@@ -23,14 +22,12 @@ class ReplannerManager: public std::enable_shared_from_this<ReplannerManager>
 protected:
 
   // To be assigned by the constructor
-  planning_scene::PlanningScenePtr planning_scn_;
+  PathPtr current_path_;
+  std::vector<PathPtr> other_paths_;
   double trj_execution_thread_frequency_;
-  double replanning_thread_frequency_;
   double collision_checker_thread_frequency_;
   double dt_replan_restricted_;
   double dt_replan_relaxed_;
-  std::vector<PathPtr> other_paths_;
-  PathPtr current_path_;
   std::string group_name_;
   std::string base_link_;
   std::string last_link_;
@@ -38,15 +35,16 @@ protected:
 
   // Global variables
   bool stop_;
+  bool first_replan_;
+  bool path_obstructed_;
+  bool computing_avoiding_path_;
+  int n_conn_;
   double real_time_;
   double t_;
   double dt_;
   double replan_offset_;
   double t_replan_;
-  bool first_replan_;
-  bool path_obstructed_;
-  bool computing_avoiding_path_;
-  int n_conn_;
+  double replanning_thread_frequency_;
 
   ReplannerPtr replanner_;
   Eigen::VectorXd current_configuration_;
@@ -54,6 +52,7 @@ protected:
   CollisionCheckerPtr checker_thread_cc_;
   CollisionCheckerPtr checker_;
   TrajectoryPtr trajectory_;
+  planning_scene::PlanningScenePtr planning_scn_;
   planning_scene::PlanningScenePtr planning_scn_replanning_;
   trajectory_processing::SplineInterpolator interpolator_;
   trajectory_msgs::JointTrajectoryPoint pnt_;
@@ -63,7 +62,6 @@ protected:
   std::mutex planning_mtx_;
   std::mutex trj_mtx_;
   std::mutex checker_mtx_;
-  std::mutex display_mtx_;
   std::mutex scene_mtx_;
   std::mutex replanner_mtx_;
 
@@ -73,11 +71,11 @@ protected:
   ros::Publisher obs_current_norm_pub_;
   ros::Publisher obs_new_norm_pub_;
   ros::Publisher obs_time_replanning_pub_;
+  ros::Publisher target_pub_;
+  ros::Publisher time_pub_;
   ros::ServiceClient plannning_scene_client_;
   ros::ServiceClient add_obj_;
   ros::ServiceClient remove_obj_;
-  ros::Publisher target_pub_;
-  ros::Publisher time_pub_;
   ros::ServiceClient start_log_;
   ros::ServiceClient stop_log_;
 
@@ -86,7 +84,6 @@ public:
 
   ReplannerManager(PathPtr &current_path,
                    std::vector<PathPtr> &other_paths,
-                   planning_scene::PlanningScenePtr &planning_scn,
                    const double &trj_execution_thread_frequency,
                    const double &collision_checker_thread_frequency,
                    const double &dt_replan_restricted,
@@ -96,10 +93,12 @@ public:
                    const std::string &last_link,
                    ros::NodeHandle &nh);
 
+  void attributeInitialization();
   void subscribeTopicsAndServices();
   void replanningThread();
   void collisionCheckThread();
   void displayThread();
+  void spawnObjects();
   int trajectoryExecutionThread();
 };
 

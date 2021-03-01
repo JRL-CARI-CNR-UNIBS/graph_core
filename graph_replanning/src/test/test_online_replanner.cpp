@@ -5,7 +5,7 @@
 #include <graph_core/graph/path.h>
 #include <graph_core/graph/tree.h>
 #include <graph_core/graph/graph_display.h>
-#include <graph_core/graph/trajectory.h>
+#include <graph_replanning/trajectory.h>
 #include <graph_core/solvers/rrt_connect.h>
 #include <graph_core/solvers/birrt.h>
 #include <graph_core/solvers/rrt_star.h>
@@ -22,7 +22,7 @@
 #include <moveit_visual_tools/moveit_visual_tools.h>
 #include <rviz_visual_tools/rviz_visual_tools.h>
 #include <eigen_conversions/eigen_msg.h>
-#include <graph_core/replanner.h>
+#include <graph_replanning/replanner.h>
 #include <moveit_planning_helper/spline_interpolator.h>
 #include <object_loader_msgs/addObjects.h>
 #include <object_loader_msgs/removeObjects.h>
@@ -156,7 +156,7 @@ void replanning_fcn()
       std::vector<pathplan::PathPtr> other_paths_copy;
       for(const pathplan::PathPtr path:other_paths) other_paths_copy.push_back(path->clone());
 
-      replanner_mtx.lock();     
+      replanner_mtx.lock();
       if(current_path_copy->findConnection(configuration_replan) == NULL)
       {
         trj_mtx.lock();

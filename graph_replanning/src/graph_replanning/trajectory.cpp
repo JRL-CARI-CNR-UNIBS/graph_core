@@ -1,4 +1,4 @@
-#include "graph_core/graph/trajectory.h"
+#include "graph_replanning/trajectory.h"
 
 namespace pathplan
 {

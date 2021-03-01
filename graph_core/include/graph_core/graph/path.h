@@ -136,6 +136,11 @@ public:
     return tree_;
   }
 
+  void setChecker(const CollisionCheckerPtr &checker)
+  {
+    checker_ = checker;
+  }
+
   void setChangeWarp(const std::vector<bool>& change_warp)
   {
     change_warp_ = change_warp;

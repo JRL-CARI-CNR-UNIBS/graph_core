@@ -1,6 +1,5 @@
-#pragma once
-#ifndef TRAJECTORY_8_1_2021_H
-#define TRAJECTORY_8_1_2021_H
+#ifndef TRAJECTORY_8_1_2021_H__
+#define TRAJECTORY_8_1_2021_H__
 
 #include <ros/ros.h>
 #include <graph_core/metrics.h>

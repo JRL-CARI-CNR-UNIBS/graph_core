@@ -4,7 +4,6 @@ namespace pathplan
 {
 ReplannerManager::ReplannerManager(PathPtr &current_path,
                                    std::vector<PathPtr> &other_paths,
-                                   planning_scene::PlanningScenePtr &planning_scn,
                                    const double &trj_execution_thread_frequency,
                                    const double &collision_checker_thread_frequency,
                                    const double &dt_replan_restricted,
@@ -16,7 +15,6 @@ ReplannerManager::ReplannerManager(PathPtr &current_path,
 {
   current_path_ = current_path;
   other_paths_ = other_paths;
-  planning_scn_ = planning_scn;
   trj_execution_thread_frequency_ = trj_execution_thread_frequency;
   collision_checker_thread_frequency_ = collision_checker_thread_frequency;
   dt_replan_restricted_ = dt_replan_restricted;
@@ -26,8 +24,12 @@ ReplannerManager::ReplannerManager(PathPtr &current_path,
   last_link_ = last_link;
   nh_ = nh;
 
+  subscribeTopicsAndServices();
+  attributeInitialization();
+}
 
-  // Global variables
+void ReplannerManager::attributeInitialization()
+{
   stop_ = false;
   replanning_thread_frequency_ = 1/dt_replan_restricted_;
   real_time_ = 0.0;
@@ -40,14 +42,29 @@ ReplannerManager::ReplannerManager(PathPtr &current_path,
   path_obstructed_ = false;
   computing_avoiding_path_ = false;
 
-  subscribeTopicsAndServices();
-
-  moveit::planning_interface::MoveGroupInterface move_group(group_name);
+  moveit::planning_interface::MoveGroupInterface move_group(group_name_);
   robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
   robot_model::RobotModelPtr kinematic_model = robot_model_loader.getModel();
   planning_scn_ = std::make_shared<planning_scene::PlanningScene>(kinematic_model);
   planning_scn_replanning_ = std::make_shared<planning_scene::PlanningScene>(kinematic_model);
-  const robot_state::JointModelGroup* joint_model_group = move_group.getCurrentState()->getJointModelGroup(group_name);
+
+  moveit_msgs::GetPlanningScene ps_srv;
+  if (!plannning_scene_client_.call(ps_srv))
+  {
+    ROS_ERROR("call to srv not ok");
+  }
+
+  if (!planning_scn_->setPlanningSceneMsg(ps_srv.response.scene))
+  {
+    ROS_ERROR("unable to update planning scene");
+  }
+
+  if (!planning_scn_replanning_->setPlanningSceneMsg(ps_srv.response.scene))
+  {
+    ROS_ERROR("unable to update planning scene");
+  }
+
+  const robot_state::JointModelGroup* joint_model_group = move_group.getCurrentState()->getJointModelGroup(group_name_);
   std::vector<std::string> joint_names = joint_model_group->getActiveJointModelNames();
   unsigned int dof = joint_names.size();
   Eigen::VectorXd lb(dof);
@@ -66,6 +83,9 @@ ReplannerManager::ReplannerManager(PathPtr &current_path,
   pathplan::MetricsPtr metrics = std::make_shared<pathplan::Metrics>();
   checker_thread_cc_ = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scn_, group_name_);
   checker_ = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scn_replanning_, group_name_);
+
+  current_path_->setChecker(checker_);  //To synchronize path checker with the related one to the planning scene that will be used by the replanner, which will be different from the planning scene used by the collision checking thread
+  for(const PathPtr &path:other_paths_) path->setChecker(checker_);
 
   pathplan::SamplerPtr samp = std::make_shared<pathplan::InformedSampler>(current_path_->getWaypoints().front(), current_path_->getWaypoints().back(), lb, ub);
   pathplan::BiRRTPtr solver = std::make_shared<pathplan::BiRRT>(metrics, checker_, samp);
@@ -88,7 +108,6 @@ ReplannerManager::ReplannerManager(PathPtr &current_path,
   replanner_ = std::make_shared<pathplan::Replanner>(configuration_replan_, current_path_, other_paths_, solver, metrics, checker_, lb, ub);
 
   interpolator_.interpolate(ros::Duration(t_),pnt_);
-
   joint_state_.position = pnt_.positions;
   joint_state_.velocity = pnt_.velocities;
   joint_state_.name = joint_names;
@@ -119,14 +138,6 @@ void ReplannerManager::subscribeTopicsAndServices()
   add_obj_ = nh_.serviceClient<object_loader_msgs::addObjects>("add_object_to_scene");
   remove_obj_ = nh_.serviceClient<object_loader_msgs::removeObjects>("/remove_object_from_scene");
 
-  if (!start_log_.waitForExistence(ros::Duration(10)))
-  {
-    ROS_ERROR("unable to connect to /start_log");
-  }
-  if (!stop_log_.waitForExistence(ros::Duration(10)))
-  {
-    ROS_ERROR("unable to connect to /stop_log");
-  }
   if (!add_obj_.waitForExistence(ros::Duration(10)))
   {
     ROS_ERROR("unable to connect to /add_object_to_scene");
@@ -163,7 +174,6 @@ void ReplannerManager::replanningThread()
 
     past_configuration_replan = configuration_replan_;
     past_abscissa = abscissa;
-
     configuration_replan_ = replanner_->getCurrentPath()->projectOnClosestConnectionKeepingCurvilinearAbscissa(point2project,past_configuration_replan,abscissa,past_abscissa,n_conn_replan);
 
     replan = ((current_configuration_-goal).norm()>1e-03 && (configuration_replan_-goal).norm()>1e-03);
@@ -317,23 +327,146 @@ void ReplannerManager::collisionCheckThread()
 {
   ros::Rate lp(collision_checker_thread_frequency_);
 
+  moveit_msgs::GetPlanningScene ps_srv;
+
+  while (!stop_)
+  {
+    scene_mtx_.lock();
+    if (!plannning_scene_client_.call(ps_srv))
+    {
+      ROS_ERROR("call to srv not ok");
+    }
+
+    if (!planning_scn_->setPlanningSceneMsg(ps_srv.response.scene))
+    {
+      ROS_ERROR("unable to update planning scene");
+    }
+    std::vector<moveit_msgs::CollisionObject> collision_objs;  //CHIEDI SE SERVE
+    planning_scn_->getCollisionObjectMsgs(collision_objs);
+    scene_mtx_.unlock();
+
+    checker_mtx_.lock();
+    current_path_->isValid(checker_thread_cc_);
+    for(const pathplan::PathPtr& path: other_paths_) path->isValid(checker_thread_cc_);
+
+    if(!computing_avoiding_path_)
+    {
+      trj_mtx_.lock();
+      path_obstructed_ = !(current_path_->isValidFromConf(current_configuration_,checker_thread_cc_));
+      trj_mtx_.unlock();
+    }
+    checker_mtx_.unlock();
+
+    lp.sleep();
+  }
+}
+
+void ReplannerManager::displayThread()
+{
+  scene_mtx_.lock();
+  pathplan::DisplayPtr disp = std::make_shared<pathplan::Display>(planning_scn_,group_name_,last_link_);
+  scene_mtx_.unlock();
+  ros::Duration(0.5).sleep();
+
+  std::vector<double> marker_color;
+  std::vector<double> marker_scale;
+  std::vector<double> marker_scale_sphere(3,0.02);
+
+  disp->clearMarkers();
+
+  ros::Rate lp(3*trj_execution_thread_frequency_);
+
+  while(!stop_)
+  {
+    checker_mtx_.lock();
+    replanner_mtx_.lock();
+    trj_mtx_.lock();
+    pathplan::PathPtr current_path = current_path_->clone();
+    std::vector<pathplan::PathPtr> other_paths;
+    for(const pathplan::PathPtr path:other_paths_) other_paths.push_back(path->clone());
+    Eigen::VectorXd current_configuration = current_configuration_;
+    Eigen::VectorXd configuration_replan = configuration_replan_;
+    trajectory_msgs::JointTrajectoryPoint pnt = pnt_;
+    trajectory_msgs::JointTrajectoryPoint pnt_replan = pnt_replan_;
+    trj_mtx_.unlock();
+    replanner_mtx_.unlock();
+    checker_mtx_.unlock();
+
+    int path_id = 10;
+    int node_id = 1000;
+    int wp_id = 10000;
+
+    marker_scale = {0.01,0.01,0.01};
+    marker_color =  {1.0,1.0,0.0,1.0};
+    disp->changeConnectionSize(marker_scale);
+    disp->displayPathAndWaypoints(current_path,path_id,wp_id,"pathplan",marker_color);
+    disp->defaultConnectionSize();
+
+    for(unsigned int i=0; i<other_paths.size();i++)
+    {
+      if(i==0) marker_color = {0.0f,0.0f,1.0,1.0};
+      if(i==1) marker_color = {1.0,0.0f,0.0f,1.0};
+      if(i==2) marker_color = {0.0,0.5,0.5,1.0};
+      if(i==3) marker_color = {0.5,0.5,0.0,1.0};
+      if(i==4) marker_color = {0.45,0.0,1.0,1.0};
+      if(i==5) marker_color = {0.75,0.25,0.0,1.0};
+      if(i==6) marker_color = {1.0,0.85,0.35,1.0};
+      if(i==7) marker_color = {0.0,1.0,0.5,1.0};
+      if(i==8) marker_color = {0.98,0.85,0.87,1.0};
+      if(i==9) marker_color = {0.27,0.35,0.27,1.0};
+
+      path_id += 1;
+      wp_id += 1000;
+      disp->displayPathAndWaypoints(other_paths.at(i),path_id,wp_id,"pathplan",marker_color);
+    }
+
+    disp->changeNodeSize(marker_scale_sphere);
+    marker_color = {1.0,0.0,1.0,1.0};
+    disp->displayNode(std::make_shared<pathplan::Node>(current_configuration),node_id,"pathplan",marker_color);
+
+    Eigen::VectorXd point2project(pnt.positions.size());
+    for(unsigned int i=0; i<pnt.positions.size();i++) point2project[i] = pnt.positions.at(i);
+    node_id +=1;
+    marker_color = {0.0,1.0,0.0,1.0};
+    disp->displayNode(std::make_shared<pathplan::Node>(point2project),node_id,"pathplan",marker_color);
+
+    node_id +=1;
+    marker_color = {0.0,0.0,0.0,1.0};
+    disp->displayNode(std::make_shared<pathplan::Node>(configuration_replan),node_id,"pathplan",marker_color);
+
+    for(unsigned int i=0; i<pnt_replan.positions.size();i++) point2project[i] = pnt_replan.positions.at(i);
+    node_id +=1;
+    marker_color = {0.5,0.5,0.5,1.0};
+    disp->displayNode(std::make_shared<pathplan::Node>(point2project),node_id,"pathplan",marker_color);
+    trj_mtx_.unlock();
+    disp->defaultNodeSize();
+
+    lp.sleep();
+  }
+}
+
+void ReplannerManager::spawnObjects()
+{
+  ros::Rate lp(2*trj_execution_thread_frequency_);
+
   object_loader_msgs::addObjects srv_add_object;
   object_loader_msgs::removeObjects srv_remove_object;
   moveit_msgs::GetPlanningScene ps_srv;
 
+  if (!add_obj_.waitForExistence(ros::Duration(10)))
+  {
+    ROS_FATAL("srv not found");
+  }
+  if (!remove_obj_.waitForExistence(ros::Duration(10)))
+  {
+    ROS_FATAL("srv not found");
+  }
+
   bool object_spawned = false;
   bool second_object_spawned = false;
   bool third_object_spawned = false;
-  bool fourth_object_spawned = false;
   while (!stop_)
   {
-    // ////////////////////////////////////////////SPAWNING THE OBJECT/////////////////////////////////////////////
-    if(real_time_>=1.85 && !fourth_object_spawned)  //CAMBIA
-    {
-      fourth_object_spawned = true;
-      object_spawned = false;
-    }
-
     if(real_time_>=1.5 && !third_object_spawned)
     {
       third_object_spawned = true;
@@ -348,10 +481,6 @@ void ReplannerManager::collisionCheckThread()
 
     if(!object_spawned && real_time_>=0.50)
     {
-      if (!add_obj_.waitForExistence(ros::Duration(10)))
-      {
-        ROS_FATAL("srv not found");
-      }
       object_loader_msgs::object obj;
       obj.object_type = "scatola";
 
@@ -364,7 +493,7 @@ void ReplannerManager::collisionCheckThread()
       trj_mtx_.unlock();
       replanner_mtx_.unlock();
 
-      if(fourth_object_spawned)
+      if(third_object_spawned)
       {
         obj_conn_pos = idx_current_conn;
       }
@@ -412,20 +541,9 @@ void ReplannerManager::collisionCheckThread()
         replanner_mtx_.unlock();
       }
 
-      /*pathplan::ConnectionPtr obj_conn;
-      pathplan::NodePtr obj_parent;
-      pathplan::NodePtr obj_child;
-      Eigen::VectorXd obj_pos;
-
-      replanner_mtx.lock();
-      obj_conn_pos = replanner->getCurrentPath()->getConnections().size()-2;
-      obj_conn = replanner->getCurrentPath()->getConnections().at(obj_conn_pos);
-      replanner_mtx.unlock();
-      obj_parent = obj_conn->getParent();
-      obj_child = obj_conn->getChild();
-      obj_pos = (obj_child->getConfiguration() +  obj_parent->getConfiguration())/2;*/
-
+      trj_mtx_.lock();
       moveit::core::RobotState obj_pos_state = trajectory_->fromWaypoints2State(obj_pos);
+      trj_mtx_.unlock();
       tf::poseEigenToMsg(obj_pos_state.getGlobalLinkTransform(last_link_),obj.pose.pose);
 
       obj.pose.header.frame_id="world";
@@ -434,6 +552,7 @@ void ReplannerManager::collisionCheckThread()
       srv_add_object.request.objects.push_back(obj);
 
       scene_mtx_.lock();
+      checker_mtx_.lock();
       if (!add_obj_.call(srv_add_object))
       {
         ROS_ERROR("call to srv not ok");
@@ -449,14 +568,15 @@ void ReplannerManager::collisionCheckThread()
           srv_remove_object.request.obj_ids.push_back(str);   //per rimuovere gli oggetti alla fine
         }
       }
+      checker_mtx_.unlock();
       scene_mtx_.unlock();
 
       object_spawned = true;
       ROS_WARN("OBJECT SPAWNED");
     }
 
-    // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     scene_mtx_.lock();
+    checker_mtx_.lock();
     if (!plannning_scene_client_.call(ps_srv))
     {
       ROS_ERROR("call to srv not ok");
@@ -468,19 +588,8 @@ void ReplannerManager::collisionCheckThread()
     }
     std::vector<moveit_msgs::CollisionObject> collision_objs;
     planning_scn_->getCollisionObjectMsgs(collision_objs);
-    scene_mtx_.unlock();
-
-    checker_mtx_.lock();
-    current_path_->isValid(checker_thread_cc_);
-    for(const pathplan::PathPtr& path: other_paths_) path->isValid(checker_thread_cc_);
-
-    if(!computing_avoiding_path_)
-    {
-      trj_mtx_.lock();
-      path_obstructed_ = !(current_path_->isValidFromConf(current_configuration_,checker_thread_cc_));
-      trj_mtx_.unlock();
-    }
     checker_mtx_.unlock();
+    scene_mtx_.unlock();
 
     lp.sleep();
   }
@@ -488,123 +597,33 @@ void ReplannerManager::collisionCheckThread()
   ros::Duration(5).sleep();
 
   scene_mtx_.lock();
-  if (!remove_obj_.waitForExistence(ros::Duration(10)))
-  {
-    ROS_FATAL("srv not found");
-  }
+  checker_mtx_.lock();
   if (!remove_obj_.call(srv_remove_object))
-  {
+  { checker_mtx_.lock();
     ROS_ERROR("call to srv not ok");
   }
   if (!srv_remove_object.response.success)
   {
     ROS_ERROR("srv error");
   }
+  checker_mtx_.unlock();
   scene_mtx_.unlock();
 }
 
-void ReplannerManager::displayThread()
-{
-  pathplan::DisplayPtr disp = std::make_shared<pathplan::Display>(planning_scn_,group_name_,last_link_);
-  disp->clearMarkers();
-  ros::Duration(0.1).sleep();
-
-  std::vector<double> marker_color;
-  std::vector<double> marker_scale;
-  std::vector<double> marker_scale_sphere(3,0.02);
-
-  ros::Rate lp(3*trj_execution_thread_frequency_);
-
-  while(!stop_)
-  {
-    int path_id = -10;
-    int node_id = -1000;
-    int wp_id = -10000;
-
-    marker_scale = {0.01,0.01,0.01};
-    marker_color =  {1.0,1.0,0.0,1.0};
-    disp->changeConnectionSize(marker_scale);
-    trj_mtx_.lock();
-    disp->displayPathAndWaypoints(current_path_,path_id,wp_id,"pathplan",marker_color);
-    disp->defaultConnectionSize();
-
-    for(unsigned int i=0; i<other_paths_.size();i++)
-    {
-      if(i==0) marker_color = {0.0f,0.0f,1.0,1.0};
-      if(i==1) marker_color = {1.0,0.0f,0.0f,1.0};
-      if(i==2) marker_color = {0.0,0.5,0.5,1.0};
-      if(i==3) marker_color = {0.5,0.5,0.0,1.0};
-      if(i==4) marker_color = {0.45,0.0,1.0,1.0};
-      if(i==5) marker_color = {0.75,0.25,0.0,1.0};
-      if(i==6) marker_color = {1.0,0.85,0.35,1.0};
-      if(i==7) marker_color = {0.0,1.0,0.5,1.0};
-      if(i==8) marker_color = {0.98,0.85,0.87,1.0};
-      if(i==9) marker_color = {0.27,0.35,0.27,1.0};
-
-      path_id -= 1;
-      wp_id -= 1000;
-      disp->displayPathAndWaypoints(current_path_,path_id,wp_id,"pathplan",marker_color);
-    }
-
-    disp->changeNodeSize(marker_scale_sphere);
-    marker_color = {1.0,0.0,1.0,1.0};
-    disp->displayNode(std::make_shared<pathplan::Node>(current_configuration_),node_id,"pathplan",marker_color);
-
-    Eigen::VectorXd point2project(pnt_.positions.size());
-    for(unsigned int i=0; i<pnt_.positions.size();i++) point2project[i] = pnt_.positions.at(i);
-    node_id -=1;
-    marker_color = {0.0,1.0,0.0,1.0};
-    disp->displayNode(std::make_shared<pathplan::Node>(point2project),node_id,"pathplan",marker_color);
-
-    node_id -=1;
-    marker_color = {0.0,0.0,0.0,1.0};
-    disp->displayNode(std::make_shared<pathplan::Node>(configuration_replan_),node_id,"pathplan",marker_color);
-
-    for(unsigned int i=0; i<pnt_replan_.positions.size();i++) point2project[i] = pnt_replan_.positions.at(i);
-    node_id -=1;
-    marker_color = {0.5,0.5,0.5,1.0};
-    disp->displayNode(std::make_shared<pathplan::Node>(point2project),node_id,"pathplan",marker_color);
-    trj_mtx_.unlock();
-    disp->defaultNodeSize();
-
-    lp.sleep();
-  }
-}
 
 int ReplannerManager::trajectoryExecutionThread()
 {
-
   std_srvs::Empty srv_log;
   start_log_.call(srv_log);
-
-  // UPDATING PLANNING SCENE
-  moveit_msgs::GetPlanningScene ps_srv;
-  if (!plannning_scene_client_.call(ps_srv))
-  {
-    ROS_ERROR("call to srv not ok");
-    return 0;
-  }
-
-  if (!planning_scn_->setPlanningSceneMsg(ps_srv.response.scene))
-  {
-    ROS_ERROR("unable to update planning scene");
-    return 0;
-  }
-  if (!planning_scn_replanning_->setPlanningSceneMsg(ps_srv.response.scene))
-  {
-    ROS_ERROR("unable to update planning scene");
-    return 0;
-  }
-
 
   Eigen::VectorXd past_current_configuration = current_configuration_;
   Eigen::VectorXd goal_conf = current_path_->getWaypoints().back();
 
-  stop_=false;
+  ROS_WARN("Launching threads..");
   std::thread display_thread = std::thread(&ReplannerManager::displayThread, this);
-  ros::Duration(0.1).sleep();
   std::thread replanning_thread = std::thread(&ReplannerManager::replanningThread, this);
   std::thread col_check_thread = std::thread(&ReplannerManager::collisionCheckThread, this);
+  //std::thread spawn_obj_thread = std::thread(&ReplannerManager::spawnObjects, this);
 
   ros::Rate lp(trj_execution_thread_frequency_);
 
@@ -642,14 +661,12 @@ int ReplannerManager::trajectoryExecutionThread()
   }
 
   ROS_ERROR("STOP");
-  if(!stop_) stop_ = true;
+  stop_ = true;
 
-  if (replanning_thread.joinable())
-    replanning_thread.join();
-  if (col_check_thread.joinable())
-    col_check_thread.join();
-  if (display_thread.joinable())
-    display_thread.join();
+  if(replanning_thread.joinable()) replanning_thread.join();
+  if(col_check_thread.joinable()) col_check_thread.join();
+  if(display_thread.joinable()) display_thread.join();
+  //if(spawn_obj_thread.joinable()) spawn_obj_thread.join();
 
   // BINARY LOGGER SALVA FINO A I-1 ESIMO DATO PUBBLICATO, QUESTO AIUTA A SALVARLI TUTTI
   std_msgs::Float64 fake_data;

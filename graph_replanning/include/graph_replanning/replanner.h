@@ -1,6 +1,5 @@
-#pragma once
-#ifndef REPLANNER_H
-#define REPLANNER_H
+#ifndef REPLANNER_H__
+#define REPLANNER_H__
 #include <eigen3/Eigen/Core>
 #include <ros/ros.h>
 #include <graph_core/util.h>
