@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <launch>
+<<<<<<< HEAD
 
   <rosparam command="load" file="$(find graph_core)/config/object_test_replanner.yaml"/>
   <rosparam command="load" file="$(find graph_core)/config/high_dof_config.yaml"/>
@@ -15,5 +16,16 @@
         output="screen"
         launch-prefix="gdb -ex run --args" >
     </node>
+=======
+  <rosparam command="load" file="$(find graph_core)/config/object_test_replanner.yaml"/>
+  <include file="$(find cell_moveit_config)/launch/demo.launch"/>
+  <node pkg="object_loader" name="context_manager_node" type="context_manager_node" respawn="true" output="screen"/>
+  <node name="test_online_replanner"
+        pkg="graph_core"
+        type="test_online_replanner"
+        output="screen"
+        launch-prefix="gdb -ex run --args" >
+  </node>
+>>>>>>> 97fd0441c5f08ec01b1ad9c64268c193f11995e5
 
 </launch>

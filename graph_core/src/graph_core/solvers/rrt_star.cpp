@@ -38,11 +38,12 @@ bool RRTStar::addStartTree(const TreePtr &start_tree)
 
   if (goal_node_)
   {
-    utopia_ = (goal_node_->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
+    utopia_ = goal_cost_+(goal_node_->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
     init_ = true;
     solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
-    cost_ = solution_->cost();
+    path_cost_ = solution_->cost();
+    cost_=path_cost_+goal_cost_;
   }
   else
     init_ = false;
@@ -55,16 +56,16 @@ bool RRTStar::addGoal(const NodePtr &goal_node)
 {
   solved_ = false;
   goal_node_ = goal_node;
-
+  goal_cost_ = goal_cost_fcn_->cost(goal_node);
   if (start_tree_)
   {
-    utopia_ = (goal_node_->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
+    utopia_ = goal_cost_+(goal_node_->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
     init_ = true;
 
     solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
-    cost_ = solution_->cost();
-
+    path_cost_ = solution_->cost();
+    cost_=path_cost_+goal_cost_;
   }
   else
     init_ = false;
@@ -83,7 +84,11 @@ bool RRTStar::update(PathPtr& solution)
   if (!init_)
     return false;
   if (cost_ <= 1.003 * utopia_)
+  {
+    completed_=true;
+    solution=solution_;
     return true;
+  }
 
   return update(sampler_->sample(), solution);
 
@@ -94,9 +99,11 @@ bool RRTStar::update(const Eigen::VectorXd& point, PathPtr& solution)
 {
   if (!init_)
     return false;
-  if (cost_ <= 1.003 * utopia_)
+  if (path_cost_ <= 1.003 * utopia_)
   {
     ROS_INFO("Already optimal");
+    solution=solution_;
+    completed_=true;
     return true;
   }
   double cost = solution_->cost();
@@ -111,10 +118,10 @@ bool RRTStar::update(const Eigen::VectorXd& point, PathPtr& solution)
     solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
 
-    cost_ = solution_->cost();
+    path_cost_ = solution_->cost();
 
 
-    sampler_->setCost(cost_);
+    sampler_->setCost(path_cost_);
   }
   solution = solution_;
   return improved;
@@ -125,9 +132,12 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
 {
   if (!init_)
     return false;
-  if (cost_ <= 1.003 * utopia_)
+  if (path_cost_ <= 1.003 * utopia_)
+  {
+    completed_=true;
+    solution=solution_;
     return true;
-
+  }
   double cost = solution_->cost();
   //double r_rewire = std::min(start_tree_->getMaximumDistance(), r_rewire_factor_ * sampler_->getSpecificVolume() * std::pow(std::log(start_tree_->getNumberOfNodes())/start_tree_->getNumberOfNodes(),1./dof_));
   double r_rewire = start_tree_->getMaximumDistance();
@@ -141,10 +151,10 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
     solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
 
-    cost_ = solution_->cost();
+    path_cost_ = solution_->cost();
 
 
-    sampler_->setCost(cost_);
+    sampler_->setCost(path_cost_);
   }
   solution = solution_;
   return improved;

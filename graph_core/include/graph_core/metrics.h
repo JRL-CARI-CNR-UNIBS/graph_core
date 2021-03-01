@@ -43,10 +43,15 @@ public:
   virtual double cost(const NodePtr& node1,
                       const NodePtr& node2);
 
-
   virtual double cost(const Eigen::VectorXd& configuration1,
                       const Eigen::VectorXd& configuration2);
 
+
+  virtual double utopia(const NodePtr& node1,
+                      const NodePtr& node2);
+
+  virtual double utopia(const Eigen::VectorXd& configuration1,
+                      const Eigen::VectorXd& configuration2);
 
 };
 typedef std::shared_ptr<Metrics> MetricsPtr;

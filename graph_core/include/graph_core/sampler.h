@@ -74,7 +74,7 @@ public:
     lower_bound_(lower_bound),
     upper_bound_(upper_bound),
     cost_(cost),
-    gen_(time(0))
+    gen_{rd_()}//gen_(time(0))
   {
     ud_ = std::uniform_real_distribution<double>(0, 1);
 
@@ -113,9 +113,15 @@ public:
     return focii_distance_ >= cost_;
   }
 
+  const double& getFociiDistance(){return focii_distance_;}
+  const double& getCost(){return cost_;}
+
   virtual double getSpecificVolume();
 
   virtual void sampleImproved(){}
+
+  const Eigen::VectorXd& getLB(){return lower_bound_;}
+  const Eigen::VectorXd& getUB(){return upper_bound_;}
 
   const unsigned int& getDimension()const {return ndof_;}
 };
