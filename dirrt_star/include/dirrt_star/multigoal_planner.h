@@ -35,10 +35,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/metrics.h>
 #include <graph_core/speed_metrics.h>
 #include <graph_core/avoidance_goal_cost_function.h>
+#include <graph_core/avoidance_metrics.h>
 #include <graph_core/moveit_collision_checker.h>
 #include <graph_core/tube_informed_sampler.h>
 #include <rosparam_utilities/rosparam_utilities.h>
 #include <geometry_msgs/PoseArray.h>
+#include <detector_ros/xyzData.h>
 #include <ros/callback_queue.h>
 
 #include <graph_core/graph/graph_display.h>
@@ -73,6 +75,7 @@ public:
   virtual void clear() override;
 
   void centroidCb(const geometry_msgs::PoseArrayConstPtr& msg);
+  void humansCb(const detector_ros::xyzDataConstPtr& msg);
 protected:
   moveit::core::RobotModelConstPtr robot_model_;
   //planning_scene::PlanningSceneConstPtr pl
@@ -82,7 +85,8 @@ protected:
   ros::WallDuration m_max_refining_time;
   ros::CallbackQueue m_queue;
 
-  bool use_avoidance_=false;
+  bool use_avoidance_goal_=false;
+  bool use_avoidance_metrics_=false;
   unsigned int m_dof;
   std::vector<std::string> joint_names_;
   Eigen::VectorXd m_lb;
@@ -91,6 +95,7 @@ protected:
   std::string group_;
 
   pathplan::MetricsPtr metrics_;
+  pathplan::AvoidanceMetricsPtr avoidance_metrics_;
   pathplan::AvoidanceGoalCostFunctionPtr m_avoidance_goal_cost_fcn;
   pathplan::CollisionCheckerPtr checker;
 
