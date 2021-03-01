@@ -1,1 +1,1 @@
-see [readme](dirrt_start/readme.md) in dirrt_star
+see [readme](dirrt_star/readme.md) in dirrt_star
