@@ -40,9 +40,9 @@
 # MODIFY THE PARAMETERS WITH THE COMMENT ***CHANGE IT***
 # ========================================================================
 group_names_map:
-  planner_name: group_name  # one planner_name for each group. ***CHANGE IT***
+  pickplace_planner: group_name  # one planner_name for each group. ***CHANGE IT***
   
-planner_name:
+pickplace_planner:
   type: Multigoal
   max_distance: 0.2 # max distance between two edges of the tree. Default value is ok
   max_refine_time: 1.0 # The time duration in seconds that the replanner uses to refine the first solution. A small value produces faster but nonoptimal solutions ***CHANGE IT IF NEEDED***
