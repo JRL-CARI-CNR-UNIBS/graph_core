@@ -38,6 +38,9 @@ protected:
   bool first_replan_;
   bool path_obstructed_;
   bool computing_avoiding_path_;
+  bool spawn_objs_;
+  bool replanning_;
+
   int n_conn_;
   double real_time_;
   double t_;
@@ -93,13 +96,18 @@ public:
                    const std::string &last_link,
                    ros::NodeHandle &nh);
 
+  ReplannerManager(PathPtr &current_path,
+                   std::vector<PathPtr> &other_paths,
+                   ros::NodeHandle &nh);
+
+  void fromParam();
   void attributeInitialization();
   void subscribeTopicsAndServices();
   void replanningThread();
   void collisionCheckThread();
   void displayThread();
   void spawnObjects();
-  int trajectoryExecutionThread();
+  bool trajectoryExecutionThread();
 };
 
 }

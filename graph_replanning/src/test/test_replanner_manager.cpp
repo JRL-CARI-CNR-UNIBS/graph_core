@@ -45,20 +45,6 @@ int main(int argc, char **argv)
     test_name = "no_name";
   }
 
-  double dt_replan_restricted;
-  if (!nh.getParam("dt_replan", dt_replan_restricted))
-  {
-    ROS_INFO("dt_replan not set, used 0.05");
-    dt_replan_restricted = 0.050;
-  }
-
-  double dt_replan_relaxed;
-  if (!nh.getParam("dt_replan_no_obstruction", dt_replan_relaxed))
-  {
-    ROS_INFO("dt_replan_no_obstruction not set, used 0.10");
-    dt_replan_relaxed = 0.10;
-  }
-
   std::string group_name;
   if (!nh.getParam("group_name",group_name))
   {
@@ -166,12 +152,7 @@ int main(int argc, char **argv)
     pathplan::PathPtr current_path = path_vector.front();
     std::vector<pathplan::PathPtr> other_paths = {path_vector.at(1),path_vector.at(2),path_vector.at(3)};
 
-    ROS_INFO_STREAM("Other paths: "<<other_paths.size());
-
-    double trj_execution_thread_frequency = 100;
-    double collision_checker_thread_frequency = 30;
-
-    pathplan::ReplannerManagerPtr replanner_manager = std::make_shared<pathplan::ReplannerManager>(current_path, other_paths, trj_execution_thread_frequency, collision_checker_thread_frequency, dt_replan_restricted, dt_replan_relaxed, group_name, base_link, last_link, nh);
+    pathplan::ReplannerManagerPtr replanner_manager = std::make_shared<pathplan::ReplannerManager>(current_path, other_paths, nh);
     replanner_manager->trajectoryExecutionThread();
   }
 

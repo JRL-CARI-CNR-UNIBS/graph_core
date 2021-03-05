@@ -28,9 +28,37 @@ ReplannerManager::ReplannerManager(PathPtr &current_path,
   attributeInitialization();
 }
 
+ReplannerManager::ReplannerManager(PathPtr &current_path,
+                 std::vector<PathPtr> &other_paths,
+                 ros::NodeHandle &nh)
+{
+  current_path_ = current_path;
+  other_paths_ = other_paths;
+  nh_ = nh;
+
+  subscribeTopicsAndServices();
+  fromParam();
+  attributeInitialization();
+}
+
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ReplannerManager::fromParam()
+{
+  if(!nh_.getParam("trj_execution_thread_frequency",trj_execution_thread_frequency_)) throw  std::invalid_argument("trj_execution_thread_frequency not set");
+  if(!nh_.getParam("collision_checker_thread_frequency",collision_checker_thread_frequency_)) throw  std::invalid_argument("collision_checker_thread_frequency not set");
+  if(!nh_.getParam("dt_replan_restricted",dt_replan_restricted_)) throw  std::invalid_argument("dt_replan_restricted not set");
+  if(!nh_.getParam("dt_replan_relaxed",dt_replan_relaxed_)) throw  std::invalid_argument("dt_replan_relaxed not set");
+  if(!nh_.getParam("group_name",group_name_)) throw  std::invalid_argument("group_name not set");
+  if(!nh_.getParam("base_link",base_link_)) throw  std::invalid_argument("base_link not set");
+  if(!nh_.getParam("last_link",last_link_)) throw  std::invalid_argument("last_link not set");
+}
+
 void ReplannerManager::attributeInitialization()
 {
   stop_ = false;
+  stop_replan_ = false;
   replanning_thread_frequency_ = 1/dt_replan_restricted_;
   real_time_ = 0.0;
   t_ = 0.0;
@@ -107,13 +135,18 @@ void ReplannerManager::attributeInitialization()
 
   replanner_ = std::make_shared<pathplan::Replanner>(configuration_replan_, current_path_, other_paths_, solver, metrics, checker_, lb, ub);
 
+  if(!nh_.getParam("spawn_objs",spawn_objs_))
+  {
+    spawn_objs_ = false;
+  }
+
   interpolator_.interpolate(ros::Duration(t_),pnt_);
   joint_state_.position = pnt_.positions;
   joint_state_.velocity = pnt_.velocities;
   joint_state_.name = joint_names;
   joint_state_.header.frame_id = kinematic_model->getModelFrame();
   joint_state_.header.stamp=ros::Time::now();
-  target_pub_.publish(joint_state_);
+  //target_pub_.publish(joint_state_);
 }
 
 void ReplannerManager::subscribeTopicsAndServices()
@@ -154,7 +187,7 @@ void ReplannerManager::replanningThread()
 
   bool replan = true;
   bool success = 0;
-  Eigen::VectorXd goal = replanner_->getCurrentPath()->getConnections().back()->getChild()->getConfiguration();;
+  Eigen::VectorXd goal = replanner_->getCurrentPath()->getConnections().back()->getChild()->getConfiguration();
   Eigen::VectorXd point2project(pnt_replan_.positions.size());
   Eigen::VectorXd past_configuration_replan = configuration_replan_;
   double past_abscissa;
@@ -177,6 +210,7 @@ void ReplannerManager::replanningThread()
     configuration_replan_ = replanner_->getCurrentPath()->projectOnClosestConnectionKeepingCurvilinearAbscissa(point2project,past_configuration_replan,abscissa,past_abscissa,n_conn_replan);
 
     replan = ((current_configuration_-goal).norm()>1e-03 && (configuration_replan_-goal).norm()>1e-03);
+
     trj_mtx_.unlock();
 
     if(replan)
@@ -211,14 +245,14 @@ void ReplannerManager::replanningThread()
       {
         replan_offset_ = (dt_replan_restricted_-dt_)*1.2;
         time_informedOnlineRepl = 0.90*dt_replan_restricted_;
-        string_dt = " dt ridotto";
+        string_dt = " reduced dt";
         computing_avoiding_path_ = true;
       }
       else
       {
         replan_offset_ = (dt_replan_relaxed_-dt_)*1.2;
         time_informedOnlineRepl = 0.90*dt_replan_relaxed_;
-        string_dt = " dt rilassato";
+        string_dt = " relaxed dt";
       }
 
       if(old_path_obstructed != path_obstructed_)
@@ -235,7 +269,7 @@ void ReplannerManager::replanningThread()
       ros::WallTime toc_rep=ros::WallTime::now();
       planning_mtx_.unlock();
 
-      if((toc_rep-tic_rep).toSec()>=time_informedOnlineRepl/0.9) ROS_WARN("informed duration: %f",(toc_rep-tic_rep).toSec());
+      if((toc_rep-tic_rep).toSec()>=time_informedOnlineRepl/0.9) ROS_WARN("replanning duration: %f",(toc_rep-tic_rep).toSec());
 
       ROS_INFO_STREAM("success: "<< success << string_dt << ": " << (toc_rep-tic_rep).toSec());
       ros::WallTime tic_trj;
@@ -252,7 +286,7 @@ void ReplannerManager::replanningThread()
           replanner_mtx_.unlock();
 
           checker_mtx_.lock();
-          other_paths_.push_back(current_path_copy);
+          other_paths_.push_back(current_path_);
           checker_mtx_.unlock();
         }
 
@@ -314,13 +348,155 @@ void ReplannerManager::replanningThread()
 
       if(duration>(time_informedOnlineRepl/0.9))
       {
-        ROS_WARN("CYCLE TIME SUPERATO: duration-> %f",duration);
-        ROS_WARN("rep-> %f",(toc_rep-tic_rep).toSec());
-        if(success) ROS_WARN("trj-> %f",(toc_trj-tic_trj).toSec());
+        ROS_WARN("Replanning thread time expired: duration-> %f",duration);
+        ROS_WARN("replanning time-> %f",(toc_rep-tic_rep).toSec());
+        if(success) ROS_WARN("trj computation time-> %f",(toc_trj-tic_trj).toSec());
       }
     }
     lp.sleep();
   }
+}
+
+void ReplannerManager::spawnObjects()
+{
+  object_loader_msgs::addObjects srv_add_object;
+  object_loader_msgs::removeObjects srv_remove_object;
+
+  ros::Rate lp(0.5*trj_execution_thread_frequency_);
+
+  bool object_spawned = false;
+  bool second_object_spawned = false;
+  bool third_object_spawned = false;
+  while (!stop_)
+  {
+    // ////////////////////////////////////////////SPAWNING THE OBJECT/////////////////////////////////////////////
+    if(real_time_>=1.5 && !third_object_spawned)
+    {
+      third_object_spawned = true;
+      object_spawned = false;
+    }
+
+    if(real_time_>=1.0 && !second_object_spawned)
+    {
+      second_object_spawned = true;
+      object_spawned = false;
+    }
+
+    if(!object_spawned && real_time_>=0.50)
+    {
+      if (!add_obj_.waitForExistence(ros::Duration(10)))
+      {
+        ROS_FATAL("srv not found");
+      }
+      object_loader_msgs::object obj;
+      obj.object_type="scatola";
+
+      int obj_conn_pos;
+      int idx_current_conn;
+
+      replanner_mtx_.lock();
+      trj_mtx_.lock();
+      replanner_->getCurrentPath()->findConnection(current_configuration_,idx_current_conn);
+      trj_mtx_.unlock();
+      replanner_mtx_.unlock();
+
+      if(third_object_spawned)
+      {
+        obj_conn_pos = idx_current_conn;
+      }
+      else
+      {
+        replanner_mtx_.lock();
+        int size = replanner_->getCurrentPath()->getConnections().size();
+        replanner_mtx_.unlock();
+
+        std::srand(time(NULL));
+        obj_conn_pos = rand() % (size-idx_current_conn) + idx_current_conn;
+      }
+      pathplan::ConnectionPtr obj_conn;
+      pathplan::NodePtr obj_parent;
+      pathplan::NodePtr obj_child;
+      Eigen::VectorXd obj_pos;
+      if(obj_conn_pos == idx_current_conn)
+      {
+        replanner_mtx_.lock();
+        trj_mtx_.lock();
+        obj_conn = replanner_->getCurrentPath()->getConnections().at(obj_conn_pos);
+        obj_child = obj_conn->getChild();
+        obj_pos = obj_child->getConfiguration();
+
+        if((obj_pos-configuration_replan_).norm()<0.20 && ((obj_conn_pos+1)<replanner_->getCurrentPath()->getConnections().size()))
+        {
+          //ROS_WARN("Shifting the object..");
+          obj_conn = replanner_->getCurrentPath()->getConnections().at(obj_conn_pos+1);
+          obj_parent = obj_conn->getParent();
+          obj_child = obj_conn->getChild();
+
+          Eigen::VectorXd conn_vect = obj_child->getConfiguration()-obj_parent->getConfiguration();
+          obj_pos = obj_parent->getConfiguration()+0.5*conn_vect;
+        }
+        trj_mtx_.unlock();
+        replanner_mtx_.unlock();
+      }
+      else
+      {
+        replanner_mtx_.lock();
+        obj_conn = replanner_->getCurrentPath()->getConnections().at(obj_conn_pos);
+        obj_parent = obj_conn->getParent();
+        obj_child = obj_conn->getChild();
+        obj_pos =  (obj_child->getConfiguration() +  obj_parent->getConfiguration())/2;
+        replanner_mtx_.unlock();
+      }
+
+      moveit::core::RobotState obj_pos_state = trajectory_->fromWaypoints2State(obj_pos);
+      tf::poseEigenToMsg(obj_pos_state.getGlobalLinkTransform(last_link_),obj.pose.pose);
+
+      obj.pose.header.frame_id="world";
+
+      srv_add_object.request.objects.clear();
+      srv_add_object.request.objects.push_back(obj);
+
+      scene_mtx_.lock();
+      if (!add_obj_.call(srv_add_object))
+      {
+        ROS_ERROR("call to srv not ok");
+      }
+      if (!srv_add_object.response.success)
+      {
+        ROS_ERROR("srv error");
+      }
+      else
+      {
+        for (const std::string& str: srv_add_object.response.ids)
+        {
+          srv_remove_object.request.obj_ids.push_back(str);   //per rimuovere gli oggetti alla fine
+        }
+      }
+      scene_mtx_.unlock();
+
+      object_spawned = true;
+      ROS_WARN("OBJECT SPAWNED");
+    }
+
+    lp.sleep();
+  }
+
+  ros::Duration(5).sleep();
+
+  scene_mtx_.lock();
+  if (!remove_obj_.waitForExistence(ros::Duration(10)))
+  {
+    ROS_FATAL("srv not found");
+  }
+  if (!remove_obj_.call(srv_remove_object))
+  {
+    ROS_ERROR("call to srv not ok");
+  }
+  if (!srv_remove_object.response.success)
+  {
+    ROS_ERROR("srv error");
+  }
+  scene_mtx_.unlock();
 }
 
 void ReplannerManager::collisionCheckThread()
@@ -331,6 +507,9 @@ void ReplannerManager::collisionCheckThread()
 
   while (!stop_)
   {
+
+    ros::WallTime tic_tot = ros::WallTime::now();
+
     scene_mtx_.lock();
     if (!plannning_scene_client_.call(ps_srv))
     {
@@ -357,15 +536,23 @@ void ReplannerManager::collisionCheckThread()
     }
     checker_mtx_.unlock();
 
+    ros::WallTime toc_tot=ros::WallTime::now();
+    double duration = (toc_tot-tic_tot).toSec();
+
+    if(duration>(1/collision_checker_thread_frequency_))
+    {
+      ROS_WARN("Collisione checking thread time expired: duration-> %f",duration);
+    }
+
     lp.sleep();
   }
 }
 
 void ReplannerManager::displayThread()
 {
-  scene_mtx_.lock();
+  //scene_mtx_.lock();
   pathplan::DisplayPtr disp = std::make_shared<pathplan::Display>(planning_scn_,group_name_,last_link_);
-  scene_mtx_.unlock();
+  //scene_mtx_.unlock();
   ros::Duration(0.5).sleep();
 
   std::vector<double> marker_color;
@@ -374,7 +561,8 @@ void ReplannerManager::displayThread()
 
   disp->clearMarkers();
 
-  ros::Rate lp(3*trj_execution_thread_frequency_);
+  double display_thread_frequency = 0.75*trj_execution_thread_frequency_;
+  ros::Rate lp(display_thread_frequency);
 
   while(!stop_)
   {
@@ -445,191 +633,29 @@ void ReplannerManager::displayThread()
   }
 }
 
-void ReplannerManager::spawnObjects()
-{
-  ros::Rate lp(2*trj_execution_thread_frequency_);
-
-  object_loader_msgs::addObjects srv_add_object;
-  object_loader_msgs::removeObjects srv_remove_object;
-  moveit_msgs::GetPlanningScene ps_srv;
-
-  if (!add_obj_.waitForExistence(ros::Duration(10)))
-  {
-    ROS_FATAL("srv not found");
-  }
-  if (!remove_obj_.waitForExistence(ros::Duration(10)))
-  {
-    ROS_FATAL("srv not found");
-  }
-
-  bool object_spawned = false;
-  bool second_object_spawned = false;
-  bool third_object_spawned = false;
-  while (!stop_)
-  {
-    if(real_time_>=1.5 && !third_object_spawned)
-    {
-      third_object_spawned = true;
-      object_spawned = false;
-    }
-
-    if(real_time_>=1 && !second_object_spawned)
-    {
-      second_object_spawned = true;
-      object_spawned = false;
-    }
-
-    if(!object_spawned && real_time_>=0.50)
-    {
-      object_loader_msgs::object obj;
-      obj.object_type = "scatola";
-
-      int obj_conn_pos;
-      int idx_current_conn;
-
-      replanner_mtx_.lock();
-      trj_mtx_.lock();
-      replanner_->getCurrentPath()->findConnection(current_configuration_,idx_current_conn);
-      trj_mtx_.unlock();
-      replanner_mtx_.unlock();
-
-      if(third_object_spawned)
-      {
-        obj_conn_pos = idx_current_conn;
-      }
-      else
-      {
-        replanner_mtx_.lock();
-        int size = replanner_->getCurrentPath()->getConnections().size();
-        replanner_mtx_.unlock();
-
-        std::srand(time(NULL));
-        obj_conn_pos = rand() % (size-idx_current_conn) + idx_current_conn;
-      }
-      pathplan::ConnectionPtr obj_conn;
-      pathplan::NodePtr obj_parent;
-      pathplan::NodePtr obj_child;
-      Eigen::VectorXd obj_pos;
-      if(obj_conn_pos == idx_current_conn)
-      {
-        replanner_mtx_.lock();
-        trj_mtx_.lock();
-        obj_conn = replanner_->getCurrentPath()->getConnections().at(obj_conn_pos);
-        obj_child = obj_conn->getChild();
-        obj_pos = obj_child->getConfiguration();
-
-        if((obj_pos-configuration_replan_).norm()<0.15 && ((obj_conn_pos+1)<replanner_->getCurrentPath()->getConnections().size()))
-        {
-          //ROS_WARN("Shifting the object..");
-          obj_conn = replanner_->getCurrentPath()->getConnections().at(obj_conn_pos+1);
-          obj_parent = obj_conn->getParent();
-          obj_child = obj_conn->getChild();
-
-          Eigen::VectorXd conn_vect = obj_child->getConfiguration()-obj_parent->getConfiguration();
-          obj_pos = obj_parent->getConfiguration()+0.5*conn_vect;
-        }
-        trj_mtx_.unlock();
-        replanner_mtx_.unlock();
-      }
-      else
-      {
-        replanner_mtx_.lock();
-        obj_conn = replanner_->getCurrentPath()->getConnections().at(obj_conn_pos);
-        obj_parent = obj_conn->getParent();
-        obj_child = obj_conn->getChild();
-        obj_pos =  (obj_child->getConfiguration() +  obj_parent->getConfiguration())/2;
-        replanner_mtx_.unlock();
-      }
-
-      trj_mtx_.lock();
-      moveit::core::RobotState obj_pos_state = trajectory_->fromWaypoints2State(obj_pos);
-      trj_mtx_.unlock();
-      tf::poseEigenToMsg(obj_pos_state.getGlobalLinkTransform(last_link_),obj.pose.pose);
-
-      obj.pose.header.frame_id="world";
-
-      srv_add_object.request.objects.clear();
-      srv_add_object.request.objects.push_back(obj);
-
-      scene_mtx_.lock();
-      checker_mtx_.lock();
-      if (!add_obj_.call(srv_add_object))
-      {
-        ROS_ERROR("call to srv not ok");
-      }
-      if (!srv_add_object.response.success)
-      {
-        ROS_ERROR("srv error");
-      }
-      else
-      {
-        for (const std::string& str: srv_add_object.response.ids)
-        {
-          srv_remove_object.request.obj_ids.push_back(str);   //per rimuovere gli oggetti alla fine
-        }
-      }
-      checker_mtx_.unlock();
-      scene_mtx_.unlock();
-
-      object_spawned = true;
-      ROS_WARN("OBJECT SPAWNED");
-    }
-
-    scene_mtx_.lock();
-    checker_mtx_.lock();
-    if (!plannning_scene_client_.call(ps_srv))
-    {
-      ROS_ERROR("call to srv not ok");
-    }
-
-    if (!planning_scn_->setPlanningSceneMsg(ps_srv.response.scene))
-    {
-      ROS_ERROR("unable to update planning scene");
-    }
-    std::vector<moveit_msgs::CollisionObject> collision_objs;
-    planning_scn_->getCollisionObjectMsgs(collision_objs);
-    checker_mtx_.unlock();
-    scene_mtx_.unlock();
-
-    lp.sleep();
-  }
-
-  ros::Duration(5).sleep();
-
-  scene_mtx_.lock();
-  checker_mtx_.lock();
-  if (!remove_obj_.call(srv_remove_object))
-  { checker_mtx_.lock();
-    ROS_ERROR("call to srv not ok");
-  }
-  if (!srv_remove_object.response.success)
-  {
-    ROS_ERROR("srv error");
-  }
-  checker_mtx_.unlock();
-  scene_mtx_.unlock();
-}
-
-
-int ReplannerManager::trajectoryExecutionThread()
+bool ReplannerManager::trajectoryExecutionThread()
 {
   std_srvs::Empty srv_log;
   start_log_.call(srv_log);
+
+  target_pub_.publish(joint_state_);
 
   Eigen::VectorXd past_current_configuration = current_configuration_;
   Eigen::VectorXd goal_conf = current_path_->getWaypoints().back();
 
   ROS_WARN("Launching threads..");
-  std::thread display_thread = std::thread(&ReplannerManager::displayThread, this);
+  std::thread display_thread = std::thread(&ReplannerManager::displayThread, this);  //it must be the first one launched, otherwise the first paths will be not displayed in time
+  std::thread spawn_obj_thread;
+  if(spawn_objs_) spawn_obj_thread = std::thread(&ReplannerManager::spawnObjects, this);
+  ros::Duration(1).sleep();
   std::thread replanning_thread = std::thread(&ReplannerManager::replanningThread, this);
   std::thread col_check_thread = std::thread(&ReplannerManager::collisionCheckThread, this);
-  //std::thread spawn_obj_thread = std::thread(&ReplannerManager::spawnObjects, this);
 
   ros::Rate lp(trj_execution_thread_frequency_);
 
   while (ros::ok() && !stop_)
   {
-    ros::WallTime start_time = ros::WallTime::now();
+    ros::WallTime tic_tot = ros::WallTime::now();
 
     replanner_mtx_.lock();
     trj_mtx_.lock();
@@ -641,6 +667,7 @@ int ReplannerManager::trajectoryExecutionThread()
     for(unsigned int i=0; i<pnt_.positions.size();i++) point2project[i] = pnt_.positions.at(i);
     past_current_configuration = current_configuration_;
     current_configuration_ = replanner_->getCurrentPath()->projectOnClosestConnectionKeepingPastPrj(point2project,past_current_configuration,n_conn_);
+
     trj_mtx_.unlock();
     replanner_mtx_.unlock();
 
@@ -655,9 +682,15 @@ int ReplannerManager::trajectoryExecutionThread()
 
     if((current_configuration_-goal_conf).norm()<1e-3) stop_ = true;
 
-    ros::WallTime end_time = ros::WallTime::now();
-    bool in_time = lp.sleep();
-    if(!in_time) ROS_ERROR("durata main %f",(end_time-start_time).toSec());
+    ros::WallTime toc_tot = ros::WallTime::now();
+    double duration = (toc_tot-tic_tot).toSec();
+
+    if(duration>(1/trj_execution_thread_frequency_))
+    {
+      ROS_WARN("Trj execution thread time expired: duration-> %f",duration);
+    }
+
+    lp.sleep();
   }
 
   ROS_ERROR("STOP");
@@ -666,7 +699,10 @@ int ReplannerManager::trajectoryExecutionThread()
   if(replanning_thread.joinable()) replanning_thread.join();
   if(col_check_thread.joinable()) col_check_thread.join();
   if(display_thread.joinable()) display_thread.join();
-  //if(spawn_obj_thread.joinable()) spawn_obj_thread.join();
+  if(spawn_objs_)
+  {
+    if(spawn_obj_thread.joinable()) spawn_obj_thread.join();
+  }
 
   // BINARY LOGGER SALVA FINO A I-1 ESIMO DATO PUBBLICATO, QUESTO AIUTA A SALVARLI TUTTI
   std_msgs::Float64 fake_data;

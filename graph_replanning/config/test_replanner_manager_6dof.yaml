@@ -1,0 +1,16 @@
+test_name: "6dof"
+group_name: "manipulator"
+base_link: "world"
+last_link: "flange"
+dt_replan_restricted: 0.070
+dt_replan_relaxed: 0.120
+trj_execution_thread_frequency: 100
+collision_checker_thread_frequency: 30
+spawn_objs: true
+
+start_configuration: [1.5, 0.5, -0.5, -1.5, -0.7, 0.7]
+stop_configuration: [0.0, 0.0, -1.0, 0.0, -1.5, 1.0]
+k_freq: 1
+init_test: 0
+end_test: 100
+opt_path: true
