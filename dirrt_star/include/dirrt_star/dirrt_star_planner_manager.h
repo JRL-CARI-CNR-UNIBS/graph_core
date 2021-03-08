@@ -39,7 +39,7 @@ public:
   virtual bool initialize(const robot_model::RobotModelConstPtr& model, const std::string& ns) override;
   std::string getDescription() const override
   {
-    return "Dgaco";
+    return "DIRRT";
   }
   bool canServiceRequest(const moveit_msgs::MotionPlanRequest &req) const override;
 

@@ -68,7 +68,14 @@ planning_interface::PlanningContextPtr PathPlanerManager::getPlanningContext(
   moveit_msgs::MoveItErrorCodes &error_code) const
 {
   ROS_DEBUG("Search a planner for group %s",req.group_name.c_str());
+  
+  if (m_planners.find(req.group_name) == m_planners.end())
+  {
+    ROS_ERROR("Planner not found for group %s.", req.group_name.c_str());
+    return nullptr;
+  }
   std::shared_ptr<DIRRTStar> planner = m_planners.at(req.group_name);
+
   if (!planner)
   {
     ROS_ERROR("Planner not found");
@@ -78,7 +85,6 @@ planning_interface::PlanningContextPtr PathPlanerManager::getPlanningContext(
   {
     ROS_DEBUG("founded planner %s",planner->getName().c_str());
   }
-
 
   planner->setPlanningScene(planning_scene);
   planner->setMotionPlanRequest(req);
