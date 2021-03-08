@@ -1,30 +1,9 @@
 #include <ros/ros.h>
-#include <graph_core/metrics.h>
-#include <graph_core/occupancy_metrics.h>
-#include <graph_core/graph/node.h>
-#include <graph_core/graph/path.h>
-#include <graph_core/graph/tree.h>
-#include <graph_core/graph/trajectory.h>
-#include <graph_core/graph/graph_display.h>
-#include <graph_core/solvers/rrt_connect.h>
-#include <graph_core/solvers/birrt.h>
-#include <graph_core/solvers/rrt_star.h>
-#include <graph_core/solvers/path_solver.h>
-#include <graph_core/moveit_collision_checker.h>
-#include <graph_core/local_informed_sampler.h>
-#include <moveit/planning_scene/planning_scene.h>
-#include <moveit/planning_interface/planning_interface.h>
-#include <moveit/move_group_interface/move_group_interface.h>
-#include <moveit/robot_model_loader/robot_model_loader.h>
-#include <moveit_msgs/DisplayTrajectory.h>
-#include <moveit/robot_state/conversions.h>
-#include <moveit_visual_tools/moveit_visual_tools.h>
-#include <rviz_visual_tools/rviz_visual_tools.h>
-#include <eigen_conversions/eigen_msg.h>
-#include <graph_core/replanner.h>
+#include <graph_replanning/trajectory.h>
+#include <moveit/robot_state/robot_state.h>
+#include <graph_replanning/replanner.h>
 #include <object_loader_msgs/addObjects.h>
-#include <rosparam_utilities/rosparam_utilities.h>
-
+#include <object_loader_msgs/removeObjects.h>
 
 int main(int argc, char **argv)
 {
@@ -36,15 +15,12 @@ int main(int argc, char **argv)
 
   ros::NodeHandle nh;
 
-  //ros::Publisher display_publisher = nh.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
-  //ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("/marker_visualization_topic", 1);
-
   // //////////////////////////////////////// GETTING ROS PARAM ///////////////////////////////////////////////
-  std::string test;
-  if (!nh.getParam("group_name",test))
+  std::string test_name;
+  if (!nh.getParam("test_name",test_name))
   {
-    ROS_INFO("group_name not set, use panda");
-    test="panda";
+    ROS_INFO("test_name not set, use no_test_name");
+    test_name = "no_test_name";
   }
 
   bool mobile_obstacle;
@@ -89,26 +65,51 @@ int main(int argc, char **argv)
     optimize_path = true;
   }
 
-  ROS_INFO_STREAM("test: "<<test<<" mobile ob: "<<mobile_obstacle);
+  std::string group_name;
+  if (!nh.getParam("group_name",group_name))
+  {
+    ROS_ERROR("group_name not set, exit");
+    return 0;
+  }
+
+  std::string base_link;
+  if (!nh.getParam("base_link",base_link))
+  {
+    ROS_ERROR("base_link not set, exit");
+    return 0;
+  }
+
+  std::string last_link;
+  if (!nh.getParam("last_link",last_link))
+  {
+    ROS_ERROR("last_link not set, exit");
+    return 0;
+  }
+
+  std::vector<double> start_configuration;
+  if (!nh.getParam("start_configuration",start_configuration))
+  {
+    ROS_ERROR("start_configuration not set, exit");
+    return 0;
+  }
+
+  std::vector<double> stop_configuration;
+  if (!nh.getParam("stop_configuration",stop_configuration))
+  {
+    ROS_ERROR("stop_configuration not set, exit");
+    return 0;
+  }
+
+  int n_test;
+  if (!nh.getParam("n_test",n_test))
+  {
+    ROS_ERROR("n_test not set, set 1");
+    n_test = 1;
+  }
+
+  ROS_INFO_STREAM("test: "<<test_name<<" mobile ob: "<<mobile_obstacle);
 
   // /////////////////////////////////UPLOADING THE ROBOT ARM/////////////////////////////////////////////////////////////
-
-  std::string group_name;
-  std::string base_link;
-  std::string last_link;
-
-  if(test=="panda")
-  {
-    group_name = "panda_arm";
-    base_link = "panda_link0";
-    last_link = "panda_link8";
-  }
-  if(test=="cartesian")
-  {
-    group_name = "cartesian_arm";
-    base_link = "world";
-    last_link = "end_effector";
-  }
 
   moveit::planning_interface::MoveGroupInterface move_group(group_name);
   robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
@@ -132,6 +133,51 @@ int main(int argc, char **argv)
     }
   }
 
+  ros::ServiceClient add_obj=nh.serviceClient<object_loader_msgs::addObjects>("add_object_to_scene");
+  ros::ServiceClient remove_obj=nh.serviceClient<object_loader_msgs::removeObjects>("remove_object_from_scene");
+  object_loader_msgs::addObjects add_srv;
+  object_loader_msgs::removeObjects remove_srv;
+
+  if(test_name == "sharework")
+  {
+    if (!add_obj.waitForExistence(ros::Duration(10)))
+    {
+      ROS_FATAL("srv not found");
+      return 1;
+    }
+    object_loader_msgs::object obj;
+    obj.object_type="scatola";
+
+    obj.pose.pose.position.x = 0.1;
+    obj.pose.pose.position.y = 0.1;
+    obj.pose.pose.position.z = 1.5;
+
+    obj.pose.pose.orientation.x = 0.0;
+    obj.pose.pose.orientation.y = 0.0;
+    obj.pose.pose.orientation.z = 0.0;
+    obj.pose.pose.orientation.w = 1.0;
+
+    obj.pose.header.frame_id="world";
+
+    add_srv.request.objects.push_back(obj);
+    if (!add_obj.call(add_srv))
+    {
+      ROS_ERROR("call to srv not ok");
+      return 1;
+    }
+    if (!add_srv.response.success)
+    {
+      ROS_ERROR("srv error");
+      return 1;
+    }
+    else
+    {
+      for (const std::string& str: add_srv.response.ids)
+      {
+        remove_srv.request.obj_ids.push_back(str);
+      }
+    }
+  }
   // ///////////////////////////////////UPDATING THE PLANNING STATIC SCENE////////////////////////////////////
   ros::ServiceClient ps_client=nh.serviceClient<moveit_msgs::GetPlanningScene>("/get_planning_scene");
 
@@ -155,33 +201,26 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  // /////////////////////////////////////////////DEFINING START AND GOAL///////////////////////////////////////////////////////
-
-  Eigen::VectorXd start_conf(dof);
-  if(test=="panda") start_conf << 0.0,0.0,0.0,-1.5,0.0,1.5,-1.0;
-  if(test=="cartesian") start_conf << 0.0,0.0,0.0;
-
-  Eigen::VectorXd goal_conf(dof);
-  if(test=="panda") goal_conf << 1.5,0.5,0.0,-1.0,0.0,2.0,-1.0;
-  if(test=="cartesian") goal_conf << 0.8,0.8,0.75;
+  // //////////////////////////////////////////PATH PLAN & VISUALIZATION////////////////////////////////////////////////////////
 
   pathplan::MetricsPtr metrics = std::make_shared<pathplan::Metrics>();
   pathplan::CollisionCheckerPtr checker = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scene, group_name);
 
-  // //////////////////////////////////////////PATH PLAN & VISUALIZATION////////////////////////////////////////////////////////
   pathplan::Display disp = pathplan::Display(planning_scene,group_name,last_link);
   pathplan::PathPtr path = NULL;
   pathplan::Trajectory trajectory = pathplan::Trajectory(path,nh,planning_scene,group_name,base_link,last_link);
 
   ros::Duration(5).sleep();
 
-  for(unsigned int j=0; j<1;j++)
+  for(unsigned int j=0; j<n_test;j++)
   {
     std::vector<pathplan::PathPtr> path_vector;
+    Eigen::VectorXd start_conf = Eigen::Map<Eigen::VectorXd>(start_configuration.data(), start_configuration.size());
+    Eigen::VectorXd goal_conf = Eigen::Map<Eigen::VectorXd>(stop_configuration.data(), stop_configuration.size());
+    pathplan::NodePtr start_node = std::make_shared<pathplan::Node>(start_conf);
 
     for (unsigned int i =0; i<n_paths; i++)
     {
-      pathplan::NodePtr start_node = std::make_shared<pathplan::Node>(start_conf);
       pathplan::NodePtr goal_node = std::make_shared<pathplan::Node>(goal_conf);
 
       pathplan::PathPtr solution = trajectory.computeBiRRTPath(start_node, goal_node, lb, ub, metrics, checker, optimize_path);
@@ -197,9 +236,41 @@ int main(int argc, char **argv)
     }
 
     pathplan::PathPtr current_path = path_vector.front();
-    int idx = 0;//current_path->getConnections().size()/2;
-
     std::vector<pathplan::PathPtr> other_paths = {path_vector.at(1),path_vector.at(2)};
+
+    // ///////////////////////////////////////////////////////////////////////////
+    if(test_name == "sharework")
+    {
+      if (!remove_obj.waitForExistence(ros::Duration(10)))
+      {
+        ROS_FATAL("srv not found");
+      }
+      if (!remove_obj.call(remove_srv))
+      {
+        ROS_ERROR("call to srv not ok");
+      }
+      if (!remove_srv.response.success)
+      {
+        ROS_ERROR("srv error");
+      }
+
+      moveit_msgs::GetPlanningScene ps_srv;
+
+      if (!ps_client.call(ps_srv))
+      {
+        ROS_ERROR("call to srv not ok");
+        return 1;
+      }
+
+      if (!planning_scene->setPlanningSceneMsg(ps_srv.response.scene))
+      {
+        ROS_ERROR("unable to update planning scene");
+        return 1;
+      }
+    }
+    // ////////////////////////////////////////////////////////////////////////////
+
+    int idx = 0;//current_path->getConnections().size()/2;
     pathplan::SamplerPtr samp = std::make_shared<pathplan::InformedSampler>(start_conf, goal_conf, lb, ub);
     pathplan::BiRRTPtr solver = std::make_shared<pathplan::BiRRT>(metrics, checker, samp);
     solver->config(nh);
@@ -232,12 +303,11 @@ int main(int argc, char **argv)
       object_loader_msgs::object obj;
       obj.object_type="scatola";
 
-      int obj_conn_pos = 1;// current_path->getConnections().size()/2;
+      int obj_conn_pos = current_path->getConnections().size()/2;
       pathplan::ConnectionPtr obj_conn = current_path->getConnections().at(obj_conn_pos);
       pathplan::NodePtr obj_parent = obj_conn->getParent();
       pathplan::NodePtr obj_child = obj_conn->getChild();
-      //Eigen::VectorXd obj_pos = (obj_child->getConfiguration()+obj_parent->getConfiguration())/2;
-      Eigen::VectorXd obj_pos = obj_parent->getConfiguration();
+      Eigen::VectorXd obj_pos = (obj_child->getConfiguration()+obj_parent->getConfiguration())/2;
 
       moveit::core::RobotState obj_pos_state = trajectory.fromWaypoints2State(obj_pos);
       tf::poseEigenToMsg(obj_pos_state.getGlobalLinkTransform(last_link),obj.pose.pose);
@@ -253,7 +323,6 @@ int main(int argc, char **argv)
       {
         ROS_ERROR("srv error");
         return 1;
-
       }
       // ///////////////////////////////////UPDATING THE PLANNING SCENE WITH THE NEW OBSTACLE ////////////////////////////////////////
 
@@ -270,7 +339,6 @@ int main(int argc, char **argv)
         ROS_ERROR("call to srv not ok");
         return 1;
       }
-
 
       if (!planning_scene->setPlanningSceneMsg(ps_srv.response.scene))
       {
@@ -331,8 +399,6 @@ int main(int argc, char **argv)
       replanner.setPathSwitchDisp(disp.pointer());
     }
 
-    for(unsigned int x=0; x<1;x++)
-    {
       double time_repl = time*0.9;
       ros::WallTime tic = ros::WallTime::now();
       success =  replanner.informedOnlineReplanning(informed,succ_node,time_repl);
@@ -340,7 +406,6 @@ int main(int argc, char **argv)
       if((toc-tic).toSec()>time) ROS_ERROR("TIME OUT");
       ROS_INFO_STREAM("DURATION: "<<(toc-tic).toSec()<<" success: "<<success<< " n sol: "<<replanner.getReplannedPathVector().size());
       ros::Duration(0.01).sleep();
-    }
 
     if(success)
     {
@@ -351,40 +416,9 @@ int main(int argc, char **argv)
       std::vector<double> marker_scale(3,0.01);
       disp.changeConnectionSize(marker_scale);
       disp.displayPath(replanner.getReplannedPath(),"pathplan",marker_color);
-
-      ROS_INFO_STREAM("N CONN PRIMA: "<<replanner.getReplannedPath()->getConnections().size());
-
-      Eigen::VectorXd new_current_configuration = (current_path->getConnections().at(idx)->getChild()->getConfiguration() + current_path->getConnections().at(idx)->getParent()->getConfiguration())/1.5;
-      //Eigen::VectorXd new_current_configuration = current_path->getConnections().at(idx+1)->getChild()->getConfiguration();
-      replanner.startReplannedPathFromNewCurrentConf(new_current_configuration);
-
-      marker_color = {0.0,0.5,0.5,1.0};
-      marker_id.clear();
-      marker_id.push_back(-105);
-      disp.changeConnectionSize(marker_scale);
-      disp.displayPath(replanner.getReplannedPath(),"pathplan",marker_color);
-
-
-      ROS_INFO_STREAM("N CONN DOPO: "<<replanner.getReplannedPath()->getConnections().size());
     }
 
-    //success =  replanner.informedOnlineReplanning(informed, succ_node);
-    //success = replanner.pathSwitch(current_path,node, succ_node, new_path, subpath_from_path2, connected2path_number);
-    //success = replanner.connect2goal(current_path,node,new_path);
-
-
-    /*trajectory.setPath(replanner.getReplannedPath());
-    robot_trajectory::RobotTrajectoryPtr trj= trajectory.fromPath2Trj();
-    moveit_msgs::RobotTrajectory trj_msg;
-    trj->getRobotTrajectoryMsg(trj_msg);
-
-    trajectory_processing::SplineInterpolator interpolator;
-    interpolator.setTrajectory(trj_msg);
-    interpolator.setSplineOrder(1);
-    interpolator.resampleTrajectory(0.5, trj_msg);
-    trajectory.displayTrj();*/
-
-    ros::Duration(2).sleep();
+    ros::Duration(0.5).sleep();
   }
   return 0;
 }

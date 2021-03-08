@@ -1,0 +1,2 @@
+#scene_objects:
+#- {type: "big_box_sharework", frame: "world", position: [0.0,0.0,1.5], quaternion: [0, 0, 0, 1]}

@@ -209,6 +209,7 @@ public:
   bool simplify(const double& distance = 0.02);
   bool isValid(const CollisionCheckerPtr &this_checker = NULL);
   bool isValidFromConf(const Eigen::VectorXd &conf, const CollisionCheckerPtr &this_checker = NULL);
+  bool isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker = NULL);
   bool isValidFromConn(const ConnectionPtr &this_conn, const CollisionCheckerPtr &this_checker = NULL);
   Eigen::VectorXd projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool &in_conn);
   const Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point);

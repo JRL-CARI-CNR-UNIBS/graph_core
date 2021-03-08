@@ -44,6 +44,7 @@ protected:
   double pathSwitch_cycle_time_mean_;
   double informedOnlineReplanning_cycle_time_mean_;
   bool an_obstacle_;
+  bool emergency_stop_;
 
   bool informedOnlineReplanning_disp_;
   bool pathSwitch_disp_;
@@ -132,6 +133,17 @@ public:
     disp_ = NULL;
     pathSwitch_disp_ = false;
   }
+
+  void setEmergencyStop()
+  {
+    emergency_stop_ = true;
+  }
+
+  void resetEmergencyStop()
+  {
+    emergency_stop_ = false;
+  }
+
 
   void setCurrentPath(const PathPtr& path)
   {

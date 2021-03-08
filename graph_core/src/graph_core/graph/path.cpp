@@ -1034,9 +1034,17 @@ bool Path::isValidFromConn(const ConnectionPtr& this_conn, const CollisionChecke
 
 bool Path::isValidFromConf(const Eigen::VectorXd &conf, const CollisionCheckerPtr &this_checker)
 {
+  int pos_closest_obs_from_goal = -1;
+  bool validity = isValidFromConf(conf,pos_closest_obs_from_goal,this_checker);
+  return validity;
+}
+
+bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker)
+{
   CollisionCheckerPtr checker = checker_;
   if(this_checker != NULL) checker = this_checker;
 
+  pos_closest_obs_from_goal = -1;
   bool validity = true;
   int idx;
   ConnectionPtr conn = findConnection(conf,idx);
@@ -1046,6 +1054,14 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const CollisionCheckerPt
   if(conf == conn->getParent()->getConfiguration())
   {
     validity = isValidFromConn(conn,checker);
+
+    if(!validity)
+    {
+      for(int i = (connections_.size()-1);i>=idx;i--)
+      {
+        if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-idx;
+      }
+    }
   }
   else if(conf == conn->getChild()->getConfiguration())
   {
@@ -1053,6 +1069,14 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const CollisionCheckerPt
     {
       conn = connections_.at(idx+1);
       validity = isValidFromConn(conn,checker);
+
+      if(!validity)
+      {
+        for(int i = (connections_.size()-1);i>=idx+1;i--)
+        {
+          if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-(idx+1);
+        }
+      }
     }
     else
     {
@@ -1066,15 +1090,26 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const CollisionCheckerPt
     if(!checker->checkPathFromConf(conn->getParent()->getConfiguration(),conn->getChild()->getConfiguration(),conf))
     {
       validity = false;
+      pos_closest_obs_from_goal = connections_.size()-idx;
     }
     else
     {
       if(idx<connections_.size()-1)
       {
         validity = isValidFromConn(connections_.at(idx+1),checker);
+
+        if(!validity)
+        {
+          for(int i = (connections_.size()-1);i>=idx+1;i--)
+          {
+            if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-(idx+1);
+          }
+        }
       }
     }
   }
+
+  //Note: pos_closest_obs_from_goal = -1 if no obstructions. The closest obs from the conf (and not from the goal) is at connections_.size()-pos_closest_obs_from_goal connection.
 
   return validity;
 }

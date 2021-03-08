@@ -14,6 +14,7 @@
 
 namespace pathplan
 {
+#define K_OFFSET 1.2
 class ReplannerManager;
 typedef std::shared_ptr<ReplannerManager> ReplannerManagerPtr;
 
@@ -40,8 +41,12 @@ protected:
   bool computing_avoiding_path_;
   bool spawn_objs_;
   bool replanning_;
+  bool display_timing_warning_;
+  bool display_replanning_success_;
 
   int n_conn_;
+  int pos_closest_obs_from_goal_repl_;
+  int pos_closest_obs_from_goal_check_;
   double real_time_;
   double t_;
   double dt_;

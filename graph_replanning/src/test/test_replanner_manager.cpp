@@ -3,6 +3,9 @@
 
 int main(int argc, char **argv)
 {
+
+  // 0.05 in coll check
+
   ros::init(argc, argv, "node_replanner");
   ros::NodeHandle nh;
   ros::AsyncSpinner spinner(1);

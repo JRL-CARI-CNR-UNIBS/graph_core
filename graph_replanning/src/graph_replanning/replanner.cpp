@@ -25,6 +25,7 @@ Replanner::Replanner(Eigen::VectorXd& current_configuration,
 
   admissible_other_paths_ = other_paths_;
   success_ = 0;
+  emergency_stop_ = false;
   available_time_ =  std::numeric_limits<double>::infinity();
   pathSwitch_cycle_time_mean_ = std::numeric_limits<double>::infinity();
   informedOnlineReplanning_cycle_time_mean_ = std::numeric_limits<double>::infinity();
@@ -35,6 +36,7 @@ Replanner::Replanner(Eigen::VectorXd& current_configuration,
 
   informedOnlineReplanning_verbose_ = false;
   pathSwitch_verbose_ = false;
+
 }
 
 bool Replanner::checkPathValidity(const CollisionCheckerPtr &this_checker)
@@ -273,29 +275,6 @@ void Replanner::startReplannedPathFromNewCurrentConf(Eigen::VectorXd &configurat
       connections.insert(connections.end(),path_connections.begin(),path_connections.end());
       path->setConnections(connections);
     }
-
-    /*std::vector<Eigen::VectorXd> wp = path->getWaypoints();
-    std::vector<ConnectionPtr> new_connections;
-    ConnectionPtr connection;
-    double cost;
-    NodePtr child;
-    NodePtr parent;
-
-    for(unsigned int i=0; i<wp.size()-1; i++)
-    {
-      parent = std::make_shared<Node>(wp.at(i));
-      child = std::make_shared<Node>(wp.at(i+1));
-
-      connection = std::make_shared<Connection>(parent,child);
-      cost = metrics_->cost(parent,child);
-      connection->setCost(cost);
-      connection->add();
-      new_connections.push_back(connection);
-    }
-
-    replanned_path_ = std::make_shared<Path>(new_connections,metrics_,checker_);
-
-    */
 
     replanned_path_ = path;
   }
@@ -648,214 +627,233 @@ bool Replanner::pathSwitch(const PathPtr &current_path,
 
     for(const NodePtr& path2_node : path2_node_vector)
     {
-      tic_cycle = ros::WallTime::now();
-
-      PathPtr path2_node2goal ;
-      path2_node2goal = path2->getSubpathFromNode(path2_node);
-
-      std::vector<ConnectionPtr> subpath2 = path2_node2goal->getConnections();
-      double subpath2_cost = path2_node2goal->cost();
-
-      double diff_subpath_cost = path_cost - subpath2_cost; //it is the maximum cost to make the connecting_path convenient
-      double distance_path_node = (path1_node->getConfiguration()-path2_node->getConfiguration()).norm(); //the Euclidean distance is the minimum cost that the connecting_path can have
-
-      if(pathSwitch_disp_)
+      if(!emergency_stop_)
       {
-        int node_n;
-        for(unsigned int r=0; r<path2->getWaypoints().size();r++)
+        tic_cycle = ros::WallTime::now();
+
+        PathPtr path2_node2goal ;
+        path2_node2goal = path2->getSubpathFromNode(path2_node);
+
+        std::vector<ConnectionPtr> subpath2 = path2_node2goal->getConnections();
+        double subpath2_cost = path2_node2goal->cost();
+
+        double diff_subpath_cost = path_cost - subpath2_cost; //it is the maximum cost to make the connecting_path convenient
+        double distance_path_node = (path1_node->getConfiguration()-path2_node->getConfiguration()).norm(); //the Euclidean distance is the minimum cost that the connecting_path can have
+
+        if(pathSwitch_disp_)
         {
-          if(path2_node->getConfiguration() == path2->getWaypoints().at(r))
+          int node_n;
+          for(unsigned int r=0; r<path2->getWaypoints().size();r++)
           {
-            node_n = r;
+            if(path2_node->getConfiguration() == path2->getWaypoints().at(r))
+            {
+              node_n = r;
+            }
           }
-        }
-        ROS_INFO_STREAM("node n: " <<node_n<< " diff_subpath_cost: "<< diff_subpath_cost<<" distance: " << distance_path_node);
-      }
-
-      if (diff_subpath_cost > 0 && distance_path_node < diff_subpath_cost) //if the Euclidean distance between the two nodes is bigger than the maximum cost for the connecting_path to be convenient, it is useless to calculate a connecting_path because it surely will not be convenient
-      {
-        NodePtr path1_node_fake = std::make_shared<Node>(path1_node->getConfiguration());
-        NodePtr path2_node_fake = std::make_shared<Node>(path2_node->getConfiguration());
-
-        SamplerPtr sampler = std::make_shared<InformedSampler>(path1_node_fake->getConfiguration(), path2_node_fake->getConfiguration(), lb_, ub_,diff_subpath_cost); //the ellipsoide determined by diff_subpath_cost is used. Outside from this elipsoid, the nodes create a connecting_path not convenient
-        //sampler->setCost(diff_subpath_cost);
-
-        solver_->setSampler(sampler);
-        solver_->resetProblem();
-        solver_->addStart(path1_node_fake);
-
-        double solver_time;
-        toc_cycle = ros::WallTime::now();
-        toc = ros::WallTime::now();
-        if(pathSwitch_cycle_time_mean_ == initial_value) solver_time = initial_value-(toc-tic).toSec();  //when there is an obstacle or when the cycle time mean has not been defined yet
-        else solver_time = (2-percentage_variability)*pathSwitch_cycle_time_mean_-(toc_cycle-tic_cycle).toSec();
-        ros::WallTime tic_setProblem = ros::WallTime::now();
-
-        if(pathSwitch_verbose_) ROS_INFO("Searching for a direct connection...");
-        solver_->addGoal(path2_node_fake,solver_time);
-        double directly_connected = solver_->solved();
-
-        if(pathSwitch_verbose_)
-        {
-          if(directly_connected) ROS_INFO("Solved->direct connection found");
-          else ROS_INFO("Direct connection NOT found");
-
-          ros::WallTime toc_setProblem = ros::WallTime::now();
-          ROS_INFO_STREAM("Max time: "<<solver_time<<". Time to directly connect: "<<(toc_setProblem-tic_setProblem).toSec());
+          ROS_INFO_STREAM("node n: " <<node_n<< " diff_subpath_cost: "<< diff_subpath_cost<<" distance: " << distance_path_node);
         }
 
-        PathPtr connecting_path;
-        bool solver_has_solved;
-        if(directly_connected)
+        if (diff_subpath_cost > 0 && distance_path_node < diff_subpath_cost) //if the Euclidean distance between the two nodes is bigger than the maximum cost for the connecting_path to be convenient, it is useless to calculate a connecting_path because it surely will not be convenient
         {
-          connecting_path = solver_->getSolution();
-          solver_has_solved = true;
-        }
+          NodePtr path1_node_fake = std::make_shared<Node>(path1_node->getConfiguration());
+          NodePtr path2_node_fake = std::make_shared<Node>(path2_node->getConfiguration());
 
-        ros::WallTime tic_solver = ros::WallTime::now();
-        if(!directly_connected)
-        {
+          SamplerPtr sampler = std::make_shared<InformedSampler>(path1_node_fake->getConfiguration(), path2_node_fake->getConfiguration(), lb_, ub_,diff_subpath_cost); //the ellipsoide determined by diff_subpath_cost is used. Outside from this elipsoid, the nodes create a connecting_path not convenient
+          //sampler->setCost(diff_subpath_cost);
+
+          solver_->setSampler(sampler);
+          solver_->resetProblem();
+          solver_->addStart(path1_node_fake);
+
+          double solver_time;
           toc_cycle = ros::WallTime::now();
           toc = ros::WallTime::now();
           if(pathSwitch_cycle_time_mean_ == initial_value) solver_time = initial_value-(toc-tic).toSec();  //when there is an obstacle or when the cycle time mean has not been defined yet
           else solver_time = (2-percentage_variability)*pathSwitch_cycle_time_mean_-(toc_cycle-tic_cycle).toSec();
+          ros::WallTime tic_setProblem = ros::WallTime::now();
 
-          if(pathSwitch_verbose_) ROS_INFO_STREAM("solving...max time: "<<solver_time);
+          if(pathSwitch_verbose_) ROS_INFO("Searching for a direct connection...");
+          solver_->addGoal(path2_node_fake,solver_time);
+          double directly_connected = solver_->solved();
 
-          solver_has_solved = solver_->solve(connecting_path,1000,solver_time);
-        }
-        if(solver_has_solved)
-        {
+          if(pathSwitch_verbose_)
+          {
+            if(directly_connected) ROS_INFO("Solved->direct connection found");
+            else ROS_INFO("Direct connection NOT found");
+
+            ros::WallTime toc_setProblem = ros::WallTime::now();
+            ROS_INFO_STREAM("Max time: "<<solver_time<<". Time to directly connect: "<<(toc_setProblem-tic_setProblem).toSec());
+          }
+
+          PathPtr connecting_path;
+          bool solver_has_solved;
+          if(directly_connected)
+          {
+            connecting_path = solver_->getSolution();
+            solver_has_solved = true;
+          }
+
+          ros::WallTime tic_solver = ros::WallTime::now();
           if(!directly_connected)
           {
-            if(pathSwitch_verbose_)
-            {
-              ros::WallTime toc_solver = ros::WallTime::now();
-              ROS_INFO_STREAM("max solver time: "<<solver_time<<" used time: "<<(toc_solver-tic_solver).toSec());
-            }
-
-            PathLocalOptimizer path_solver(checker_, metrics_);
-            path_solver.setPath(connecting_path);
-
-            double opt_time;
             toc_cycle = ros::WallTime::now();
             toc = ros::WallTime::now();
-            if(pathSwitch_cycle_time_mean_ == initial_value) opt_time = initial_value-(toc-tic).toSec();
-            else opt_time = (2-percentage_variability)*pathSwitch_cycle_time_mean_-(toc_cycle-tic_cycle).toSec();
-            ros::WallTime tic_opt = ros::WallTime::now();
+            if(pathSwitch_cycle_time_mean_ == initial_value) solver_time = initial_value-(toc-tic).toSec();  //when there is an obstacle or when the cycle time mean has not been defined yet
+            else solver_time = (2-percentage_variability)*pathSwitch_cycle_time_mean_-(toc_cycle-tic_cycle).toSec();
 
-            path_solver.solve(connecting_path,10,opt_time);
+            if(pathSwitch_verbose_) ROS_INFO_STREAM("solving...max time: "<<solver_time);
 
-            if(pathSwitch_verbose_)
-            {
-              ros::WallTime toc_opt = ros::WallTime::now();
-              ROS_INFO_STREAM("max opt time: "<<opt_time<<" used time: "<<(toc_opt-tic_opt).toSec());
-            }
+            solver_has_solved = solver_->solve(connecting_path,1000,solver_time);
           }
-
-          std::vector<ConnectionPtr> connecting_path_conn = connecting_path->getConnections();
-          std::vector<ConnectionPtr> new_connecting_path_conn;
-
-          double conn_cost = subpath2_cost + connecting_path->cost();
-
-          if(pathSwitch_verbose_) ROS_INFO_STREAM("solution cost: "<<conn_cost);
-
-          if(conn_cost<path_cost && conn_cost<subpath1_cost && !subpath2.empty()) //maybe "if(conn_cost<path_cost)" is enough (the GOAL is always excluded and at the beginning subpath1_cost is path_cost)
+          if(solver_has_solved)
           {
-            if(connecting_path_conn.size()>1)
+            if(!directly_connected)
             {
-              NodePtr node1 = connecting_path_conn.front()->getChild();
-              NodePtr node2 = connecting_path_conn.back()->getParent();
+              if(pathSwitch_verbose_)
+              {
+                ros::WallTime toc_solver = ros::WallTime::now();
+                ROS_INFO_STREAM("max solver time: "<<solver_time<<" used time: "<<(toc_solver-tic_solver).toSec());
+              }
 
-              double conn1_cost = metrics_->cost(path1_node,node1);
-              double conn2_cost = metrics_->cost(node2,path2_node);
+              PathLocalOptimizer path_solver(checker_, metrics_);
+              path_solver.setPath(connecting_path);
 
-              ConnectionPtr conn1 = std::make_shared<Connection>(path1_node,node1);
-              conn1->setCost(conn1_cost);
-              conn1->add();
-              ConnectionPtr conn2 = std::make_shared<Connection>(node2,path2_node);
-              conn2->setCost(conn2_cost);
-              conn2->add();
+              double opt_time;
+              toc_cycle = ros::WallTime::now();
+              toc = ros::WallTime::now();
+              if(pathSwitch_cycle_time_mean_ == initial_value) opt_time = initial_value-(toc-tic).toSec();
+              else opt_time = (2-percentage_variability)*pathSwitch_cycle_time_mean_-(toc_cycle-tic_cycle).toSec();
+              ros::WallTime tic_opt = ros::WallTime::now();
 
-              new_connecting_path_conn.push_back(conn1);
-              if(connecting_path_conn.size()>2) new_connecting_path_conn.insert(new_connecting_path_conn.end(), connecting_path_conn.begin()+1, connecting_path_conn.end()-1);
-              new_connecting_path_conn.push_back(conn2);
+              path_solver.solve(connecting_path,10,opt_time);
 
-              connecting_path_conn.front()->remove();
-              connecting_path_conn.back()->remove();
-            }
-            else
-            {
-              double conn1_cost =  metrics_->cost(path1_node,path2_node);
-
-              ConnectionPtr conn1 = std::make_shared<Connection>(path1_node,path2_node);
-              conn1->setCost(conn1_cost);
-              conn1->add();
-
-              connecting_path_conn.front()->remove();
-              new_connecting_path_conn.push_back(conn1);
+              if(pathSwitch_verbose_)
+              {
+                ros::WallTime toc_opt = ros::WallTime::now();
+                ROS_INFO_STREAM("max opt time: "<<opt_time<<" used time: "<<(toc_opt-tic_opt).toSec());
+              }
             }
 
-            path1_node_fake->disconnect();
-            path2_node_fake->disconnect();
+            std::vector<ConnectionPtr> connecting_path_conn = connecting_path->getConnections();
+            std::vector<ConnectionPtr> new_connecting_path_conn;
 
-            new_connecting_path_conn.insert(new_connecting_path_conn.end(),subpath2.begin(),subpath2.end());
-            new_path = std::make_shared<Path>(new_connecting_path_conn, metrics_, checker_);
-            path_cost = new_path->cost();
+            double conn_cost = subpath2_cost + connecting_path->cost();
 
-            success = 1;
-            an_obstacle_ = false;
-            subpath_from_path2 = path2_node2goal;
-            for(unsigned int z=0; z<admissible_other_paths_.size();z++)
+            if(pathSwitch_verbose_) ROS_INFO_STREAM("solution cost: "<<conn_cost);
+
+            if(conn_cost<path_cost && conn_cost<subpath1_cost && !subpath2.empty()) //maybe "if(conn_cost<path_cost)" is enough (the GOAL is always excluded and at the beginning subpath1_cost is path_cost)
             {
-              if(path2 == admissible_other_paths_.at(z)) connected2path_number = z;
-            }
+              if(connecting_path_conn.size()>1)
+              {
+                NodePtr node1 = connecting_path_conn.front()->getChild();
+                NodePtr node2 = connecting_path_conn.back()->getParent();
 
-            /*//////////Visualization//////////////////*/
-            if(pathSwitch_disp_)
-            {
-              disp_->clearMarker(new_path_id);
-              disp_->changeConnectionSize(marker_scale);
-              new_path_id = disp_->displayPath(new_path,"pathplan",marker_color);
-              disp_->defaultConnectionSize();
+                double conn1_cost = metrics_->cost(path1_node,node1);
+                double conn2_cost = metrics_->cost(node2,path2_node);
 
-              disp_->nextButton("Press \"next\" to execute the next PathSwitch step");
-            }
-            /*//////////////////////////////////////*/
-          }
-          else
-          {
-            if(pathSwitch_disp_)
-            {
+                ConnectionPtr conn1 = std::make_shared<Connection>(path1_node,node1);
+                conn1->setCost(conn1_cost);
+                conn1->add();
+                ConnectionPtr conn2 = std::make_shared<Connection>(node2,path2_node);
+                conn2->setCost(conn2_cost);
+                conn2->add();
+
+                new_connecting_path_conn.push_back(conn1);
+                if(connecting_path_conn.size()>2) new_connecting_path_conn.insert(new_connecting_path_conn.end(), connecting_path_conn.begin()+1, connecting_path_conn.end()-1);
+                new_connecting_path_conn.push_back(conn2);
+
+                connecting_path_conn.front()->remove();
+                connecting_path_conn.back()->remove();
+              }
+              else
+              {
+                double conn1_cost =  metrics_->cost(path1_node,path2_node);
+
+                ConnectionPtr conn1 = std::make_shared<Connection>(path1_node,path2_node);
+                conn1->setCost(conn1_cost);
+                conn1->add();
+
+                connecting_path_conn.front()->remove();
+                new_connecting_path_conn.push_back(conn1);
+              }
+
+              path1_node_fake->disconnect();
+              path2_node_fake->disconnect();
+
+              new_connecting_path_conn.insert(new_connecting_path_conn.end(),subpath2.begin(),subpath2.end());
+              new_path = std::make_shared<Path>(new_connecting_path_conn, metrics_, checker_);
+              path_cost = new_path->cost();
+
+              success = 1;
+              an_obstacle_ = false;
+              subpath_from_path2 = path2_node2goal;
+              for(unsigned int z=0; z<admissible_other_paths_.size();z++)
+              {
+                if(path2 == admissible_other_paths_.at(z)) connected2path_number = z;
+              }
+
               /*//////////Visualization//////////////////*/
               if(pathSwitch_disp_)
               {
-                ROS_INFO_STREAM("It is not a better solution");
-
-                disp_->clearMarker(new_node_id);
-                disp_->changeNodeSize(marker_scale_sphere);
-                disp_->displayNode(path2_node,"pathplan",marker_color_sphere);
-                disp_->defaultNodeSize();
+                disp_->clearMarker(new_path_id);
+                disp_->changeConnectionSize(marker_scale);
+                new_path_id = disp_->displayPath(new_path,"pathplan",marker_color);
+                disp_->defaultConnectionSize();
 
                 disp_->nextButton("Press \"next\" to execute the next PathSwitch step");
               }
               /*//////////////////////////////////////*/
             }
-          }
+            else
+            {
+              if(pathSwitch_disp_)
+              {
+                /*//////////Visualization//////////////////*/
+                if(pathSwitch_disp_)
+                {
+                  ROS_INFO_STREAM("It is not a better solution");
 
-          toc_cycle = ros::WallTime::now();
-          time_vector.push_back((toc_cycle-tic_cycle).toSec());
-          if(pathSwitch_verbose_) ROS_INFO_STREAM("SOLVED->cycle time: "<<(toc_cycle-tic_cycle).toSec());
-          pathSwitch_cycle_time_mean_ = std::accumulate(time_vector.begin(), time_vector.end(),0.0)/((double) time_vector.size());
+                  disp_->clearMarker(new_node_id);
+                  disp_->changeNodeSize(marker_scale_sphere);
+                  disp_->displayNode(path2_node,"pathplan",marker_color_sphere);
+                  disp_->defaultNodeSize();
+
+                  disp_->nextButton("Press \"next\" to execute the next PathSwitch step");
+                }
+                /*//////////////////////////////////////*/
+              }
+            }
+
+            toc_cycle = ros::WallTime::now();
+            time_vector.push_back((toc_cycle-tic_cycle).toSec());
+            if(pathSwitch_verbose_) ROS_INFO_STREAM("SOLVED->cycle time: "<<(toc_cycle-tic_cycle).toSec());
+            pathSwitch_cycle_time_mean_ = std::accumulate(time_vector.begin(), time_vector.end(),0.0)/((double) time_vector.size());
+          }
+          else
+          {
+            if(pathSwitch_verbose_) ROS_INFO("not solved");
+
+            /*//////////Visualization//////////////////*/
+            if(pathSwitch_disp_)
+            {
+              ROS_INFO("not solved");
+
+              disp_->clearMarker(new_node_id);
+              disp_->changeNodeSize(marker_scale_sphere);
+              disp_->displayNode(path2_node,"pathplan",marker_color_sphere);
+              disp_->defaultNodeSize();
+
+              disp_->nextButton("Press \"next\" to execute the next PathSwitch step");
+            }
+            /*//////////////////////////////////////*/
+          }
         }
         else
         {
-          if(pathSwitch_verbose_) ROS_INFO("not solved");
-
           /*//////////Visualization//////////////////*/
           if(pathSwitch_disp_)
           {
-            ROS_INFO("not solved");
+            ROS_INFO_STREAM("It would not be a better solution");
 
             disp_->clearMarker(new_node_id);
             disp_->changeNodeSize(marker_scale_sphere);
@@ -866,35 +864,21 @@ bool Replanner::pathSwitch(const PathPtr &current_path,
           }
           /*//////////////////////////////////////*/
         }
-      }
-      else
-      {
-        /*//////////Visualization//////////////////*/
-        if(pathSwitch_disp_)
+
+        toc=ros::WallTime::now();
+        time = max_time - (toc-tic).toSec();
+        if(pathSwitch_verbose_) ROS_INFO_STREAM("cycle time mean: "<<pathSwitch_cycle_time_mean_<<" -> available time: "<< time);
+
+        toc=ros::WallTime::now();
+        time = max_time - (toc-tic).toSec();
+        if((!an_obstacle_ && time<percentage_variability*pathSwitch_cycle_time_mean_)|| time<=0.0)  //if there is an obstacle, you should use the entire available time to find a feasible solution
         {
-          ROS_INFO_STREAM("It would not be a better solution");
-
-          disp_->clearMarker(new_node_id);
-          disp_->changeNodeSize(marker_scale_sphere);
-          disp_->displayNode(path2_node,"pathplan",marker_color_sphere);
-          disp_->defaultNodeSize();
-
-          disp_->nextButton("Press \"next\" to execute the next PathSwitch step");
+          time_out = true;
+          break;
         }
-        /*//////////////////////////////////////*/
-      }
 
-      toc=ros::WallTime::now();
-      time = max_time - (toc-tic).toSec();
-      if(pathSwitch_verbose_) ROS_INFO_STREAM("cycle time mean: "<<pathSwitch_cycle_time_mean_<<" -> available time: "<< time);
-
-      toc=ros::WallTime::now();
-      time = max_time - (toc-tic).toSec();
-      if((!an_obstacle_ && time<percentage_variability*pathSwitch_cycle_time_mean_)|| time<=0.0)  //if there is an obstacle, you should use the entire available time to find a feasible solution
-      {
-        time_out = true;
-        break;
       }
+      else break;
     }
     if(time_out)
     {
@@ -973,7 +957,7 @@ bool Replanner::informedOnlineReplanning(const int& informed,
   int idx; //to save the index of the connection on which the current configuration is
   ConnectionPtr current_conn = current_path_->findConnection(current_configuration_,idx);
 
-  if(idx<0) //DA ELIMINARE
+  if(idx<0) // ////DA ELIMINARE/////////////////////////////////////////////////
   {
     double dist1 = (current_configuration_ - current_path_->getWaypoints().at(1)).norm();
     double dist2 = (current_path_->getWaypoints().at(0) - current_path_->getWaypoints().at(1)).norm();
@@ -984,7 +968,7 @@ bool Replanner::informedOnlineReplanning(const int& informed,
 
     for(Eigen::VectorXd wp:current_path_->getWaypoints()) ROS_INFO_STREAM("WP: "<<wp.transpose());
     throw std::invalid_argument("idx < 0");
-  }
+  } // //////////////////////////////////////////////////////////////////////////
 
   reset_other_paths = addAdmissibleCurrentPath(idx, admissible_current_path);
   admissible_other_paths_ = reset_other_paths;
@@ -1072,7 +1056,7 @@ bool Replanner::informedOnlineReplanning(const int& informed,
 
   bool flag_other_paths = 0;
 
-  while(j>=0)
+  while(j>=0 && !emergency_stop_)
   {
     if(informedOnlineReplanning_disp_) ROS_INFO_STREAM("j: "<<j);
 
@@ -1129,7 +1113,7 @@ bool Replanner::informedOnlineReplanning(const int& informed,
 
       if(informedOnlineReplanning_verbose_) ROS_INFO_STREAM("available time: "<<available_time_<<", min time for PathSwitch: "<<min_time_pathSwitch);
 
-      if(available_time_>=min_time_pathSwitch)
+      if(available_time_>=min_time_pathSwitch && !emergency_stop_)
       {
         if(no_available_paths)
         {
@@ -1154,7 +1138,7 @@ bool Replanner::informedOnlineReplanning(const int& informed,
 
       if(informedOnlineReplanning_verbose_) ROS_INFO_STREAM("available time: "<<available_time_<<", min time for PathSwitch: "<<min_time_pathSwitch);
 
-      if(available_time_>=min_time_pathSwitch)
+      if(available_time_>=min_time_pathSwitch && !emergency_stop_)
       {
         if(no_available_paths)
         {
@@ -1336,6 +1320,13 @@ bool Replanner::informedOnlineReplanning(const int& informed,
     }
 
     j -= 1;
+
+    if(emergency_stop_)
+    {
+      ROS_WARN("EMERGENCY STOP HANDLED");   //ELIMINA
+      emergency_stop_ = false;
+      break;
+    }
 
     if(informedOnlineReplanning_verbose_) ROS_INFO("------------------------------------------");
     if(informedOnlineReplanning_disp_) disp_->nextButton("Press \"next\" to execute the next InformedOnlineReplanning step");

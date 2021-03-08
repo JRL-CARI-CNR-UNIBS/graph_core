@@ -1,0 +1,4 @@
+group_name: "manipulator"
+base_link: "base_link"
+last_link: "ee_link"
+checker_resolution: 0.01

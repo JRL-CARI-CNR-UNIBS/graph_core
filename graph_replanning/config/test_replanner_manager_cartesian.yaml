@@ -7,10 +7,13 @@ dt_replan_relaxed: 0.100
 trj_execution_thread_frequency: 100
 collision_checker_thread_frequency: 30
 spawn_objs: true
+display_timing_warning: false
+display_replanning_success: true
+
 
 start_configuration: [0.0, 0.0, 0.0]
 stop_configuration: [0.8, 0.8, 0.8]
 k_freq: 1
 init_test: 0
 end_test: 100
-opt_path: true
+opt_path: false
