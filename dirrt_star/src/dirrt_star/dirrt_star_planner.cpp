@@ -119,8 +119,7 @@ DIRRTStar::DIRRTStar ( const std::string& name,
 void DIRRTStar::setPlanningScene ( const planning_scene::PlanningSceneConstPtr& planning_scene )
 {
   planning_scene_=planning_scene;
-  //COMMENT("create checker");
-  ROS_WARN("create checker");
+  COMMENT("create checker");
   checker=std::make_shared<pathplan::MoveitCollisionChecker>(planning_scene_,group_,collision_distance);
 
 }
