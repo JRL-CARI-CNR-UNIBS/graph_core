@@ -70,4 +70,6 @@ pickplace_planner:
   - forearm_link
   - upper_arm_link
 
+  max_accuracy: 0.7
 
+#

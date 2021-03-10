@@ -443,13 +443,14 @@ void MultigoalPlanner::centroidCb(const geometry_msgs::PoseArrayConstPtr& msg)
   }
 }
 
-void MultigoalPlanner::humansCb(const detector_ros::xyzDataConstPtr &msg)
+void MultigoalPlanner::humansCb(const shared_human_body_part::BodyListConstPtr &msg)
 {
   if (!use_avoidance_goal_ && !use_avoidance_metrics_)
     return;
   m_avoidance_goal_cost_fcn->cleanPoints();
   Eigen::Vector3d point;
-  for (const geometry_msgs::Point& p: msg->xyz_data)
+
+  for (const shared_human_body_part& p: msg->body_array)
   {
     point(0)=p.x;
     point(1)=p.y;

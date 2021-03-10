@@ -22,7 +22,7 @@
   <exec_depend>moveit_core</exec_depend>
   <exec_depend>moveit_ros_planning</exec_depend>
   <exec_depend>roscpp</exec_depend>
-  <depend>detector_ros</depend>
+  <depend>shared_human_body_part</depend>
 
   <export>
     <moveit_core plugin="${prefix}/plugin.xml"/>

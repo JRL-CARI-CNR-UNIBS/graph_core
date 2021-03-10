@@ -40,7 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/tube_informed_sampler.h>
 #include <rosparam_utilities/rosparam_utilities.h>
 #include <geometry_msgs/PoseArray.h>
-#include <detector_ros/xyzData.h>
+#include <shared_human_body_part/BodyList.h>
 #include <ros/callback_queue.h>
 
 #include <graph_core/graph/graph_display.h>
@@ -75,7 +75,8 @@ public:
   virtual void clear() override;
 
   void centroidCb(const geometry_msgs::PoseArrayConstPtr& msg);
-  void humansCb(const detector_ros::xyzDataConstPtr& msg);
+
+  void humansCb(const shared_human_body_part::BodyListConstPtr& msg);
 protected:
   moveit::core::RobotModelConstPtr robot_model_;
   //planning_scene::PlanningSceneConstPtr pl
