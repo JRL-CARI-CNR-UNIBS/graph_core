@@ -1,0 +1,1 @@
+see [readme](dirrt_star/readme.md) in dirrt_star
