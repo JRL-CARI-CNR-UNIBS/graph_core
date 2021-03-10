@@ -84,9 +84,9 @@ DIRRTStar::DIRRTStar ( const std::string& name,
 
   COMMENT("create metrics");
   metrics=std::make_shared<pathplan::Metrics>();
-  COMMENT("check planning scene");
-  if (!planning_scene_)
-    ROS_ERROR("No planning scene available");
+  // COMMENT("check planning scene");
+  // if (!planning_scene_)
+  //   ROS_ERROR("No planning scene available");
 
   COMMENT("created DIRRTStar");
 
