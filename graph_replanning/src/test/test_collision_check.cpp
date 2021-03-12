@@ -45,6 +45,27 @@ int main(int argc, char **argv)
     return 0;
   }
 
+  std::string test;
+  if (!nh.getParam("test",test))
+  {
+    ROS_ERROR("test not set, set "" ");
+    test = "";
+  }
+
+  std::vector<double> start_configuration;
+  if (!nh.getParam("start_configuration",start_configuration))
+  {
+    ROS_ERROR("start_configuration not set");
+    return 0;
+  }
+
+  std::vector<double> goal_configuration;
+  if (!nh.getParam("goal_configuration",goal_configuration))
+  {
+    ROS_ERROR("goal_configuration not set");
+    return 0;
+  }
+
   // /////////////////////////////////UPLOADING THE ROBOT ARM/////////////////////////////////////////////////////////////
 
   moveit::planning_interface::MoveGroupInterface move_group(group_name);
@@ -61,7 +82,7 @@ int main(int argc, char **argv)
 
   for (unsigned int idx = 0; idx < dof; idx++)
   {
-    const robot_model::VariableBounds& bounds = kinematic_model->getVariableBounds(joint_names.at(idx));  //bounds dei joints definito in urdf e file joints limit
+    const robot_model::VariableBounds& bounds = kinematic_model->getVariableBounds(joint_names.at(idx));
     if (bounds.position_bounded_)
     {
       lb(idx) = bounds.min_position_;
@@ -96,23 +117,36 @@ int main(int argc, char **argv)
 
   pathplan::CollisionCheckerPtr checker = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scene, group_name, checker_resolution);
 
-  std::vector<double> start_configuration(dof,0.0);
-  std::vector<double> goal_configuration(dof,1.0);
   Eigen::VectorXd start = Eigen::Map<Eigen::VectorXd>(start_configuration.data(), start_configuration.size());
   Eigen::VectorXd goal = Eigen::Map<Eigen::VectorXd>(goal_configuration.data(), goal_configuration.size());
 
   pathplan::SamplerPtr sampler = std::make_shared<pathplan::InformedSampler>(start, goal, lb, ub);
-  sampler->setCost(std::numeric_limits<double>::infinity());
-
+  sampler->setCost(std::numeric_limits<double>::infinity()); //to sample the whole joints space
 
   pathplan::Display disp = pathplan::Display(planning_scene,group_name,last_link);
-  ros::Duration(1).sleep();
+  ros::Duration(2).sleep();
   std::vector<double> marker_color = {1.0,0.0,0.0,1.0};
+  std::vector<double> marker_size = {0.05,0.05,0.05};
+  disp.changeNodeSize(marker_size);
   int id = 0;
   disp.displayNode(std::make_shared<pathplan::Node>(start),id,"pathplan",marker_color);
   marker_color = {0.0,1.0,0.0,1.0};
   id++;
   disp.displayNode(std::make_shared<pathplan::Node>(goal),id,"pathplan",marker_color);
+  disp.defaultNodeSize();
+
+  bool success_in;
+  ros::WallTime tic_in = ros::WallTime::now();
+  success_in = checker->check(start);
+  ros::WallTime toc_in = ros::WallTime::now();
+
+  ROS_INFO_STREAM("TIME start: "<<(toc_in-tic_in).toSec()<<" success: "<<success_in);
+
+  tic_in = ros::WallTime::now();
+  success_in = checker->check(goal);
+  toc_in = ros::WallTime::now();
+
+  ROS_INFO_STREAM("TIME goal: "<<(toc_in-tic_in).toSec()<<" success: "<<success_in);
 
   marker_color = {0.0,0.0,1.0,1.0};
   int n_succ = 0;
@@ -125,8 +159,9 @@ int main(int argc, char **argv)
   {
     Eigen::VectorXd sample = sampler->sample();
 
+    bool success;
     ros::WallTime tic = ros::WallTime::now();
-    bool success = checker->check(sample);
+    success = checker->check(sample);
     ros::WallTime toc = ros::WallTime::now();
 
     double time = (toc-tic).toSec();
@@ -136,17 +171,26 @@ int main(int argc, char **argv)
     if(success)n_succ++;
     else n_fail++;
 
-    disp.displayNode(std::make_shared<pathplan::Node>(sample),id,"pathplan",marker_color);
-    ROS_INFO_STREAM("iter: "<<i<<" success:: "<<success<<" time: "<<time);
     id++;
-    ros::Duration(0.01).sleep();
+    disp.displayNode(std::make_shared<pathplan::Node>(sample),id,"pathplan",marker_color);
+    //ROS_INFO_STREAM("iter: "<<i<<" success:: "<<success<<" time: "<<time);
+    ros::Duration(0.001).sleep();
   }
 
   double time_avg = 0;
   for(const double &time:time_vec) time_avg +=time;
-  time_avg = time_avg/time_vec.size();
+  time_avg = time_avg/(double) time_vec.size();
 
   ROS_INFO_STREAM("time avg: "<<time_avg<<" max_time: "<<max_time<<" count>0.001: "<<count<<" free: "<<n_succ<<" coll: "<<n_fail);
+
+  bool success;
+  ros::WallTime tic = ros::WallTime::now();
+  success = checker->checkPath(start,goal);
+  ros::WallTime toc = ros::WallTime::now();
+
+  ROS_INFO_STREAM("checker resol: "<<checker_resolution);
+  ROS_INFO_STREAM("time path: "<<(toc-tic).toSec()<<" cost: "<<(goal-start).norm()<<" success: "<<success);
+
   return 0;
 }
 

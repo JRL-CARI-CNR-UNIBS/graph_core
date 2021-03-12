@@ -2,3 +2,12 @@ group_name: "manipulator"
 base_link: "base_link"
 last_link: "open_tip"
 checker_resolution: 0.05
+test: "sharework"
+start_configuration: [0.0,0.0,0.0,0.0,0.0,0.0]
+goal_configuration: [2.0,0.0,0.0,0.0,0.0,0.0]
+
+#RESULTS:
+#step: 0.01  ur10-> 13-17 ms (to 30!)  ur10e_simplified-> 9-11 ms  (to 25!)
+#step: 0.05  ur10-> 4-4.5 ms  ur10e_simplified-> 2.5-4.5 ms
+
+#path length->2.0

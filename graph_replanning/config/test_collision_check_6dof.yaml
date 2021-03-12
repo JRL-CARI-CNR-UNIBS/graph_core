@@ -1,0 +1,13 @@
+group_name: "manipulator"
+base_link: "world"
+last_link: "flange"
+checker_resolution: 0.01
+test: "6dof"
+start_configuration: [0.0,0.0,0.0,0.0,0.0,0.0]
+goal_configuration: [1.0,1.0,1.0,1.0,1.0,1.0]
+
+#RESULTS:
+#step: 0.01  6dof-> 1.2 ms
+#step: 0.05  6dof-> 0.3-0.7 ms
+
+#path length->2.449

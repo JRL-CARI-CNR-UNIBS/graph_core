@@ -58,7 +58,6 @@ public:
 
   virtual bool check(const Eigen::VectorXd& configuration)
   {
-
     *state_ = planning_scene_->getCurrentState();
     state_->setJointGroupPositions(group_name_, configuration);
     if (!state_->satisfiesBounds())

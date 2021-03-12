@@ -3,9 +3,6 @@
 
 int main(int argc, char **argv)
 {
-
-  // 0.05 in coll check
-
   ros::init(argc, argv, "node_replanner");
   ros::NodeHandle nh;
   ros::AsyncSpinner spinner(1);
@@ -135,7 +132,7 @@ int main(int argc, char **argv)
     pathplan::NodePtr start_node = std::make_shared<pathplan::Node>(start_conf);
 
     pathplan::MetricsPtr metrics = std::make_shared<pathplan::Metrics>();
-    pathplan::CollisionCheckerPtr checker = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scn, group_name);
+    pathplan::CollisionCheckerPtr checker = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scn, group_name,0.05);
 
     // //////////////////////////////////////PATH PLAN//////////////////////////////////////////////////////////////////////////
     pathplan::PathPtr path = NULL;

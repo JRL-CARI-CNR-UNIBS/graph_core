@@ -1,0 +1,2 @@
+scene_objects:
+- {type: "box_coll_check", frame: "world", position: [0.0, 1.5, 0.7], quaternion: [0, 0, 0, 1]}
