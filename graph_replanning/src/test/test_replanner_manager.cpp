@@ -17,13 +17,6 @@ int main(int argc, char **argv)
     optimize_path = 1;
   }
 
-  double k_freq;
-  if (!nh.getParam("k_freq",k_freq))
-  {
-    ROS_INFO("k_freq not set, use 1");
-    k_freq=1;
-  }
-
   int init_test;
   if (!nh.getParam("init_test",init_test))
   {
@@ -90,7 +83,7 @@ int main(int argc, char **argv)
   double checker_resolution;
   if (!nh.getParam("checker_resolution",checker_resolution))
   {
-    ROS_ERROR("stop_configuration not set, set 0.05");
+    ROS_ERROR("checker_resolution not set, set 0.05");
     checker_resolution = 0.05;
   }
 

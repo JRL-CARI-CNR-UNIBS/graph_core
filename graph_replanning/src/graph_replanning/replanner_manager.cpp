@@ -633,6 +633,8 @@ void ReplannerManager::spawnObjects()
 
         std::srand(time(NULL));
         obj_conn_pos = rand() % (size-idx_current_conn) + idx_current_conn;
+
+        if(obj_conn_pos == idx_current_conn) obj_conn_pos +=1;  //ELIMINA
       }
       pathplan::ConnectionPtr obj_conn;
       pathplan::NodePtr obj_parent;

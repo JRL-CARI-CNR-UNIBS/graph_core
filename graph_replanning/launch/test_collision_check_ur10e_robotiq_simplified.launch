@@ -2,7 +2,7 @@
 <launch>
 
   <rosparam command="load" file="$(find graph_replanning)/config/object_test_replanner.yaml"/>
-  <rosparam command="load" file="$(find graph_replanning)/config/test_collision_check_ur10e.yaml"/>
+  <rosparam command="load" file="$(find graph_replanning)/config/test_collision_check_ur10e_robotiq.yaml"/>
   <include file= "$(find ur10e_robotiq_simplified_moveit_config)/launch/demo.launch"/>
   <node pkg="object_loader" name="context_manager_node" type="context_manager_node" respawn="true" output="screen"/>
 

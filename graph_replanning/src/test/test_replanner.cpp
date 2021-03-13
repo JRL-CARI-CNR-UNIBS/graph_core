@@ -208,6 +208,7 @@ int main(int argc, char **argv)
 
   pathplan::Display disp = pathplan::Display(planning_scene,group_name,last_link);
   disp.clearMarkers();
+  ros::Duration(1).sleep();
   pathplan::PathPtr path = NULL;
   pathplan::Trajectory trajectory = pathplan::Trajectory(path,nh,planning_scene,group_name,base_link,last_link);
 
@@ -220,6 +221,8 @@ int main(int argc, char **argv)
     Eigen::VectorXd goal_conf = Eigen::Map<Eigen::VectorXd>(stop_configuration.data(), stop_configuration.size());
     pathplan::NodePtr start_node = std::make_shared<pathplan::Node>(start_conf);
 
+    int id=0;
+    int id_wp = 1000;
     for (unsigned int i =0; i<n_paths; i++)
     {
       pathplan::NodePtr goal_node = std::make_shared<pathplan::Node>(goal_conf);
@@ -233,7 +236,9 @@ int main(int argc, char **argv)
       if(i==1) marker_color = {0.0f,0.0f,1.0,1.0};
       if(i==2) marker_color = {1.0,0.0f,0.0f,1.0};
 
-      disp.displayPathAndWaypoints(solution,"pathplan",marker_color);
+      disp.displayPathAndWaypoints(solution,id,id_wp,"pathplan",marker_color);
+      id++;
+      id_wp +=50;
     }
 
     pathplan::PathPtr current_path = path_vector.front();
@@ -270,7 +275,6 @@ int main(int argc, char **argv)
       }
     }
     // ////////////////////////////////////////////////////////////////////////////
-
     int idx = 0;//current_path->getConnections().size()/2;
     pathplan::SamplerPtr samp = std::make_shared<pathplan::InformedSampler>(start_conf, goal_conf, lb, ub);
     pathplan::BiRRTPtr solver = std::make_shared<pathplan::BiRRT>(metrics, checker, samp);
@@ -278,17 +282,14 @@ int main(int argc, char **argv)
 
     Eigen::VectorXd current_configuration = (current_path->getConnections().at(idx)->getChild()->getConfiguration() + current_path->getConnections().at(idx)->getParent()->getConfiguration())/2.0;
 
-    pathplan::PathPtr new_path;
-    pathplan::PathPtr subpath_from_path2;
-    int connected2path_number;
     bool success;
     bool succ_node = 1;
     int informed = 2;
 
     // ///////////////////////////////////////// VISUALIZATION OF CURRENT NODE ///////////////////////////////////////////////////////////
     std::vector<double> marker_color_sphere_actual = {1.0,0.0,1.0,1.0};
-    disp.displayNode(std::make_shared<pathplan::Node>(current_configuration),"pathplan",marker_color_sphere_actual);
-
+    disp.displayNode(std::make_shared<pathplan::Node>(current_configuration),id,"pathplan",marker_color_sphere_actual);
+    id++;
     // //////////////////////////////////////// ADDING A MOBILE OBSTACLE ////////////////////////////////////////////////////////////////
     if(mobile_obstacle)
     {
@@ -324,6 +325,14 @@ int main(int argc, char **argv)
       {
         ROS_ERROR("srv error");
         return 1;
+      }
+      else
+      {
+        remove_srv.request.obj_ids.clear();
+        for (const std::string& str: srv.response.ids)
+        {
+          remove_srv.request.obj_ids.push_back(str);
+        }
       }
       // ///////////////////////////////////UPDATING THE PLANNING SCENE WITH THE NEW OBSTACLE ////////////////////////////////////////
 
@@ -416,10 +425,40 @@ int main(int argc, char **argv)
 
       std::vector<double> marker_scale(3,0.01);
       disp.changeConnectionSize(marker_scale);
-      disp.displayPath(replanner.getReplannedPath(),"pathplan",marker_color);
+      disp.displayPath(replanner.getReplannedPath(),id,"pathplan",marker_color);
     }
 
-    ros::Duration(0.5).sleep();
+    ros::Duration(2).sleep();
+
+    //Removing mobile obs
+    if (!remove_obj.waitForExistence(ros::Duration(10)))
+    {
+      ROS_FATAL("srv not found");
+    }
+    if (!remove_obj.call(remove_srv))
+    {
+      ROS_ERROR("call to srv not ok");
+    }
+    if (!remove_srv.response.success)
+    {
+      ROS_ERROR("srv error");
+    }
+
+    moveit_msgs::GetPlanningScene ps_srv;
+
+    if (!ps_client.call(ps_srv))
+    {
+      ROS_ERROR("call to srv not ok");
+      return 1;
+    }
+
+    if (!planning_scene->setPlanningSceneMsg(ps_srv.response.scene))
+    {
+      ROS_ERROR("unable to update planning scene");
+      return 1;
+    }
+
+    ROS_INFO("--------------------------------");
   }
   return 0;
 }
