@@ -32,7 +32,7 @@ PathPtr Trajectory::computeBiRRTPath(const NodePtr &start_node, NodePtr &goal_no
   solver.addGoal(goal_node);
 
   pathplan::PathPtr solution;
-  if (!solver.solve(solution, 1000))
+  if (!solver.solve(solution, 10000))
   {
     ROS_INFO("No solutions found");
     assert(0);

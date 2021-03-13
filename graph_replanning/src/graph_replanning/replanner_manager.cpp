@@ -4,32 +4,6 @@ namespace pathplan
 {
 ReplannerManager::ReplannerManager(PathPtr &current_path,
                                    std::vector<PathPtr> &other_paths,
-                                   const double &trj_execution_thread_frequency,
-                                   const double &collision_checker_thread_frequency,
-                                   const double &dt_replan_restricted,
-                                   const double &dt_replan_relaxed,
-                                   const std::string &group_name,
-                                   const std::string &base_link,
-                                   const std::string &last_link,
-                                   ros::NodeHandle &nh)
-{
-  current_path_ = current_path;
-  other_paths_ = other_paths;
-  trj_execution_thread_frequency_ = trj_execution_thread_frequency;
-  collision_checker_thread_frequency_ = collision_checker_thread_frequency;
-  dt_replan_restricted_ = dt_replan_restricted;
-  dt_replan_relaxed_ = dt_replan_relaxed;
-  group_name_ = group_name;
-  base_link_ = base_link;
-  last_link_ = last_link;
-  nh_ = nh;
-
-  subscribeTopicsAndServices();
-  attributeInitialization();
-}
-
-ReplannerManager::ReplannerManager(PathPtr &current_path,
-                                   std::vector<PathPtr> &other_paths,
                                    ros::NodeHandle &nh)
 {
   current_path_ = current_path;
@@ -53,6 +27,11 @@ void ReplannerManager::fromParam()
   if(!nh_.getParam("group_name",group_name_)) throw  std::invalid_argument("group_name not set");
   if(!nh_.getParam("base_link",base_link_)) throw  std::invalid_argument("base_link not set");
   if(!nh_.getParam("last_link",last_link_)) throw  std::invalid_argument("last_link not set");
+  if(!nh_.getParam("spawn_objs",spawn_objs_)) spawn_objs_ = false;
+  if(!nh_.getParam("scaling",scaling_)) scaling_ = 1.0;
+  if(!nh_.getParam("checker_resolution",checker_resol_)) checker_resol_ = 0.05;
+  if(!nh_.getParam("display_timing_warning",display_timing_warning_)) display_timing_warning_ = false;
+  if(!nh_.getParam("display_replanning_success",display_replanning_success_)) display_replanning_success_ = false;
 }
 
 void ReplannerManager::attributeInitialization()
@@ -63,7 +42,7 @@ void ReplannerManager::attributeInitialization()
   real_time_ = 0.0;
   t_ = 0.0;
   dt_ = 1/trj_execution_thread_frequency_;
-  replan_offset_ = (dt_replan_restricted_-dt_)*1.2;
+  replan_offset_ = (dt_replan_restricted_-dt_)*K_OFFSET;
   t_replan_ = t_+replan_offset_;
   n_conn_ = 0;
   first_replan_ = true;
@@ -111,8 +90,8 @@ void ReplannerManager::attributeInitialization()
   }
 
   pathplan::MetricsPtr metrics = std::make_shared<pathplan::Metrics>();
-  checker_thread_cc_ = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scn_, group_name_,0.05);
-  checker_ = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scn_replanning_, group_name_,0.05);
+  checker_thread_cc_ = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scn_, group_name_, checker_resol_);
+  checker_ = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scn_replanning_, group_name_, checker_resol_);
 
   current_path_->setChecker(checker_);  //To synchronize path checker with the related one to the planning scene that will be used by the replanner, which will be different from the planning scene used by the collision checking thread
   for(const PathPtr &path:other_paths_) path->setChecker(checker_);
@@ -136,21 +115,6 @@ void ReplannerManager::attributeInitialization()
   n_conn_ = 0;
 
   replanner_ = std::make_shared<pathplan::Replanner>(configuration_replan_, current_path_, other_paths_, solver, metrics, checker_, lb, ub);
-
-  if(!nh_.getParam("spawn_objs",spawn_objs_))
-  {
-    spawn_objs_ = false;
-  }
-
-  if(!nh_.getParam("display_timing_warning",display_timing_warning_))
-  {
-    display_timing_warning_ = false;
-  }
-
-  if(!nh_.getParam("display_replanning_success",display_replanning_success_))
-  {
-    display_replanning_success_ = false;
-  }
 
   interpolator_.interpolate(ros::Duration(t_),pnt_);
   joint_state_.position = pnt_.positions;
@@ -462,7 +426,7 @@ bool ReplannerManager::trajectoryExecutionThread()
     replanner_mtx_.lock();
     trj_mtx_.lock();
     real_time_ += dt_;
-    t_+=dt_;
+    t_+= scaling_*dt_;
 
     interpolator_.interpolate(ros::Duration(t_),pnt_);
     Eigen::VectorXd point2project(pnt_.positions.size());
@@ -622,8 +586,8 @@ void ReplannerManager::spawnObjects()
   ros::Rate lp(0.5*trj_execution_thread_frequency_);
 
   bool object_spawned = false;
-  bool second_object_spawned = false;
-  bool third_object_spawned = false;
+  bool second_object_spawned = true;
+  bool third_object_spawned = true;
   while (!stop_)
   {
     // ////////////////////////////////////////////SPAWNING THE OBJECT/////////////////////////////////////////////

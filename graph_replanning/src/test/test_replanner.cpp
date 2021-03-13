@@ -148,8 +148,8 @@ int main(int argc, char **argv)
     object_loader_msgs::object obj;
     obj.object_type="scatola";
 
-    obj.pose.pose.position.x = 0.1;
-    obj.pose.pose.position.y = 0.1;
+    obj.pose.pose.position.x = 1.0;
+    obj.pose.pose.position.y = 0.0;
     obj.pose.pose.position.z = 1.5;
 
     obj.pose.pose.orientation.x = 0.0;
@@ -207,6 +207,7 @@ int main(int argc, char **argv)
   pathplan::CollisionCheckerPtr checker = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scene, group_name);
 
   pathplan::Display disp = pathplan::Display(planning_scene,group_name,last_link);
+  disp.clearMarkers();
   pathplan::PathPtr path = NULL;
   pathplan::Trajectory trajectory = pathplan::Trajectory(path,nh,planning_scene,group_name,base_link,last_link);
 

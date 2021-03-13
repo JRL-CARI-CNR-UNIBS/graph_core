@@ -53,6 +53,8 @@ protected:
   double replan_offset_;
   double t_replan_;
   double replanning_thread_frequency_;
+  double scaling_;
+  double checker_resol_;
 
   ReplannerPtr replanner_;
   Eigen::VectorXd current_configuration_;
@@ -89,17 +91,6 @@ protected:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  ReplannerManager(PathPtr &current_path,
-                   std::vector<PathPtr> &other_paths,
-                   const double &trj_execution_thread_frequency,
-                   const double &collision_checker_thread_frequency,
-                   const double &dt_replan_restricted,
-                   const double &dt_replan_relaxed,
-                   const std::string &group_name,
-                   const std::string &base_link,
-                   const std::string &last_link,
-                   ros::NodeHandle &nh);
 
   ReplannerManager(PathPtr &current_path,
                    std::vector<PathPtr> &other_paths,
