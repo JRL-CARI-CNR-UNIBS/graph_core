@@ -3,7 +3,7 @@ group_name: "manipulator"
 base_link: "base_link"
 last_link: "open_tip"
 dt_replan_restricted: 0.100
-dt_replan_relaxed: 0.200
+dt_replan_relaxed: 0.150
 trj_execution_thread_frequency: 100
 collision_checker_thread_frequency: 30
 spawn_objs: true

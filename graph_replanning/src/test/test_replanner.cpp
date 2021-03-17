@@ -409,7 +409,7 @@ int main(int argc, char **argv)
       replanner.setPathSwitchDisp(disp.pointer());
     }
 
-      double time_repl = time*0.9;
+      double time_repl = time;
       ros::WallTime tic = ros::WallTime::now();
       success =  replanner.informedOnlineReplanning(informed,succ_node,time_repl);
       ros::WallTime toc = ros::WallTime::now();

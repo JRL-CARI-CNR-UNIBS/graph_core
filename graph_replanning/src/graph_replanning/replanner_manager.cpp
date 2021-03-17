@@ -32,6 +32,7 @@ void ReplannerManager::fromParam()
   if(!nh_.getParam("checker_resolution",checker_resol_)) checker_resol_ = 0.05;
   if(!nh_.getParam("display_timing_warning",display_timing_warning_)) display_timing_warning_ = false;
   if(!nh_.getParam("display_replanning_success",display_replanning_success_)) display_replanning_success_ = false;
+  if(!nh_.getParam("from_robot",from_robot_)) from_robot_ = false;
 }
 
 void ReplannerManager::attributeInitialization()
@@ -112,6 +113,12 @@ void ReplannerManager::attributeInitialization()
   for(unsigned int i=0; i<pnt_replan_.positions.size();i++) point2project[i] = pnt_replan_.positions.at(i);
   configuration_replan_ = current_path_->projectOnClosestConnection(point2project);
   current_configuration_ = current_path_->getWaypoints().front();
+
+  if(from_robot_)
+  {
+    if((getRobotPos()-current_configuration_).norm()>1e-04) throw std::invalid_argument("robot position and current configuration don't match");
+  }
+
   n_conn_ = 0;
 
   replanner_ = std::make_shared<pathplan::Replanner>(configuration_replan_, current_path_, other_paths_, solver, metrics, checker_, lb, ub);
@@ -326,7 +333,7 @@ void ReplannerManager::replanningThread()
       ros::WallTime toc_tot=ros::WallTime::now();
       double duration = (toc_tot-tic_tot).toSec();
 
-      if(duration>(time_informedOnlineRepl/0.9) && display_timing_warning_)
+      if(display_timing_warning_ && duration>(time_informedOnlineRepl/0.9))
       {
         ROS_WARN("Replanning thread time expired: duration-> %f",duration);
         ROS_WARN("replanning time-> %f",(toc_rep-tic_rep).toSec());
@@ -389,7 +396,8 @@ void ReplannerManager::collisionCheckThread()
     ros::WallTime toc_tot=ros::WallTime::now();
     double duration = (toc_tot-tic_tot).toSec();
 
-    if(duration>(1/collision_checker_thread_frequency_) && display_timing_warning_)
+    //if(duration>(1/collision_checker_thread_frequency_) && display_timing_warning_)
+    if(duration>(0.040) && display_timing_warning_)
     {
       ROS_WARN("Collision checking thread time expired: duration-> %f",duration);
       ROS_WARN("t mtx %f, t scn call %f, t check %f",(toc_mtx-tic_mtx).toSec(),(toc_pln_call-tic_pln_call).toSec(),(toc_check-tic_check).toSec());
@@ -632,7 +640,7 @@ void ReplannerManager::spawnObjects()
         replanner_mtx_.unlock();
 
         std::srand(time(NULL));
-        obj_conn_pos = rand() % (size-idx_current_conn) + idx_current_conn;
+        obj_conn_pos = (rand() % (size-idx_current_conn)) + idx_current_conn;
 
         if(obj_conn_pos == idx_current_conn) obj_conn_pos +=1;  //ELIMINA
       }
@@ -720,5 +728,11 @@ void ReplannerManager::spawnObjects()
     ROS_ERROR("srv error");
   }
   scene_mtx_.unlock();
+}
+
+Eigen::VectorXd ReplannerManager::getRobotPos()
+{
+  Eigen::VectorXd robot_pos;
+  return robot_pos;
 }
 }

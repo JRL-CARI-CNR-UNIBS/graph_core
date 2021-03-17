@@ -43,6 +43,7 @@ protected:
   bool replanning_;
   bool display_timing_warning_;
   bool display_replanning_success_;
+  bool from_robot_;
 
   int n_conn_;
   int pos_closest_obs_from_goal_repl_;
@@ -104,6 +105,7 @@ public:
   void displayThread();
   void spawnObjects();
   bool trajectoryExecutionThread();
+  Eigen::VectorXd getRobotPos();
 };
 
 }

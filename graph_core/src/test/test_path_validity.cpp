@@ -162,7 +162,7 @@ int main(int argc, char **argv)
     pathplan::ConnectionPtr obj_conn = current_path->getConnections().at(obj_conn_pos);
     pathplan::NodePtr obj_parent = obj_conn->getParent();
     pathplan::NodePtr obj_child = obj_conn->getChild();
-    Eigen::VectorXd obj_pos = (obj_child->getConfiguration()+obj_parent->getConfiguration())*2/3;
+    Eigen::VectorXd obj_pos = obj_parent->getConfiguration() + (0.8)*(obj_child->getConfiguration()-obj_parent->getConfiguration());
     //Eigen::VectorXd obj_pos = obj_child->getConfiguration();
 
     moveit::core::RobotState obj_pos_state = trajectory.fromWaypoints2State(obj_pos);
@@ -218,8 +218,11 @@ int main(int argc, char **argv)
     Eigen::VectorXd conf = (last_conn->getParent()->getConfiguration()+last_conn->getChild()->getConfiguration())/2.0;
     valid =current_path->isValidFromConf(conf);
     ROS_INFO_STREAM("conf last valid: "<<valid);*/
-    valid =current_path->isValidFromConf(current_configuration);
-    ROS_INFO_STREAM("conf : "<<valid);
+
+    //valid =current_path->isValidFromConf(current_configuration);
+    valid =current_path->isValid();
+    double cost = current_path->cost();
+    ROS_INFO_STREAM("conf valid: "<<valid <<" cost: "<<cost);
 
     ros::Duration(2).sleep();
   }

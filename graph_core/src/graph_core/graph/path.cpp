@@ -1090,6 +1090,7 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_fro
     if(!checker->checkPathFromConf(conn->getParent()->getConfiguration(),conn->getChild()->getConfiguration(),conf))
     {
       validity = false;
+      conn->setCost(std::numeric_limits<double>::infinity());
       pos_closest_obs_from_goal = connections_.size()-idx;
     }
     else
