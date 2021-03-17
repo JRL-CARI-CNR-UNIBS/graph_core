@@ -1,0 +1,21 @@
+test_name: "ur10e"
+group_name: "manipulator"
+base_link: "base_link"
+last_link: "ee_link"
+dt_replan_restricted: 0.100
+dt_replan_relaxed: 0.150
+checker_resolution: 0.05
+trj_execution_thread_frequency: 100
+collision_checker_thread_frequency: 30
+spawn_objs: true
+display_timing_warning: true
+display_replanning_success: true
+scaling: 1.0
+
+start_configuration: [1.0, 0.0, -2.5, -0.5, -1.5, 1.5]
+stop_configuration: [0.25, -0.1, -0.7, -2.5, -0.5, 3.0]
+ #[1.9116676305618414, -1.2818443792424408, 1.4909049355133048, -1.7995697939246473, 1.6242242845419699, -0.2917314270181776] #[1.0, 0.0, -2.5, -0.5, -1.5, 1.5]
+ #[1.0345399673974909, -1.425833939127472, 1.6585670286984027, -1.7750118330097937, 1.6200988709763757, 0.5866261948302681] #[0.25, -0.1, -0.7, -2.5, -0.5, 3.0]
+init_test: 0
+end_test: 10
+opt_path: true

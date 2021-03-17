@@ -1,0 +1,13 @@
+test_name: "ur10e"
+group_name: "manipulator"
+base_link: "base_link"
+last_link: "ee_link"
+moving_obs: true
+disp_verb_informed: false
+disp_verb_pathSwitch: false
+time_verb: false
+time_for_repl: 0.085
+opt_path: true
+start_configuration: [1.0, 0.0, -2.5, -0.5, -1.5, 1.5]
+stop_configuration: [0.25, -0.1, -0.7, -2.5, -0.5, 3.0]
+n_test: 10
