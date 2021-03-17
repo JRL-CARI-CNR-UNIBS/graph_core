@@ -40,7 +40,7 @@
 # MODIFY THE PARAMETERS WITH THE COMMENT ***CHANGE IT***
 # ========================================================================
 group_names_map:
-  pickplace_planner: group_name  # ***CHANGE IT***
+  pickplace_planner: group_name  ***CHANGE IT***
   
 pickplace_planner:
   type: Multigoal
