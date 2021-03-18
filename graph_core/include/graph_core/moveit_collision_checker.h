@@ -53,11 +53,11 @@ public:
     group_name_(group_name)
   {
     state_ = std::make_shared<robot_state::RobotState>(planning_scene_->getCurrentState());
+
   }
 
   virtual bool check(const Eigen::VectorXd& configuration)
   {
-
     *state_ = planning_scene_->getCurrentState();
     state_->setJointGroupPositions(group_name_, configuration);
     if (!state_->satisfiesBounds())
@@ -65,9 +65,15 @@ public:
       ROS_FATAL("Out of bound");
       return false;
     }
+    state_->update();
     state_->updateCollisionBodyTransforms();
     return planning_scene_->isStateValid(*state_,group_name_);
 
+  }
+
+  void setPlanningScene(planning_scene::PlanningSceneConstPtr &planning_scene)
+  {
+    planning_scene_ = planning_scene;
   }
 
 };

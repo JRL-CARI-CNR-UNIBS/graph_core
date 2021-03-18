@@ -36,13 +36,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
-#define DISPLAYTIME 0.00001
+#define DISPLAYTIME 0.0001
+#define DEFAULTNODESIZE 0.02
+#define DEFAULTCONNECTIONSIZE 0.005
+#define DEFAULTTREESIZE 0.005
 class Display;
 typedef std::shared_ptr<Display> DisplayPtr;
 class Display: public std::enable_shared_from_this<Display>
 {
 protected:
-  planning_scene::PlanningSceneConstPtr planning_scene_;
+  planning_scene::PlanningScenePtr planning_scene_;
   std::string group_name_;
   std::string last_link_;
   int marker_id_;
@@ -58,9 +61,14 @@ protected:
                        std::vector<geometry_msgs::Point> &points
                        );
 public:
-  Display(const planning_scene::PlanningSceneConstPtr planning_scene,
+  Display(const planning_scene::PlanningScenePtr planning_scene,
           const std::string& group_name,
           const std::string& last_link);
+
+  DisplayPtr pointer()
+  {
+    return shared_from_this();
+  }
 
   void changeNodeSize(const std::vector<double>& marker_size)
   {
@@ -68,7 +76,7 @@ public:
   }
   void defaultNodeSize()
   {
-    node_marker_scale_.resize(3,0.02);
+    node_marker_scale_ = {DEFAULTNODESIZE, DEFAULTNODESIZE, DEFAULTNODESIZE};
   }
 
   void changeConnectionSize(const std::vector<double>& marker_size)
@@ -77,7 +85,7 @@ public:
   }
   void defaultConnectionSize()
   {
-    connection_marker_scale_.resize(3,0.005);;
+    connection_marker_scale_ = {DEFAULTCONNECTIONSIZE, DEFAULTCONNECTIONSIZE, DEFAULTCONNECTIONSIZE};
   }
 
   void clearMarkers(const std::string &ns="pathplan");

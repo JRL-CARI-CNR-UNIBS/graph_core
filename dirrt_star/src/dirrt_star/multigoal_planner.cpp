@@ -86,18 +86,54 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
 
   COMMENT("create metrics");
 
-  if (!m_nh.getParam("use_avoidance",use_avoidance_))
+  if (!m_nh.getParam("use_avoidance_path",use_avoidance_goal_))
+  {
+    ROS_DEBUG("use_avoidance_path is not set, default=false");
+    use_avoidance_metrics_=false;
+  }
+  if (use_avoidance_metrics_)
+  {
+    avoidance_metrics_=std::make_shared<pathplan::AvoidanceMetrics>(m_nh);
+    metrics_=avoidance_metrics_;
+  }
+  else
+    metrics_=std::make_shared<pathplan::Metrics>();
+
+  if (!m_nh.getParam("use_avoidance_goal",use_avoidance_goal_))
   {
     ROS_DEBUG("use_avoidance is not set, default=false");
-    use_avoidance_=false;
+    use_avoidance_goal_=false;
   }
-  if (use_avoidance_)
+  else if (use_avoidance_metrics_)
   {
-    m_avoidance_goal_cost_fcn=std::make_shared<pathplan::AvoidanceGoalCostFunction>(m_nh);
-    m_centroid_sub=m_nh.subscribe("/centroids",2,&MultigoalPlanner::centroidCb,this);
+    ROS_DEBUG("both use_avoidance_goal and use_avoidance_path are set, using use_avoidance_path");
+    use_avoidance_goal_=false;
   }
 
-  metrics_=std::make_shared<pathplan::Metrics>();
+  if (use_avoidance_goal_)
+  {
+    m_avoidance_goal_cost_fcn=std::make_shared<pathplan::AvoidanceGoalCostFunction>(m_nh);
+  }
+
+
+  bool use_detector=false;
+  std::string detector_topic;
+  if (use_avoidance_goal_ || use_avoidance_metrics_)
+  {
+    if (!m_nh.getParam("detector_topic",detector_topic))
+    {
+      use_detector=false;
+      m_centroid_sub=m_nh.subscribe("/centroids",2,&MultigoalPlanner::centroidCb,this);
+    }
+    else
+    {
+      use_detector=true;
+      m_centroid_sub=m_nh.subscribe(detector_topic,2,&MultigoalPlanner::humansCb,this);
+    }
+  }
+
+
+
 
 
   COMMENT("created MultigoalPlanner");
@@ -195,13 +231,14 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
     m_is_running=false;
     return false;
   }
-  if (use_avoidance_)
+  if (use_avoidance_goal_)
     solver->setGoalCostFunction(m_avoidance_goal_cost_fcn);
   solver->addStart(start_node);
 
   m_queue.callAvailable();
-  // computing minimum time
   bool at_least_a_goal=false;
+
+  // joint goal
   for (unsigned int iGoal=0;iGoal<request_.goal_constraints.size();iGoal++)
   {
     ROS_DEBUG("Processing goal %u",iGoal++);
@@ -389,7 +426,7 @@ bool MultigoalPlanner::terminate()
 void MultigoalPlanner::centroidCb(const geometry_msgs::PoseArrayConstPtr& msg)
 {
 
-  if (!m_avoidance_goal_cost_fcn)
+  if (!use_avoidance_goal_ && !use_avoidance_metrics_)
     return;
   m_avoidance_goal_cost_fcn->cleanPoints();
   Eigen::Vector3d point;
@@ -399,8 +436,31 @@ void MultigoalPlanner::centroidCb(const geometry_msgs::PoseArrayConstPtr& msg)
     point(1)=p.position.y;
     point(2)=p.position.z;
     m_avoidance_goal_cost_fcn->addPoint(point);
+    if (use_avoidance_goal_)
+      m_avoidance_goal_cost_fcn->addPoint(point);
+    if (use_avoidance_metrics_)
+      avoidance_metrics_->addPoint(point);
   }
 }
 
+void MultigoalPlanner::humansCb(const detector_ros::xyzDataConstPtr &msg)
+{
+  if (!use_avoidance_goal_ && !use_avoidance_metrics_)
+    return;
+  m_avoidance_goal_cost_fcn->cleanPoints();
+  Eigen::Vector3d point;
+  for (const geometry_msgs::Point& p: msg->xyz_data)
+  {
+    point(0)=p.x;
+    point(1)=p.y;
+    point(2)=p.z;
+    if (use_avoidance_goal_)
+      m_avoidance_goal_cost_fcn->addPoint(point);
+    if (use_avoidance_metrics_)
+      avoidance_metrics_->addPoint(point);
+  }
 }
-}
+
+
+}  // namespace dirrt_star
+}  // namespace pathplan

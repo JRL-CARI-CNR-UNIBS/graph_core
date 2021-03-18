@@ -1,7 +1,14 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(graph_core)
+<<<<<<< HEAD
 add_compile_options(-std=c++14 -funroll-loops -Wall -Ofast)
 set(CMAKE_BUILD_TYPE Release)
+=======
+add_compile_options(-std=c++11 -funroll-loops -Wall -Ofast)
+set(CMAKE_BUILD_TYPE Release)
+#add_compile_options(-std=c++14)
+#set(CMAKE_BUILD_TYPE Debug)
+>>>>>>> eadd33a132e81f85adc126982520274464f2842e
 
 
 find_package(catkin REQUIRED COMPONENTS
@@ -21,7 +28,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES graph_core
-  CATKIN_DEPENDS actionlib moveit_core moveit_ros_planning moveit_ros_planning_interface roscpp rosdyn_core human_probablistic_occupancy moveit_visual_tools rviz_visual_tools eigen_conversions
+  CATKIN_DEPENDS actionlib moveit_core moveit_ros_planning moveit_ros_planning_interface roscpp rosdyn_core human_probablistic_occupancy moveit_visual_tools rviz_visual_tools eigen_conversions geometry_msgs
   DEPENDS
   )
 include_directories(

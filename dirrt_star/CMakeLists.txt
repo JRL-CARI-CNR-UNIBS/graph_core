@@ -10,12 +10,13 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_core
   moveit_ros_planning
   roscpp
+  detector_ros
 )
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES dirrt_star
-  CATKIN_DEPENDS graph_core moveit_core moveit_ros_planning roscpp
+  CATKIN_DEPENDS graph_core moveit_core moveit_ros_planning roscpp detector_ros
   DEPENDS
 )
 include_directories(
