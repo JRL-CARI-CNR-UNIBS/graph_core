@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/collision_checker.h>
 #include <graph_core/metrics.h>
 #include <graph_core/sampler.h>
+#include <graph_core/goal_cost_function.h>
 #include <ros/ros.h>
 #include <ros/duration.h>
 namespace pathplan
@@ -46,20 +47,26 @@ protected:
   MetricsPtr metrics_;
   CollisionCheckerPtr checker_;
   SamplerPtr sampler_;
+  GoalCostFunctionPtr goal_cost_fcn_;
   bool solved_ = false;
+  bool completed_=false;
   bool init_ = false;
   bool configured_=false;
-  double cost_;
+  double path_cost_;
+  double goal_cost_=0;
+  double cost_=0;
   TreePtr start_tree_;
   PathPtr solution_;
   unsigned int dof_;
 
 protected:
-  virtual bool setProblem()
+  virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity())
   {
     return false;
   }
   virtual void clean(){}
+
+  virtual void printMyself(std::ostream& os) const {}
 
 public:
   TreeSolver(const MetricsPtr& metrics,
@@ -69,33 +76,54 @@ public:
     checker_(checker),
     sampler_(sampler)
   {
+    path_cost_ = std::numeric_limits<double>::infinity();
+    goal_cost_ = 0.0;
     cost_ = std::numeric_limits<double>::infinity();
+    goal_cost_fcn_=std::make_shared<GoalCostFunction>();
   }
+
+  const double& cost() const
+  {
+    return cost_;
+  }
+
   virtual bool config(const ros::NodeHandle& nh)
   {
     return false;
   }
   virtual bool update(PathPtr& solution) = 0;
-  virtual bool update(const Eigen::VectorXd& point, PathPtr& solution) = 0;
-  virtual bool update(const NodePtr& n, PathPtr& solution)=0;
+  virtual bool update(const Eigen::VectorXd& point, PathPtr& solution){return false;}
+  virtual bool update(const NodePtr& n, PathPtr& solution){return false;}
 
-  virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100, const double &max_time = 10000);
-  virtual bool addStart(const NodePtr& start_node) = 0;
-  virtual bool addGoal(const NodePtr& goal_node) = 0;
+  virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100, const double &max_time = std::numeric_limits<double>::infinity());
+  virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;
+  virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;
   virtual void resetProblem()=0;
+
+  void setGoalCostFunction(const GoalCostFunctionPtr& goal_cost_fcn)
+  {
+    goal_cost_fcn_=goal_cost_fcn;
+  }
+
+  const bool& completed()const
+  {
+    return completed_;
+  }
 
   const bool& solved()const
   {
     return solved_;
   }
-  const double& cost()const
-  {
-    return cost_;
-  }
+
   virtual bool setSolution(const PathPtr &solution, const bool& solved=false);
   TreePtr getStartTree() const
   {
     return start_tree_;
+  }
+
+  PathPtr getSolution() const
+  {
+    return solution_;
   }
 
   void setSampler(const SamplerPtr& sampler)
@@ -103,6 +131,10 @@ public:
     sampler_ = sampler;
   }
 
+  friend std::ostream& operator<<(std::ostream& os, const TreeSolver& solver);
 
 };
-}
+inline std::ostream& operator<<(std::ostream& os, const TreeSolver& solver){solver.printMyself(os);return os;}
+
+}  // namespace pathplan
+

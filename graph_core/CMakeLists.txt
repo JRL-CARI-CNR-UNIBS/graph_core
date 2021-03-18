@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 2.8.3)
 project(graph_core)
 add_compile_options(-std=c++14 -funroll-loops -Wall -Ofast)
 set(CMAKE_BUILD_TYPE Release)
-#set(CMAKE_BUILD_TYPE Debug)
 
 
 find_package(catkin REQUIRED COMPONENTS
@@ -16,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_visual_tools
   rviz_visual_tools
   eigen_conversions
+  geometry_msgs
   )
 
 catkin_package(
@@ -30,18 +30,26 @@ include_directories(
   )
 add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/metrics.cpp
+  src/${PROJECT_NAME}/goal_cost_function.cpp
+  src/${PROJECT_NAME}/avoidance_goal_cost_function.cpp
+  src/${PROJECT_NAME}/avoidance_metrics.cpp
   src/${PROJECT_NAME}/occupancy_metrics.cpp
+  src/${PROJECT_NAME}/speed_metrics.cpp
   src/${PROJECT_NAME}/sampler.cpp
   src/${PROJECT_NAME}/local_informed_sampler.cpp
   src/${PROJECT_NAME}/tube_informed_sampler.cpp
+  src/${PROJECT_NAME}/scaled_sampler.cpp
   src/${PROJECT_NAME}/util.cpp
   src/${PROJECT_NAME}/moveit_collision_checker.cpp
   src/${PROJECT_NAME}/narrow_pass_checker.cpp
+  src/${PROJECT_NAME}/boxes_checker.cpp
   src/${PROJECT_NAME}/collision_checker.cpp
   src/${PROJECT_NAME}/graph/node.cpp
   src/${PROJECT_NAME}/graph/connection.cpp
   src/${PROJECT_NAME}/graph/tree.cpp
   src/${PROJECT_NAME}/graph/path.cpp
+  src/${PROJECT_NAME}/graph/graph_display.cpp
+  src/${PROJECT_NAME}/solvers/multigoal.cpp
   src/${PROJECT_NAME}/solvers/tree_solver.cpp
   src/${PROJECT_NAME}/solvers/rrt_connect.cpp
   src/${PROJECT_NAME}/solvers/birrt.cpp

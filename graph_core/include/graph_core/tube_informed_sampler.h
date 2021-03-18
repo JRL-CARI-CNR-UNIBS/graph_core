@@ -43,6 +43,7 @@ protected:
   double length_;
   double local_bias_=0.8;
 
+  bool couldImprove(const Eigen::VectorXd &q);
 
 
 public:
@@ -50,8 +51,9 @@ public:
   TubeInformedSampler(const Eigen::VectorXd& start_configuration,
                       const Eigen::VectorXd& stop_configuration,
                       const Eigen::VectorXd& lower_bound,
-                      const Eigen::VectorXd& upper_bound):
-    InformedSampler(start_configuration,stop_configuration,lower_bound,upper_bound)
+                      const Eigen::VectorXd& upper_bound,
+                      const double& cost = std::numeric_limits<double>::infinity()):
+    InformedSampler(start_configuration,stop_configuration,lower_bound,upper_bound,cost)
   {
     length_ = 0;
     radius_=0;

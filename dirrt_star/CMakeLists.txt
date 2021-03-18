@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8.3)
 project(dirrt_star)
 add_compile_options(-std=c++14 -funroll-loops -Wall -Ofast)
 set(CMAKE_BUILD_TYPE Release)
+#add_compile_options(-std=c++11)
+#set(CMAKE_BUILD_TYPE Debug)
 
 find_package(catkin REQUIRED COMPONENTS
   graph_core
@@ -23,6 +25,7 @@ include_directories(
 
 add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/dirrt_star_planner.cpp
+  src/${PROJECT_NAME}/multigoal_planner.cpp
   src/${PROJECT_NAME}/dirrt_star_planner_manager.cpp
 )
 

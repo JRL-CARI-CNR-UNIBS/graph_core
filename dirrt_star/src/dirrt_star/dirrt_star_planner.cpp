@@ -125,23 +125,6 @@ void DIRRTStar::setPlanningScene ( const planning_scene::PlanningSceneConstPtr& 
 }
 
 
-bool DIRRTStar::canServiceRequest(const moveit_msgs::MotionPlanRequest &req) const
-{
-  if(req.group_name != getGroupName())
-  {
-    ROS_ERROR("Unsupported planning group '%s' requested", req.group_name.c_str());
-    return false;
-  }
-
-  if (req.goal_constraints[0].joint_constraints.size() == 0)
-  {
-    ROS_ERROR("Can only handle joint space goals.");
-    return false;
-  }
-
-  return true;
-}
-
 void DIRRTStar::clear()
 {
 

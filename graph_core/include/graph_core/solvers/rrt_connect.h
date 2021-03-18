@@ -39,7 +39,7 @@ protected:
   NodePtr goal_node_;
   double max_distance_;
   double utopia_;
-  virtual bool setProblem();
+  virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity());
   virtual void clean(){}
 
 public:
@@ -50,9 +50,9 @@ public:
     TreeSolver(metrics, checker, sampler) {}
   virtual bool config(const ros::NodeHandle& nh);
 
-  virtual bool addStart(const NodePtr& start_node);
+  virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity());
   virtual bool addStartTree(const TreePtr& start_tree);
-  virtual bool addGoal(const NodePtr& goal_node);
+  virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity());
 
   virtual void resetProblem();
   virtual bool update(const Eigen::VectorXd& point, PathPtr& solution);

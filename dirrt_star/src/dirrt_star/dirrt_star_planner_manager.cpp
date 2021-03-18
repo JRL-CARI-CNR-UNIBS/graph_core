@@ -43,9 +43,29 @@ bool PathPlanerManager::initialize(const moveit::core::RobotModelConstPtr& model
   for (std::pair<std::string,std::string> p: planner_map)
   {
     COMMENT("Group name = %s, planner name: %s",p.second.c_str(),p.first.c_str());
-    std::shared_ptr<pathplan::dirrt_star::DIRRTStar> ptr(new DIRRTStar(ns+"/"+p.first,p.second,model));
-    m_planners.insert(std::pair<std::string,std::shared_ptr<pathplan::dirrt_star::DIRRTStar>>(p.second,ptr));
 
+    std::string type;
+    if (!m_nh.getParam(ns+"/"+p.first+"/type",type))
+    {
+      ROS_WARN_STREAM(ns+"/"+p.first+"/type is not set, skip this planner");
+      continue;
+    }
+
+    std::shared_ptr<planning_interface::PlanningContext> ptr;
+    if (!type.compare("DIRRT"))
+    {
+      ptr= std::make_shared<DIRRTStar>(ns+"/"+p.first,p.second,model);
+    }
+    else if (!type.compare("Multigoal"))
+    {
+      ptr= std::make_shared<MultigoalPlanner>(ns+"/"+p.first,p.second,model);
+    }
+    else
+    {
+      ROS_WARN_STREAM(ns+"/"+p.first+"/type is '"<<type<<"'. Available ones are: DIRRT, Multigoal. Skip this planner");
+      continue;
+    }
+    m_planners.insert(std::pair<std::string, std::shared_ptr<planning_interface::PlanningContext>>(p.second,ptr));
   }
   return true;
 }
@@ -57,8 +77,7 @@ bool PathPlanerManager::canServiceRequest(const moveit_msgs::MotionPlanRequest& 
     return false;
   }
   // Get planner
-  std::shared_ptr<DIRRTStar> planner = m_planners.at(req.group_name);
-  return planner->canServiceRequest(req);
+  return m_planners.find(req.group_name)!=m_planners.end();
 }
 
 
@@ -68,14 +87,13 @@ planning_interface::PlanningContextPtr PathPlanerManager::getPlanningContext(
   moveit_msgs::MoveItErrorCodes &error_code) const
 {
   ROS_DEBUG("Search a planner for group %s",req.group_name.c_str());
-  
+
   if (m_planners.find(req.group_name) == m_planners.end())
   {
     ROS_ERROR("Planner not found for group %s.", req.group_name.c_str());
     return nullptr;
   }
-  std::shared_ptr<DIRRTStar> planner = m_planners.at(req.group_name);
-
+  std::shared_ptr<planning_interface::PlanningContext> planner = m_planners.at(req.group_name);
   if (!planner)
   {
     ROS_ERROR("Planner not found");

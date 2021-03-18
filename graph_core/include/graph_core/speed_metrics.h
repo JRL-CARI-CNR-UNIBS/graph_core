@@ -27,54 +27,32 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <graph_core/metrics.h>
-#include <human_probablistic_occupancy/human_probablistic_occupancy.h>
+#include <rosdyn_core/primitives.h>
+#include <visualization_msgs/MarkerArray.h>
+#include <eigen_conversions/eigen_msg.h>
+
 namespace pathplan
 {
 
 
-
-// Euclidean metrics
-class OccupancyMetrics: public Metrics
+// Avoidance metrics
+class SpeedMetrics: public Metrics
 {
 protected:
-  human_occupancy::OccupancyFilterPtr filter_;
-  double step_=0.1;
-  double weight_=1;
-  ros::NodeHandle nh_;
+  Eigen::VectorXd max_speed_;
+  Eigen::VectorXd inv_max_speed_;
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  OccupancyMetrics(ros::NodeHandle& nh);
+  SpeedMetrics(const Eigen::VectorXd& max_speed);
 
-  /*
-   *
-   * length total length between configurations
-   * step_ checking distance
-   * nsteps number of checking steps
-   * d=length/nsteps distance between checking steps
-   * occupancy(i) occupancy at the checking step i
-   *
-   * cost between checking steps i and i+1
-   * cost(i) = length*(1+0.5*weigth_*(occupancy(i)+occupancy(i+1))
-   *
-   * cost(0)   = d*(1+0.5*weigth_*(occupancy(0)  +occupancy(1))
-   * cost(1)   = d*(1+0.5*weigth_*(occupancy(1)  +occupancy(2))
-   * cost(2)   = d*(1+0.5*weigth_*(occupancy(2)  +occupancy(3))
-   * ....
-   * cost(n-1) = d*(1+0.5*weigth_*(occupancy(n-1)+occupancy(n))
-   *
-   * total_cost = sum(cost(i))  with i=0,...,n-1
-   * total_cost= d*nsteps+ d*weigth*(0.5*occupancy(0)+occupancy(1)+occupancy(2)+...+occupancy(n-1)+0.5*occupancy(n))
-   * total_cost= length+ d*weigth*(0.5*occupancy(0)+occupancy(1)+occupancy(2)+...+occupancy(n-1)+0.5*occupancy(n))
-   *
-   */
   virtual double cost(const Eigen::VectorXd& configuration1,
                       const Eigen::VectorXd& configuration2);
-
-  virtual double cost(const NodePtr& node1,
-                      const NodePtr& node2);
+  virtual double utopia(const Eigen::VectorXd& configuration1,
+                      const Eigen::VectorXd& configuration2);
 
 
 };
-typedef std::shared_ptr<OccupancyMetrics> OccupancyMetricsPtr;
+typedef std::shared_ptr<SpeedMetrics> SpeedMetricsPtr;
 
 }

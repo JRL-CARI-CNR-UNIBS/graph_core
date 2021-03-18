@@ -72,6 +72,7 @@
 
   <depend>human_probablistic_occupancy</depend>
   <depend>eigen_conversions</depend>
+  <depend>geometry_msgs</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

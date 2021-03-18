@@ -47,8 +47,10 @@ Eigen::VectorXd TubeInformedSampler::sample()
     ball.setRandom();
     ball *= std::pow(ud_(gen_), 1.0 / (double)ndof_) / ball.norm();
     Eigen::VectorXd q = radius_ * ball + center;
-    if (InformedSampler::inBounds(q))
+    if (InformedSampler::inBounds(q) && couldImprove(q))
+    {
       return q;
+    }
   }
   return InformedSampler::sample();
 }
@@ -123,6 +125,18 @@ Eigen::VectorXd TubeInformedSampler::pointOnCurvilinearAbscissa(const double& ab
     }
   }
   return path_.back();
+}
+
+bool TubeInformedSampler::couldImprove(const Eigen::VectorXd& q)
+{
+  for (size_t idx=1;idx<path_.size()-1;idx++)
+  {
+    double delta_length=partial_length_.at(idx+1)-partial_length_.at(idx-1);
+    double test_length=(path_.at(idx+1)-q).norm()+(path_.at(idx-1)-q).norm();
+    if (test_length<delta_length)
+      return true;
+  }
+  return false;
 }
 
 }  // namespace pathplan

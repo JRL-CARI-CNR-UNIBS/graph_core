@@ -53,7 +53,6 @@ public:
     group_name_(group_name)
   {
     state_ = std::make_shared<robot_state::RobotState>(planning_scene_->getCurrentState());
-
   }
 
   virtual bool check(const Eigen::VectorXd& configuration)
