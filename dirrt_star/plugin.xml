@@ -1,7 +1,7 @@
 <library path="libdirrt_star">
   <class name="pathplan/DIRRTStar" type="pathplan::dirrt_star::PathPlanerManager" base_class_type="planning_interface::PlannerManager">
     <description>
-      Dgaco Planner Manager
+      DIRRT Planner Manager
     </description>
   </class>
 </library>

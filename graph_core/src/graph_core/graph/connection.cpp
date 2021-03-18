@@ -38,6 +38,17 @@ Connection::Connection(const NodePtr &parent, const NodePtr &child):
   euclidean_norm_ = (child->getConfiguration() - parent->getConfiguration()).norm();
 }
 
+ConnectionPtr Connection::clone()
+{
+  NodePtr new_parent = std::make_shared<Node>(parent_->getConfiguration());
+  NodePtr new_child = std::make_shared<Node>(child_->getConfiguration());
+
+  ConnectionPtr new_connection = std::make_shared<Connection>(new_parent,new_child);
+  new_connection->setCost(cost_);
+  new_connection->add();
+  return new_connection;
+}
+
 void Connection::add()
 {
   valid = true;

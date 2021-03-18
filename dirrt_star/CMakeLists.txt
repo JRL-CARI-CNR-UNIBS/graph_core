@@ -10,13 +10,12 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_core
   moveit_ros_planning
   roscpp
-  shared_human_body_part
 )
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES dirrt_star
-  CATKIN_DEPENDS graph_core moveit_core moveit_ros_planning roscpp shared_human_body_part
+  CATKIN_DEPENDS graph_core moveit_core moveit_ros_planning roscpp
   DEPENDS
 )
 include_directories(

@@ -40,7 +40,7 @@
 # MODIFY THE PARAMETERS WITH THE COMMENT ***CHANGE IT***
 # ========================================================================
 group_names_map:
-  pickplace_planner: group_name  # ***CHANGE IT***
+  pickplace_planner: group_name  ***CHANGE IT***
   
 pickplace_planner:
   type: Multigoal
@@ -53,7 +53,7 @@ pickplace_planner:
   use_avoidance_path: false # set true if the human avoidance is done during the path. It is slower than use_avoidance_goal. ***CHANGE IT***
   #If use_avoidance_goal and use_avoidance_path are both true, use_avoidance_path is used.
 
-  detector_topic: topic_name #topic name of the message type detector_ros::xyzData. ***CHANGE IT***
+  detector_topic: /combined_poses #topic name of the message type geometry_msgs/PoseArray. ***CHANGE IT IF NEEDED***
   base_frame: world #base_frame of the chain. ***CHANGE IT***
   tool_frame: open_tip #tool_frame of the chain. ***CHANGE IT***
 
@@ -71,5 +71,3 @@ pickplace_planner:
   - upper_arm_link
 
   max_accuracy: 0.7
-
-#
