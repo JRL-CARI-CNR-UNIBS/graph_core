@@ -68,6 +68,7 @@ public:
   Path(std::vector<ConnectionPtr> connections, const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
   const double& cost()
   {
+    computeCost();
     return cost_;
   }
 
@@ -97,10 +98,69 @@ public:
   Eigen::VectorXd pointOnCurvilinearAbscissa(const double& abscissa);
   double curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf);
   double curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf, int& idx);
-
+  double curvilinearAbscissaOfPointGivenConnection(const Eigen::VectorXd& conf,const int& conn_idx);
+  double getCostFromConf(const Eigen::VectorXd& conf);
+  double getNormFromConf(const Eigen::VectorXd& conf);
 
 
   std::vector<Eigen::VectorXd> getWaypoints();
+
+  /*std::vector<bool> change_warp_;
+  std::vector<bool> change_slip_parent_;
+  std::vector<bool> change_slip_child_;
+#ifdef NO_SPIRAL
+  std::vector<bool> change_spiral_;*/
+
+  std::vector<bool> getChangeWarp()
+  {
+    return change_warp_;
+  }
+
+  std::vector<bool> getChangeSlipParent()
+  {
+    return change_slip_parent_;
+  }
+
+  std::vector<bool> getChangeSlipChild()
+  {
+    return change_slip_child_;
+  }
+
+  std::vector<bool> getChangeSpiral()
+  {
+    return change_spiral_;
+  }
+
+  TreePtr getTree()
+  {
+    return tree_;
+  }
+
+  void setChecker(const CollisionCheckerPtr &checker)
+  {
+    checker_ = checker;
+  }
+
+  void setChangeWarp(const std::vector<bool>& change_warp)
+  {
+    change_warp_ = change_warp;
+  }
+
+  void setgChangeSlipParent(const std::vector<bool>& change_slip_parent)
+  {
+    change_slip_parent_ = change_slip_parent;
+  }
+
+  void setgChangeSlipChild(const std::vector<bool>& change_slip_child)
+  {
+    change_slip_parent_ = change_slip_child;
+  }
+
+  void setChangeSpiral(const std::vector<bool>& change_spiral)
+  {
+    change_spiral_ = change_spiral;
+  }
+
   void setTree(const TreePtr& tree)
   {
     tree_ = tree;
@@ -118,16 +178,43 @@ public:
 
   void setConnections(const std::vector<ConnectionPtr>& conn)
   {
-     connections_ = conn;
-     this->computeCost();
+    change_warp_.clear();
+    change_slip_child_.clear();
+    change_slip_parent_.clear();
+    change_spiral_.clear();
+
+    cost_ = 0;
+
+    for(const ConnectionPtr& connection : conn)
+    {
+      cost_ += connection->getCost();
+      change_warp_.push_back(true);
+      change_slip_child_.push_back(true);
+      change_slip_parent_.push_back(true);
+#ifdef NO_SPIRAL
+      change_spiral_.push_back(true);
+#endif
+    }
+    change_warp_.at(0) = false;
+    change_slip_child_.at(0) = false;
+    change_slip_parent_.at(0) = false;
+#ifdef NO_SPIRAL
+    change_spiral_.at(0) = false;
+#endif
+
+    connections_ = conn;
   }
 
+  PathPtr clone();
   bool simplify(const double& distance = 0.02);
-  bool isValid();
+  bool isValid(const CollisionCheckerPtr &this_checker = NULL);
+  bool isValidFromConf(const Eigen::VectorXd &conf, const CollisionCheckerPtr &this_checker = NULL);
+  bool isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker = NULL);
+  bool isValidFromConn(const ConnectionPtr &this_conn, const CollisionCheckerPtr &this_checker = NULL);
   Eigen::VectorXd projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool &in_conn);
   const Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point);
   const Eigen::VectorXd projectOnClosestConnectionKeepingPastPrj(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, int &n_conn);
-  const Eigen::VectorXd projectOnClosestConnectionKeepingCurvilinearAbscissa(const Eigen::VectorXd& point, Eigen::VectorXd &past_prj, int &n_conn);
+  const Eigen::VectorXd projectOnClosestConnectionKeepingCurvilinearAbscissa(const Eigen::VectorXd& point, Eigen::VectorXd& past_prj, double &new_abscissa,  double &past_abscissa, int &n_conn, const bool &verbose = false);
 
 
   // return true if improve
