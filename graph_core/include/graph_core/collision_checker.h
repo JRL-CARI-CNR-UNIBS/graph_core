@@ -85,7 +85,7 @@ public:
     return true;
   }
 
-  bool checkPath(const Eigen::VectorXd& configuration1,
+  virtual bool checkPath(const Eigen::VectorXd& configuration1,
                  const Eigen::VectorXd& configuration2)
   {
     if (!check(configuration1))

@@ -43,6 +43,7 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/scaled_sampler.cpp
   src/${PROJECT_NAME}/util.cpp
   src/${PROJECT_NAME}/moveit_collision_checker.cpp
+  src/${PROJECT_NAME}/parallel_moveit_collision_checker.cpp
   src/${PROJECT_NAME}/narrow_pass_checker.cpp
   src/${PROJECT_NAME}/boxes_checker.cpp
   src/${PROJECT_NAME}/collision_checker.cpp

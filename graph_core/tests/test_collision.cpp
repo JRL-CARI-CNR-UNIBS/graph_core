@@ -1,21 +1,12 @@
 #include <ros/ros.h>
-#include <graph_core/metrics.h>
-#include <graph_core/occupancy_metrics.h>
-#include <graph_core/avoidance_metrics.h>
-#include <graph_core/graph/node.h>
-#include <graph_core/graph/path.h>
-#include <graph_core/graph/tree.h>
-#include <graph_core/solvers/rrt_connect.h>
-#include <graph_core/solvers/multigoal.h>
-#include <graph_core/solvers/rrt_star.h>
-#include <graph_core/solvers/path_solver.h>
+
 #include <graph_core/moveit_collision_checker.h>
-#include <graph_core/local_informed_sampler.h>
+#include <graph_core/parallel_moveit_collision_checker.h>
+#include <graph_core/sampler.h>
 #include <moveit/planning_scene/planning_scene.h>
 #include <moveit/planning_interface/planning_interface.h>
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <moveit/robot_model_loader/robot_model_loader.h>
-#include <graph_core/graph/graph_display.h>
 
 int main(int argc, char **argv)
 {
@@ -32,7 +23,8 @@ int main(int argc, char **argv)
 
   robot_state::RobotState state = planning_scene->getCurrentState();
 
-  pathplan::CollisionCheckerPtr checker = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scene, group_name);
+  //pathplan::CollisionCheckerPtr checker = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scene, group_name);
+  pathplan::CollisionCheckerPtr checker = std::make_shared<pathplan::ParallelMoveitCollisionChecker>(planning_scene, group_name,50);
 
   std::vector<std::string> joint_names = kinematic_model->getJointModelGroup(group_name)->getActiveJointModelNames();
 
@@ -51,15 +43,17 @@ int main(int argc, char **argv)
   }
   pathplan::SamplerPtr sampler = std::make_shared<pathplan::InformedSampler>(lb, ub, lb, ub);
 
-  int iters=1000;
-  ros::WallTime t0=ros::WallTime::now();
+  int iters=100000;
+  double time=0;
   for (int idx=0;idx<iters;idx++)
   {
     Eigen::VectorXd q1=sampler->sample();
     Eigen::VectorXd q2=sampler->sample();
+    ros::WallTime t0=ros::WallTime::now();
     checker->checkPath(q1,q2);
+    ros::WallTime t1=ros::WallTime::now();
+    time+=(t1-t0).toSec();
   }
-  ros::WallTime t1=ros::WallTime::now();
-  ROS_INFO("Average time =%f",(t1-t0).toSec()/(double)iters);
+  ROS_INFO("Average time = %f ms on %d attempts",1e3*time/(double)iters,iters);
   return 0;
 }
