@@ -84,6 +84,17 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
   urdf::Model urdf_model;
   urdf_model.initParam("robot_description");
 
+
+  if (!m_nh.getParam("display_bubbles",display_flag))
+  {
+    ROS_DEBUG("display_flag is not set, default=false");
+    display_flag=false;
+  }
+  if (!m_nh.getParam("tool_frame",tool_frame))
+  {
+    ROS_DEBUG("tool_frame is not set, default=false");
+    display_flag=false;
+  }
   COMMENT("create metrics");
 
   if (!m_nh.getParam("use_avoidance_path",use_avoidance_goal_))
@@ -116,20 +127,15 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
   }
 
 
-  bool use_detector=false;
   std::string detector_topic;
   if (use_avoidance_goal_ || use_avoidance_metrics_)
   {
     if (!m_nh.getParam("detector_topic",detector_topic))
     {
-      use_detector=false;
-      m_centroid_sub=m_nh.subscribe("/centroids",2,&MultigoalPlanner::centroidCb,this);
+      ROS_DEBUG("detector_topic is not defined, using centroids");
+      detector_topic="/centroids";
     }
-    else
-    {
-      use_detector=true;
-      m_centroid_sub=m_nh.subscribe(detector_topic,2,&MultigoalPlanner::humansCb,this);
-    }
+    m_centroid_sub=m_nh.subscribe("/centroids",2,&MultigoalPlanner::centroidCb,this);
   }
 
 
@@ -170,10 +176,15 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
     m_is_running=false;
     return false;
   }
-  if (!display)
-    display=std::make_shared<pathplan::Display>(planning_scene_,group_,"open_tip");
-  else
-    display->clearMarkers();
+
+
+  if (display_flag)
+  {
+    if (!display)
+      display=std::make_shared<pathplan::Display>(planning_scene_,group_,tool_frame);
+    else
+      display->clearMarkers();
+  }
 
   planning_scene::PlanningScenePtr ptr=planning_scene::PlanningScene::clone(planning_scene_);
   checker=std::make_shared<pathplan::MoveitCollisionChecker>(ptr,group_,collision_distance);
@@ -342,7 +353,8 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
 
   ROS_INFO_STREAM(*solver);
 
-  display->displayTree(solver->getStartTree());
+  if (display_flag)
+    display->displayTree(solver->getStartTree());
 
   if (!found_a_solution)
   {
@@ -443,23 +455,6 @@ void MultigoalPlanner::centroidCb(const geometry_msgs::PoseArrayConstPtr& msg)
   }
 }
 
-void MultigoalPlanner::humansCb(const detector_ros::xyzDataConstPtr &msg)
-{
-  if (!use_avoidance_goal_ && !use_avoidance_metrics_)
-    return;
-  m_avoidance_goal_cost_fcn->cleanPoints();
-  Eigen::Vector3d point;
-  for (const geometry_msgs::Point& p: msg->xyz_data)
-  {
-    point(0)=p.x;
-    point(1)=p.y;
-    point(2)=p.z;
-    if (use_avoidance_goal_)
-      m_avoidance_goal_cost_fcn->addPoint(point);
-    if (use_avoidance_metrics_)
-      avoidance_metrics_->addPoint(point);
-  }
-}
 
 
 }  // namespace dirrt_star

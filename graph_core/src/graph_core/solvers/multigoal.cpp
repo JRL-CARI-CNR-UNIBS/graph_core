@@ -51,7 +51,7 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
 {
   if (!start_tree_)
   {
-    ROS_ERROR(("You have to specify first the start goal"));
+    ROS_ERROR("You have to specify first the start goal");
     return false;
   }
 
@@ -249,7 +249,7 @@ bool MultigoalSolver::update(PathPtr& solution)
   }
   if (cost_ <= utopia_tolerance * best_utopia_)
   {
-    ROS_WARN("Find the final solution");
+    ROS_DEBUG("Find the final solution");
     solution=solution_;
     completed_=true;
     return false;
@@ -320,12 +320,12 @@ bool MultigoalSolver::update(PathPtr& solution)
         {
           solutions_.at(igoal)->warp();
         }
-        ROS_WARN("warp: cost from %f to %f in %f second",cost_1,solutions_.at(igoal)->cost(),(ros::WallTime::now()-twarp).toSec());
+        ROS_DEBUG("warp: cost from %f to %f in %f second",cost_1,solutions_.at(igoal)->cost(),(ros::WallTime::now()-twarp).toSec());
 
         double cost_0=solutions_.at(igoal)->cost();
         ros::WallTime tsimpl=ros::WallTime::now();
         solutions_.at(igoal)->simplify();
-        ROS_WARN("simplify: cost from %f to %f in %f second",cost_0,solutions_.at(igoal)->cost(),(ros::WallTime::now()-tsimpl).toSec());
+        ROS_DEBUG("simplify: cost from %f to %f in %f second",cost_0,solutions_.at(igoal)->cost(),(ros::WallTime::now()-tsimpl).toSec());
 
         tube_samplers_.at(igoal)->setPath(solutions_.at(igoal));
         tube_samplers_.at(igoal)->setRadius(tube_radius_*solutions_.at(igoal)->cost());
@@ -361,12 +361,12 @@ bool MultigoalSolver::update(PathPtr& solution)
         {
           solutions_.at(igoal)->warp();
         }
-        ROS_WARN("warp: cost from %f to %f in %f second",cost_1,solutions_.at(igoal)->cost(),(ros::WallTime::now()-twarp).toSec());
+        ROS_DEBUG("warp: cost from %f to %f in %f second",cost_1,solutions_.at(igoal)->cost(),(ros::WallTime::now()-twarp).toSec());
 
         double cost_0=solutions_.at(igoal)->cost();
         ros::WallTime tsimpl=ros::WallTime::now();
         solutions_.at(igoal)->simplify();
-        ROS_WARN("simplify: cost from %f to %f in %f second",cost_0,solutions_.at(igoal)->cost(),(ros::WallTime::now()-tsimpl).toSec());
+        ROS_DEBUG("simplify: cost from %f to %f in %f second",cost_0,solutions_.at(igoal)->cost(),(ros::WallTime::now()-tsimpl).toSec());
 
 
         tube_samplers_.at(igoal)->setPath(solutions_.at(igoal));
