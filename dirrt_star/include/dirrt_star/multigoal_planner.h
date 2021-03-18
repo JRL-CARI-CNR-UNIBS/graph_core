@@ -40,10 +40,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/tube_informed_sampler.h>
 #include <rosparam_utilities/rosparam_utilities.h>
 #include <geometry_msgs/PoseArray.h>
-<<<<<<< HEAD
-#include <shared_human_body_part/BodyList.h>
-=======
->>>>>>> 3c980d15f8a2c9095f41cf39e25d22e6f3dfc010
 #include <ros/callback_queue.h>
 
 #include <graph_core/graph/graph_display.h>
