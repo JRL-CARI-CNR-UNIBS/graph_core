@@ -49,8 +49,10 @@ public:
                          const std::string& group_name,
                          const double& min_distance = 0.01):
     CollisionChecker(min_distance),
-    group_name_(group_name)
+    group_name_(group_name),
+    planning_scene_(planning_scene)
   {
+
     state_ = std::make_shared<robot_state::RobotState>(planning_scene_->getCurrentState());
     if (!planning_scene_)
       ROS_ERROR("invalid planning scene");
