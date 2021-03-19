@@ -45,7 +45,7 @@ public:
 
   }
 
-  virtual void setPlanningscene(const moveit_msgs::PlanningScene& msg){}
+  virtual void setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg){}
 
   // collision check: true if it is valid
   virtual bool check(const Eigen::VectorXd& configuration)

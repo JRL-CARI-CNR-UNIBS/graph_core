@@ -74,7 +74,7 @@ public:
   }
 
 
-  virtual void setPlanningscene(const moveit_msgs::PlanningScene& msg)
+  virtual void setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg)
   {
     stop_check_=true;
     for (int idx=0;idx<threads_num_;idx++)

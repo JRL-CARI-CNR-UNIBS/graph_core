@@ -58,7 +58,7 @@ public:
       ROS_ERROR("invalid planning scene");
   }
 
-  virtual void setPlanningscene(const moveit_msgs::PlanningScene& msg)
+  virtual void setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg)
   {
     if (!planning_scene_->setPlanningSceneMsg(msg))
     {
