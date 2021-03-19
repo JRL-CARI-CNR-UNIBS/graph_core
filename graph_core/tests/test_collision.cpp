@@ -20,7 +20,6 @@ int main(int argc, char **argv)
   robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
   robot_model::RobotModelPtr       kinematic_model = robot_model_loader.getModel();
   planning_scene::PlanningScenePtr planning_scene = std::make_shared<planning_scene::PlanningScene>(kinematic_model);
-  planning_scene::PlanningScenePtr planning_scene2 = planning_scene::PlanningScene::clone(planning_scene);
 
 
   int num_threads =nh.param("number_of_threads",20);
@@ -28,8 +27,8 @@ int main(int argc, char **argv)
 
   robot_state::RobotState state = planning_scene->getCurrentState();
 
-  pathplan::CollisionCheckerPtr checker1 = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scene2, group_name);
-  pathplan::CollisionCheckerPtr checker2 = std::make_shared<pathplan::ParallelMoveitCollisionChecker>(planning_scene2, group_name,num_threads);
+  pathplan::CollisionCheckerPtr checker1 = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scene, group_name);
+  pathplan::CollisionCheckerPtr checker2 = std::make_shared<pathplan::ParallelMoveitCollisionChecker>(planning_scene, group_name,num_threads);
 
   std::vector<std::string> joint_names = kinematic_model->getJointModelGroup(group_name)->getActiveJointModelNames();
 

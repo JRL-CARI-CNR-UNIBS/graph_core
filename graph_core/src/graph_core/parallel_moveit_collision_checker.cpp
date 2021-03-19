@@ -33,7 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
-ParallelMoveitCollisionChecker::ParallelMoveitCollisionChecker(const planning_scene::PlanningSceneConstPtr &planning_scene,
+ParallelMoveitCollisionChecker::ParallelMoveitCollisionChecker(const planning_scene::PlanningScenePtr &planning_scene,
                                                                const std::string& group_name,
                                                                const int& threads_num,
                                                                const double& min_distance):
@@ -60,8 +60,6 @@ ParallelMoveitCollisionChecker::ParallelMoveitCollisionChecker(const planning_sc
 
 void ParallelMoveitCollisionChecker::resetQueue()
 {
-  moveit_msgs::PlanningScene msg;
-  planning_scene_->getPlanningSceneMsg(msg);
 
   at_least_a_collision_=false;
   stop_check_=true;
@@ -74,7 +72,6 @@ void ParallelMoveitCollisionChecker::resetQueue()
     queues_.at(idx).clear();
     completed_.at(idx)=false;
 
-    planning_scenes_.at(idx)->setPlanningSceneMsg(msg);
   }
 }
 

@@ -28,6 +28,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/ros.h>
 #include <eigen3/Eigen/Core>
+#include <moveit_msgs/PlanningScene.h>
+
 namespace pathplan
 {
 
@@ -43,6 +45,8 @@ public:
 
   }
 
+  virtual void setPlanningscene(const moveit_msgs::PlanningScene& msg){}
+
   // collision check: true if it is valid
   virtual bool check(const Eigen::VectorXd& configuration)
   {
@@ -56,6 +60,8 @@ public:
     return checkPath(configuration1,configuration2,conf);
   }
   */
+
+
 
   bool checkPath(const Eigen::VectorXd& configuration1,
                  const Eigen::VectorXd& configuration2,
@@ -111,7 +117,6 @@ public:
         {
           return false;
         }
-
       }
       n *= 2;
     }

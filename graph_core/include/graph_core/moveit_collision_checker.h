@@ -36,7 +36,7 @@ namespace pathplan
 class MoveitCollisionChecker: public CollisionChecker
 {
 protected:
-  planning_scene::PlanningSceneConstPtr planning_scene_;
+  planning_scene::PlanningScenePtr planning_scene_;
   collision_detection::CollisionRequest req_;
   collision_detection::CollisionResult res_;
   robot_state::RobotStatePtr state_;
@@ -45,18 +45,25 @@ protected:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  MoveitCollisionChecker(const planning_scene::PlanningSceneConstPtr& planning_scene,
+  MoveitCollisionChecker(const planning_scene::PlanningScenePtr& planning_scene,
                          const std::string& group_name,
                          const double& min_distance = 0.01):
     CollisionChecker(min_distance),
-    planning_scene_(planning_scene),
     group_name_(group_name)
   {
     state_ = std::make_shared<robot_state::RobotState>(planning_scene_->getCurrentState());
     if (!planning_scene_)
       ROS_ERROR("invalid planning scene");
-
   }
+
+  virtual void setPlanningscene(const moveit_msgs::PlanningScene& msg)
+  {
+    if (!planning_scene_->setPlanningSceneMsg(msg))
+    {
+      ROS_ERROR_THROTTLE(1,"unable to upload scene");
+    }
+  }
+
 
   virtual bool check(const Eigen::VectorXd& configuration)
   {
@@ -73,7 +80,7 @@ public:
 
   }
 
-  void setPlanningScene(planning_scene::PlanningSceneConstPtr &planning_scene)
+  virtual void setPlanningScene(planning_scene::PlanningScenePtr &planning_scene)
   {
     planning_scene_ = planning_scene;
   }

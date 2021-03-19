@@ -57,7 +57,7 @@ protected:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  ParallelMoveitCollisionChecker(const planning_scene::PlanningSceneConstPtr& planning_scene,
+  ParallelMoveitCollisionChecker(const planning_scene::PlanningScenePtr& planning_scene,
                                  const std::string& group_name,
                                  const int& threads_num=4,
                                  const double& min_distance = 0.01);
@@ -71,6 +71,36 @@ public:
       if (threads.at(idx).joinable())
         threads.at(idx).join();
     }
+  }
+
+
+  virtual void setPlanningscene(const moveit_msgs::PlanningScene& msg)
+  {
+    stop_check_=true;
+    for (int idx=0;idx<threads_num_;idx++)
+    {
+      while (!stopped_.at(idx))
+        std::this_thread::sleep_for(std::chrono::microseconds(1));
+    }
+    if (!planning_scene_->setPlanningSceneMsg(msg))
+    {
+      ROS_ERROR_THROTTLE(1,"unable to upload scene");
+    }
+    for (int idx=0;idx<threads_num_;idx++)
+      planning_scenes_.at(idx)->setPlanningSceneMsg(msg);
+  }
+
+  virtual void setPlanningScene(planning_scene::PlanningScenePtr &planning_scene)
+  {
+    stop_check_=true;
+    for (int idx=0;idx<threads_num_;idx++)
+    {
+      while (!stopped_.at(idx))
+        std::this_thread::sleep_for(std::chrono::microseconds(1));
+    }
+    planning_scene_ = planning_scene;
+    for (int idx=0;idx<threads_num_;idx++)
+      planning_scenes_.at(idx)=planning_scene::PlanningScene::clone(planning_scene_);
   }
 
   virtual bool checkPath(const Eigen::VectorXd& configuration1,
