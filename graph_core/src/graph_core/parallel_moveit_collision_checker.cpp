@@ -124,15 +124,15 @@ void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
     for (const Eigen::VectorXd& configuration: queues_.at(thread_idx))
     {
       state_->setJointGroupPositions(group_name_, configuration);
-//      if (!state_->satisfiesBounds())
-//      {
-//        at_least_a_collision_=true;
-//        stopped_.at(thread_idx)=true;
-//      completed_.at(thread_idx)=true;
-//        stop_check_=true;
-//        break;
-//      }
-//      state_->update();
+      if (!state_->satisfiesBounds())
+      {
+        at_least_a_collision_=true;
+        stopped_.at(thread_idx)=true;
+        completed_.at(thread_idx)=true;
+        stop_check_=true;
+        break;
+      }
+      state_->update();
       state_->updateCollisionBodyTransforms();
       if (!planning_scenes_.at(thread_idx)->isStateValid(*state_,group_name_))
       {

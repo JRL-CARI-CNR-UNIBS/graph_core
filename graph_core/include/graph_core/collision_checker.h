@@ -119,7 +119,7 @@ public:
     return true;
   }
 
-  bool checkPathFromConf(const Eigen::VectorXd& parent,
+  virtual bool checkPathFromConf(const Eigen::VectorXd& parent,
                          const Eigen::VectorXd& child,
                          const Eigen::VectorXd& this_conf)
   {

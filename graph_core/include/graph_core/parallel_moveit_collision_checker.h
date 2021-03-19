@@ -98,5 +98,50 @@ public:
     return checkAllQueues();
   }
 
+  virtual bool checkPathFromConf(const Eigen::VectorXd& parent,
+                         const Eigen::VectorXd& child,
+                         const Eigen::VectorXd& this_conf)
+  {
+    resetQueue();
+
+    double dist_child = (this_conf-child).norm();
+    double dist_parent = (parent-this_conf).norm();
+    double dist = (parent-child).norm();
+
+    if((dist-dist_child-dist_parent)>1e-04)
+    {
+      ROS_ERROR("The conf is not on the connection between parent and child");
+      assert(0);
+      return false;
+    }
+
+    queueUp(this_conf);
+    queueUp(child);
+
+
+    double distance = (this_conf - child).norm();
+    if(distance < min_distance_)
+      return checkAllQueues();
+
+    double this_abscissa = (parent-this_conf).norm()/(parent-child).norm();
+    double abscissa;
+    double n = 2;
+    Eigen::VectorXd conf;
+    while (distance > n * min_distance_)
+    {
+      for (double idx = 1; idx < n; idx += 2)
+      {
+        abscissa = idx/n;
+        if(abscissa>=this_abscissa)
+        {
+          conf = parent + (child - parent) * abscissa;
+          queueUp(conf);
+        }
+      }
+      n *= 2;
+    }
+    return checkAllQueues();
+  }
+
 };
-}
+}  // namaspace pathplan
