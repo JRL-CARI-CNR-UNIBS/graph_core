@@ -47,7 +47,7 @@ protected:
   std::vector<bool> completed_;
   std::vector<std::vector<Eigen::VectorXd>> queues_;
   std::vector<std::thread> threads;
-  std::vector<planning_scene::PlanningSceneConstPtr> planning_scenes_;
+  std::vector<planning_scene::PlanningScenePtr> planning_scenes_;
 
 
   void resetQueue();

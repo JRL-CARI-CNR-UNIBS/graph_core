@@ -60,15 +60,21 @@ ParallelMoveitCollisionChecker::ParallelMoveitCollisionChecker(const planning_sc
 
 void ParallelMoveitCollisionChecker::resetQueue()
 {
+  moveit_msgs::PlanningScene msg;
+  planning_scene_->getPlanningSceneMsg(msg);
+
   at_least_a_collision_=false;
   stop_check_=true;
   thread_iter_=0;
   for (int idx=0;idx<threads_num_;idx++)
   {
+
     while (!stopped_.at(idx))
       std::this_thread::sleep_for(std::chrono::microseconds(1));
     queues_.at(idx).clear();
     completed_.at(idx)=false;
+
+    planning_scenes_.at(idx)->setPlanningSceneMsg(msg);
   }
 }
 
