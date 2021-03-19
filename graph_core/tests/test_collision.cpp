@@ -24,11 +24,11 @@ int main(int argc, char **argv)
 
 
   int num_threads =nh.param("number_of_threads",20);
+  ROS_INFO("Compare MoveitCollisionChecker and ParallelMoveitCollisionChecker with %d threads",num_threads);
 
   robot_state::RobotState state = planning_scene->getCurrentState();
 
   pathplan::CollisionCheckerPtr checker1 = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scene2, group_name);
-//  pathplan::CollisionCheckerPtr checker1 = std::make_shared<pathplan::ParallelMoveitCollisionChecker>(planning_scene, group_name);
   pathplan::CollisionCheckerPtr checker2 = std::make_shared<pathplan::ParallelMoveitCollisionChecker>(planning_scene2, group_name,num_threads);
 
   std::vector<std::string> joint_names = kinematic_model->getJointModelGroup(group_name)->getActiveJointModelNames();
@@ -48,6 +48,8 @@ int main(int argc, char **argv)
   }
   pathplan::SamplerPtr sampler = std::make_shared<pathplan::InformedSampler>(lb, ub, lb, ub);
 
+
+  ROS_INFO("Testing connections with feasible start and stop node and length 2");
   int iters=100000;
   int attempts=0;
   double time_single=0;
@@ -63,8 +65,7 @@ int main(int argc, char **argv)
       continue;
 
     Eigen::VectorXd q2=sampler->sample();
-//    if ((q2-q1).norm()>2.0)
-      q2=q1+(q2-q1)*2.0/(q2-q1).norm();
+    q2=q1+(q2-q1)*2.0/(q2-q1).norm();
 
     if (!checker1->check(q2))
       continue;
@@ -88,6 +89,45 @@ int main(int argc, char **argv)
   ROS_INFO("MoveitCollisionChecker: Average time = %f ms on %d attempts",1e3*time_single/(double)attempts,attempts);
   ROS_INFO("ParallelMoveitCollisionChecker: Average time = %f ms on %d attempts",1e3*time_par/(double)attempts,attempts);
   ROS_INFO("Erros = %d over %d attempts",errors,iters);
+
+
+  ROS_INFO("Testing random connections with length 2");
+  iters=100000;
+  attempts=0;
+  time_single=0;
+  time_par=0;
+  errors=0;
+  for (int idx=0;idx<iters;idx++)
+  {
+    if (iters%10000)
+      ROS_INFO("iters %u",iters);
+    Eigen::VectorXd q1=sampler->sample();
+
+
+    Eigen::VectorXd q2=sampler->sample();
+    q2=q1+(q2-q1)*2.0/(q2-q1).norm();
+
+
+    attempts++;
+    ros::WallTime t0=ros::WallTime::now();
+    bool fl1=checker1->checkPath(q1,q2);
+    ros::WallTime t1=ros::WallTime::now();
+    bool fl2=checker2->checkPath(q1,q2);
+    ros::WallTime t2=ros::WallTime::now();
+    time_single+=(t1-t0).toSec();
+    time_par+=(t2-t1).toSec();
+    if (fl1!=fl2)
+    {
+      ROS_INFO_STREAM("Q1 = "<<q1.transpose());
+      ROS_INFO_STREAM("Q2 = "<<q2.transpose());
+      ROS_INFO("check1 = %s, check2 =%s",fl1?"true":"false",fl2?"true":"false");
+      errors++;
+    }
+  }
+  ROS_INFO("MoveitCollisionChecker: Average time = %f ms on %d attempts",1e3*time_single/(double)attempts,attempts);
+  ROS_INFO("ParallelMoveitCollisionChecker: Average time = %f ms on %d attempts",1e3*time_par/(double)attempts,attempts);
+  ROS_INFO("Erros = %d over %d attempts",errors,iters);
+
 
   return 0;
 }
