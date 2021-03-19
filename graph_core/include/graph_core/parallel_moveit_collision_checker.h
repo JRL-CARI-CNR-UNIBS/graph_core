@@ -64,6 +64,7 @@ public:
 
   ~ParallelMoveitCollisionChecker()
   {
+    ROS_INFO("closing collision threads");
     stop_threads_=true;
     stop_check_=true;
     for (int idx=0;idx<threads_num_;idx++)
@@ -71,6 +72,7 @@ public:
       if (threads.at(idx).joinable())
         threads.at(idx).join();
     }
+    ROS_INFO("collision threads closed");
   }
 
 
@@ -87,7 +89,9 @@ public:
       ROS_ERROR_THROTTLE(1,"unable to upload scene");
     }
     for (int idx=0;idx<threads_num_;idx++)
+    {
       planning_scenes_.at(idx)->setPlanningSceneMsg(msg);
+    }
   }
 
   virtual void setPlanningScene(planning_scene::PlanningScenePtr &planning_scene)
@@ -147,7 +151,6 @@ public:
 
     queueUp(this_conf);
     queueUp(child);
-
 
     double distance = (this_conf - child).norm();
     if(distance < min_distance_)

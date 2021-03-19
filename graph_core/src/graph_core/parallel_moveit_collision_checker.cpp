@@ -60,24 +60,20 @@ ParallelMoveitCollisionChecker::ParallelMoveitCollisionChecker(const planning_sc
 
 void ParallelMoveitCollisionChecker::resetQueue()
 {
-
   at_least_a_collision_=false;
   stop_check_=true;
   thread_iter_=0;
   for (int idx=0;idx<threads_num_;idx++)
   {
-
     while (!stopped_.at(idx))
       std::this_thread::sleep_for(std::chrono::microseconds(1));
     queues_.at(idx).clear();
     completed_.at(idx)=false;
-
   }
 }
 
 void ParallelMoveitCollisionChecker::queueUp(const Eigen::VectorXd &q)
 {
-
   completed_.at(thread_iter_)=false;
   queues_.at(thread_iter_++).push_back(q);
   if (thread_iter_>=threads_num_)
@@ -108,7 +104,7 @@ bool ParallelMoveitCollisionChecker::checkAllQueues()
 
 void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
 {
-  robot_state::RobotStatePtr state_;
+  robot_state::RobotStatePtr state=std::make_shared<robot_state::RobotState>(planning_scenes_.at(thread_idx)->getCurrentState());
   while(!stop_threads_)
   {
     if (stop_check_)
@@ -116,7 +112,7 @@ void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
       stopped_.at(thread_idx)=true;
       completed_.at(thread_idx)=false;
       std::this_thread::sleep_for(std::chrono::microseconds(1));
-      state_ = std::make_shared<robot_state::RobotState>(planning_scene_->getCurrentState());
+      state = std::make_shared<robot_state::RobotState>(planning_scenes_.at(thread_idx)->getCurrentState());
       continue;
     }
     if (completed_.at(thread_idx))
@@ -126,8 +122,9 @@ void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
     }
     for (const Eigen::VectorXd& configuration: queues_.at(thread_idx))
     {
-      state_->setJointGroupPositions(group_name_, configuration);
-      if (!state_->satisfiesBounds())
+//      *state=planning_scenes_.at(thread_idx)->getCurrentState();
+      state->setJointGroupPositions(group_name_, configuration);
+      if (!state->satisfiesBounds())
       {
         at_least_a_collision_=true;
         stopped_.at(thread_idx)=true;
@@ -135,9 +132,9 @@ void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
         stop_check_=true;
         break;
       }
-      state_->update();
-      state_->updateCollisionBodyTransforms();
-      if (!planning_scenes_.at(thread_idx)->isStateValid(*state_,group_name_))
+      state->update();
+      state->updateCollisionBodyTransforms();
+      if (!planning_scenes_.at(thread_idx)->isStateValid(*state,group_name_))
       {
         at_least_a_collision_=true;
         stopped_.at(thread_idx)=true;

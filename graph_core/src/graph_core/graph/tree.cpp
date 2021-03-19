@@ -209,7 +209,7 @@ bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node, const double &m
     time = max_time-(toc-tic).toSec();
     if(time<0.8*mean || time<=0.0)
     {
-      ROS_ERROR("TIME OUT");
+      //ROS_ERROR("TIME OUT");
       break;
     }
   }
