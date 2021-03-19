@@ -37,8 +37,6 @@ namespace pathplan
 class ParallelMoveitCollisionChecker: public MoveitCollisionChecker
 {
 protected:
-  planning_scene::PlanningSceneConstPtr planning_scene_;
-
   int threads_num_;
   int thread_iter_=0;
   bool stop_threads_;
@@ -46,9 +44,11 @@ protected:
   bool at_least_a_collision_;
 
   std::vector<bool> stopped_;
+  std::vector<bool> completed_;
   std::vector<std::vector<Eigen::VectorXd>> queues_;
   std::vector<std::thread> threads;
   std::vector<planning_scene::PlanningSceneConstPtr> planning_scenes_;
+
 
   void resetQueue();
   void queueUp(const Eigen::VectorXd &q);
@@ -57,7 +57,7 @@ protected:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  ParallelMoveitCollisionChecker(const planning_scene::PlanningSceneConstPtr planning_scene,
+  ParallelMoveitCollisionChecker(const planning_scene::PlanningSceneConstPtr& planning_scene,
                                  const std::string& group_name,
                                  const int& threads_num=4,
                                  const double& min_distance = 0.01);
@@ -79,10 +79,9 @@ public:
     resetQueue();
     queueUp(configuration1);
     queueUp(configuration2);
-
     double distance = (configuration2 - configuration1).norm();
     if (distance < min_distance_)
-      return true;
+      return checkAllQueues();
 
     Eigen::VectorXd conf;
     double n = 2;
