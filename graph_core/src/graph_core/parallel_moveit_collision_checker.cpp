@@ -47,6 +47,7 @@ ParallelMoveitCollisionChecker::ParallelMoveitCollisionChecker(const planning_sc
   at_least_a_collision_=false;
   stop_check_=true;
   thread_iter_=0;
+
   for (int idx=0;idx<threads_num_;idx++)
   {
     stopped_.push_back(true);
@@ -54,6 +55,7 @@ ParallelMoveitCollisionChecker::ParallelMoveitCollisionChecker(const planning_sc
 
     planning_scenes_.push_back(planning_scene::PlanningScene::clone(planning_scene_));
     queues_.push_back(std::vector<Eigen::VectorXd>());
+    mutex_.push_back(std::make_shared<std::mutex>());
     threads.push_back(std::thread(&ParallelMoveitCollisionChecker::collisionThread,this,idx));
   }
 }
@@ -74,10 +76,13 @@ void ParallelMoveitCollisionChecker::resetQueue()
 
 void ParallelMoveitCollisionChecker::queueUp(const Eigen::VectorXd &q)
 {
-  completed_.at(thread_iter_)=false;
-  queues_.at(thread_iter_++).push_back(q);
-  if (thread_iter_>=threads_num_)
-    thread_iter_=0;
+  if(q.size() != 0)
+  {
+    completed_.at(thread_iter_)=false;
+    queues_.at(thread_iter_++).push_back(q);
+    if (thread_iter_>=threads_num_)
+      thread_iter_=0;
+  }
 }
 
 bool ParallelMoveitCollisionChecker::checkAllQueues()
@@ -102,9 +107,12 @@ bool ParallelMoveitCollisionChecker::checkAllQueues()
   return  !at_least_a_collision_;
 }
 
-void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
+void ParallelMoveitCollisionChecker:: collisionThread(int thread_idx)
 {
+  mutex_.at(thread_idx)->lock();
   robot_state::RobotStatePtr state=std::make_shared<robot_state::RobotState>(planning_scenes_.at(thread_idx)->getCurrentState());
+  mutex_.at(thread_idx)->unlock();
+
   while(!stop_threads_)
   {
     if (stop_check_)
@@ -112,18 +120,29 @@ void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
       stopped_.at(thread_idx)=true;
       completed_.at(thread_idx)=false;
       std::this_thread::sleep_for(std::chrono::microseconds(1));
-      state = std::make_shared<robot_state::RobotState>(planning_scenes_.at(thread_idx)->getCurrentState());
-      continue;
-    }
-    if (completed_.at(thread_idx))
-    {
-      std::this_thread::sleep_for(std::chrono::microseconds(1));
-      continue;
-    }
-    for (const Eigen::VectorXd& configuration: queues_.at(thread_idx))
-    {
-//      *state=planning_scenes_.at(thread_idx)->getCurrentState();
+      //state = std::make_shared<robot_state::RobotState>(planning_scenes_.at(thread_idx)->getCurrentState()); Perchè qua? L'ho spostato nel for sotto (o forse andrebbe messo appena prima del for?)
+      continue;                                                                                        //           |
+    }                                                                                                  //           |
+    if (completed_.at(thread_idx))                                                                     //           |
+    {                                                                                                  //           |
+      std::this_thread::sleep_for(std::chrono::microseconds(1));                                       //           |
+      continue;                                                                                        //           |
+    }                                                                                                  //           |
+    for (const Eigen::VectorXd& configuration: queues_.at(thread_idx))                                 //           |
+    {                                                                                                  //           |
+      //      *state=planning_scenes_.at(thread_idx)->getCurrentState();                               //           |
+      mutex_.at(thread_idx)->lock();                                                                   //           v
+      state = std::make_shared<robot_state::RobotState>(planning_scenes_.at(thread_idx)->getCurrentState()); //Spostato qua
+
+      if(configuration.size()==0)
+      {
+        ROS_INFO_STREAM("CONF vuoto: "<<configuration.transpose());
+        continue;
+      }
       state->setJointGroupPositions(group_name_, configuration);
+
+      mutex_.at(thread_idx)->unlock();
+
       if (!state->satisfiesBounds())
       {
         at_least_a_collision_=true;
@@ -134,14 +153,19 @@ void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
       }
       state->update();
       state->updateCollisionBodyTransforms();
+
+      mutex_.at(thread_idx)->lock();
       if (!planning_scenes_.at(thread_idx)->isStateValid(*state,group_name_))
       {
         at_least_a_collision_=true;
         stopped_.at(thread_idx)=true;
         completed_.at(thread_idx)=true;
         stop_check_=true;
+        mutex_.at(thread_idx)->unlock();
         break;
       }
+      mutex_.at(thread_idx)->unlock();
+
       if (stop_check_)
         break;
     }

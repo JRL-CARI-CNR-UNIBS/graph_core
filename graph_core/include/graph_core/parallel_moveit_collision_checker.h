@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/moveit_collision_checker.h>
 #include <moveit/planning_scene/planning_scene.h>
 #include <thread>
+#include <mutex>
 
 namespace pathplan
 {
@@ -48,7 +49,7 @@ protected:
   std::vector<std::vector<Eigen::VectorXd>> queues_;
   std::vector<std::thread> threads;
   std::vector<planning_scene::PlanningScenePtr> planning_scenes_;
-
+  std::vector <std::shared_ptr<std::mutex>> mutex_;
 
   void resetQueue();
   void queueUp(const Eigen::VectorXd &q);
@@ -86,11 +87,18 @@ public:
     }
     if (!planning_scene_->setPlanningSceneMsg(msg))
     {
-      ROS_ERROR_THROTTLE(1,"unable to upload scene");
+      ROS_ERROR("unaple to upload planning scn");
+      //ROS_ERROR_THROTTLE(1,"unable to upload scene");
     }
     for (int idx=0;idx<threads_num_;idx++)
     {
-      planning_scenes_.at(idx)->setPlanningSceneMsg(msg);
+      mutex_.at(idx)->lock();
+      if(!planning_scenes_.at(idx)->setPlanningSceneMsg(msg))
+      {
+        ROS_ERROR("unaple to upload planning scn");
+        //ROS_ERROR_THROTTLE(1,"unable to upload scene");
+      }
+      mutex_.at(idx)->unlock();
     }
   }
 
@@ -104,12 +112,21 @@ public:
     }
     planning_scene_ = planning_scene;
     for (int idx=0;idx<threads_num_;idx++)
+    {
+      mutex_.at(idx)->lock();
       planning_scenes_.at(idx)=planning_scene::PlanningScene::clone(planning_scene_);
+      mutex_.at(idx)->unlock();
+    }
   }
 
   virtual bool checkPath(const Eigen::VectorXd& configuration1,
                          const Eigen::VectorXd& configuration2)
   {
+    if(configuration1.size() == 0) ROS_ERROR("CONF1 VUOTA"); //ELIMINA
+    if(configuration2.size() == 0) ROS_ERROR("CONF2 VUOTA");
+    if(configuration1.size() == 0 || configuration2.size() == 0) throw std::invalid_argument("conf vuota");
+
+
     resetQueue();
     queueUp(configuration1);
     queueUp(configuration2);
@@ -117,7 +134,7 @@ public:
     if (distance < min_distance_)
       return checkAllQueues();
 
-    Eigen::VectorXd conf;
+    Eigen::VectorXd conf(configuration1.size());
     double n = 2;
 
     while (distance > n * min_distance_)
@@ -125,6 +142,11 @@ public:
       for (double idx = 1; idx < n; idx += 2)
       {
         conf = configuration1 + (configuration2 - configuration1) * idx / n;
+        if(conf.size() == 0)
+        {
+          ROS_ERROR("CONF VUOTA"); //ELIMINA
+          throw std::invalid_argument("conf vuota");
+        }
         queueUp(conf);
       }
       n *= 2;
@@ -133,9 +155,14 @@ public:
   }
 
   virtual bool checkPathFromConf(const Eigen::VectorXd& parent,
-                         const Eigen::VectorXd& child,
-                         const Eigen::VectorXd& this_conf)
+                                 const Eigen::VectorXd& child,
+                                 const Eigen::VectorXd& this_conf)
   {
+    if(parent.size() == 0) ROS_ERROR("parent VUOTA"); //ELIMINA
+    if(child.size() == 0) ROS_ERROR("child VUOTA");
+    if(this_conf.size() == 0) ROS_ERROR("this conf VUOTA");
+    if(parent.size() == 0 || child.size() == 0|| this_conf.size() == 0)throw std::invalid_argument("conf vuota");
+
     resetQueue();
 
     double dist_child = (this_conf-child).norm();
@@ -168,6 +195,11 @@ public:
         if(abscissa>=this_abscissa)
         {
           conf = parent + (child - parent) * abscissa;
+          if(conf.size() == 0)
+          {
+            ROS_ERROR(" conf2 VUOTA");
+            throw std::invalid_argument("conf vuota");
+          }
           queueUp(conf);
         }
       }
