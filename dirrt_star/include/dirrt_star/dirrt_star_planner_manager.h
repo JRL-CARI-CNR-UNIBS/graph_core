@@ -28,7 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <moveit/planning_interface/planning_interface.h>
-#include <dirrt_star/dirrt_star_planner.h>
 #include <dirrt_star/multigoal_planner.h>
 
 
