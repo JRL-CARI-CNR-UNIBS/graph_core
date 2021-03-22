@@ -55,7 +55,7 @@ ParallelMoveitCollisionChecker::ParallelMoveitCollisionChecker(const planning_sc
 
     planning_scenes_.push_back(planning_scene::PlanningScene::clone(planning_scene_));
     queues_.push_back(std::vector<Eigen::VectorXd>());
-    mutex_.push_back(std::make_shared<std::mutex>());
+    scene_mutex_.push_back(std::make_shared<std::mutex>());
     threads.push_back(std::thread(&ParallelMoveitCollisionChecker::collisionThread,this,idx));
   }
 }
@@ -69,7 +69,11 @@ void ParallelMoveitCollisionChecker::resetQueue()
   {
     while (!stopped_.at(idx))
       std::this_thread::sleep_for(std::chrono::microseconds(1));
+
+    queues_mutex_.lock();
     queues_.at(idx).clear();
+    queues_mutex_.unlock();
+
     completed_.at(idx)=false;
   }
 }
@@ -79,7 +83,12 @@ void ParallelMoveitCollisionChecker::queueUp(const Eigen::VectorXd &q)
   if(q.size() != 0)
   {
     completed_.at(thread_iter_)=false;
-    queues_.at(thread_iter_++).push_back(q);
+
+    queues_mutex_.lock();
+    queues_.at(thread_iter_).push_back(q);
+    queues_mutex_.unlock();
+
+    thread_iter_ +=1;
     if (thread_iter_>=threads_num_)
       thread_iter_=0;
   }
@@ -109,9 +118,9 @@ bool ParallelMoveitCollisionChecker::checkAllQueues()
 
 void ParallelMoveitCollisionChecker:: collisionThread(int thread_idx)
 {
-  mutex_.at(thread_idx)->lock();
+  scene_mutex_.at(thread_idx)->lock();
   robot_state::RobotStatePtr state=std::make_shared<robot_state::RobotState>(planning_scenes_.at(thread_idx)->getCurrentState());
-  mutex_.at(thread_idx)->unlock();
+  scene_mutex_.at(thread_idx)->unlock();
 
   while(!stop_threads_)
   {
@@ -120,7 +129,7 @@ void ParallelMoveitCollisionChecker:: collisionThread(int thread_idx)
       stopped_.at(thread_idx)=true;
       completed_.at(thread_idx)=false;
       std::this_thread::sleep_for(std::chrono::microseconds(1));
-      //state = std::make_shared<robot_state::RobotState>(planning_scenes_.at(thread_idx)->getCurrentState()); Perchè qua? L'ho spostato nel for sotto (o forse andrebbe messo appena prima del for?)
+      //state = std::make_shared<robot_state::RobotState>(planning_scenes_.at(thread_idx)->getCurrentState()); Perchè qua? L'ho spostato prima del for
       continue;                                                                                        //           |
     }                                                                                                  //           |
     if (completed_.at(thread_idx))                                                                     //           |
@@ -128,20 +137,28 @@ void ParallelMoveitCollisionChecker:: collisionThread(int thread_idx)
       std::this_thread::sleep_for(std::chrono::microseconds(1));                                       //           |
       continue;                                                                                        //           |
     }                                                                                                  //           |
-    for (const Eigen::VectorXd& configuration: queues_.at(thread_idx))                                 //           |
-    {                                                                                                  //           |
-      //      *state=planning_scenes_.at(thread_idx)->getCurrentState();                               //           |
-      mutex_.at(thread_idx)->lock();                                                                   //           v
-      state = std::make_shared<robot_state::RobotState>(planning_scenes_.at(thread_idx)->getCurrentState()); //Spostato qua
+                                                                                                       //           v
+    scene_mutex_.at(thread_idx)->lock();
+    state = std::make_shared<robot_state::RobotState>(planning_scenes_.at(thread_idx)->getCurrentState()); //Spostato qua
+    scene_mutex_.at(thread_idx)->unlock();
 
-      if(configuration.size()==0)
+
+    queues_mutex_.lock();
+    std::vector<Eigen::VectorXd> queue  = queues_.at(thread_idx);
+    queues_mutex_.unlock();
+
+    for (const Eigen::VectorXd& configuration: queue)
+    {
+      //      *state=planning_scenes_.at(thread_idx)->getCurrentState();
+
+      if(configuration.size()==0)  //tieni per qualche test poi cancella
       {
-        ROS_INFO_STREAM("CONF vuoto: "<<configuration.transpose());
-        continue;
+        ROS_INFO_STREAM ("conf vuota: "<<configuration.transpose()<<" queue: "<<thread_idx << " length queue: "<<queue.size());
+        throw std::invalid_argument("conf vuota thread");
       }
-      state->setJointGroupPositions(group_name_, configuration);
 
-      mutex_.at(thread_idx)->unlock();
+      scene_mutex_.at(thread_idx)->lock();
+      state->setJointGroupPositions(group_name_, configuration);
 
       if (!state->satisfiesBounds())
       {
@@ -149,22 +166,24 @@ void ParallelMoveitCollisionChecker:: collisionThread(int thread_idx)
         stopped_.at(thread_idx)=true;
         completed_.at(thread_idx)=true;
         stop_check_=true;
+
+        scene_mutex_.at(thread_idx)->unlock();
         break;
       }
-      state->update();
-      state->updateCollisionBodyTransforms();
+      state->update();                        //servono entrambi? Se guardo linea 618 http://docs.ros.org/en/melodic/api/moveit_core/html/robot__state_8cpp_source.html#l00536 vedo che update chiama gia updateCollisionBodyTransform
+      state->updateCollisionBodyTransforms(); //servono entrambi? Se guardo linea 618 http://docs.ros.org/en/melodic/api/moveit_core/html/robot__state_8cpp_source.html#l00536 vedo che update chiama gia updateCollisionBodyTransform
 
-      mutex_.at(thread_idx)->lock();
       if (!planning_scenes_.at(thread_idx)->isStateValid(*state,group_name_))
       {
         at_least_a_collision_=true;
         stopped_.at(thread_idx)=true;
         completed_.at(thread_idx)=true;
         stop_check_=true;
-        mutex_.at(thread_idx)->unlock();
+
+        scene_mutex_.at(thread_idx)->unlock();
         break;
       }
-      mutex_.at(thread_idx)->unlock();
+      scene_mutex_.at(thread_idx)->unlock();
 
       if (stop_check_)
         break;
