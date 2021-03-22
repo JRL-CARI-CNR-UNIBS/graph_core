@@ -7,6 +7,7 @@
 #include <moveit/planning_interface/planning_interface.h>
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <moveit/robot_model_loader/robot_model_loader.h>
+#include <graph_core/graph/graph_display.h>
 
 int main(int argc, char **argv)
 {
@@ -47,6 +48,9 @@ int main(int argc, char **argv)
   }
   pathplan::SamplerPtr sampler = std::make_shared<pathplan::InformedSampler>(lb, ub, lb, ub);
 
+
+  planning_scene->getRobotModel()->getJointModelGroup(group_name)->isChain();
+  pathplan::Display display(planning_scene,group_name);
 
   ROS_INFO("Testing connections with feasible start and stop node and length 2");
   int iters=100000;
@@ -119,6 +123,11 @@ int main(int argc, char **argv)
     {
       ROS_INFO_STREAM("Q1 = "<<q1.transpose());
       ROS_INFO_STREAM("Q2 = "<<q2.transpose());
+      pathplan::NodePtr n1=std::make_shared<pathplan::Node>(q1);
+      pathplan::NodePtr n2=std::make_shared<pathplan::Node>(q2);
+
+      pathplan::ConnectionPtr conn=std::make_shared<pathplan::Connection>(n1,n2);
+      display.displayConnection(conn);
       ROS_INFO("check1 = %s, check2 =%s",fl1?"true":"false",fl2?"true":"false");
       errors++;
     }

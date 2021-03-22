@@ -39,6 +39,8 @@ Display::Display(const planning_scene::PlanningSceneConstPtr planning_scene,
   group_name_(group_name),
   last_link_(last_link)
 {
+  if (last_link.empty())
+    last_link_=planning_scene->getRobotModel()->getJointModelGroup(group_name)->getLinkModelNames().back();
   node_marker_scale_.resize(3,DEFAULTNODESIZE);
   connection_marker_scale_.resize(3,DEFAULTCONNECTIONSIZE);
   tree_marker_scale_.resize(3,DEFAULTTREESIZE);
@@ -99,7 +101,7 @@ int Display::displayNode(const NodePtr &n,
   tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),marker.pose);
 
 
-  marker.header.frame_id="world";
+  marker.header.frame_id=planning_scene_->getRobotModel()->getRootLink()->getName();
   marker.header.stamp=ros::Time::now();
   marker.action = visualization_msgs::Marker::ADD;
   marker.id= static_id;

@@ -63,7 +63,7 @@ protected:
 public:
   Display(const planning_scene::PlanningSceneConstPtr planning_scene,
           const std::string& group_name,
-          const std::string& last_link);
+          const std::string& last_link="");
 
   DisplayPtr pointer()
   {
