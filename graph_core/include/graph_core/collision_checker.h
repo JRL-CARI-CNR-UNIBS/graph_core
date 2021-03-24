@@ -69,8 +69,6 @@ public:
   {
     if (!check(configuration1))
       return false;
-    if (!check(configuration2))
-      return false;
 
     double dist = (configuration2 - configuration1).norm();
     unsigned int npnt = std::ceil(dist / min_distance_);
@@ -88,6 +86,10 @@ public:
         }
       }
     }
+
+    if (!check(configuration2))
+      return false;
+
     return true;
   }
 

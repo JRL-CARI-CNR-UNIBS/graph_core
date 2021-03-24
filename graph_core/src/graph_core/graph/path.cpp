@@ -1059,7 +1059,7 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_fro
     {
       for(int i = (connections_.size()-1);i>=idx;i--)
       {
-        if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-idx;
+        if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-1-i;
       }
     }
   }
@@ -1074,7 +1074,7 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_fro
       {
         for(int i = (connections_.size()-1);i>=idx+1;i--)
         {
-          if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-(idx+1);
+          if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-1-i;
         }
       }
     }
@@ -1091,7 +1091,7 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_fro
     {
       validity = false;
       conn->setCost(std::numeric_limits<double>::infinity());
-      pos_closest_obs_from_goal = connections_.size()-idx;
+      pos_closest_obs_from_goal = connections_.size()-1-idx;
     }
     else
     {
@@ -1103,14 +1103,12 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_fro
         {
           for(int i = (connections_.size()-1);i>=idx+1;i--)
           {
-            if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-(idx+1);
+            if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-1-i;
           }
         }
       }
     }
   }
-
-  //Note: pos_closest_obs_from_goal = -1 if no obstructions. The closest obs from the conf (and not from the goal) is at connections_.size()-pos_closest_obs_from_goal connection.
 
   return validity;
 }
