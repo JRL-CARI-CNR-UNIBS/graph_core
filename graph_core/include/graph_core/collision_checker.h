@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/ros.h>
 #include <eigen3/Eigen/Core>
 #include <moveit_msgs/PlanningScene.h>
+#include <graph_core/graph/connection.h>
 
 namespace pathplan
 {
@@ -52,16 +53,6 @@ public:
   {
     return true;
   }
-
-  /*
-  bool checkPath(const Eigen::VectorXd &configuration1, const Eigen::VectorXd &configuration2)
-  {
-    Eigen::VectorXd conf;
-    return checkPath(configuration1,configuration2,conf);
-  }
-  */
-
-
 
   bool checkPath(const Eigen::VectorXd& configuration1,
                  const Eigen::VectorXd& configuration2,
@@ -121,6 +112,20 @@ public:
       n *= 2;
     }
 
+    return true;
+  }
+
+
+  virtual bool checkConnection(const ConnectionPtr& conn)
+  {
+    return checkPath(conn->getParent()->getConfiguration(),conn->getChild()->getConfiguration());
+  }
+
+  virtual bool checkConnections(const std::vector<ConnectionPtr>& connections)
+  {
+    for (const ConnectionPtr& c: connections)
+      if (!checkConnection(c))
+        return false;
     return true;
   }
 

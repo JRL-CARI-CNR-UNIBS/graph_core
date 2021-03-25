@@ -40,22 +40,21 @@ class ParallelMoveitCollisionChecker: public MoveitCollisionChecker
 protected:
   int threads_num_;
   int thread_iter_=0;
-  bool stop_threads_;
   bool stop_check_;
   bool at_least_a_collision_;
 
-  std::vector<bool> stopped_;
-  std::vector<bool> completed_;
-  std::vector<std::vector<Eigen::VectorXd>> queues_;
+  std::vector<std::vector<std::vector<double>>> queues_;
   std::vector<std::thread> threads;
   std::vector<planning_scene::PlanningScenePtr> planning_scenes_;
-  std::vector <std::shared_ptr<std::mutex>> scene_mutex_;
-  std::mutex queues_mutex_;
 
+  std::mutex stop_mutex;
   void resetQueue();
   void queueUp(const Eigen::VectorXd &q);
   bool checkAllQueues();
   void collisionThread(int thread_idx);
+
+  void queueConnection(const Eigen::VectorXd& configuration1,
+                       const Eigen::VectorXd& configuration2);
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -64,128 +63,20 @@ public:
                                  const int& threads_num=4,
                                  const double& min_distance = 0.01);
 
-  ~ParallelMoveitCollisionChecker()
-  {
-    ROS_INFO("closing collision threads");
-    stop_threads_=true;
-    stop_check_=true;
-    for (int idx=0;idx<threads_num_;idx++)
-    {
-      if (threads.at(idx).joinable())
-        threads.at(idx).join();
-    }
-    ROS_INFO("collision threads closed");
-  }
+  ~ParallelMoveitCollisionChecker();
 
+  virtual void setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg);
 
-  virtual void setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg)
-  {
-    stop_check_=true;
-    for (int idx=0;idx<threads_num_;idx++)
-    {
-      while (!stopped_.at(idx))
-        std::this_thread::sleep_for(std::chrono::microseconds(1));
-    }
-    if (!planning_scene_->setPlanningSceneMsg(msg))
-    {
-      ROS_ERROR_THROTTLE(1,"unable to upload scene");
-    }
-    for (int idx=0;idx<threads_num_;idx++)
-    {
-      scene_mutex_.at(idx)->lock();
-      if(!planning_scenes_.at(idx)->setPlanningSceneMsg(msg))
-      {
-        ROS_ERROR_THROTTLE(1,"unable to upload scene");
-      }
-      scene_mutex_.at(idx)->unlock();
-    }
-  }
-
-  virtual void setPlanningScene(planning_scene::PlanningScenePtr &planning_scene)
-  {
-    stop_check_=true;
-    for (int idx=0;idx<threads_num_;idx++)
-    {
-      while (!stopped_.at(idx))
-        std::this_thread::sleep_for(std::chrono::microseconds(1));
-    }
-    planning_scene_ = planning_scene;
-    for (int idx=0;idx<threads_num_;idx++)
-    {
-      scene_mutex_.at(idx)->lock();
-      planning_scenes_.at(idx)=planning_scene::PlanningScene::clone(planning_scene_);
-      scene_mutex_.at(idx)->unlock();
-    }
-  }
+  virtual void setPlanningScene(planning_scene::PlanningScenePtr &planning_scene);
 
   virtual bool checkPath(const Eigen::VectorXd& configuration1,
-                         const Eigen::VectorXd& configuration2)
-  {
-    resetQueue();
-    queueUp(configuration1);
-    queueUp(configuration2);
-    double distance = (configuration2 - configuration1).norm();
-    if (distance < min_distance_)
-      return checkAllQueues();
-
-    Eigen::VectorXd conf(configuration1.size());
-    double n = 2;
-
-    while (distance > n * min_distance_)
-    {
-      for (double idx = 1; idx < n; idx += 2)
-      {
-        conf = configuration1 + (configuration2 - configuration1) * idx / n;
-        queueUp(conf);
-      }
-      n *= 2;
-    }
-    return checkAllQueues();
-  }
+                         const Eigen::VectorXd& configuration2);
 
   virtual bool checkPathFromConf(const Eigen::VectorXd& parent,
                                  const Eigen::VectorXd& child,
-                                 const Eigen::VectorXd& this_conf)
-  {
-    resetQueue();
+                                 const Eigen::VectorXd& this_conf);
 
-    double dist_child = (this_conf-child).norm();
-    double dist_parent = (parent-this_conf).norm();
-    double dist = (parent-child).norm();
-
-    if((dist-dist_child-dist_parent)>1e-04)
-    {
-      ROS_ERROR("The conf is not on the connection between parent and child");
-      assert(0);
-      return false;
-    }
-
-    queueUp(this_conf);
-    queueUp(child);
-
-    double distance = (this_conf - child).norm();
-    if(distance < min_distance_)
-      return checkAllQueues();
-
-    double this_abscissa = (parent-this_conf).norm()/(parent-child).norm();
-    double abscissa;
-    double n = 2;
-    Eigen::VectorXd conf;
-    while (distance > n * min_distance_)
-    {
-      for (double idx = 1; idx < n; idx += 2)
-      {
-        abscissa = idx/n;
-        if(abscissa>=this_abscissa)
-        {
-          conf = parent + (child - parent) * abscissa;
-          queueUp(conf);
-        }
-      }
-      n *= 2;
-    }
-    return checkAllQueues();
-  }
+  virtual bool checkConnections(const std::vector<ConnectionPtr>& connections);
 
 };
 }  // namaspace pathplan

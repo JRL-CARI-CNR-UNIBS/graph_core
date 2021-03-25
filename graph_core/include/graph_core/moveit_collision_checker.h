@@ -73,7 +73,7 @@ public:
     state_->setJointGroupPositions(group_name_, configuration);
     if (!state_->satisfiesBounds())
     {
-      ROS_FATAL("Out of bound");
+      ROS_DEBUG("Out of bound");
       return false;
     }
     state_->update();

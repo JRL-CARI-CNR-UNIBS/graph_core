@@ -23,13 +23,14 @@ int main(int argc, char **argv)
   planning_scene::PlanningScenePtr planning_scene = std::make_shared<planning_scene::PlanningScene>(kinematic_model);
 
 
-  int num_threads =nh.param("number_of_threads",20);
+  int num_threads =nh.param("number_of_threads",5);
   ROS_INFO("Compare MoveitCollisionChecker and ParallelMoveitCollisionChecker with %d threads",num_threads);
+  double steps=nh.param("steps",0.01);
 
   robot_state::RobotState state = planning_scene->getCurrentState();
 
-  pathplan::CollisionCheckerPtr checker1 = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scene, group_name);
-  pathplan::CollisionCheckerPtr checker2 = std::make_shared<pathplan::ParallelMoveitCollisionChecker>(planning_scene, group_name,num_threads);
+  pathplan::CollisionCheckerPtr checker1 = std::make_shared<pathplan::MoveitCollisionChecker>(planning_scene, group_name,steps);
+  pathplan::CollisionCheckerPtr checker2 = std::make_shared<pathplan::ParallelMoveitCollisionChecker>(planning_scene, group_name,num_threads,steps);
 
   std::vector<std::string> joint_names = kinematic_model->getJointModelGroup(group_name)->getActiveJointModelNames();
 
@@ -48,20 +49,19 @@ int main(int argc, char **argv)
   }
   pathplan::SamplerPtr sampler = std::make_shared<pathplan::InformedSampler>(lb, ub, lb, ub);
 
-
-  planning_scene->getRobotModel()->getJointModelGroup(group_name)->isChain();
   pathplan::Display display(planning_scene,group_name);
 
   ROS_INFO("Testing connections with feasible start and stop node and length 2");
-  int iters=100000;
+  int iters=nh.param("iterations",100000);
   int attempts=0;
   double time_single=0;
   double time_par=0;
   int errors=0;
   for (int idx=0;idx<iters;idx++)
   {
-    if (iters%10000)
-      ROS_INFO("iters %u",iters);
+    if (!ros::ok())
+      break;
+    ROS_INFO_THROTTLE(10,"%d iter of %d",idx,iters);
     Eigen::VectorXd q1=sampler->sample();
 
     if (!checker1->check(q1))
@@ -83,27 +83,24 @@ int main(int argc, char **argv)
     time_par+=(t2-t1).toSec();
     if (fl1!=fl2)
     {
-      ROS_INFO_STREAM("Q1 = "<<q1.transpose());
-      ROS_INFO_STREAM("Q2 = "<<q2.transpose());
-      ROS_INFO("check1 = %s, check2 =%s",fl1?"true":"false",fl2?"true":"false");
       errors++;
     }
   }
   ROS_INFO("MoveitCollisionChecker: Average time = %f ms on %d attempts",1e3*time_single/(double)attempts,attempts);
   ROS_INFO("ParallelMoveitCollisionChecker: Average time = %f ms on %d attempts",1e3*time_par/(double)attempts,attempts);
-  ROS_INFO("Erros = %d over %d attempts",errors,iters);
+  ROS_INFO("Erros = %d over %d attempts",errors,attempts);
 
 
   ROS_INFO("Testing random connections with length 2");
-  iters=100000;
   attempts=0;
   time_single=0;
   time_par=0;
   errors=0;
   for (int idx=0;idx<iters;idx++)
   {
-    if (iters%10000)
-      ROS_INFO("iters %u",iters);
+    if (!ros::ok())
+      break;
+    ROS_INFO_THROTTLE(10,"%d iter of %d",idx,iters);
     Eigen::VectorXd q1=sampler->sample();
 
 
@@ -121,14 +118,11 @@ int main(int argc, char **argv)
     time_par+=(t2-t1).toSec();
     if (fl1!=fl2)
     {
-      ROS_INFO_STREAM("Q1 = "<<q1.transpose());
-      ROS_INFO_STREAM("Q2 = "<<q2.transpose());
       pathplan::NodePtr n1=std::make_shared<pathplan::Node>(q1);
       pathplan::NodePtr n2=std::make_shared<pathplan::Node>(q2);
 
       pathplan::ConnectionPtr conn=std::make_shared<pathplan::Connection>(n1,n2);
       display.displayConnection(conn);
-      ROS_INFO("check1 = %s, check2 =%s",fl1?"true":"false",fl2?"true":"false");
       errors++;
     }
   }

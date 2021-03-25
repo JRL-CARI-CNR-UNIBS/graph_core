@@ -43,20 +43,15 @@ ParallelMoveitCollisionChecker::ParallelMoveitCollisionChecker(const planning_sc
   if (threads_num<=0)
     throw std::invalid_argument("number of thread should be positive");
 
-  stop_threads_=false;
   at_least_a_collision_=false;
   stop_check_=true;
   thread_iter_=0;
 
+  threads.resize(threads_num_);
   for (int idx=0;idx<threads_num_;idx++)
   {
-    stopped_.push_back(true);
-    completed_.push_back(false);
-
     planning_scenes_.push_back(planning_scene::PlanningScene::clone(planning_scene_));
-    queues_.push_back(std::vector<Eigen::VectorXd>());
-    scene_mutex_.push_back(std::make_shared<std::mutex>());
-    threads.push_back(std::thread(&ParallelMoveitCollisionChecker::collisionThread,this,idx));
+    queues_.push_back(std::vector<std::vector<double>>());
   }
 }
 
@@ -67,14 +62,9 @@ void ParallelMoveitCollisionChecker::resetQueue()
   thread_iter_=0;
   for (int idx=0;idx<threads_num_;idx++)
   {
-    while (!stopped_.at(idx))
-      std::this_thread::sleep_for(std::chrono::microseconds(1));
-
-    queues_mutex_.lock();
+    if (threads.at(idx).joinable())
+      threads.at(idx).join();
     queues_.at(idx).clear();
-    queues_mutex_.unlock();
-
-    completed_.at(idx)=false;
   }
 }
 
@@ -82,115 +72,205 @@ void ParallelMoveitCollisionChecker::queueUp(const Eigen::VectorXd &q)
 {
   if(q.size() != 0)
   {
-    completed_.at(thread_iter_)=false;
+    std::vector<double> conf(q.size());
+    for (unsigned idx=0;idx<q.size();idx++)
+      conf.at(idx)=q(idx);
 
-    queues_mutex_.lock();
-    queues_.at(thread_iter_).push_back(q);
-    queues_mutex_.unlock();
 
-    thread_iter_ +=1;
+    queues_.at(thread_iter_).push_back(conf);
+    thread_iter_ ++;
     if (thread_iter_>=threads_num_)
       thread_iter_=0;
   }
+  else
+    throw std::invalid_argument("q is empty");
 }
 
 bool ParallelMoveitCollisionChecker::checkAllQueues()
 {
-  stop_check_=false;
-  while (true)
-  {
-    std::this_thread::sleep_for(std::chrono::microseconds(1));
-    bool still_run=false;
-    for (int idx=0;idx<threads_num_;idx++)
-      if (!completed_.at(idx))
-        still_run=true;
 
-    if (at_least_a_collision_)
-    {
-      stop_check_=true;
-      return false;
-    }
-    if (!still_run)
-      break;
+  stop_check_=false;
+  for (int idx=0;idx<threads_num_;idx++)
+  {
+    if (queues_.at(idx).size()>0)
+      threads.at(idx)=std::thread(&ParallelMoveitCollisionChecker::collisionThread,this,idx);
+  }
+  for (int idx=0;idx<threads_num_;idx++)
+  {
+    if (threads.at(idx).joinable())
+      threads.at(idx).join();
   }
   return  !at_least_a_collision_;
 }
 
-void ParallelMoveitCollisionChecker:: collisionThread(int thread_idx)
+void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
 {
-  scene_mutex_.at(thread_idx)->lock();
   robot_state::RobotStatePtr state=std::make_shared<robot_state::RobotState>(planning_scenes_.at(thread_idx)->getCurrentState());
-  scene_mutex_.at(thread_idx)->unlock();
-
-  while(!stop_threads_)
+  const std::vector<std::vector<double>>& queue=queues_.at(thread_idx);
+  for (const std::vector<double>& configuration: queue)
   {
     if (stop_check_)
     {
-      stopped_.at(thread_idx)=true;
-      completed_.at(thread_idx)=false;
-      std::this_thread::sleep_for(std::chrono::microseconds(1));
-      //state = std::make_shared<robot_state::RobotState>(planning_scenes_.at(thread_idx)->getCurrentState()); Perchè qua? L'ho spostato prima del for
-      continue;                                                                                        //           |
-    }                                                                                                  //           |
-    if (completed_.at(thread_idx))                                                                     //           |
-    {                                                                                                  //           |
-      std::this_thread::sleep_for(std::chrono::microseconds(1));                                       //           |
-      continue;                                                                                        //           |
-    }                                                                                                  //           |
-                                                                                                       //           v
-    scene_mutex_.at(thread_idx)->lock();
-    state = std::make_shared<robot_state::RobotState>(planning_scenes_.at(thread_idx)->getCurrentState()); //Spostato qua
-    scene_mutex_.at(thread_idx)->unlock();
-
-
-    queues_mutex_.lock();
-    std::vector<Eigen::VectorXd> queue  = queues_.at(thread_idx);
-    queues_mutex_.unlock();
-
-    for (const Eigen::VectorXd& configuration: queue)
-    {
-      //      *state=planning_scenes_.at(thread_idx)->getCurrentState();
-
-      if(configuration.size()==0)  //tieni per qualche test poi cancella
-      {
-        ROS_INFO_STREAM ("conf vuota: "<<configuration.transpose()<<" queue: "<<thread_idx << " length queue: "<<queue.size());
-        throw std::invalid_argument("conf vuota thread");
-      }
-
-      scene_mutex_.at(thread_idx)->lock();
-      state->setJointGroupPositions(group_name_, configuration);
-
-      if (!state->satisfiesBounds())
-      {
-        at_least_a_collision_=true;
-        stopped_.at(thread_idx)=true;
-        completed_.at(thread_idx)=true;
-        stop_check_=true;
-
-        scene_mutex_.at(thread_idx)->unlock();
-        break;
-      }
-      state->update();                        //servono entrambi? Se guardo linea 618 http://docs.ros.org/en/melodic/api/moveit_core/html/robot__state_8cpp_source.html#l00536 vedo che update chiama gia updateCollisionBodyTransform
-      state->updateCollisionBodyTransforms(); //servono entrambi? Se guardo linea 618 http://docs.ros.org/en/melodic/api/moveit_core/html/robot__state_8cpp_source.html#l00536 vedo che update chiama gia updateCollisionBodyTransform
-
-      if (!planning_scenes_.at(thread_idx)->isStateValid(*state,group_name_))
-      {
-        at_least_a_collision_=true;
-        stopped_.at(thread_idx)=true;
-        completed_.at(thread_idx)=true;
-        stop_check_=true;
-
-        scene_mutex_.at(thread_idx)->unlock();
-        break;
-      }
-      scene_mutex_.at(thread_idx)->unlock();
-
-      if (stop_check_)
-        break;
+      break;
     }
-    stopped_.at(thread_idx)=true;
-    completed_.at(thread_idx)=true;
+    assert(configuration.size()>0);
+    state->setJointGroupPositions(group_name_, configuration);
+    if (!state->satisfiesBounds())
+    {
+      at_least_a_collision_=true;
+      stop_check_=true;
+      break;
+    }
+    state->update();
+    state->updateCollisionBodyTransforms();
+    if (!planning_scenes_.at(thread_idx)->isStateValid(*state,group_name_))
+    {
+      at_least_a_collision_=true;
+      stop_check_=true;
+      break;
+    }
   }
 }
+
+ParallelMoveitCollisionChecker::~ParallelMoveitCollisionChecker()
+{
+  ROS_DEBUG("closing collision threads");
+  stop_check_=true;
+  for (int idx=0;idx<threads_num_;idx++)
+  {
+    if (threads.at(idx).joinable())
+      threads.at(idx).join();
+  }
+  ROS_DEBUG("collision threads closed");
+}
+
+void ParallelMoveitCollisionChecker::setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg)
+{
+  stop_check_=true;
+  for (int idx=0;idx<threads_num_;idx++)
+  {
+    if (threads.at(idx).joinable())
+      threads.at(idx).join();
+  }
+  if (!planning_scene_->setPlanningSceneMsg(msg))
+  {
+    ROS_ERROR_THROTTLE(1,"unable to upload scene");
+  }
+  for (int idx=0;idx<threads_num_;idx++)
+  {
+    if(!planning_scenes_.at(idx)->setPlanningSceneMsg(msg))
+    {
+      ROS_ERROR_THROTTLE(1,"unable to upload scene");
+    }
+  }
+}
+
+void ParallelMoveitCollisionChecker::setPlanningScene(planning_scene::PlanningScenePtr &planning_scene)
+{
+  stop_check_=true;
+  for (int idx=0;idx<threads_num_;idx++)
+  {
+    if (threads.at(idx).joinable())
+      threads.at(idx).join();
+  }
+  planning_scene_ = planning_scene;
+  for (int idx=0;idx<threads_num_;idx++)
+  {
+    planning_scenes_.at(idx)=planning_scene::PlanningScene::clone(planning_scene_);
+  }
+}
+
+
+void ParallelMoveitCollisionChecker::queueConnection(const Eigen::VectorXd& configuration1,
+                                                     const Eigen::VectorXd& configuration2)
+{
+
+  double distance = (configuration2 - configuration1).norm();
+  if (distance < min_distance_)
+    return;
+
+  Eigen::VectorXd conf(configuration1.size());
+  double n = 2;
+
+  while (distance > n * min_distance_)
+  {
+    for (double idx = 1; idx < n; idx += 2)
+    {
+      conf = configuration1 + (configuration2 - configuration1) * idx / n;
+      queueUp(conf);
+    }
+    n *= 2;
+  }
+}
+
+bool ParallelMoveitCollisionChecker::checkPath(const Eigen::VectorXd& configuration1,
+                                               const Eigen::VectorXd& configuration2)
+{
+  resetQueue();
+  if (!check(configuration1))
+    return false;
+  if (!check(configuration2))
+    return false;
+  queueConnection(configuration1,configuration2);
+  return checkAllQueues();
+}
+
+bool ParallelMoveitCollisionChecker::checkPathFromConf(const Eigen::VectorXd& parent,
+                                                       const Eigen::VectorXd& child,
+                                                       const Eigen::VectorXd& this_conf)
+{
+  resetQueue();
+
+  double dist_child = (this_conf-child).norm();
+  double dist_parent = (parent-this_conf).norm();
+  double dist = (parent-child).norm();
+
+  if((dist-dist_child-dist_parent)>1e-04)
+  {
+    ROS_ERROR("The conf is not on the connection between parent and child");
+    assert(0);
+    return false;
+  }
+
+  queueUp(this_conf);
+  queueUp(child);
+
+  double distance = (this_conf - child).norm();
+  if(distance < min_distance_)
+    return checkAllQueues();
+
+  double this_abscissa = (parent-this_conf).norm()/(parent-child).norm();
+  double abscissa;
+  double n = 2;
+  Eigen::VectorXd conf;
+  while (distance > n * min_distance_)
+  {
+    for (double idx = 1; idx < n; idx += 2)
+    {
+      abscissa = idx/n;
+      if(abscissa>=this_abscissa)
+      {
+        conf = parent + (child - parent) * abscissa;
+        queueUp(conf);
+      }
+    }
+    n *= 2;
+  }
+  return checkAllQueues();
+}
+bool ParallelMoveitCollisionChecker::checkConnections(const std::vector<ConnectionPtr>& connections)
+{
+  resetQueue();
+  if (!check(connections.front()->getParent()->getConfiguration()))
+    return false;
+  for (const ConnectionPtr& c: connections)
+  {
+    if (!check(c->getChild()->getConfiguration()))
+      return false;
+    queueConnection(c->getParent()->getConfiguration(),c->getChild()->getConfiguration());
+  }
+  return checkAllQueues();
+}
+
 
 }  // pathplan
