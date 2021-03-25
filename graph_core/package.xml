@@ -33,7 +33,6 @@
   <depend>rviz_visual_tools</depend>
 
   <depend>human_probablistic_occupancy</depend>
-  <depend>detector_ros</depend>
   <depend>eigen_conversions</depend>
   <depend>geometry_msgs</depend>
 
