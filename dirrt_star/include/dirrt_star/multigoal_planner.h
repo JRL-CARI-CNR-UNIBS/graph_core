@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/speed_metrics.h>
 #include <graph_core/avoidance_goal_cost_function.h>
 #include <graph_core/avoidance_metrics.h>
-#include <graph_core/moveit_collision_checker.h>
+#include <graph_core/parallel_moveit_collision_checker.h>
 #include <graph_core/tube_informed_sampler.h>
 #include <rosparam_utilities/rosparam_utilities.h>
 #include <geometry_msgs/PoseArray.h>
