@@ -123,6 +123,9 @@ public:
   const Eigen::VectorXd& getLB(){return lower_bound_;}
   const Eigen::VectorXd& getUB(){return upper_bound_;}
 
+  const Eigen::VectorXd& getStartConf(){return start_configuration_;}
+  const Eigen::VectorXd& getStopConf(){return stop_configuration_;}
+
   const unsigned int& getDimension()const {return ndof_;}
 };
 
