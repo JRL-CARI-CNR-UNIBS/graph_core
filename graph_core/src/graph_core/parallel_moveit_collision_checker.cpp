@@ -215,11 +215,12 @@ bool ParallelMoveitCollisionChecker::checkPath(const Eigen::VectorXd& configurat
   return checkAllQueues();
 }
 
-bool ParallelMoveitCollisionChecker::checkPathFromConf(const Eigen::VectorXd& parent,
-                                                       const Eigen::VectorXd& child,
+bool ParallelMoveitCollisionChecker::checkConnFromConf(const ConnectionPtr& conn,
                                                        const Eigen::VectorXd& this_conf)
 {
   resetQueue();
+  Eigen::VectorXd parent = conn->getParent()->getConfiguration();
+  Eigen::VectorXd child = conn->getChild()->getConfiguration();
 
   double dist_child = (this_conf-child).norm();
   double dist_parent = (parent-this_conf).norm();
