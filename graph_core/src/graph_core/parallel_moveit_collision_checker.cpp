@@ -88,7 +88,6 @@ void ParallelMoveitCollisionChecker::queueUp(const Eigen::VectorXd &q)
 
 bool ParallelMoveitCollisionChecker::checkAllQueues()
 {
-
   stop_check_=false;
   for (int idx=0;idx<threads_num_;idx++)
   {
@@ -233,13 +232,13 @@ bool ParallelMoveitCollisionChecker::checkConnFromConf(const ConnectionPtr& conn
     return false;
   }
 
-  queueUp(this_conf);
-  queueUp(child);
+  if(!check(this_conf)) return false;
+  if(!check(child)) return false;
 
   double distance = (this_conf - child).norm();
   if(distance < min_distance_)
   {
-    return checkAllQueues();
+    return true;
   }
 
   double this_abscissa = (parent-this_conf).norm()/(parent-child).norm();
@@ -255,11 +254,26 @@ bool ParallelMoveitCollisionChecker::checkConnFromConf(const ConnectionPtr& conn
       {
         conf = parent + (child - parent) * abscissa;
         queueUp(conf);
+        if(!check(conf)) ROS_ERROR("OBS");
       }
     }
     n *= 2;
   }
-  return checkAllQueues();
+
+  bool validity = checkAllQueues();
+  ROS_INFO_STREAM("VALIDITY: "<<validity);
+
+  resetQueue();
+  queueConnection(this_conf,child);
+  validity = checkAllQueues();
+  ROS_INFO_STREAM("VALIDITY: "<<validity);
+
+  resetQueue();
+  queueConnection(parent,child);
+  validity = checkAllQueues();
+  ROS_INFO_STREAM("VALIDITY: "<<validity);
+
+  return validity;
 }
 bool ParallelMoveitCollisionChecker::checkConnections(const std::vector<ConnectionPtr>& connections)
 {

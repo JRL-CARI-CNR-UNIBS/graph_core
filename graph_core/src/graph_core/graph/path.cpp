@@ -1117,10 +1117,9 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_fro
 
     if(idx<connections_.size()-1)  //also if the checker has failed, this check is important to update the cost of all the connections
     {
-      validity = isValidFromConn(connections_.at(idx+1),checker);
-
-      if(!validity)
+      if(!isValidFromConn(connections_.at(idx+1),checker))
       {
+        validity = false;
         for(int i = (connections_.size()-1);i>=idx+1;i--)
         {
           if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-1-i;
