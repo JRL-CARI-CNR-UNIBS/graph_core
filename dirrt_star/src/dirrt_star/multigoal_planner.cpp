@@ -97,7 +97,7 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
   }
   COMMENT("create metrics");
 
-  if (!m_nh.getParam("use_avoidance_path",use_avoidance_goal_))
+  if (!m_nh.getParam("use_avoidance_path",use_avoidance_metrics_))
   {
     ROS_DEBUG("use_avoidance_path is not set, default=false");
     use_avoidance_metrics_=false;
@@ -135,7 +135,7 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
       ROS_DEBUG("detector_topic is not defined, using centroids");
       detector_topic="/centroids";
     }
-    m_centroid_sub=m_nh.subscribe("/centroids",2,&MultigoalPlanner::centroidCb,this);
+    m_centroid_sub=m_nh.subscribe(detector_topic,2,&MultigoalPlanner::centroidCb,this);
   }
 
 
@@ -353,16 +353,18 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
 
   ROS_INFO_STREAM(*solver);
 
-  if (display_flag)
-    display->displayTree(solver->getStartTree());
 
   if (!found_a_solution)
   {
     ROS_ERROR("unable to find a valid path");
     res.error_code_.val=moveit_msgs::MoveItErrorCodes::PLANNING_FAILED;
     m_is_running=false;
+    if (display_flag)
+      display->displayTree(solver->getStartTree());
     return false;
   }
+  if (display_flag)
+    display->displayPath(solution);
 
   if (!solver->completed())
   {
@@ -440,14 +442,16 @@ void MultigoalPlanner::centroidCb(const geometry_msgs::PoseArrayConstPtr& msg)
 
   if (!use_avoidance_goal_ && !use_avoidance_metrics_)
     return;
-  m_avoidance_goal_cost_fcn->cleanPoints();
+  if (use_avoidance_goal_)
+    m_avoidance_goal_cost_fcn->cleanPoints();
+  if (use_avoidance_metrics_)
+    avoidance_metrics_->cleanPoints();
   Eigen::Vector3d point;
   for (const geometry_msgs::Pose& p: msg->poses)
   {
     point(0)=p.position.x;
     point(1)=p.position.y;
     point(2)=p.position.z;
-    m_avoidance_goal_cost_fcn->addPoint(point);
     if (use_avoidance_goal_)
       m_avoidance_goal_cost_fcn->addPoint(point);
     if (use_avoidance_metrics_)

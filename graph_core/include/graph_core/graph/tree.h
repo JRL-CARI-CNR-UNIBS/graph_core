@@ -34,6 +34,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
+class Tree;
+typedef std::shared_ptr<Tree> TreePtr;
+
 class Tree: public std::enable_shared_from_this<Tree>
 {
 protected:
@@ -57,6 +60,8 @@ protected:
                                          const std::vector<NodePtr>& white_list,
                                          unsigned int& removed_nodes);
 
+  // add children(Forward direction) or parents (Backforward direction) to the tree. node is not added (throw exception if it is not member of the tree)
+  void populateTreeFromNode(const NodePtr& node);
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Tree(const NodePtr& root,
@@ -70,7 +75,10 @@ public:
     return root_;
   }
 
-  void addNode(const NodePtr& node, const bool& check_if_present = true);
+  virtual void addNode(const NodePtr& node, const bool& check_if_present = true);
+  virtual void removeNode(const std::vector<NodePtr>::iterator& it);
+  virtual void removeNode(const NodePtr& node);
+
   bool tryExtend(const Eigen::VectorXd& configuration,
                  Eigen::VectorXd& next_configuration,
                  NodePtr& closest_node);
@@ -121,8 +129,10 @@ public:
 
   const double& getMaximumDistance() const {return max_distance_;}
   const Direction& getDirection() const {return direction_;}
+  MetricsPtr& getMetrics() {return metrics_;}
+  CollisionCheckerPtr& getChecker() {return checker_;}
+  friend std::ostream& operator<<(std::ostream& os, const Tree& tree);
 };
 
-typedef std::shared_ptr<Tree> TreePtr;
-
+std::ostream& operator<<(std::ostream& os, const Tree& tree);
 }

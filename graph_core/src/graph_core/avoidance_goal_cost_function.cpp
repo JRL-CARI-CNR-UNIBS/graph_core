@@ -157,7 +157,7 @@ void AvoidanceGoalCostFunction::addPoint(const Eigen::Vector3d &point)
   marker.color.r = 1;
   marker.color.g = 0;
   marker.color.b = 0;
-  marker.color.a = 0.3;
+  marker.color.a = 0.2;
 
 
   marker_pub_.publish(marker);
@@ -172,7 +172,7 @@ void AvoidanceGoalCostFunction::addPoint(const Eigen::Vector3d &point)
     marker.color.r = 1;
     marker.color.g = 0;
     marker.color.b = 0;
-    marker.color.a = 1;
+    marker.color.a = .4;
     marker_pub_.publish(marker);
     ros::Duration(0.01).sleep();
   }

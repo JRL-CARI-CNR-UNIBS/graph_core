@@ -44,6 +44,9 @@ Tree::Tree(const NodePtr& root,
   nodes_.push_back(root);
 }
 
+
+
+
 NodePtr Tree::findClosestNode(const Eigen::VectorXd &configuration)
 {
   NodePtr closest_node;
@@ -107,7 +110,6 @@ bool Tree::extend(const Eigen::VectorXd &configuration, NodePtr &new_node)
     ConnectionPtr conn = std::make_shared<Connection>(closest_node, new_node);
     conn->add();
     conn->setCost(cost);
-
   }
   else
   {
@@ -117,6 +119,7 @@ bool Tree::extend(const Eigen::VectorXd &configuration, NodePtr &new_node)
     conn->setCost(cost);
   }
   nodes_.push_back(new_node);
+  addNode(new_node,false);
   return true;
 }
 
@@ -143,7 +146,7 @@ bool Tree::extendToNode(const NodePtr& node,
   {
     new_node = std::make_shared<Node>(next_configuration);
     assert(std::find(nodes_.begin(),nodes_.end(),new_node)==nodes_.end());
-    nodes_.push_back(new_node);
+    addNode(new_node,false);
   }
 
   if (direction_ == Forward)
@@ -469,6 +472,19 @@ void Tree::addNode(const NodePtr& node, const bool& check_if_present)
   if (!check_if_present || !isInTree(node))
     nodes_.push_back(node);
 }
+
+void Tree::removeNode(const std::vector<NodePtr>::iterator& it)
+{
+  nodes_.erase(it);
+}
+
+void Tree::removeNode(const NodePtr& node)
+{
+  node->disconnect();
+  std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
+  removeNode(it);
+}
+
 bool Tree::keepOnlyThisBranch(const std::vector<ConnectionPtr>& connections)
 {
   if (connections.size() == 0)
@@ -513,7 +529,7 @@ bool Tree::addBranch(const std::vector<ConnectionPtr> &connections)
   {
     std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), n);
     if (it == nodes_.end())
-      nodes_.push_back(n);
+      addNode(n,false);
   }
   return true;
 
@@ -652,7 +668,7 @@ unsigned int Tree::purgeNodes(const SamplerPtr& sampler, const std::vector<NodeP
     {
       removed_nodes++;
       nodes_.at(idx)->disconnect();
-      nodes_.erase(nodes_.begin() + idx);
+      removeNode(nodes_.begin() + idx);
       continue;
     }
 
@@ -687,10 +703,42 @@ bool Tree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, 
   node->disconnect();
   if (it < nodes_.end())
   {
-    nodes_.erase(it);
+    removeNode(it);
     removed_nodes++;
   }
   return true;
 }
 
+void Tree::populateTreeFromNode(const NodePtr& node)
+{
+  std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
+  if (it == nodes_.end())
+  {
+    throw std::invalid_argument("node is not member of tree");
+  }
+
+  if (direction_==Direction::Forward)
+  {
+    for (const NodePtr& n: node->getChildren())
+    {
+      nodes_.push_back(n);
+      populateTreeFromNode(n);
+    }
+  }
+  else
+  {
+    for (const NodePtr& n: node->getParents())
+    {
+      nodes_.push_back(n);
+      populateTreeFromNode(n);
+    }
+  }
 }
+
+std::ostream& operator<<(std::ostream& os, const Tree& tree)
+{
+  os << "number of nodes = " << tree.nodes_.size() << std::endl;
+  os << "root = " << *tree.root_;
+  return os;
+}
+}  // end namespace pathplan

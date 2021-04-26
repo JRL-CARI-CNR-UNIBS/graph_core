@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <graph_core/parallel_moveit_collision_checker.h>
-
+#include <moveit/collision_detection_bullet/collision_detector_allocator_bullet.h>
 
 namespace pathplan
 {
@@ -51,6 +51,7 @@ ParallelMoveitCollisionChecker::ParallelMoveitCollisionChecker(const planning_sc
   for (int idx=0;idx<threads_num_;idx++)
   {
     planning_scenes_.push_back(planning_scene::PlanningScene::clone(planning_scene_));
+//    planning_scenes_.back()->setActiveCollisionDetector(collision_detection::CollisionDetectorAllocatorBullet::create());
     queues_.push_back(std::vector<std::vector<double>>());
   }
 }
