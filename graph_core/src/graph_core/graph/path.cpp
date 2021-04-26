@@ -317,33 +317,39 @@ bool Path::bisection(const unsigned int &connection_idx,
   return improved;
 }
 
-bool Path::warp()
+bool Path::warp(const double &max_time)
 {
-  for (unsigned int idx = 1; idx < connections_.size(); idx++)
+  if(max_time > 0)
   {
-    if (change_warp_.at(idx - 1) || change_warp_.at(idx))
+    ros::WallTime tic = ros::WallTime::now();
+    for (unsigned int idx = 1; idx < connections_.size(); idx++)
     {
-      Eigen::VectorXd center = 0.5 * (connections_.at(idx - 1)->getParent()->getConfiguration() +
-                                      connections_.at(idx)->getChild()->getConfiguration());
-      Eigen::VectorXd direction = connections_.at(idx - 1)->getChild()->getConfiguration() - center;
-      double max_distance = direction.norm();
-      double min_distance = 0;
-
-      direction.normalize();
-
-      if (!bisection(idx, center, direction, max_distance, min_distance))
+      if (change_warp_.at(idx - 1) || change_warp_.at(idx))
       {
-        change_warp_.at(idx) = 0;
+        Eigen::VectorXd center = 0.5 * (connections_.at(idx - 1)->getParent()->getConfiguration() +
+                                        connections_.at(idx)->getChild()->getConfiguration());
+        Eigen::VectorXd direction = connections_.at(idx - 1)->getChild()->getConfiguration() - center;
+        double max_distance = direction.norm();
+        double min_distance = 0;
+
+        direction.normalize();
+
+        if (!bisection(idx, center, direction, max_distance, min_distance))
+        {
+          change_warp_.at(idx) = 0;
+        }
+        else
+          setChanged(idx);
       }
-      else
-        setChanged(idx);
+
+      if((ros::WallTime::now()-tic).toSec()>=0.98*max_time) break;
     }
   }
+
   return std::any_of(change_warp_.cbegin(), change_warp_.cend(), [](bool i)
   {
     return i;
   });
-
 }
 
 bool Path::slipChild()
