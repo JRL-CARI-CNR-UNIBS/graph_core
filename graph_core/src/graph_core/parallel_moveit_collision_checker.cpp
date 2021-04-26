@@ -238,7 +238,9 @@ bool ParallelMoveitCollisionChecker::checkConnFromConf(const ConnectionPtr& conn
 
   double distance = (this_conf - child).norm();
   if(distance < min_distance_)
+  {
     return checkAllQueues();
+  }
 
   double this_abscissa = (parent-this_conf).norm()/(parent-child).norm();
   double abscissa;
