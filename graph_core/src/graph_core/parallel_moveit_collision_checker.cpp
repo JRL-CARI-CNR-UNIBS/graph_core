@@ -254,26 +254,12 @@ bool ParallelMoveitCollisionChecker::checkConnFromConf(const ConnectionPtr& conn
       {
         conf = parent + (child - parent) * abscissa;
         queueUp(conf);
-        if(!check(conf)) ROS_ERROR("OBS");
       }
     }
     n *= 2;
   }
 
-  bool validity = checkAllQueues();
-  ROS_INFO_STREAM("VALIDITY: "<<validity);
-
-  resetQueue();
-  queueConnection(this_conf,child);
-  validity = checkAllQueues();
-  ROS_INFO_STREAM("VALIDITY: "<<validity);
-
-  resetQueue();
-  queueConnection(parent,child);
-  validity = checkAllQueues();
-  ROS_INFO_STREAM("VALIDITY: "<<validity);
-
-  return validity;
+  return checkAllQueues();
 }
 bool ParallelMoveitCollisionChecker::checkConnections(const std::vector<ConnectionPtr>& connections)
 {
