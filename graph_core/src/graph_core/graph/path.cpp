@@ -168,6 +168,7 @@ double Path::curvilinearAbscissaOfPointGivenConnection(const Eigen::VectorXd& co
 
 double Path::getCostFromConf(const Eigen::VectorXd &conf)
 {
+  computeCost();
   double cost = 0;
   int idx;
   ConnectionPtr this_conn = findConnection(conf,idx);
@@ -175,18 +176,34 @@ double Path::getCostFromConf(const Eigen::VectorXd &conf)
   if(this_conn == NULL)
   {
     ROS_ERROR("cost can't be computed");
-    assert(0);
     return 0;
   }
   else
   {
-    cost += metrics_->cost(conf,this_conn->getChild()->getConfiguration());
+    if(conf == connections_.at(0)->getParent()->getConfiguration()) return cost_;
+
     if(idx < connections_.size()-1)
     {
-      for(unsigned int i=idx+1;i<connections_.size();i++) cost += connections_.at(i)->getCost();
+      for(unsigned int i=idx+1;i<connections_.size();i++)
+      {
+        cost += connections_.at(i)->getCost();
+        if(cost == std::numeric_limits<double>::infinity()) return std::numeric_limits<double>::infinity();
+      }
+    }
+
+    if(conf == this_conn->getParent()->getConfiguration()) cost += this_conn->getCost();
+    else if (conf == this_conn->getChild()->getConfiguration()) cost += 0;
+    else
+    {
+      if(this_conn->getCost() == std::numeric_limits<double>::infinity())
+      {
+        ConnectionPtr conn = std::make_shared<Connection>(std::make_shared<Node>(conf),this_conn->getChild());
+        if(checker_->checkConnection(conn)) cost += metrics_->cost(conf,this_conn->getChild()->getConfiguration());
+        else cost = std::numeric_limits<double>::infinity();
+      }
+      else cost += metrics_->cost(conf,this_conn->getChild()->getConfiguration());
     }
   }
-
   return cost;
 }
 
@@ -301,33 +318,39 @@ bool Path::bisection(const unsigned int &connection_idx,
   return improved;
 }
 
-bool Path::warp()
+bool Path::warp(const double &max_time)
 {
-  for (unsigned int idx = 1; idx < connections_.size(); idx++)
+  if(max_time > 0)
   {
-    if (change_warp_.at(idx - 1) || change_warp_.at(idx))
+    ros::WallTime tic = ros::WallTime::now();
+    for (unsigned int idx = 1; idx < connections_.size(); idx++)
     {
-      Eigen::VectorXd center = 0.5 * (connections_.at(idx - 1)->getParent()->getConfiguration() +
-                                      connections_.at(idx)->getChild()->getConfiguration());
-      Eigen::VectorXd direction = connections_.at(idx - 1)->getChild()->getConfiguration() - center;
-      double max_distance = direction.norm();
-      double min_distance = 0;
-
-      direction.normalize();
-
-      if (!bisection(idx, center, direction, max_distance, min_distance))
+      if (change_warp_.at(idx - 1) || change_warp_.at(idx))
       {
-        change_warp_.at(idx) = 0;
+        Eigen::VectorXd center = 0.5 * (connections_.at(idx - 1)->getParent()->getConfiguration() +
+                                        connections_.at(idx)->getChild()->getConfiguration());
+        Eigen::VectorXd direction = connections_.at(idx - 1)->getChild()->getConfiguration() - center;
+        double max_distance = direction.norm();
+        double min_distance = 0;
+
+        direction.normalize();
+
+        if (!bisection(idx, center, direction, max_distance, min_distance))
+        {
+          change_warp_.at(idx) = 0;
+        }
+        else
+          setChanged(idx);
       }
-      else
-        setChanged(idx);
+
+      if((ros::WallTime::now()-tic).toSec()>=0.98*max_time) break;
     }
   }
+
   return std::any_of(change_warp_.cbegin(), change_warp_.cend(), [](bool i)
   {
     return i;
   });
-
 }
 
 bool Path::slipChild()
@@ -494,7 +517,6 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
   ROS_INFO_STREAM("conf: "<<configuration.transpose());
   ROS_INFO_STREAM("parent0: "<<connections_.at(0)->getParent()->getConfiguration().transpose());
   ROS_INFO_STREAM("child0: "<<connections_.at(0)->getChild()->getConfiguration().transpose());
-
 }
 
 Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool& in_conn)
@@ -1013,16 +1035,16 @@ bool Path::isValidFromConn(const ConnectionPtr& this_conn, const CollisionChecke
 
     if(from_here)
     {
-      parent = conn->getParent()->getConfiguration();
-      child = conn->getChild()->getConfiguration();
-
-      if(!checker->checkPath(parent,child))
+      if(!checker->checkConnection(conn))
       {
         conn->setCost(std::numeric_limits<double>::infinity());
         valid = false;
       }
       else
       {
+        parent = conn->getParent()->getConfiguration();
+        child = conn->getChild()->getConfiguration();
+
         cost = metrics_->cost(parent,child);
         conn->setCost(cost);
       }
@@ -1087,24 +1109,21 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_fro
   }
   else
   {
-    if(!checker->checkPathFromConf(conn->getParent()->getConfiguration(),conn->getChild()->getConfiguration(),conf))
+    if(!checker->checkConnFromConf(conn,conf))
     {
       validity = false;
       conn->setCost(std::numeric_limits<double>::infinity());
       pos_closest_obs_from_goal = connections_.size()-1-idx;
     }
-    else
-    {
-      if(idx<connections_.size()-1)
-      {
-        validity = isValidFromConn(connections_.at(idx+1),checker);
 
-        if(!validity)
+    if(idx<connections_.size()-1)  //also if the checker has failed, this check is important to update the cost of all the connections
+    {
+      if(!isValidFromConn(connections_.at(idx+1),checker))
+      {
+        validity = false;
+        for(int i = (connections_.size()-1);i>=idx+1;i--)
         {
-          for(int i = (connections_.size()-1);i>=idx+1;i--)
-          {
-            if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-1-i;
-          }
+          if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-1-i;
         }
       }
     }

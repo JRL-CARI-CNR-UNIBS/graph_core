@@ -218,7 +218,7 @@ public:
 
 
   // return true if improve
-  bool warp();
+  bool warp(const double& max_time = std::numeric_limits<double>::infinity());
   bool slipChild();
   bool slipParent();
 

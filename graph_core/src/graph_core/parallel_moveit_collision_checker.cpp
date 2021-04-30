@@ -89,7 +89,6 @@ void ParallelMoveitCollisionChecker::queueUp(const Eigen::VectorXd &q)
 
 bool ParallelMoveitCollisionChecker::checkAllQueues()
 {
-
   stop_check_=false;
   for (int idx=0;idx<threads_num_;idx++)
   {
@@ -216,11 +215,12 @@ bool ParallelMoveitCollisionChecker::checkPath(const Eigen::VectorXd& configurat
   return checkAllQueues();
 }
 
-bool ParallelMoveitCollisionChecker::checkPathFromConf(const Eigen::VectorXd& parent,
-                                                       const Eigen::VectorXd& child,
+bool ParallelMoveitCollisionChecker::checkConnFromConf(const ConnectionPtr& conn,
                                                        const Eigen::VectorXd& this_conf)
 {
   resetQueue();
+  Eigen::VectorXd parent = conn->getParent()->getConfiguration();
+  Eigen::VectorXd child = conn->getChild()->getConfiguration();
 
   double dist_child = (this_conf-child).norm();
   double dist_parent = (parent-this_conf).norm();
@@ -233,12 +233,14 @@ bool ParallelMoveitCollisionChecker::checkPathFromConf(const Eigen::VectorXd& pa
     return false;
   }
 
-  queueUp(this_conf);
-  queueUp(child);
+  if(!check(this_conf)) return false;
+  if(!check(child)) return false;
 
   double distance = (this_conf - child).norm();
   if(distance < min_distance_)
-    return checkAllQueues();
+  {
+    return true;
+  }
 
   double this_abscissa = (parent-this_conf).norm()/(parent-child).norm();
   double abscissa;
@@ -257,6 +259,7 @@ bool ParallelMoveitCollisionChecker::checkPathFromConf(const Eigen::VectorXd& pa
     }
     n *= 2;
   }
+
   return checkAllQueues();
 }
 bool ParallelMoveitCollisionChecker::checkConnections(const std::vector<ConnectionPtr>& connections)

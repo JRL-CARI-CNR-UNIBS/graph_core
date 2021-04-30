@@ -131,10 +131,12 @@ public:
     return true;
   }
 
-  virtual bool checkPathFromConf(const Eigen::VectorXd& parent,
-                         const Eigen::VectorXd& child,
+  virtual bool checkConnFromConf(const ConnectionPtr &conn,
                          const Eigen::VectorXd& this_conf)
   {
+    Eigen::VectorXd parent = conn->getParent()->getConfiguration();
+    Eigen::VectorXd child = conn->getChild()->getConfiguration();
+
     double dist_child = (this_conf-child).norm();
     double dist_parent = (parent-this_conf).norm();
     double dist = (parent-child).norm();
