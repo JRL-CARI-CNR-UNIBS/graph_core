@@ -168,6 +168,7 @@ double Path::curvilinearAbscissaOfPointGivenConnection(const Eigen::VectorXd& co
 
 double Path::getCostFromConf(const Eigen::VectorXd &conf)
 {
+  computeCost();
   double cost = 0;
   int idx;
   ConnectionPtr this_conn = findConnection(conf,idx);
@@ -175,12 +176,12 @@ double Path::getCostFromConf(const Eigen::VectorXd &conf)
   if(this_conn == NULL)
   {
     ROS_ERROR("cost can't be computed");
-    assert(0);
     return 0;
   }
   else
   {
     if(conf == connections_.at(0)->getParent()->getConfiguration()) return cost_;
+
     if(idx < connections_.size()-1)
     {
       for(unsigned int i=idx+1;i<connections_.size();i++)
@@ -194,15 +195,15 @@ double Path::getCostFromConf(const Eigen::VectorXd &conf)
     else if (conf == this_conn->getChild()->getConfiguration()) cost += 0;
     else
     {
-      ConnectionPtr conn = std::make_shared<Connection>(std::make_shared<Node>(conf),this_conn->getChild());
-      if(checker_->checkConnection(conn))
+      if(this_conn->getCost() == std::numeric_limits<double>::infinity())
       {
-        cost += metrics_->cost(conf,this_conn->getChild()->getConfiguration());
+        ConnectionPtr conn = std::make_shared<Connection>(std::make_shared<Node>(conf),this_conn->getChild());
+        if(checker_->checkConnection(conn)) cost += metrics_->cost(conf,this_conn->getChild()->getConfiguration());
+        else cost = std::numeric_limits<double>::infinity();
       }
-      else cost = std::numeric_limits<double>::infinity();
+      else cost += metrics_->cost(conf,this_conn->getChild()->getConfiguration());
     }
   }
-
   return cost;
 }
 
