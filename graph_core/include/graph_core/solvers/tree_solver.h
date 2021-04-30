@@ -131,6 +131,31 @@ public:
     sampler_ = sampler;
   }
 
+  SamplerPtr getSampler() const
+  {
+    return sampler_;
+  }
+
+  void setChecker(const CollisionCheckerPtr& checker)
+  {
+    checker_ = checker;
+  }
+
+  CollisionCheckerPtr getChecker() const
+  {
+    return checker_;
+  }
+
+  void setMetrics(const MetricsPtr& metrics)
+  {
+    metrics_ = metrics;
+  }
+
+  MetricsPtr getMetrics() const
+  {
+    return metrics_;
+  }
+
   friend std::ostream& operator<<(std::ostream& os, const TreeSolver& solver);
 
 };

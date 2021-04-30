@@ -1,6 +1,7 @@
 *~
 *.kdev4
 kdev4/
-*.txt.user
+*.txt.user*
 *.orig*
 *.autosave*
+

@@ -1,4 +1,3 @@
-#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -26,46 +25,39 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <graph_core/graph/subtree.h>
 
-#include <moveit/planning_interface/planning_interface.h>
-#include <dirrt_star/multigoal_planner.h>
-
-
-namespace pathplan {
-namespace dirrt_star {
-class PathPlanerManager : public planning_interface::PlannerManager
+namespace pathplan
 {
-public:
-  virtual bool initialize(const robot_model::RobotModelConstPtr& model, const std::string& ns) override;
-  std::string getDescription() const override
-  {
-    return "DIRRT";
-  }
-  bool canServiceRequest(const moveit_msgs::MotionPlanRequest &req) const override;
-
-
-
-  void getPlanningAlgorithms(std::vector<std::string> &algs) const override;
-
-
-  void setPlannerConfigurations(const planning_interface::PlannerConfigurationMap &pcs) override;
-
-  planning_interface::PlanningContextPtr getPlanningContext(
-    const planning_scene::PlanningSceneConstPtr &planning_scene,
-    const planning_interface::MotionPlanRequest &req,
-    moveit_msgs::MoveItErrorCodes &error_code) const override;
-
-
-
-protected:
-  ros::NodeHandle m_nh;
-
-  std::map< std::string, std::shared_ptr<planning_interface::PlanningContext>> m_planners;
-  moveit::core::RobotModelConstPtr m_robot_model;
-};
-
-//
-
-}
+Subtree::Subtree(const TreePtr& parent_tree,
+                 const NodePtr& root,
+                 const Direction &direction,
+                 const double &max_distance,
+                 const CollisionCheckerPtr &checker,
+                 const MetricsPtr &metrics):
+  Tree(root,direction,max_distance,checker,metrics),
+  parent_tree_(parent_tree)
+{
+  populateTreeFromNode(root);
 }
 
+void Subtree::addNode(const NodePtr& node, const bool& check_if_present)
+{
+  Tree::addNode(node,check_if_present);
+  parent_tree_->addNode(node,check_if_present);
+}
+
+void Subtree::removeNode(const std::vector<NodePtr>::iterator& it)
+{
+  Tree::removeNode(it);
+  parent_tree_->removeNode(*it);
+}
+
+
+
+
+SubtreePtr Subtree::createSubtree(const TreePtr& parent_tree, const NodePtr& root)
+{
+  return std::make_shared<Subtree>(parent_tree,root,parent_tree->getDirection(),parent_tree->getMaximumDistance(),parent_tree->getChecker(),parent_tree->getMetrics());
+}
+}

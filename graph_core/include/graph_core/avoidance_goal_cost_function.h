@@ -56,6 +56,7 @@ public:
 AvoidanceGoalCostFunction(const ros::NodeHandle &nh);
 void cleanPoints();
 void addPoint(const Eigen::Vector3d &point);
+void publishPoints();
 virtual double cost(const Eigen::VectorXd& q);
 };
 typedef std::shared_ptr<AvoidanceGoalCostFunction> AvoidanceGoalCostFunctionPtr;

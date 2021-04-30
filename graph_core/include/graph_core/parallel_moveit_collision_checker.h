@@ -27,65 +27,55 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include <graph_core/collision_checker.h>
+#include <graph_core/moveit_collision_checker.h>
 #include <moveit/planning_scene/planning_scene.h>
+#include <thread>
+#include <mutex>
 
 namespace pathplan
 {
 
-class MoveitCollisionChecker: public CollisionChecker
+class ParallelMoveitCollisionChecker: public MoveitCollisionChecker
 {
 protected:
-  planning_scene::PlanningScenePtr planning_scene_;
-  collision_detection::CollisionRequest req_;
-  collision_detection::CollisionResult res_;
-  robot_state::RobotStatePtr state_;
-  std::string group_name_;
+  int threads_num_;
+  int thread_iter_=0;
+  bool stop_check_;
+  bool at_least_a_collision_;
 
+  std::vector<std::vector<std::vector<double>>> queues_;
+  std::vector<std::thread> threads;
+  std::vector<planning_scene::PlanningScenePtr> planning_scenes_;
+
+  std::mutex stop_mutex;
+  void resetQueue();
+  void queueUp(const Eigen::VectorXd &q);
+  bool checkAllQueues();
+  void collisionThread(int thread_idx);
+
+  void queueConnection(const Eigen::VectorXd& configuration1,
+                       const Eigen::VectorXd& configuration2);
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  MoveitCollisionChecker(const planning_scene::PlanningScenePtr& planning_scene,
-                         const std::string& group_name,
-                         const double& min_distance = 0.01):
-    CollisionChecker(min_distance),
-    group_name_(group_name),
-    planning_scene_(planning_scene)
-  {
+  ParallelMoveitCollisionChecker(const planning_scene::PlanningScenePtr& planning_scene,
+                                 const std::string& group_name,
+                                 const int& threads_num=4,
+                                 const double& min_distance = 0.01);
 
-    state_ = std::make_shared<robot_state::RobotState>(planning_scene_->getCurrentState());
-    if (!planning_scene_)
-      ROS_ERROR("invalid planning scene");
-  }
+  ~ParallelMoveitCollisionChecker();
 
-  virtual void setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg)
-  {
-    if (!planning_scene_->setPlanningSceneMsg(msg))
-    {
-      ROS_ERROR_THROTTLE(1,"unable to upload scene");
-    }
-  }
+  virtual void setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg);
 
+  virtual void setPlanningScene(planning_scene::PlanningScenePtr &planning_scene);
 
-  virtual bool check(const Eigen::VectorXd& configuration)
-  {
-    *state_ = planning_scene_->getCurrentState();
-    state_->setJointGroupPositions(group_name_, configuration);
-    if (!state_->satisfiesBounds())
-    {
-      ROS_DEBUG("Out of bound");
-      return false;
-    }
-    state_->update();
-    state_->updateCollisionBodyTransforms();
-    return planning_scene_->isStateValid(*state_,group_name_);
+  virtual bool checkPath(const Eigen::VectorXd& configuration1,
+                         const Eigen::VectorXd& configuration2);
 
-  }
+  virtual bool checkConnFromConf(const ConnectionPtr& conn,
+                                 const Eigen::VectorXd& this_conf);
 
-  virtual void setPlanningScene(planning_scene::PlanningScenePtr &planning_scene)
-  {
-    planning_scene_ = planning_scene;
-  }
+  virtual bool checkConnections(const std::vector<ConnectionPtr>& connections);
 
 };
-}
+}  // namaspace pathplan

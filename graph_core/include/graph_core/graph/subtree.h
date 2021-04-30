@@ -26,46 +26,35 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <graph_core/graph/tree.h>
 
-#include <moveit/planning_interface/planning_interface.h>
-#include <dirrt_star/multigoal_planner.h>
-
-
-namespace pathplan {
-namespace dirrt_star {
-class PathPlanerManager : public planning_interface::PlannerManager
+namespace pathplan
 {
-public:
-  virtual bool initialize(const robot_model::RobotModelConstPtr& model, const std::string& ns) override;
-  std::string getDescription() const override
-  {
-    return "DIRRT";
-  }
-  bool canServiceRequest(const moveit_msgs::MotionPlanRequest &req) const override;
 
+class Subtree;
+typedef std::shared_ptr<Subtree> SubtreePtr;
 
-
-  void getPlanningAlgorithms(std::vector<std::string> &algs) const override;
-
-
-  void setPlannerConfigurations(const planning_interface::PlannerConfigurationMap &pcs) override;
-
-  planning_interface::PlanningContextPtr getPlanningContext(
-    const planning_scene::PlanningSceneConstPtr &planning_scene,
-    const planning_interface::MotionPlanRequest &req,
-    moveit_msgs::MoveItErrorCodes &error_code) const override;
-
-
-
+class Subtree: public Tree
+{
 protected:
-  ros::NodeHandle m_nh;
+  TreePtr parent_tree_;
 
-  std::map< std::string, std::shared_ptr<planning_interface::PlanningContext>> m_planners;
-  moveit::core::RobotModelConstPtr m_robot_model;
+
+public:
+
+
+  Subtree(const TreePtr& parent_tree,
+             const NodePtr& root,
+             const Direction &direction,
+             const double &max_distance,
+             const CollisionCheckerPtr &checker,
+             const MetricsPtr &metrics);
+
+  virtual void addNode(const NodePtr& node, const bool& check_if_present = true);
+  virtual void removeNode(const std::vector<NodePtr>::iterator& it);
+
+  static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root);
 };
 
-//
 
 }
-}
-

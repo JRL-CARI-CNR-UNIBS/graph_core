@@ -101,8 +101,8 @@ AvoidanceMetrics::AvoidanceMetrics(const ros::NodeHandle &nh):
 
   for (unsigned int idx=0;idx<5;idx++)
   {
-  marker_pub_.publish(marker);
-  ros::Duration(0.1).sleep();
+    marker_pub_.publish(marker);
+    ros::Duration(0.1).sleep();
   }
 
 }
@@ -149,7 +149,7 @@ void AvoidanceMetrics::addPoint(const Eigen::Vector3d &point)
   marker.color.r = 1;
   marker.color.g = 0;
   marker.color.b = 0;
-  marker.color.a = 0.3;
+  marker.color.a = 0.2;
 
 
   marker_pub_.publish(marker);
@@ -157,27 +157,25 @@ void AvoidanceMetrics::addPoint(const Eigen::Vector3d &point)
 
   if (min_distance_>0)
   {
-  marker.scale.x = 2.0*min_distance_;
-  marker.scale.y = 2.0*min_distance_;
-  marker.scale.z = 2.0*min_distance_;
-  marker.id= marker_id_++;
-  marker.color.r = 1;
-  marker.color.g = 0;
-  marker.color.b = 0;
-  marker.color.a = 1;
-  marker_pub_.publish(marker);
-  ros::Duration(0.01).sleep();
+    marker.scale.x = 2.0*min_distance_;
+    marker.scale.y = 2.0*min_distance_;
+    marker.scale.z = 2.0*min_distance_;
+    marker.id= marker_id_++;
+    marker.color.r = 1;
+    marker.color.g = 0;
+    marker.color.b = 0;
+    marker.color.a = 0.4;
+    marker_pub_.publish(marker);
+    ros::Duration(0.01).sleep();
   }
-
 }
 
 double AvoidanceMetrics::cost(const Eigen::VectorXd& configuration1,
-                     const Eigen::VectorXd& configuration2)
+                              const Eigen::VectorXd& configuration2)
 {
   double length = (configuration1 - configuration2).norm();
   if (length < 0.1*step_)
     return length;
-
   double cost = length;
   unsigned int nsteps = std::ceil(length / step_);
   double inv_nsteps = 1.0 / nsteps;
@@ -204,7 +202,6 @@ double AvoidanceMetrics::cost(const Eigen::VectorXd& configuration1,
     else if (dist<max_distance_)
       cost+=l*max_penalty_*(max_distance_-dist)*inv_delta_distance_;
   }
-
   return cost;
 }
 

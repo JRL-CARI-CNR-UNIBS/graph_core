@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-  <rosparam command="load" file="$(find graph_core)/config/object_test_replanner.yaml"/>
-  <include file="$(find cartesian_moveit_config)/launch/demo.launch"/>
-  <node pkg="object_loader" name="context_manager_node" type="context_manager_node" respawn="true" output="screen"/>
-  <node pkg="graph_core" name="test_replanner_with_moving_obstacle" type="test_replanner_with_moving_obstacle" output="screen"/>
-</launch>

@@ -39,9 +39,12 @@ Display::Display(const planning_scene::PlanningSceneConstPtr planning_scene,
   group_name_(group_name),
   last_link_(last_link)
 {
-  node_marker_scale_.resize(3,DEFAULTNODESIZE);
-  connection_marker_scale_.resize(3,DEFAULTCONNECTIONSIZE);
-  tree_marker_scale_.resize(3,DEFAULTTREESIZE);
+  if (last_link.empty())
+    last_link_=planning_scene->getRobotModel()->getJointModelGroup(group_name)->getLinkModelNames().back();
+
+  node_marker_scale_.resize(3,DEFAULT_NODE_SIZE);
+  connection_marker_scale_.resize(3,DEFAULT_CONNECTION_SIZE);
+  tree_marker_scale_.resize(3,DEFAULT_TREE_SIZE);
   marker_id_=0;
   state_=std::make_shared<moveit::core::RobotState>(planning_scene_->getCurrentState());
   marker_pub_ = nh_.advertise<visualization_msgs::Marker>("/marker_visualization_topic", 1000);
@@ -59,7 +62,7 @@ void Display::clearMarkers(const std::string& ns)
   marker.id= marker_id_++;
 
   marker_pub_.publish(marker);
-  ros::Duration(DISPLAYTIME).sleep();
+  ros::Duration(DISPLAY_TIME).sleep();
 }
 void Display::clearMarker(const int& id,const std::string& ns)
 {
@@ -71,7 +74,7 @@ void Display::clearMarker(const int& id,const std::string& ns)
   marker.id= id;
 
   marker_pub_.publish(marker);
-  ros::Duration(DISPLAYTIME).sleep();
+  ros::Duration(DISPLAY_TIME).sleep();
 }
 
 int Display::displayNode(const NodePtr &n,
@@ -99,7 +102,7 @@ int Display::displayNode(const NodePtr &n,
   tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),marker.pose);
 
 
-  marker.header.frame_id="world";
+  marker.header.frame_id=planning_scene_->getRobotModel()->getRootLink()->getName();
   marker.header.stamp=ros::Time::now();
   marker.action = visualization_msgs::Marker::ADD;
   marker.id= static_id;
@@ -114,7 +117,7 @@ int Display::displayNode(const NodePtr &n,
   marker.color.a = marker_color.at(3);
 
   marker_pub_.publish(marker);
-  ros::Duration(DISPLAYTIME).sleep();
+  ros::Duration(DISPLAY_TIME).sleep();
   return marker.id;
 }
 
@@ -136,17 +139,7 @@ int Display::displayConnection(const ConnectionPtr& conn,
 {
   visualization_msgs::Marker marker;
   marker.ns = ns;
-  marker.type = visualization_msgs::Marker::LINE_STRIP;
-
-  geometry_msgs::Pose pose;
-  state_->setJointGroupPositions(group_name_,conn->getParent()->getConfiguration());
-  tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
-  marker.points.push_back(pose.position);
-
-  state_->setJointGroupPositions(group_name_,conn->getChild()->getConfiguration());
-  tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
-  marker.points.push_back(pose.position);
-
+  marker.type = visualization_msgs::Marker::LINE_LIST;
   marker.header.frame_id="world";
   marker.header.stamp=ros::Time::now();
   marker.action = visualization_msgs::Marker::ADD;
@@ -161,8 +154,34 @@ int Display::displayConnection(const ConnectionPtr& conn,
   marker.color.b = marker_color.at(2);
   marker.color.a = marker_color.at(3);
 
+  Eigen::VectorXd parent = conn->getParent()->getConfiguration();
+  Eigen::VectorXd child = conn->getChild()->getConfiguration();
+
+  double length = (parent-child).norm();
+  double step = length/SUBDIVISION_FACTOR;
+
+  Eigen::VectorXd v = (child-parent)/length;
+  Eigen::VectorXd conf1 = parent;
+  Eigen::VectorXd conf2;
+
+  for(unsigned int i=1;i<=SUBDIVISION_FACTOR; i++)
+  {
+    conf2 = parent + i*step*v;
+
+    geometry_msgs::Pose pose;
+    state_->setJointGroupPositions(group_name_,conf1);
+    tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+    marker.points.push_back(pose.position);
+
+    state_->setJointGroupPositions(group_name_,conf2);
+    tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+    marker.points.push_back(pose.position);
+
+    conf1 = conf2;
+  }
+
   marker_pub_.publish(marker);
-  ros::Duration(DISPLAYTIME).sleep();
+  ros::Duration(DISPLAY_TIME).sleep();
   return marker.id;
 }
 
@@ -204,18 +223,37 @@ int Display::displayPath(const PathPtr &path,
     return marker.id;
   for (const ConnectionPtr& conn: connections)
   {
-    geometry_msgs::Pose pose;
-    state_->setJointGroupPositions(group_name_,conn->getParent()->getConfiguration());
-    tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
-    marker.points.push_back(pose.position);
+    Eigen::VectorXd parent = conn->getParent()->getConfiguration();
+    Eigen::VectorXd child = conn->getChild()->getConfiguration();
 
-    state_->setJointGroupPositions(group_name_,conn->getChild()->getConfiguration());
-    tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
-    marker.points.push_back(pose.position);
+    double length = (parent-child).norm();
+    double step = length/SUBDIVISION_FACTOR;
+
+    Eigen::VectorXd v = (child-parent)/length;
+    Eigen::VectorXd conf1 = parent;
+    Eigen::VectorXd conf2;
+
+
+    for(unsigned int i=1;i<=SUBDIVISION_FACTOR; i++)
+    {
+      conf2 = parent + i*step*v;
+
+      geometry_msgs::Pose pose;
+      state_->setJointGroupPositions(group_name_,conf1);
+      tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+      marker.points.push_back(pose.position);
+
+      state_->setJointGroupPositions(group_name_,conf2);
+      tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+      marker.points.push_back(pose.position);
+
+      conf1 = conf2;
+    }
+
   }
 
   marker_pub_.publish(marker);
-  ros::Duration(DISPLAYTIME).sleep();
+  ros::Duration(DISPLAY_TIME).sleep();
   return marker.id;
 }
 
@@ -279,21 +317,40 @@ std::vector<int> Display::displayPathAndWaypoints(const PathPtr &path,
     return ids;
   for (const ConnectionPtr& conn: connections)
   {
-    geometry_msgs::Pose pose;
-    state_->setJointGroupPositions(group_name_,conn->getParent()->getConfiguration());
-    tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
-    marker.points.push_back(pose.position);
-    marker_wp.points.push_back(pose.position);
+    Eigen::VectorXd parent = conn->getParent()->getConfiguration();
+    Eigen::VectorXd child = conn->getChild()->getConfiguration();
 
-    state_->setJointGroupPositions(group_name_,conn->getChild()->getConfiguration());
-    tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
-    marker.points.push_back(pose.position);
-    marker_wp.points.push_back(pose.position);
+    double length = (parent-child).norm();
+    double step = length/SUBDIVISION_FACTOR;
+
+    Eigen::VectorXd v = (child-parent)/length;
+    Eigen::VectorXd conf1 = parent;
+    Eigen::VectorXd conf2;
+
+
+    for(unsigned int i=1;i<=SUBDIVISION_FACTOR; i++)
+    {
+      conf2 = parent + i*step*v;
+
+      geometry_msgs::Pose pose;
+      state_->setJointGroupPositions(group_name_,conf1);
+      tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+      marker.points.push_back(pose.position);
+      if(i==1) marker_wp.points.push_back(pose.position);
+
+      state_->setJointGroupPositions(group_name_,conf2);
+      tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+      marker.points.push_back(pose.position);
+      if(i==SUBDIVISION_FACTOR) marker_wp.points.push_back(pose.position);
+
+      conf1 = conf2;
+    }
+
   }
 
   marker_pub_.publish(marker);
   marker_pub_.publish(marker_wp);
-  ros::Duration(DISPLAYTIME).sleep();
+  ros::Duration(DISPLAY_TIME).sleep();
   return ids;
 }
 
@@ -330,7 +387,7 @@ int Display::displayTree(const TreePtr &tree,
   displayTreeNode(tree->getRoot(),tree->getDirection(),marker.points);
 
   marker_pub_.publish(marker);
-  ros::Duration(DISPLAYTIME).sleep();
+  ros::Duration(DISPLAY_TIME).sleep();
   return marker.id;
 
 }

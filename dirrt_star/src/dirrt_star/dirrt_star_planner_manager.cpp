@@ -54,7 +54,8 @@ bool PathPlanerManager::initialize(const moveit::core::RobotModelConstPtr& model
     std::shared_ptr<planning_interface::PlanningContext> ptr;
     if (!type.compare("DIRRT"))
     {
-      ptr= std::make_shared<DIRRTStar>(ns+"/"+p.first,p.second,model);
+      ROS_ERROR("DIRRT has been replaced by Multigoal");
+      //ptr= std::make_shared<DIRRTStar>(ns+"/"+p.first,p.second,model);
     }
     else if (!type.compare("Multigoal"))
     {
@@ -62,7 +63,7 @@ bool PathPlanerManager::initialize(const moveit::core::RobotModelConstPtr& model
     }
     else
     {
-      ROS_WARN_STREAM(ns+"/"+p.first+"/type is '"<<type<<"'. Available ones are: DIRRT, Multigoal. Skip this planner");
+      ROS_WARN_STREAM(ns+"/"+p.first+"/type is '"<<type<<"'. Available ones are: Multigoal. Skip this planner");
       continue;
     }
     m_planners.insert(std::pair<std::string, std::shared_ptr<planning_interface::PlanningContext>>(p.second,ptr));

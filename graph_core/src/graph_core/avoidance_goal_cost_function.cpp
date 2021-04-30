@@ -132,18 +132,65 @@ void AvoidanceGoalCostFunction::cleanPoints()
 }
 void AvoidanceGoalCostFunction::addPoint(const Eigen::Vector3d &point)
 {
+  for (int ic=0;ic<points_.cols();ic++)
+  {
+    if ((points_.col(ic)-point).norm()<1e-4)
+      return;
+  }
   points_.conservativeResize(3, points_.cols()+1);
   points_.col(points_.cols()-1) = point;
 
   if (!plot)
     return;
 
-  visualization_msgs::Marker marker;
-  marker.type = visualization_msgs::Marker::SPHERE;
+//  visualization_msgs::Marker marker;
+//  marker.type = visualization_msgs::Marker::SPHERE;
 
+//  marker.ns = "avoidance";
+//  marker.pose.orientation.w=1.0;
+//  tf::pointEigenToMsg(point,marker.pose.position);
+
+//  marker.header.frame_id="world";
+//  marker.header.stamp=ros::Time::now();
+//  marker.action = visualization_msgs::Marker::ADD;
+//  marker.id= marker_id_++;
+
+//  marker.scale.x = 2.0*max_distance_;
+//  marker.scale.y = 2.0*max_distance_;
+//  marker.scale.z = 2.0*max_distance_;
+
+//  marker.color.r = 1;
+//  marker.color.g = 0;
+//  marker.color.b = 0;
+//  marker.color.a = 0.05;
+
+
+//  marker_pub_.publish(marker);
+//  ros::Duration(0.15).sleep();
+
+//  if (min_distance_>0)
+//  {
+//    marker.scale.x = 2.0*min_distance_;
+//    marker.scale.y = 2.0*min_distance_;
+//    marker.scale.z = 2.0*min_distance_;
+//    marker.id= marker_id_++;
+//    marker.color.r = 1;
+//    marker.color.g = 0;
+//    marker.color.b = 0;
+//    marker.color.a = .4;
+//    marker_pub_.publish(marker);
+//    ros::Duration(0.01).sleep();
+//  }
+
+}
+
+void AvoidanceGoalCostFunction::publishPoints()
+{
+  visualization_msgs::Marker marker;
+  marker.type = visualization_msgs::Marker::SPHERE_LIST;
   marker.ns = "avoidance";
   marker.pose.orientation.w=1.0;
-  tf::pointEigenToMsg(point,marker.pose.position);
+
 
   marker.header.frame_id="world";
   marker.header.stamp=ros::Time::now();
@@ -154,28 +201,38 @@ void AvoidanceGoalCostFunction::addPoint(const Eigen::Vector3d &point)
   marker.scale.y = 2.0*max_distance_;
   marker.scale.z = 2.0*max_distance_;
 
-  marker.color.r = 1;
-  marker.color.g = 0;
-  marker.color.b = 0;
-  marker.color.a = 0.3;
+  marker.color.r = 1.0;
+  marker.color.g = 0.0;
+  marker.color.b = 0.0;
+  marker.color.a = 0.05;
+
+  for (int ic=0;ic<points_.cols();ic++)
+  {
+    Eigen::Vector3d point=points_.col(ic);
+    geometry_msgs::Point p;
+    tf::pointEigenToMsg(point,p);
+    marker.points.push_back(p);
+    marker.colors.push_back(marker.color);
+  }
+
 
 
   marker_pub_.publish(marker);
-  ros::Duration(0.01).sleep();
+  ros::Duration(0.15).sleep();
 
-  if (min_distance_>0)
-  {
-    marker.scale.x = 2.0*min_distance_;
-    marker.scale.y = 2.0*min_distance_;
-    marker.scale.z = 2.0*min_distance_;
-    marker.id= marker_id_++;
-    marker.color.r = 1;
-    marker.color.g = 0;
-    marker.color.b = 0;
-    marker.color.a = 1;
-    marker_pub_.publish(marker);
-    ros::Duration(0.01).sleep();
-  }
+//  if (min_distance_>0)
+//  {
+//    marker.scale.x = 2.0*min_distance_;
+//    marker.scale.y = 2.0*min_distance_;
+//    marker.scale.z = 2.0*min_distance_;
+//    marker.id= marker_id_++;
+//    marker.color.r = 1;
+//    marker.color.g = 0;
+//    marker.color.b = 0;
+//    marker.color.a = .4;
+//    marker_pub_.publish(marker);
+//    ros::Duration(0.01).sleep();
+//  }
 
 }
 

@@ -1,7 +1,0 @@
-group_name: "manipulator"
-base_link: "world"
-last_link: "flange"
-
-start_configuration: [0.7063384203242605, 1.0527972151163965, -1.0985439526800531]
-stop_configuration:  [0.05549312171610082, -1.3873359156073537, -0.802569037438184]
-end_test: 400

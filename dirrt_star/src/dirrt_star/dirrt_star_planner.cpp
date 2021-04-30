@@ -120,7 +120,8 @@ void DIRRTStar::setPlanningScene ( const planning_scene::PlanningSceneConstPtr& 
 {
   planning_scene_=planning_scene;
   COMMENT("create checker");
-  checker=std::make_shared<pathplan::MoveitCollisionChecker>(planning_scene_,group_,collision_distance);
+  planning_scene::PlanningScenePtr ps=planning_scene::PlanningScene::clone(planning_scene);
+  checker=std::make_shared<pathplan::MoveitCollisionChecker>(ps,group_,collision_distance);
 
 }
 

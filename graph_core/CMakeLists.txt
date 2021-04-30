@@ -43,12 +43,14 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/scaled_sampler.cpp
   src/${PROJECT_NAME}/util.cpp
   src/${PROJECT_NAME}/moveit_collision_checker.cpp
+  src/${PROJECT_NAME}/parallel_moveit_collision_checker.cpp
   src/${PROJECT_NAME}/narrow_pass_checker.cpp
   src/${PROJECT_NAME}/boxes_checker.cpp
   src/${PROJECT_NAME}/collision_checker.cpp
   src/${PROJECT_NAME}/graph/node.cpp
   src/${PROJECT_NAME}/graph/connection.cpp
   src/${PROJECT_NAME}/graph/tree.cpp
+  src/${PROJECT_NAME}/graph/subtree.cpp
   src/${PROJECT_NAME}/graph/path.cpp
   src/${PROJECT_NAME}/graph/graph_display.cpp
   src/${PROJECT_NAME}/solvers/multigoal.cpp
@@ -61,6 +63,21 @@ add_library(${PROJECT_NAME}
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
+
+add_executable(       test_collision tests/test_collision.cpp)
+add_dependencies(     test_collision ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_collision
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
+
+add_executable(       test_subtree tests/test_subtree.cpp)
+add_dependencies(     test_subtree ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_subtree
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
 #install(PROGRAMS
 #  scripts/my_python_script
 #  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

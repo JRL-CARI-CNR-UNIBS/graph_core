@@ -28,6 +28,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/ros.h>
 #include <eigen3/Eigen/Core>
+#include <moveit_msgs/PlanningScene.h>
+#include <graph_core/graph/connection.h>
+
 namespace pathplan
 {
 
@@ -43,27 +46,19 @@ public:
 
   }
 
+  virtual void setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg){}
+
   // collision check: true if it is valid
   virtual bool check(const Eigen::VectorXd& configuration)
   {
     return true;
   }
 
-  /*
-  bool checkPath(const Eigen::VectorXd &configuration1, const Eigen::VectorXd &configuration2)
-  {
-    Eigen::VectorXd conf;
-    return checkPath(configuration1,configuration2,conf);
-  }
-  */
-
   bool checkPath(const Eigen::VectorXd& configuration1,
                  const Eigen::VectorXd& configuration2,
                  Eigen::VectorXd& conf)
   {
     if (!check(configuration1))
-      return false;
-    if (!check(configuration2))
       return false;
 
     double dist = (configuration2 - configuration1).norm();
@@ -82,10 +77,14 @@ public:
         }
       }
     }
+
+    if (!check(configuration2))
+      return false;
+
     return true;
   }
 
-  bool checkPath(const Eigen::VectorXd& configuration1,
+  virtual bool checkPath(const Eigen::VectorXd& configuration1,
                  const Eigen::VectorXd& configuration2)
   {
     if (!check(configuration1))
@@ -111,7 +110,6 @@ public:
         {
           return false;
         }
-
       }
       n *= 2;
     }
@@ -119,10 +117,26 @@ public:
     return true;
   }
 
-  bool checkPathFromConf(const Eigen::VectorXd& parent,
-                         const Eigen::VectorXd& child,
+
+  virtual bool checkConnection(const ConnectionPtr& conn)
+  {
+    return checkPath(conn->getParent()->getConfiguration(),conn->getChild()->getConfiguration());
+  }
+
+  virtual bool checkConnections(const std::vector<ConnectionPtr>& connections)
+  {
+    for (const ConnectionPtr& c: connections)
+      if (!checkConnection(c))
+        return false;
+    return true;
+  }
+
+  virtual bool checkConnFromConf(const ConnectionPtr &conn,
                          const Eigen::VectorXd& this_conf)
   {
+    Eigen::VectorXd parent = conn->getParent()->getConfiguration();
+    Eigen::VectorXd child = conn->getChild()->getConfiguration();
+
     double dist_child = (this_conf-child).norm();
     double dist_parent = (parent-this_conf).norm();
     double dist = (parent-child).norm();
