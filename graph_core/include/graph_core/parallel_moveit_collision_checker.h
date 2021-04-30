@@ -72,8 +72,7 @@ public:
   virtual bool checkPath(const Eigen::VectorXd& configuration1,
                          const Eigen::VectorXd& configuration2);
 
-  virtual bool checkPathFromConf(const Eigen::VectorXd& parent,
-                                 const Eigen::VectorXd& child,
+  virtual bool checkConnFromConf(const ConnectionPtr& conn,
                                  const Eigen::VectorXd& this_conf);
 
   virtual bool checkConnections(const std::vector<ConnectionPtr>& connections);

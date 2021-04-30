@@ -59,7 +59,7 @@ int main(int argc, char **argv)
   int errors=0;
   for (int idx=0;idx<iters;idx++)
   {
-    if (!ros::ok())
+    if(!ros::ok())
       break;
     ROS_INFO_THROTTLE(10,"%d iter of %d",idx,iters);
     Eigen::VectorXd q1=sampler->sample();
@@ -90,6 +90,52 @@ int main(int argc, char **argv)
   ROS_INFO("ParallelMoveitCollisionChecker: Average time = %f ms on %d attempts",1e3*time_par/(double)attempts,attempts);
   ROS_INFO("Erros = %d over %d attempts",errors,attempts);
 
+  // ///////////////////////////////////////////////////////////////////////////////////////
+  ROS_INFO("CHECK FROM CONF");
+  for (int idx=0;idx<iters;idx++)
+  {
+    if(!ros::ok())
+      break;
+    ROS_INFO_THROTTLE(10,"%d iter of %d",idx,iters);
+    Eigen::VectorXd q1=sampler->sample();
+
+    if (!checker1->check(q1))
+      continue;
+
+    Eigen::VectorXd q2=sampler->sample();
+    q2=q1+(q2-q1)*2.0/(q2-q1).norm();
+
+    if (!checker1->check(q2))
+      continue;
+
+    Eigen::VectorXd r(1);
+    r.setRandom();
+    double rand = std::abs(r(0));
+
+    if(rand >=1 || rand <=0) assert(0);
+
+    Eigen::VectorXd q3=q1+(q2-q1)*rand;
+
+    pathplan::ConnectionPtr conn = std::make_shared<pathplan::Connection>(std::make_shared<pathplan::Node>(q1),std::make_shared<pathplan::Node>(q2));
+    conn->setCost((q2-q1).norm());
+    conn->add();
+
+    attempts++;
+    ros::WallTime t0=ros::WallTime::now();
+    bool fl1=checker1->checkConnFromConf(conn,q3);
+    ros::WallTime t1=ros::WallTime::now();
+    bool fl2=checker2->checkConnFromConf(conn,q3);
+    ros::WallTime t2=ros::WallTime::now();
+    time_single+=(t1-t0).toSec();
+    time_par+=(t2-t1).toSec();
+    if (fl2 != fl1)
+    {
+      ROS_ERROR("ERROR");
+      errors++;
+    }
+  }
+
+// /////////////////////////////////////////////////////////////////////////////////////////////
 
   ROS_INFO("Testing random connections with length 2");
   attempts=0;
