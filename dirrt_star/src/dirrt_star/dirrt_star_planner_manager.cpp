@@ -107,25 +107,25 @@ planning_interface::PlanningContextPtr PathPlanerManager::getPlanningContext(
   {
     if (m_default_planner_config.size()==0)
     {
-      ROS_FATAL("Search a planner for group %s",req.group_name.c_str());
+      ROS_DEBUG("Search a planner for group %s",req.group_name.c_str());
       any_planner=true;
     }
     else
     {
-      ROS_FATAL("Use default planner %s",m_default_planner_config.c_str());
+      ROS_DEBUG("Use default planner %s",m_default_planner_config.c_str());
       planner_id=m_default_planner_config;
     }
   }
   else
   {
-    ROS_FATAL("Search planner %s for group %s",req.planner_id.c_str(),req.group_name.c_str());
+    ROS_DEBUG("Search planner %s for group %s",req.planner_id.c_str(),req.group_name.c_str());
     planner_id=req.planner_id;
   }
 
   bool ok=false;
   for (std::pair<std::string, std::shared_ptr<planning_interface::PlanningContext>> planner: m_planners)
   {
-    ROS_FATAL("planner %s for group %s",planner.first.c_str(),planner.second->getGroupName().c_str());
+    ROS_DEBUG("planner %s for group %s",planner.first.c_str(),planner.second->getGroupName().c_str());
     if (!planner.second->getGroupName().compare(req.group_name))
     {
       if (any_planner)
@@ -136,12 +136,8 @@ planning_interface::PlanningContextPtr PathPlanerManager::getPlanningContext(
       }
       else if (!planner.first.compare(planner_id))
       {
-        ROS_INFO("Planned Id=%s can be used for group %s",planner.first.c_str(),req.group_name.c_str());
+        ROS_DEBUG("Planned Id=%s can be used for group %s",planner.first.c_str(),req.group_name.c_str());
         ok=true;
-      }
-      else
-      {
-        ROS_FATAL("++++++++++planner %s for group %s",planner.first.c_str(),planner.second->getGroupName().c_str());
       }
     }
   }
@@ -161,7 +157,7 @@ planning_interface::PlanningContextPtr PathPlanerManager::getPlanningContext(
   }
   else
   {
-    ROS_DEBUG("founded planner %s",planner->getName().c_str());
+    ROS_INFO("Using  planner %s for planning on the group %s",planner->getName().c_str(),req.group_name.c_str());
   }
 
   planner->setPlanningScene(planning_scene);
