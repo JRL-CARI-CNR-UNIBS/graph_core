@@ -164,6 +164,8 @@ void MultigoalPlanner::clear()
 
 bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
 {
+
+
   ros::WallDuration max_planning_time=ros::WallDuration(request_.allowed_planning_time);
   ros::WallTime start_time = ros::WallTime::now();
   ros::WallTime refine_time = ros::WallTime::now();
