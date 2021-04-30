@@ -363,8 +363,8 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
       display->displayTree(solver->getStartTree());
     return false;
   }
-  if (display_flag)
-    display->displayPath(solution);
+//  if (display_flag)
+//    display->displayPath(solution);
 
   if (!solver->completed())
   {
@@ -454,9 +454,11 @@ void MultigoalPlanner::centroidCb(const geometry_msgs::PoseArrayConstPtr& msg)
     point(2)=p.position.z;
     if (use_avoidance_goal_)
       m_avoidance_goal_cost_fcn->addPoint(point);
+//    ros::Duration(0.1).sleep();
     if (use_avoidance_metrics_)
       avoidance_metrics_->addPoint(point);
   }
+  m_avoidance_goal_cost_fcn->publishPoints();
 }
 
 

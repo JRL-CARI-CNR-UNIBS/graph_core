@@ -1,8 +1,0 @@
-cylinder_radius: 1
-cylinder_width: 1
-dofs: [2,6,8]
-measures_ratio: 0.2
-trials: 100
-maximum_iter: 50000
-exit_tolerance: 1.01
-save_full_logs: false
