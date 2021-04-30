@@ -118,7 +118,7 @@ bool Tree::extend(const Eigen::VectorXd &configuration, NodePtr &new_node)
     conn->add();
     conn->setCost(cost);
   }
-  nodes_.push_back(new_node);
+  //nodes_.push_back(new_node);
   addNode(new_node,false);
   return true;
 }
@@ -290,7 +290,6 @@ bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire)
     ConnectionPtr conn = std::make_shared<Connection>(new_node, n);
     conn->setCost(cost_new_to_near);
     conn->add();
-
   }
 
   return improved;
