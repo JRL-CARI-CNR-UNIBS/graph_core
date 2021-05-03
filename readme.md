@@ -25,6 +25,7 @@ Download and install the packages specified in the rosinstall file and the other
 cd ~/catkin_ws
 wstool update -t src
 rosdep install --from-paths src --ignore-src -r -y
+```
 
 
 see [readme](dirrt_star/readme.md) in dirrt_star
