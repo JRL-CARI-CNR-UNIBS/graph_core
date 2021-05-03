@@ -8,16 +8,12 @@ Then, download and merge the rosinstall file:
 ```
 cd ~/catkin_ws
 wget https://bitbucket.org/iras-ind/human_aware_motion_planners/raw/b1d545049aa78ab35e3918e4d30fbc395416ad40/human_aware.rosinstall
-
-cd ~/catkin_ws
- wstool merge -t src ./human_aware.rosinstall
+wstool merge -t src ./human_aware.rosinstall
 ```
 Now, do the same with the dependencies required:
 ```
 cd ~/catkin_ws
 wget https://raw.githubusercontent.com/CNR-STIIMA-IRAS/rosdyn/master/rosdyn.rosinstall
-
-cd ~/catkin_ws
 wstool merge -t src ./rosdyn.rosinstall
 ```
 Download and install the packages specified in the rosinstall file and the other system dipendencies:
