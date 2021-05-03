@@ -15,7 +15,7 @@ cd ~/catkin_ws
 Now, do the same with the dependencies required:
 ```
 cd ~/catkin_ws
-https://raw.githubusercontent.com/CNR-STIIMA-IRAS/rosdyn/master/rosdyn.rosinstall
+wget https://raw.githubusercontent.com/CNR-STIIMA-IRAS/rosdyn/master/rosdyn.rosinstall
 
 cd ~/catkin_ws
 wstool merge -t src ./rosdyn.rosinstall
