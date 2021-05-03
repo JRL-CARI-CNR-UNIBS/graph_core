@@ -1,4 +1,4 @@
 - git:
     local-name: motion_control/human_aware_motion_planners
-    uri: https://CNR-ITIA@bitbucket.org/iras-ind/human_aware_motion_planners.git
+    uri: https://bitbucket.org/iras-ind/human_aware_motion_planners.git
     version: master
