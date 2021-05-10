@@ -99,6 +99,7 @@ public:
   virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;
   virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;
   virtual void resetProblem()=0;
+  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler) = 0;
 
   void setGoalCostFunction(const GoalCostFunctionPtr& goal_cost_fcn)
   {

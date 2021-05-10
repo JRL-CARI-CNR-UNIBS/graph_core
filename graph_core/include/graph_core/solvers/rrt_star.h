@@ -50,6 +50,8 @@ public:
   virtual bool solve(PathPtr &solution, const unsigned int& max_iter=100);
   virtual bool update(const Eigen::VectorXd& point, PathPtr& solution);
   virtual bool update(const NodePtr& n, PathPtr& solution);
+  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler);
+
 
 };
 }
