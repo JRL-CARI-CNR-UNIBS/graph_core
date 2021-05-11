@@ -60,6 +60,7 @@ public:
 
   virtual bool update(PathPtr& solution);
 
+  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler);
 
 };
 

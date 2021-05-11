@@ -205,5 +205,10 @@ double AvoidanceMetrics::cost(const Eigen::VectorXd& configuration1,
   return cost;
 }
 
+MetricsPtr AvoidanceMetrics::clone()
+{
+  return std::make_shared<AvoidanceMetrics>(nh_);
+}
+
 
 }

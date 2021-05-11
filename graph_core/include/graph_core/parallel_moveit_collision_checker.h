@@ -43,6 +43,9 @@ protected:
   bool stop_check_;
   bool at_least_a_collision_;
 
+  std::string group_name_;
+  double min_distance_;
+
   std::vector<std::vector<std::vector<double>>> queues_;
   std::vector<std::thread> threads;
   std::vector<planning_scene::PlanningScenePtr> planning_scenes_;
@@ -76,6 +79,8 @@ public:
                                  const Eigen::VectorXd& this_conf);
 
   virtual bool checkConnections(const std::vector<ConnectionPtr>& connections);
+
+  virtual CollisionCheckerPtr clone();
 
 };
 }  // namaspace pathplan

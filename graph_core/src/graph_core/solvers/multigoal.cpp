@@ -460,4 +460,9 @@ void MultigoalSolver::cleanTree()
   start_tree_->purgeNodesOutsideEllipsoids(samplers,white_list);
 }
 
+TreeSolverPtr MultigoalSolver::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler)
+{
+  return std::make_shared<MultigoalSolver>(metrics,checker,sampler);
+}
+
 }  // namespace pathplan
