@@ -74,4 +74,5 @@ bool TreeSolver::setSolution(const PathPtr &solution, const bool& solved)
     clean();
   return true;
 }
+
 }

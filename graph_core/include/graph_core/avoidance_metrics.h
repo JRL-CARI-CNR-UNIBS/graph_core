@@ -33,7 +33,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
-
+class AvoidanceMetrics;
+typedef std::shared_ptr<AvoidanceMetrics> AvoidanceMetricsPtr;
 
 // Avoidance metrics
 class AvoidanceMetrics: public Metrics
@@ -64,8 +65,9 @@ public:
   virtual double cost(const Eigen::VectorXd& configuration1,
                       const Eigen::VectorXd& configuration2);
 
+  virtual MetricsPtr clone();
+
 
 };
-typedef std::shared_ptr<AvoidanceMetrics> AvoidanceMetricsPtr;
 
 }

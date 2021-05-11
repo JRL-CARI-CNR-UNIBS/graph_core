@@ -33,6 +33,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
+class CollisionChecker;
+typedef std::shared_ptr<CollisionChecker> CollisionCheckerPtr;
 
 class CollisionChecker
 {
@@ -47,6 +49,11 @@ public:
   }
 
   virtual void setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg){}
+
+  virtual CollisionCheckerPtr clone()
+  {
+    return std::make_shared<CollisionChecker>(min_distance_);
+  }
 
   // collision check: true if it is valid
   virtual bool check(const Eigen::VectorXd& configuration)
@@ -184,7 +191,6 @@ public:
   }
 };
 
-typedef std::shared_ptr<CollisionChecker> CollisionCheckerPtr;
 
 class Cube3dCollisionChecker: public CollisionChecker
 {

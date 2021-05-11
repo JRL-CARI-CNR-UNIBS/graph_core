@@ -211,6 +211,10 @@ bool RRTConnect::update(const NodePtr& n, PathPtr &solution)
 
 }
 
+TreeSolverPtr RRTConnect::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler)
+{
+  return std::make_shared<RRTConnect>(metrics,checker,sampler);
+}
 
 
 }
