@@ -33,6 +33,7 @@ namespace pathplan
 
 bool BiRRT::config(const ros::NodeHandle &nh)
 {
+  nh_ = nh;
   extend_ = false;
   return RRTConnect::config(nh);
 
