@@ -62,6 +62,7 @@ protected:
 
   std::map< std::string, std::shared_ptr<planning_interface::PlanningContext>> m_planners;
   moveit::core::RobotModelConstPtr m_robot_model;
+  std::string m_default_planner_config;
 };
 
 //
