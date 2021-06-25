@@ -196,6 +196,7 @@ bool MultigoalSolver::setProblem(const double &max_time)   //CHIEDI A MNAUEL->de
 
 bool MultigoalSolver::config(const ros::NodeHandle& nh)
 {
+  nh_ = nh;
   max_distance_ = 1;
   if (!nh.getParam("max_distance",max_distance_))
   {

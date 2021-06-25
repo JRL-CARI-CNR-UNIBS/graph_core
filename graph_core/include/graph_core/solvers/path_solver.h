@@ -41,11 +41,11 @@ class PathLocalOptimizer: public std::enable_shared_from_this<PathLocalOptimizer
 {
 
 protected:
+  ros::NodeHandle nh_;
   CollisionCheckerPtr checker_;
   MetricsPtr metrics_;
   PathPtr path_;
   bool solved_ = false;
-  ros::NodeHandle nh_;
   unsigned int max_stall_gen_ = 10;
   unsigned int stall_gen_ = 0;
 public:

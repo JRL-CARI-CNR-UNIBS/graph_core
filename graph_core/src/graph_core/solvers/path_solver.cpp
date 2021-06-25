@@ -38,6 +38,7 @@ PathLocalOptimizer::PathLocalOptimizer(const CollisionCheckerPtr &checker, const
 }
 void PathLocalOptimizer::config(ros::NodeHandle &nh)
 {
+  nh_ = nh;
   max_stall_gen_ = 10;
   stall_gen_ = 0;
 }

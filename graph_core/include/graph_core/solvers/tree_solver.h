@@ -44,6 +44,7 @@ class TreeSolver: public std::enable_shared_from_this<TreeSolver>
 {
 protected:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  ros::NodeHandle nh_;
   MetricsPtr metrics_;
   CollisionCheckerPtr checker_;
   SamplerPtr sampler_;
@@ -125,6 +126,11 @@ public:
   PathPtr getSolution() const
   {
     return solution_;
+  }
+
+  ros::NodeHandle getNodeHandle()
+  {
+    return nh_;
   }
 
   void setSampler(const SamplerPtr& sampler)
