@@ -27,13 +27,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include <graph_core/solvers/multigoal.h>
+#include <graph_core/solvers/time_multigoal.h>
 
 
 namespace pathplan
 {
 
-bool MultigoalSolver::addStart(const NodePtr& start_node, const double &max_time)
+bool TimeMultigoalSolver::addStart(const NodePtr& start_node, const double &max_time)
 {
   if (!configured_)
   {
@@ -47,7 +47,7 @@ bool MultigoalSolver::addStart(const NodePtr& start_node, const double &max_time
   return true;
 }
 
-bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
+bool TimeMultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
 {
   if (!start_tree_)
   {
@@ -110,11 +110,12 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
     status=GoalStatus::search;
   }
 
-  TubeInformedSamplerPtr tube_sampler = std::make_shared<TubeInformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler_->getLB(),sampler_->getUB(),path_cost_+goal_cost_-goal_cost);
-  tube_sampler->setLocalBias(local_bias_);
-  tube_sampler->setRadius(tube_radius_);
-  if (solution)
-    tube_sampler->setPath(solution);
+  TimeBasedInformedSamplerPtr time_sampler = std::make_shared<TimeBasedInformedSampler>(start_tree_->getRoot()->getConfiguration(),
+                                                                           goal_node->getConfiguration(),
+                                                                           time_based_sampler_->getLB(),
+                                                                           time_based_sampler_->getUB(),
+                                                                           time_based_sampler_->getMaxSpeed(),
+                                                                           path_cost_+goal_cost_-goal_cost);
 
   goal_nodes_.push_back(goal_node);
   goal_trees_.push_back(goal_tree);
@@ -123,7 +124,7 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
   costs_.push_back(cost);
   utopias_.push_back(utopia);
   solutions_.push_back(solution);
-  tube_samplers_.push_back(tube_sampler);
+  time_samplers_.push_back(time_sampler);
   status_.push_back(status);
 
   if (isBestSolution(goal_nodes_.size()-1))
@@ -133,7 +134,7 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
   return true;
 }
 
-bool MultigoalSolver::isBestSolution(const int &index)
+bool TimeMultigoalSolver::isBestSolution(const int &index)
 {
   assert(status_.at(index)!=GoalStatus::discard);
 
@@ -159,7 +160,11 @@ bool MultigoalSolver::isBestSolution(const int &index)
     }
     if (status_.at(igoal)==GoalStatus::done)
       continue;
-    tube_samplers_.at(igoal)->setCost(path_cost_+goal_cost_-goal_costs_.at(igoal));
+    ROS_DEBUG("Best solution costs. Total cost = %f, Path cost= %f. Goal cost  =%f",cost_,path_cost_,goal_cost_);
+    ROS_DEBUG("Goal %u. Total cost = %f, Path cost= %f. Goal cost  =%f",igoal,costs_.at(igoal), path_costs_.at(igoal),goal_costs_.at(igoal));
+    ROS_DEBUG("Goal %u. sampler cost = %f",igoal,path_cost_+goal_cost_-goal_costs_.at(igoal));
+
+    time_samplers_.at(igoal)->setCost(path_cost_+goal_cost_-goal_costs_.at(igoal));
   }
 
   if ((cost_<0.9999*cost_at_last_clean) || start_tree_->needCleaning())
@@ -171,20 +176,20 @@ bool MultigoalSolver::isBestSolution(const int &index)
   return true;
 }
 
-void MultigoalSolver::resetProblem()
+void TimeMultigoalSolver::resetProblem()
 {
   goal_nodes_.clear();
   goal_trees_.clear();
   path_costs_.clear();
   utopias_.clear();
   solutions_.clear();
-  tube_samplers_.clear();
+  time_samplers_.clear();
   status_.clear();
   start_tree_.reset();
   solved_=false;
 }
 
-bool MultigoalSolver::setProblem(const double &max_time)   //CHIEDI A MNAUEL->devi metterlo perche in TreeSolver hai dovuto metterlo, ma qua non serve
+bool TimeMultigoalSolver::setProblem(const double &max_time)   //CHIEDI A MNAUEL->devi metterlo perche in TreeSolver hai dovuto metterlo, ma qua non serve
 {
   if (!start_tree_)
     return false;
@@ -194,7 +199,7 @@ bool MultigoalSolver::setProblem(const double &max_time)   //CHIEDI A MNAUEL->de
   return true;
 }
 
-bool MultigoalSolver::config(const ros::NodeHandle& nh)
+bool TimeMultigoalSolver::config(const ros::NodeHandle& nh)
 {
   max_distance_ = 1;
   if (!nh.getParam("max_distance",max_distance_))
@@ -207,31 +212,10 @@ bool MultigoalSolver::config(const ros::NodeHandle& nh)
     ROS_WARN("%s/extend is not set. using false (connect algorithm)",nh.getNamespace().c_str());
     max_distance_=1.0;
   }
-  if (!nh.getParam("local_bias",local_bias_))
+  if (!nh.getParam("rewire_radius",r_rewire_))
   {
-    ROS_WARN("%s/local_bias is not set. using 0.3",nh.getNamespace().c_str());
-    local_bias_=0.3;
-  }
-  if (local_bias_<0)
-  {
-    ROS_WARN("%s/local_bias cannot be negative, set equal to 0",nh.getNamespace().c_str());
-    local_bias_=0.0;
-  }
-  if (local_bias_>1)
-  {
-    ROS_WARN("%s/local_bias cannot be greater than 1.0, set equal to 1.0",nh.getNamespace().c_str());
-    local_bias_=1.0;
-  }
-
-  if (!nh.getParam("tube_radius",tube_radius_))
-  {
-    ROS_WARN("%s/tube_radius is not set. using 0.01",nh.getNamespace().c_str());
-    tube_radius_=0.3;
-  }
-  if (tube_radius_<=0)
-  {
-    ROS_WARN("%s/local_bias cannot be negative, set equal to 0.01",nh.getNamespace().c_str());
-    tube_radius_=0.01;
+    ROS_WARN("%s/rewire_radius is not set. using 1.0",nh.getNamespace().c_str());
+    r_rewire_=1.0;
   }
 
 
@@ -240,11 +224,11 @@ bool MultigoalSolver::config(const ros::NodeHandle& nh)
 }
 
 
-bool MultigoalSolver::update(PathPtr& solution)
+bool TimeMultigoalSolver::update(PathPtr& solution)
 {
   if (!init_)
   {
-    ROS_WARN("MultigoalSolver is not initialized");
+    ROS_WARN("TimeMultigoalSolver is not initialized");
     return false;
   }
   if (cost_ <= utopia_tolerance * best_utopia_)
@@ -257,7 +241,7 @@ bool MultigoalSolver::update(PathPtr& solution)
 
 
   bool global_improvement=false;
-  double r_rewire = start_tree_->getMaximumDistance();
+  double r_rewire = std::max(start_tree_->getMaximumDistance(),r_rewire_);
   double old_cost=cost_;
 
 
@@ -265,7 +249,7 @@ bool MultigoalSolver::update(PathPtr& solution)
   {
     NodePtr new_start_node, new_goal_node;
     bool add_to_start, add_to_goal;
-    Eigen::VectorXd configuration = tube_samplers_.at(igoal)->sample();
+    Eigen::VectorXd configuration = time_samplers_.at(igoal)->sample();
 
     double prob=1.0;
     double min_prob=0.2;
@@ -330,8 +314,7 @@ bool MultigoalSolver::update(PathPtr& solution)
         ROS_DEBUG("warp: cost from %f to %f in %f second",cost_1,solutions_.at(igoal)->cost(),(ros::WallTime::now()-twarp).toSec());
 
 
-        tube_samplers_.at(igoal)->setPath(solutions_.at(igoal));
-        tube_samplers_.at(igoal)->setRadius(tube_radius_*solutions_.at(igoal)->cost());
+
         path_costs_.at(igoal) = solutions_.at(igoal)->cost();
         costs_.at(igoal) = path_costs_.at(igoal)+goal_costs_.at(igoal);
 
@@ -351,7 +334,7 @@ bool MultigoalSolver::update(PathPtr& solution)
 
       break;
     case GoalStatus::refine:
-      if (start_tree_->rewire(tube_samplers_.at(igoal)->sample(), r_rewire, goal_nodes_,cost_)) //TODO add weight goal
+      if (start_tree_->rewire(time_samplers_.at(igoal)->sample(), r_rewire, goal_nodes_,cost_)) //TODO add weight goal
       {
         if (start_tree_->costToNode(goal_nodes_.at(igoal)) >= (path_costs_.at(igoal) - 1e-8))
           continue;
@@ -375,8 +358,6 @@ bool MultigoalSolver::update(PathPtr& solution)
         ROS_DEBUG("warp: cost from %f to %f in %f second",cost_1,solutions_.at(igoal)->cost(),(ros::WallTime::now()-twarp).toSec());
 
 
-        tube_samplers_.at(igoal)->setPath(solutions_.at(igoal));
-        tube_samplers_.at(igoal)->setRadius(tube_radius_*solutions_.at(igoal)->cost());
         path_costs_.at(igoal) = solutions_.at(igoal)->cost();
         costs_.at(igoal) = path_costs_.at(igoal)+goal_costs_.at(igoal);
         if (costs_.at(igoal)<=(utopias_.at(igoal)+1e-8))
@@ -389,6 +370,23 @@ bool MultigoalSolver::update(PathPtr& solution)
           ROS_DEBUG("Goal %u refines solution with cost %f",igoal,costs_.at(igoal));
         global_improvement=isBestSolution(igoal) || global_improvement;
       }
+      else
+      {
+        double cost_1=solutions_.at(igoal)->cost();
+        ros::WallTime twarp=ros::WallTime::now();
+        solutions_.at(igoal)->warp(0.1*solutions_.at(igoal)->cost(),0.01);
+//        solutions_.at(igoal)->slipParent();
+//        solutions_.at(igoal)->slipChild();
+
+
+        ROS_DEBUG_COND(solutions_.at( igoal)->cost()<cost_1,"warp: cost from %f to %f in %f second",cost_1,solutions_.at(igoal)->cost(),(ros::WallTime::now()-twarp).toSec());
+//        ROS_DEBUG("warp: cost from %f to %f in %f second",cost_1,solutions_.at(igoal)->cost(),(ros::WallTime::now()-twarp).toSec());
+
+        if (solutions_.at(igoal)->cost() >= (path_costs_.at(igoal) - 1e-8))
+          continue;
+        global_improvement=isBestSolution(igoal) || global_improvement;
+
+      }
       break;
     case GoalStatus::discard:
     case GoalStatus::done:
@@ -396,20 +394,12 @@ bool MultigoalSolver::update(PathPtr& solution)
     }
   }
 
-  if (solved_)
-  {
-    local_bias_=std::min(forgetting_factor_*local_bias_+reward_*(old_cost-cost_)/(old_cost-best_utopia_),1.0);
-    for (TubeInformedSamplerPtr& sampler: tube_samplers_)
-    {
-      sampler->setLocalBias(local_bias_);
-    }
-  }
   solution = solution_;
   return global_improvement;
 }
 
 
-void MultigoalSolver::printMyself(std::ostream &os) const
+void TimeMultigoalSolver::printMyself(std::ostream &os) const
 {
   os << "Best cost: " << cost_;
   os << " path cost: " << path_cost_;
@@ -439,13 +429,13 @@ void MultigoalSolver::printMyself(std::ostream &os) const
     os << ". goal cost = " << goal_costs_.at(igoal);
     os << ". utopia = " << utopias_.at(igoal);
     os << ". ellisse = " << path_cost_+goal_cost_-goal_costs_.at(igoal);
-    os << ". volume = " << std::scientific <<tube_samplers_.at(igoal)->getSpecificVolume()<< std::defaultfloat;
+    os << ". volume = " << std::scientific <<time_samplers_.at(igoal)->getSpecificVolume()<< std::defaultfloat;
 
     os<<std::endl;
   }
 }
 
-void MultigoalSolver::cleanTree()
+void TimeMultigoalSolver::cleanTree()
 {
   std::vector<NodePtr> white_list=goal_nodes_;
   white_list.push_back(start_tree_->getRoot());
@@ -453,7 +443,7 @@ void MultigoalSolver::cleanTree()
   for (unsigned int igoal=0;igoal<goal_nodes_.size();igoal++)
   {
     if ((status_.at(igoal)==GoalStatus::refine)||(status_.at(igoal)==GoalStatus::search))
-      samplers.push_back(tube_samplers_.at(igoal));
+      samplers.push_back(time_samplers_.at(igoal));
   }
 
 
@@ -463,12 +453,12 @@ void MultigoalSolver::cleanTree()
       for (const ConnectionPtr& conn: sol->getConnections())
         white_list.push_back(conn->getChild());
   }
-  start_tree_->purgeNodesOutsideEllipsoids(samplers,white_list);
+  ROS_DEBUG_STREAM("Removed nodes: " << start_tree_->purgeNodesOutsideEllipsoids(samplers,white_list));
 }
 
-TreeSolverPtr MultigoalSolver::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler)
+TreeSolverPtr TimeMultigoalSolver::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler)
 {
-  return std::make_shared<MultigoalSolver>(metrics,checker,sampler);
+  return std::make_shared<TimeMultigoalSolver>(metrics,checker,sampler,time_based_sampler_->getMaxSpeed());
 }
 
 }  // namespace pathplan

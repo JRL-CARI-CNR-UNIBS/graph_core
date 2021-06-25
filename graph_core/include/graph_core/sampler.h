@@ -82,17 +82,21 @@ public:
     ellipse_center_ = 0.5 * (start_configuration_ + stop_configuration_);
     focii_distance_ = (start_configuration_ - stop_configuration_).norm();
     center_bound_ = 0.5 * (lower_bound_ + upper_bound_);
-    bound_width_ = 0.5 * (lower_bound_ - upper_bound_);
+    bound_width_ = 0.5 * (upper_bound_ - lower_bound_);
     ellipse_axis_.resize(ndof_);
 
 
     rot_matrix_ = computeRotationMatrix(start_configuration_, stop_configuration_);
 
+    ROS_DEBUG_STREAM("start_configuration" << start_configuration.transpose());
+    ROS_DEBUG_STREAM("stop_configuration" << stop_configuration.transpose());
     ROS_DEBUG_STREAM("rot_matrix_:\n" << rot_matrix_);
     ROS_DEBUG_STREAM("ellipse center" << ellipse_center_.transpose());
     ROS_DEBUG_STREAM("focii_distance_" << focii_distance_);
     ROS_DEBUG_STREAM("center_bound_" << center_bound_.transpose());
     ROS_DEBUG_STREAM("bound_width_" << bound_width_.transpose());
+    ROS_DEBUG_STREAM("lower_bound_" << lower_bound_.transpose());
+    ROS_DEBUG_STREAM("upper_bound_" << upper_bound_.transpose());
 
 
     if (cost_ < std::numeric_limits<double>::infinity())
@@ -105,7 +109,7 @@ public:
   }
 
   virtual Eigen::VectorXd sample();
-  void setCost(const double& cost);
+  virtual void setCost(const double& cost);
 
   virtual bool inBounds(const Eigen::VectorXd& q);
   virtual bool collapse()

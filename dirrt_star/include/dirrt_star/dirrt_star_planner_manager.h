@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <moveit/planning_interface/planning_interface.h>
 #include <dirrt_star/multigoal_planner.h>
-
+#include <dirrt_star/time_planner.h>
 
 namespace pathplan {
 namespace dirrt_star {
@@ -46,6 +46,7 @@ public:
 
 
   void getPlanningAlgorithms(std::vector<std::string> &algs) const override;
+
 
 
   void setPlannerConfigurations(const planning_interface::PlannerConfigurationMap &pcs) override;

@@ -1,3 +1,4 @@
+#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -25,32 +26,48 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#include <graph_core/scaled_sampler.h>
+#include <graph_core/time_metrics.h>
+#include <rosdyn_core/primitives.h>
+#include <visualization_msgs/MarkerArray.h>
+#include <eigen_conversions/eigen_msg.h>
 
 namespace pathplan
 {
-ScaledInformedSampler::ScaledInformedSampler(const Eigen::VectorXd& start_configuration,
-                                             const Eigen::VectorXd& stop_configuration,
-                                             const Eigen::VectorXd& lower_bound,
-                                             const Eigen::VectorXd& upper_bound,
-                                             const Eigen::VectorXd& scale,
-                                             const double& cost):
-  InformedSampler(start_configuration,stop_configuration,lower_bound,upper_bound,cost),
-  scale_(scale)
+class AvoidanceTimeMetrics;
+typedef std::shared_ptr<AvoidanceTimeMetrics> AvoidanceTimeMetricsPtr;
+
+// Avoidance metrics
+class AvoidanceTimeMetrics: public TimeBasedMetrics
 {
-  inv_scale_=scale_.cwiseInverse();
+protected:
+  double step_ = 0.1;
+  ros::NodeHandle nh_;
+  rosdyn::ChainPtr chain_;
 
-  InformedSampler(inv_scale_.cwiseProduct(start_configuration),
-                  inv_scale_.cwiseProduct(stop_configuration),
-                  inv_scale_.cwiseProduct(lower_bound),
-                  inv_scale_.cwiseProduct(upper_bound),
-                  cost);
+  double min_distance_=0.2;
+  double max_distance_=1.0;
+  double inv_delta_distance_;
+  double max_penalty_=2.0;
+
+  std::vector<std::string> links_;
+
+  Eigen::Matrix<double,3,-1> points_;
+
+  ros::Publisher marker_pub_;
+  int marker_id_;
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  AvoidanceTimeMetrics(const ros::NodeHandle& nh);
+
+  void addPoint(const Eigen::Vector3d& point);
+  void cleanPoints();
+
+  virtual double cost(const Eigen::VectorXd& configuration1,
+                      const Eigen::VectorXd& configuration2);
+
+  virtual MetricsPtr clone();
+
+
+};
+
 }
-Eigen::VectorXd ScaledInformedSampler::sample()
-{
-  return scale_.cwiseProduct(InformedSampler::sample());
-}
-
-
-}  // namespace pathplan

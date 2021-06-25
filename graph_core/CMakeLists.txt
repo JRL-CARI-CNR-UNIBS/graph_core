@@ -36,11 +36,12 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/avoidance_goal_cost_function.cpp
   src/${PROJECT_NAME}/avoidance_metrics.cpp
   src/${PROJECT_NAME}/occupancy_metrics.cpp
-  src/${PROJECT_NAME}/speed_metrics.cpp
+  #src/${PROJECT_NAME}/avoidance_time_metrics.cpp
   src/${PROJECT_NAME}/sampler.cpp
   src/${PROJECT_NAME}/local_informed_sampler.cpp
   src/${PROJECT_NAME}/tube_informed_sampler.cpp
-  src/${PROJECT_NAME}/scaled_sampler.cpp
+  src/${PROJECT_NAME}/time_sampler.cpp
+  src/${PROJECT_NAME}/time_metrics.cpp
   src/${PROJECT_NAME}/util.cpp
   src/${PROJECT_NAME}/moveit_collision_checker.cpp
   src/${PROJECT_NAME}/parallel_moveit_collision_checker.cpp
@@ -54,10 +55,11 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/graph/path.cpp
   src/${PROJECT_NAME}/graph/graph_display.cpp
   src/${PROJECT_NAME}/solvers/multigoal.cpp
+  src/${PROJECT_NAME}/solvers/time_multigoal.cpp
   src/${PROJECT_NAME}/solvers/tree_solver.cpp
   src/${PROJECT_NAME}/solvers/rrt_connect.cpp
   src/${PROJECT_NAME}/solvers/birrt.cpp
-  src/${PROJECT_NAME}/solvers/rrt_star.cpp
+  #src/${PROJECT_NAME}/solvers/rrt_star.cpp
   src/${PROJECT_NAME}/solvers/path_solver.cpp
   )
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

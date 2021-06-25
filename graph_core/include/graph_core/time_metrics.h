@@ -26,33 +26,34 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/sampler.h>
-#include <graph_core/graph/path.h>
+#include <graph_core/metrics.h>
+#include <rosdyn_core/primitives.h>
+#include <visualization_msgs/MarkerArray.h>
+#include <eigen_conversions/eigen_msg.h>
 
-namespace pathplan {
+namespace pathplan
+{
 
 
-
-class ScaledInformedSampler: public InformedSampler
+// Avoidance metrics
+class TimeBasedMetrics: public Metrics
 {
 protected:
-  Eigen::VectorXd scale_;
-  Eigen::VectorXd inv_scale_;
-
+  Eigen::VectorXd max_speed_;
+  Eigen::VectorXd inv_max_speed_;
+  double nu_=1e-2;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  ScaledInformedSampler(const Eigen::VectorXd& start_configuration,
-                      const Eigen::VectorXd& stop_configuration,
-                      const Eigen::VectorXd& lower_bound,
-                      const Eigen::VectorXd& upper_bound,
-                      const Eigen::VectorXd& scale,
-                      const double& cost = std::numeric_limits<double>::infinity());
+  TimeBasedMetrics(const Eigen::VectorXd& max_speed, const double &nu=1e-2);
 
-  virtual Eigen::VectorXd sample();
+  virtual double cost(const Eigen::VectorXd& configuration1,
+                      const Eigen::VectorXd& configuration2);
+  virtual double utopia(const Eigen::VectorXd& configuration1,
+                      const Eigen::VectorXd& configuration2);
+
+
 };
+typedef std::shared_ptr<TimeBasedMetrics> SpeedMetricsPtr;
 
-
-typedef std::shared_ptr<ScaledInformedSampler> ScaledInformedSamplerPtr;
-
-}    // namespace pathplan
+}

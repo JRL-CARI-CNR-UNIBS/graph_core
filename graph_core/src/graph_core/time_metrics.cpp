@@ -1,4 +1,3 @@
-#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -26,33 +25,31 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/metrics.h>
-#include <rosdyn_core/primitives.h>
-#include <visualization_msgs/MarkerArray.h>
-#include <eigen_conversions/eigen_msg.h>
+#include <graph_core/time_metrics.h>
+
 
 namespace pathplan
 {
 
-
-// Avoidance metrics
-class SpeedMetrics: public Metrics
+TimeBasedMetrics::TimeBasedMetrics(const Eigen::VectorXd& max_speed, const double& nu):
+  Metrics(),
+  max_speed_(max_speed),
+  nu_(nu)
 {
-protected:
-  Eigen::VectorXd max_speed_;
-  Eigen::VectorXd inv_max_speed_;
+  inv_max_speed_=max_speed_.cwiseInverse();
+}
 
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  SpeedMetrics(const Eigen::VectorXd& max_speed);
+double TimeBasedMetrics::cost(const Eigen::VectorXd& configuration1,
+                     const Eigen::VectorXd& configuration2)
+{
+  double cost = (inv_max_speed_.cwiseProduct(configuration1 - configuration2)).cwiseAbs().maxCoeff()+nu_*(configuration2-configuration1).norm();
+  return cost;
+}
 
-  virtual double cost(const Eigen::VectorXd& configuration1,
-                      const Eigen::VectorXd& configuration2);
-  virtual double utopia(const Eigen::VectorXd& configuration1,
-                      const Eigen::VectorXd& configuration2);
+double TimeBasedMetrics::utopia(const Eigen::VectorXd &configuration1, const Eigen::VectorXd &configuration2)
+{
+  return cost(configuration1,configuration2);
+}
 
-
-};
-typedef std::shared_ptr<SpeedMetrics> SpeedMetricsPtr;
 
 }

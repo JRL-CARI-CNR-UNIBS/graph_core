@@ -44,11 +44,12 @@ protected:
   Direction direction_;
   double max_distance_=1;
   double tolerance_ = 1e-6;
-  unsigned int maximum_nodes_ = 5000; // legare il massimo numero di punti al volume????
+  unsigned int maximum_nodes_ = 50; // legare il massimo numero di punti al volume????
   CollisionCheckerPtr checker_;
   MetricsPtr metrics_;
 
   std::vector<NodePtr> nodes_;
+  std::vector<NodePtr> death_nodes_;
 
   void purgeNodeOutsideEllipsoid(NodePtr& node,
                                          const SamplerPtr& sampler,
@@ -97,7 +98,9 @@ public:
                      const double &max_time = std::numeric_limits<double>::infinity());
 
   bool rewire(const Eigen::VectorXd& configuration,
-              double r_rewire);
+              double r_rewire,
+              const std::vector<NodePtr>& goal_nodes,
+              const double path_cost);
 
   bool rewireToNode(const NodePtr& n,
               double r_rewire);
@@ -126,7 +129,7 @@ public:
   unsigned int purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds = true);
   bool purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
   bool needCleaning(){return nodes_.size()>maximum_nodes_;}
-
+  void purgeDeathNodes(const std::vector<NodePtr>& white_list);
   const double& getMaximumDistance() const {return max_distance_;}
   const Direction& getDirection() const {return direction_;}
   MetricsPtr& getMetrics() {return metrics_;}

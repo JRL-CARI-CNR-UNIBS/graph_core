@@ -1,3 +1,4 @@
+#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -25,30 +26,38 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/speed_metrics.h>
+#include <graph_core/sampler.h>
+#include <graph_core/graph/path.h>
+
+namespace pathplan {
 
 
-namespace pathplan
+
+class TimeBasedInformedSampler: public InformedSampler
 {
-
-SpeedMetrics::SpeedMetrics(const Eigen::VectorXd &max_speed):
-  Metrics(),
-  max_speed_(max_speed)
-{
-  inv_max_speed_=max_speed_.cwiseInverse();
-}
-
-double SpeedMetrics::cost(const Eigen::VectorXd& configuration1,
-                     const Eigen::VectorXd& configuration2)
-{
-  double cost= (inv_max_speed_.cwiseProduct(configuration1 - configuration2)).norm();
-  return cost;
-}
-
-double SpeedMetrics::utopia(const Eigen::VectorXd &configuration1, const Eigen::VectorXd &configuration2)
-{
-  return cost(configuration1,configuration2);
-}
+protected:
+protected:
+  Eigen::VectorXd max_speed_;
+  Eigen::VectorXd inv_max_speed_;
+  double utopia_;
 
 
-}
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  TimeBasedInformedSampler(const Eigen::VectorXd& start_configuration,
+                      const Eigen::VectorXd& stop_configuration,
+                      const Eigen::VectorXd& lower_bound,
+                      const Eigen::VectorXd& upper_bound,
+                      const Eigen::VectorXd& max_speed,
+                      const double& cost = std::numeric_limits<double>::infinity());
+
+  virtual Eigen::VectorXd sample();
+  Eigen::VectorXd getMaxSpeed()const{return max_speed_;};
+  virtual void setCost(const double& cost);
+  virtual bool inBounds(const Eigen::VectorXd& q);
+};
+
+
+typedef std::shared_ptr<TimeBasedInformedSampler> TimeBasedInformedSamplerPtr;
+
+}    // namespace pathplan

@@ -26,21 +26,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include <dirrt_star/multigoal_planner.h>
+#include <dirrt_star/time_planner.h>
 
 
 
 namespace pathplan {
 namespace dirrt_star {
 
-MultigoalPlanner::MultigoalPlanner ( const std::string& name,
+TimeBasedMultiGoalPlanner::TimeBasedMultiGoalPlanner ( const std::string& name,
                        const std::string& group,
                        const moveit::core::RobotModelConstPtr& model ) :
   PlanningContext ( name, group ),
   group_(group)
 {
-  m_nh=ros::NodeHandle(name);
-  m_nh.setCallbackQueue(&m_queue);
+  nh_=ros::NodeHandle(name);
+  nh_.setCallbackQueue(&queue_);
 
 
   COMMENT("create MultigoalPlanner, name =%s, group = %s", name.c_str(),group.c_str());
@@ -61,132 +61,67 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
   COMMENT("get joint names of JointModelGroup=%s",jmg->getName().c_str());
 
   joint_names_=jmg->getActiveJointModelNames();
-  m_dof=joint_names_.size();
-  COMMENT("number of joints  = %u",m_dof);
-  m_lb.resize(m_dof);
-  m_ub.resize(m_dof);
-  m_max_speed_.resize(m_dof);
+  dof_=joint_names_.size();
+  COMMENT("number of joints  = %u",dof_);
+  lower_bounds_.resize(dof_);
+  upper_bounds_.resize(dof_);
+  max_velocity_.resize(dof_);
 
   COMMENT("read bounds");
-  for (unsigned int idx=0;idx<m_dof;idx++)
+  for (unsigned int idx=0;idx<dof_;idx++)
   {
     COMMENT("joint %s",joint_names_.at(idx).c_str());
     const robot_model::VariableBounds& bounds = robot_model_->getVariableBounds(joint_names_.at(idx));
     if (bounds.position_bounded_)
     {
-      m_lb(idx)=bounds.min_position_;
-      m_ub(idx)=bounds.max_position_;
-      m_max_speed_(idx)=bounds.max_velocity_;
+      lower_bounds_(idx)=bounds.min_position_;
+      upper_bounds_(idx)=bounds.max_position_;
+      max_velocity_(idx)=bounds.max_velocity_;
     }
   }
 
 
-  urdf::Model urdf_model;
-  urdf_model.initParam("robot_description");
+   metrics_=std::make_shared<pathplan::TimeBasedMetrics>(max_velocity_);
 
 
-  if (!m_nh.getParam("display_bubbles",display_flag))
-  {
-    ROS_DEBUG("display_flag is not set, default=false");
-    display_flag=false;
-  }
-  if (!m_nh.getParam("tool_frame",tool_frame))
-  {
-    ROS_DEBUG("tool_frame is not set, default=false");
-    display_flag=false;
-  }
-  COMMENT("create metrics");
-
-  if (!m_nh.getParam("use_avoidance_path",use_avoidance_metrics_))
-  {
-    ROS_DEBUG("use_avoidance_path is not set, default=false");
-    use_avoidance_metrics_=false;
-  }
-  if (use_avoidance_metrics_)
-  {
-    avoidance_metrics_=std::make_shared<pathplan::AvoidanceMetrics>(m_nh);
-    metrics_=avoidance_metrics_;
-  }
-  else
-    metrics_=std::make_shared<pathplan::Metrics>();
-
-  if (!m_nh.getParam("use_avoidance_goal",use_avoidance_goal_))
-  {
-    ROS_DEBUG("use_avoidance is not set, default=false");
-    use_avoidance_goal_=false;
-  }
-  else if (use_avoidance_metrics_)
-  {
-    ROS_DEBUG("both use_avoidance_goal and use_avoidance_path are set, using use_avoidance_path");
-    use_avoidance_goal_=false;
-  }
-
-  if (use_avoidance_goal_)
-  {
-    m_avoidance_goal_cost_fcn=std::make_shared<pathplan::AvoidanceGoalCostFunction>(m_nh);
-  }
-
-
-  std::string detector_topic;
-  if (use_avoidance_goal_ || use_avoidance_metrics_)
-  {
-    if (!m_nh.getParam("detector_topic",detector_topic))
-    {
-      ROS_DEBUG("detector_topic is not defined, using centroids");
-      detector_topic="/centroids";
-    }
-    m_centroid_sub=m_nh.subscribe(detector_topic,2,&MultigoalPlanner::centroidCb,this);
-  }
-
-
-
-
-
-  COMMENT("created MultigoalPlanner");
+  COMMENT("created Time base planner");
 
   double refining_time=0;
-  if (!m_nh.getParam("max_refine_time",refining_time))
+  if (!nh_.getParam("max_refine_time",refining_time))
   {
     ROS_DEBUG("refining_time is not set, default=30");
     refining_time=30;
   }
-  m_max_refining_time=ros::WallDuration(refining_time);
+  max_refining_time_=ros::WallDuration(refining_time);
 
 }
 
 
 
-void MultigoalPlanner::clear()
+void TimeBasedMultiGoalPlanner::clear()
 {
 
 }
 
 
-bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
+bool TimeBasedMultiGoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
 {
-
+  display=std::make_shared<pathplan::Display>(planning_scene_,group_);
 
   ros::WallDuration max_planning_time=ros::WallDuration(request_.allowed_planning_time);
   ros::WallTime start_time = ros::WallTime::now();
   ros::WallTime refine_time = ros::WallTime::now();
-  m_is_running=true;
+  is_running_=true;
 
   if (!planning_scene_)
   {
     ROS_ERROR("No planning scene available");
     res.error_code_.val=moveit_msgs::MoveItErrorCodes::COLLISION_CHECKING_UNAVAILABLE;
-    m_is_running=false;
+    is_running_=false;
     return false;
   }
 
 
-  if (display_flag)
-  {
-    if (!display)
-      display=std::make_shared<pathplan::Display>(planning_scene_,group_,tool_frame);
-    else
-      display->clearMarkers();
-  }
 
   planning_scene::PlanningScenePtr ptr=planning_scene::PlanningScene::clone(planning_scene_);
   checker=std::make_shared<pathplan::ParallelMoveitCollisionChecker>(ptr,group_,collision_thread_,collision_distance);
@@ -205,7 +140,7 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
   {
     ROS_FATAL("Start point is  Out of bound");
     res.error_code_.val=moveit_msgs::MoveItErrorCodes::START_STATE_IN_COLLISION;
-    m_is_running=false;
+    is_running_=false;
     return false;
   }
   Eigen::VectorXd start_conf;
@@ -229,26 +164,24 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
       }
     }
     res.error_code_.val=moveit_msgs::MoveItErrorCodes::START_STATE_IN_COLLISION;
-    m_is_running=false;
+    is_running_=false;
     return false;
   }
 
 
   pathplan::NodePtr start_node=std::make_shared<pathplan::Node>(start_conf);
-  pathplan::SamplerPtr sampler = std::make_shared<pathplan::InformedSampler>(m_lb, m_ub, m_lb, m_ub);
-  pathplan::TreeSolverPtr solver=std::make_shared<pathplan::MultigoalSolver>(metrics_, checker, sampler);
-  if (!solver->config(m_nh))
+  pathplan::SamplerPtr sampler = std::make_shared<pathplan::TimeBasedInformedSampler>(lower_bounds_, upper_bounds_, lower_bounds_, upper_bounds_,max_velocity_);
+  pathplan::TreeSolverPtr solver=std::make_shared<pathplan::TimeMultigoalSolver>(metrics_, checker, sampler,max_velocity_);
+  if (!solver->config(nh_))
   {
     ROS_ERROR("Unable to configure the planner");
     res.error_code_.val=moveit_msgs::MoveItErrorCodes::INVALID_GROUP_NAME;
-    m_is_running=false;
+    is_running_=false;
     return false;
   }
-  if (use_avoidance_goal_)
-    solver->setGoalCostFunction(m_avoidance_goal_cost_fcn);
   solver->addStart(start_node);
 
-  m_queue.callAvailable();
+  queue_.callAvailable();
   bool at_least_a_goal=false;
 
   // joint goal
@@ -309,7 +242,7 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
   {
     ROS_ERROR("All goals are in collision");
     res.error_code_.val=moveit_msgs::MoveItErrorCodes::GOAL_IN_COLLISION;
-    m_is_running=false;
+    is_running_=false;
     return false;
   }
 
@@ -321,14 +254,16 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
   pathplan::PathPtr solution;
   bool found_a_solution=false;
   unsigned int iteration=0;
+  ros::WallTime plot_time=ros::WallTime::now();
+  double cost_of_first_solution;
   while((ros::WallTime::now()-start_time)<max_planning_time)
   {
     iteration++;
-    if (m_stop)
+    if (stop_)
     {
       ROS_INFO("Externally stopped");
       res.error_code_.val=moveit_msgs::MoveItErrorCodes::PREEMPTED;
-      m_is_running=false;
+      is_running_=false;
       return false;
     }
 
@@ -337,8 +272,9 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
     {
       assert(solution);
       ROS_INFO("Find a first solution (cost=%f) in %f seconds",solver->cost(),(ros::WallTime::now()-start_time).toSec());
-      ROS_DEBUG_STREAM(*solver);
       found_a_solution=true;
+      cost_of_first_solution=solver->cost();
+      ROS_INFO("path length = %f",solver->getSolution()->computeEuclideanNorm());
       refine_time = ros::WallTime::now();
     }
     if (solver->completed())
@@ -347,27 +283,34 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
       break;
     }
 
-    if (found_a_solution && ((ros::WallTime::now()-refine_time)>m_max_refining_time))
+    if (found_a_solution && ((ros::WallTime::now()-refine_time)>max_refining_time_))
     {
       ROS_INFO("Refine time expired (cost=%f) in %f seconds (%u iterations)",solver->cost(),(ros::WallTime::now()-start_time).toSec(),iteration);
       break;
+    }
+
+    if (found_a_solution)
+    {
+      if ((ros::WallTime::now()-plot_time).toSec()>15)
+      {
+        display->clearMarkers();
+        display->displayTree(solver->getStartTree());
+        plot_time=ros::WallTime::now();
+      }
     }
   }
 
   ROS_INFO_STREAM(*solver);
 
-
   if (!found_a_solution)
   {
     ROS_ERROR("unable to find a valid path");
     res.error_code_.val=moveit_msgs::MoveItErrorCodes::PLANNING_FAILED;
-    m_is_running=false;
-    if (display_flag)
-      display->displayTree(solver->getStartTree());
+    is_running_=false;
     return false;
   }
-//  if (display_flag)
-//    display->displayPath(solution);
+  ROS_INFO("solution improved from %f to %f",cost_of_first_solution,solution->cost());
+  ROS_INFO("path length = %f",solver->getSolution()->computeEuclideanNorm());
 
   if (!solver->completed())
   {
@@ -398,14 +341,14 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
   res.trajectory_.push_back(trj);
 
   res.error_code_.val=moveit_msgs::MoveItErrorCodes::SUCCESS;
-  m_is_running=false;
+  is_running_=false;
   COMMENT("ok");
 
 
   return true;
 }
 
-bool MultigoalPlanner::solve ( planning_interface::MotionPlanResponse& res )
+bool TimeBasedMultiGoalPlanner::solve ( planning_interface::MotionPlanResponse& res )
 {
   ros::WallTime start_time = ros::WallTime::now();
   planning_interface::MotionPlanDetailedResponse detailed_res;
@@ -421,14 +364,14 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanResponse& res )
   return success;
 }
 
-bool MultigoalPlanner::terminate()
+bool TimeBasedMultiGoalPlanner::terminate()
 {
-  m_stop=true;
+  stop_=true;
   ros::Time t0=ros::Time::now();
   ros::Rate lp(50);
   while (ros::ok())
   {
-    if (!m_is_running)
+    if (!is_running_)
       return true;
     lp.sleep();
     if ((ros::Time::now()-t0).toSec()>5)
@@ -440,29 +383,6 @@ bool MultigoalPlanner::terminate()
   return false;
 }
 
-void MultigoalPlanner::centroidCb(const geometry_msgs::PoseArrayConstPtr& msg)
-{
-
-  if (!use_avoidance_goal_ && !use_avoidance_metrics_)
-    return;
-  if (use_avoidance_goal_)
-    m_avoidance_goal_cost_fcn->cleanPoints();
-  if (use_avoidance_metrics_)
-    avoidance_metrics_->cleanPoints();
-  Eigen::Vector3d point;
-  for (const geometry_msgs::Pose& p: msg->poses)
-  {
-    point(0)=p.position.x;
-    point(1)=p.position.y;
-    point(2)=p.position.z;
-    if (use_avoidance_goal_)
-      m_avoidance_goal_cost_fcn->addPoint(point);
-//    ros::Duration(0.1).sleep();
-    if (use_avoidance_metrics_)
-      avoidance_metrics_->addPoint(point);
-  }
-  m_avoidance_goal_cost_fcn->publishPoints();
-}
 
 
 }  // namespace dirrt_star

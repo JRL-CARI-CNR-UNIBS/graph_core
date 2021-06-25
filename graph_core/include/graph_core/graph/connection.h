@@ -71,6 +71,10 @@ public:
   }
   ConnectionPtr clone();
 
+  Eigen::VectorXd versor() const;
+
+  bool isParallel(const ConnectionPtr& conn) const;
+
 
   friend std::ostream& operator<<(std::ostream& os, const Connection& connection);
   ~Connection();

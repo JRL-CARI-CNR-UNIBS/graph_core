@@ -69,6 +69,10 @@ bool PathPlanerManager::initialize(const moveit::core::RobotModelConstPtr& model
     {
       ptr= std::make_shared<MultigoalPlanner>(ns+"/"+p.first,p.second,model);
     }
+    else if (!type.compare("TimeBasedMultigoal"))
+    {
+      ptr= std::make_shared<TimeBasedMultiGoalPlanner>(ns+"/"+p.first,p.second,model);
+    }
     else
     {
       ROS_WARN_STREAM(ns+"/"+p.first+"/type is '"<<type<<"'. Available ones are: Multigoal. Skip this planner");
@@ -143,7 +147,10 @@ planning_interface::PlanningContextPtr PathPlanerManager::getPlanningContext(
   }
   if (!ok)
   {
-    ROS_ERROR("Planner not found for group %s.", req.group_name.c_str());
+    ROS_ERROR("Planner %s not found for group %s.", planner_id.c_str(), req.group_name.c_str());
+    ROS_ERROR("Available planners are:\n");
+    for (std::pair<std::string, std::shared_ptr<planning_interface::PlanningContext>> planner: m_planners)
+      ROS_ERROR("- planner %s, group  %s",planner.first.c_str(),planner.second->getGroupName().c_str());
     return nullptr;
   }
 
@@ -168,7 +175,8 @@ planning_interface::PlanningContextPtr PathPlanerManager::getPlanningContext(
 
 void PathPlanerManager::getPlanningAlgorithms ( std::vector< std::string >& algs ) const
 {
-  planning_interface::PlannerManager::getPlanningAlgorithms ( algs );
+  for (std::pair<std::string, std::shared_ptr<planning_interface::PlanningContext>> planner: m_planners)
+    algs.push_back(planner.first);
 }
 
 void PathPlanerManager::setPlannerConfigurations ( const planning_interface::PlannerConfigurationMap& pcs )

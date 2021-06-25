@@ -271,10 +271,10 @@ bool Path::bisection(const unsigned int &connection_idx,
 
   while (iter++ < 5 & (max_distance - min_distance) > min_length_)
   {
-    if (iter > 0)
+//    if (iter > 0)
       distance = 0.5 * (max_distance + min_distance);
-    else
-      distance = min_distance;
+//    else
+//      distance = min_distance;
 
     Eigen::VectorXd p = center + direction * distance;
     assert(p.size() == center.size());
@@ -951,14 +951,14 @@ bool Path::simplify(const double& distance)
 
   if(connections_.size()>1)
   {
-    double dist = (connections_.at(0)->getParent()->getConfiguration() - connections_.at(0)->getChild()->getConfiguration()).norm();
+    double dist = connections_.at(0)->getCost();
     if(dist < distance) reconnect_first_conn = true;
   }
 
   unsigned int ic = 1;
   while (ic < connections_.size())
   {
-    double dist = (connections_.at(ic)->getParent()->getConfiguration() - connections_.at(ic)->getChild()->getConfiguration()).norm();
+    double dist = connections_.at(ic)->getCost();
     if (dist > distance )
     {
       if(!(ic == 1 && reconnect_first_conn))
@@ -967,8 +967,20 @@ bool Path::simplify(const double& distance)
         continue;
       }
     }
-    if (checker_->checkPath(connections_.at(ic - 1)->getParent()->getConfiguration(),
-                            connections_.at(ic)->getChild()->getConfiguration()))
+
+    bool simplifiable=false;
+
+    if (connections_.at(ic-1)->isParallel(connections_.at(ic)))
+    {
+      simplifiable=true;
+    }
+    else if (checker_->checkPath(connections_.at(ic - 1)->getParent()->getConfiguration(),
+                                    connections_.at(ic)->getChild()->getConfiguration()))
+    {
+      simplifiable=true;
+    }
+
+    if (simplifiable)
     {
       simplified = true;
       double cost = metrics_->cost(connections_.at(ic - 1)->getParent(),
@@ -982,12 +994,20 @@ bool Path::simplify(const double& distance)
       connections_.insert(connections_.begin() + (ic - 1), conn);
 
       change_warp_.erase(change_warp_.begin() + ic);
-      change_warp_.at(ic - 1) = 1;
       change_slip_parent_.erase(change_slip_parent_.begin() + ic);
-      change_slip_parent_.at(ic - 1) = 1;
       change_slip_child_.erase(change_slip_child_.begin() + ic);
-      change_slip_child_.at(ic - 1) = 1;
-
+      if (ic>1)
+      {
+        change_slip_child_.at(ic - 1) = 1;
+        change_warp_.at(ic - 1) = 1;
+        change_slip_parent_.at(ic - 1) = 1;
+      }
+      else
+      {
+        change_slip_child_.at(ic - 1) = 0;
+        change_warp_.at(ic - 1) = 0;
+        change_slip_parent_.at(ic - 1) = 0;
+      }
       /*change_warp_.erase(change_warp_.begin() + ic-1);   //se da ancora problemi prova a usare questi anziche quelli sopra
       change_warp_.at(ic - 1) = 1;
       change_slip_parent_.erase(change_slip_parent_.begin() + ic-1);
@@ -995,10 +1015,6 @@ bool Path::simplify(const double& distance)
       change_slip_child_.erase(change_slip_child_.begin() + ic-1);
       change_slip_child_.at(ic - 1) = 1;*/
 
-#ifndef NO_SPIRAL
-      change_spiral_.erase(change_spiral_.begin() + ic);
-      change_spiral_.begin() + (ic - 1) = 1;
-#endif
     }
     else
       ic++;

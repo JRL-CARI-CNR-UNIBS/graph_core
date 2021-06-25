@@ -76,6 +76,18 @@ void Connection::remove()
     ROS_FATAL("child already destroied");
 
 }
+
+
+Eigen::VectorXd Connection::versor() const
+{
+  return (child_->getConfiguration() - parent_->getConfiguration()).normalized();
+}
+
+bool Connection::isParallel(const ConnectionPtr& conn) const
+{
+  return versor().dot(conn->versor())>0.9999;
+}
+
 Connection::~Connection()
 {
 }
