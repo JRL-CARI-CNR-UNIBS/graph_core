@@ -26,48 +26,38 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#include <moveit/planning_interface/planning_interface.h>
-#include <dirrt_star/multigoal_planner.h>
-#include <dirrt_star/time_planner.h>
+#include <graph_core/sampler.h>
+#include <graph_core/graph/path.h>
 
 namespace pathplan {
-namespace dirrt_star {
-class PathPlanerManager : public planning_interface::PlannerManager
+
+
+
+class TimeBasedInformedSampler: public InformedSampler
 {
-public:
-  virtual bool initialize(const robot_model::RobotModelConstPtr& model, const std::string& ns) override;
-  std::string getDescription() const override
-  {
-    return "DIRRT";
-  }
-  bool canServiceRequest(const moveit_msgs::MotionPlanRequest &req) const override;
-
-
-
-  void getPlanningAlgorithms(std::vector<std::string> &algs) const override;
-
-
-
-  void setPlannerConfigurations(const planning_interface::PlannerConfigurationMap &pcs) override;
-
-  planning_interface::PlanningContextPtr getPlanningContext(
-    const planning_scene::PlanningSceneConstPtr &planning_scene,
-    const planning_interface::MotionPlanRequest &req,
-    moveit_msgs::MoveItErrorCodes &error_code) const override;
-
-
-
 protected:
-  ros::NodeHandle m_nh;
+protected:
+  Eigen::VectorXd max_speed_;
+  Eigen::VectorXd inv_max_speed_;
+  double utopia_;
 
-  std::map< std::string, std::shared_ptr<planning_interface::PlanningContext>> m_planners;
-  moveit::core::RobotModelConstPtr m_robot_model;
-  std::string m_default_planner_config;
+
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  TimeBasedInformedSampler(const Eigen::VectorXd& start_configuration,
+                      const Eigen::VectorXd& stop_configuration,
+                      const Eigen::VectorXd& lower_bound,
+                      const Eigen::VectorXd& upper_bound,
+                      const Eigen::VectorXd& max_speed,
+                      const double& cost = std::numeric_limits<double>::infinity());
+
+  virtual Eigen::VectorXd sample();
+  Eigen::VectorXd getMaxSpeed()const{return max_speed_;};
+  virtual void setCost(const double& cost);
+  virtual bool inBounds(const Eigen::VectorXd& q);
 };
 
-//
 
-}
-}
+typedef std::shared_ptr<TimeBasedInformedSampler> TimeBasedInformedSamplerPtr;
 
+}    // namespace pathplan
