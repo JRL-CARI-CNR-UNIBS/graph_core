@@ -83,6 +83,7 @@ protected:
   Eigen::VectorXd lower_bounds_;
   Eigen::VectorXd upper_bounds_;
   Eigen::VectorXd max_velocity_;
+  double nu_;
   std::string group_;
 
   pathplan::MetricsPtr metrics_;

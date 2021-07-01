@@ -1,4 +1,3 @@
-#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -27,48 +26,43 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include <moveit/planning_interface/planning_interface.h>
-#include <dirrt_star/multigoal_planner.h>
-#include <dirrt_star/time_planner.h>
 #include <dirrt_star/hamp_time_planner.h>
+
+
 
 namespace pathplan {
 namespace dirrt_star {
-class PathPlanerManager : public planning_interface::PlannerManager
+
+HAMPTimeBasedMultiGoalPlanner::HAMPTimeBasedMultiGoalPlanner ( const std::string& name,
+                       const std::string& group,
+                       const moveit::core::RobotModelConstPtr& model ) :
+  TimeBasedMultiGoalPlanner ( name, group, model )
 {
-public:
-  virtual bool initialize(const robot_model::RobotModelConstPtr& model, const std::string& ns) override;
-  std::string getDescription() const override
+  ROS_FATAL("\n\n\n\n\n\n START HAMP");
+
+  avoidance_metrics_=std::make_shared<pathplan::AvoidanceTimeMetrics>(max_velocity_,nu_,nh_);
+  metrics_=avoidance_metrics_;
+  ROS_FATAL("\n\n\n\n\n\n START HAMP");
+}
+
+
+void HAMPTimeBasedMultiGoalPlanner::centroidCb(const geometry_msgs::PoseArrayConstPtr& msg)
+{
+
+  Eigen::Vector3d point;
+  avoidance_metrics_->cleanPoints();
+  for (const geometry_msgs::Pose& p: msg->poses)
   {
-    return "DIRRT";
+    point(0)=p.position.x;
+    point(1)=p.position.y;
+    point(2)=p.position.z;
+    avoidance_metrics_->addPoint(point);
   }
-  bool canServiceRequest(const moveit_msgs::MotionPlanRequest &req) const override;
-
-
-
-  void getPlanningAlgorithms(std::vector<std::string> &algs) const override;
-
-
-
-  void setPlannerConfigurations(const planning_interface::PlannerConfigurationMap &pcs) override;
-
-  planning_interface::PlanningContextPtr getPlanningContext(
-    const planning_scene::PlanningSceneConstPtr &planning_scene,
-    const planning_interface::MotionPlanRequest &req,
-    moveit_msgs::MoveItErrorCodes &error_code) const override;
-
-
-
-protected:
-  ros::NodeHandle m_nh;
-
-  std::map< std::string, std::shared_ptr<planning_interface::PlanningContext>> m_planners;
-  moveit::core::RobotModelConstPtr m_robot_model;
-  std::string m_default_planner_config;
-};
-
-//
-
-}
 }
 
+
+
+
+
+}  // namespace dirrt_star
+}  // namespace pathplan

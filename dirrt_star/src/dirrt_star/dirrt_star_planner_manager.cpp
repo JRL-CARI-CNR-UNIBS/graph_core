@@ -73,9 +73,13 @@ bool PathPlanerManager::initialize(const moveit::core::RobotModelConstPtr& model
     {
       ptr= std::make_shared<TimeBasedMultiGoalPlanner>(ns+"/"+p.first,p.second,model);
     }
+    else if (!type.compare("HAMPTimeBasedMultigoal"))
+    {
+      ptr= std::make_shared<HAMPTimeBasedMultiGoalPlanner>(ns+"/"+p.first,p.second,model);
+    }
     else
     {
-      ROS_WARN_STREAM(ns+"/"+p.first+"/type is '"<<type<<"'. Available ones are: Multigoal. Skip this planner");
+      ROS_WARN_STREAM(ns+"/"+p.first+"/type is '"<<type<<"'. Available ones are: Multigoal,TimeBasedMultigoal, HAMPTimeBasedMultigoal. Skip this planner");
       continue;
     }
 

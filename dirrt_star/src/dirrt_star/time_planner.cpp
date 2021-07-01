@@ -34,8 +34,8 @@ namespace pathplan {
 namespace dirrt_star {
 
 TimeBasedMultiGoalPlanner::TimeBasedMultiGoalPlanner ( const std::string& name,
-                       const std::string& group,
-                       const moveit::core::RobotModelConstPtr& model ) :
+                                                       const std::string& group,
+                                                       const moveit::core::RobotModelConstPtr& model ) :
   PlanningContext ( name, group ),
   group_(group)
 {
@@ -81,7 +81,12 @@ TimeBasedMultiGoalPlanner::TimeBasedMultiGoalPlanner ( const std::string& name,
   }
 
 
-   metrics_=std::make_shared<pathplan::TimeBasedMetrics>(max_velocity_);
+  if (!nh_.getParam("norm2_weigth",nu_))
+  {
+    ROS_DEBUG("norm2_weigth is not set, default=1e-2");
+    nu_=1e-2;
+  }
+  metrics_=std::make_shared<pathplan::TimeBasedMetrics>(max_velocity_,nu_);
 
 
   COMMENT("created Time base planner");

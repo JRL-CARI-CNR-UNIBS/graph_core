@@ -27,48 +27,28 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include <moveit/planning_interface/planning_interface.h>
-#include <dirrt_star/multigoal_planner.h>
 #include <dirrt_star/time_planner.h>
-#include <dirrt_star/hamp_time_planner.h>
+#include <graph_core/avoidance_time_metrics.h>
+
 
 namespace pathplan {
 namespace dirrt_star {
-class PathPlanerManager : public planning_interface::PlannerManager
+
+class HAMPTimeBasedMultiGoalPlanner: public TimeBasedMultiGoalPlanner
 {
 public:
-  virtual bool initialize(const robot_model::RobotModelConstPtr& model, const std::string& ns) override;
-  std::string getDescription() const override
-  {
-    return "DIRRT";
-  }
-  bool canServiceRequest(const moveit_msgs::MotionPlanRequest &req) const override;
+  HAMPTimeBasedMultiGoalPlanner ( const std::string& name,
+                const std::string& group,
+                const moveit::core::RobotModelConstPtr& model
+              );
 
-
-
-  void getPlanningAlgorithms(std::vector<std::string> &algs) const override;
-
-
-
-  void setPlannerConfigurations(const planning_interface::PlannerConfigurationMap &pcs) override;
-
-  planning_interface::PlanningContextPtr getPlanningContext(
-    const planning_scene::PlanningSceneConstPtr &planning_scene,
-    const planning_interface::MotionPlanRequest &req,
-    moveit_msgs::MoveItErrorCodes &error_code) const override;
-
-
+  void centroidCb(const geometry_msgs::PoseArrayConstPtr& msg);
+  pathplan::AvoidanceTimeMetricsPtr avoidance_metrics_;
 
 protected:
-  ros::NodeHandle m_nh;
 
-  std::map< std::string, std::shared_ptr<planning_interface::PlanningContext>> m_planners;
-  moveit::core::RobotModelConstPtr m_robot_model;
-  std::string m_default_planner_config;
+
 };
 
-//
-
 }
 }
-

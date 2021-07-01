@@ -18,12 +18,13 @@ find_package(catkin REQUIRED COMPONENTS
   rviz_visual_tools
   eigen_conversions
   geometry_msgs
+  velocity_scaling_iso15066
   )
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES graph_core
-  CATKIN_DEPENDS actionlib moveit_core moveit_ros_planning moveit_ros_planning_interface roscpp rosdyn_core human_probablistic_occupancy moveit_visual_tools rviz_visual_tools eigen_conversions geometry_msgs
+  CATKIN_DEPENDS actionlib moveit_core moveit_ros_planning moveit_ros_planning_interface roscpp rosdyn_core human_probablistic_occupancy moveit_visual_tools rviz_visual_tools eigen_conversions geometry_msgs velocity_scaling_iso15066
   DEPENDS
   )
 include_directories(
@@ -35,6 +36,7 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/goal_cost_function.cpp
   src/${PROJECT_NAME}/avoidance_goal_cost_function.cpp
   src/${PROJECT_NAME}/avoidance_metrics.cpp
+  src/${PROJECT_NAME}/avoidance_time_metrics.cpp
   src/${PROJECT_NAME}/occupancy_metrics.cpp
   src/${PROJECT_NAME}/time_metrics.cpp
   src/${PROJECT_NAME}/sampler.cpp
