@@ -88,6 +88,11 @@ TimeBasedMultiGoalPlanner::TimeBasedMultiGoalPlanner ( const std::string& name,
   }
   metrics_=std::make_shared<pathplan::TimeBasedMetrics>(max_velocity_,nu_);
 
+  if (!nh_.getParam("plot_interval",plot_interval_))
+  {
+    ROS_DEBUG("plot_interval is not set, default=1e-2");
+    plot_interval_=1;
+  }
 
   COMMENT("created Time base planner");
 
@@ -296,10 +301,12 @@ bool TimeBasedMultiGoalPlanner::solve ( planning_interface::MotionPlanDetailedRe
 
     if (found_a_solution)
     {
-      if ((ros::WallTime::now()-plot_time).toSec()>5)
+      ROS_DEBUG_THROTTLE(0.5,"solution improved from %f to %f",cost_of_first_solution,solution->cost());
+      if ((ros::WallTime::now()-plot_time).toSec()>plot_interval_)
       {
         display->clearMarkers();
         display->displayTree(solver->getStartTree());
+        display->displayPath(solution,"pathplan",{0,1,0,1});
         plot_time=ros::WallTime::now();
       }
     }

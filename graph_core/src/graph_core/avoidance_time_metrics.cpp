@@ -91,31 +91,32 @@ double AvoidanceTimeMetrics::cost(const Eigen::VectorXd& configuration1,
                                   const Eigen::VectorXd& configuration2)
 {
   double nominal_time = (inv_max_speed_.cwiseProduct(configuration1 - configuration2)).cwiseAbs().maxCoeff()+nu_*(configuration2-configuration1).norm();
-  ROS_FATAL("nominal_time = %f",nominal_time);
   if (nominal_time==0.0)
     return 0.0;
 
   Eigen::VectorXd nominal_velocity= (configuration1 - configuration2)/nominal_time;
-  ROS_FATAL_STREAM("nominal_velocity = "<<nominal_velocity.transpose());
-  ROS_FATAL_STREAM("max_velocity = "<<max_speed_.transpose());
-  ROS_FATAL_STREAM("inv max_velocity = "<<inv_max_speed_.transpose());
 
   double length = (configuration1 - configuration2).norm();
   double cost=0;
   unsigned int nsteps = std::ceil(length / step_);
   double inv_nsteps = 1.0 / nsteps;
   double segment_time = nominal_time / nsteps;
-  ROS_FATAL("length=%f, segments %u, step length = %f",length,nsteps,step_);
 
-  for (unsigned int istep = 0; istep <= nsteps; istep++)
+  for (unsigned int istep = 0; istep < nsteps; istep++)
   {
-    Eigen::VectorXd q = configuration1 + (configuration2 - configuration1) * inv_nsteps * istep;
+    Eigen::VectorXd q = configuration1 + (configuration2 - configuration1) * inv_nsteps * (istep+0.5);
 
     double scaling=ssm_->computeScaling(q,nominal_velocity);
-    ROS_FATAL("step %u, scaling %f",istep,scaling);
     cost+=segment_time/(scaling+1e-6); //avoid division by zero
   }
   return cost;
+}
+
+
+double AvoidanceTimeMetrics::utopia(const Eigen::VectorXd& configuration1,
+                                  const Eigen::VectorXd& configuration2)
+{
+  return TimeBasedMetrics::utopia(configuration1,configuration2);
 }
 
 MetricsPtr AvoidanceTimeMetrics::clone()

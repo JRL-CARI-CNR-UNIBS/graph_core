@@ -199,6 +199,7 @@ bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node, const double &m
     tic_cycle = ros::WallTime::now();
 
     NodePtr tmp_node;
+    ROS_DEBUG("calling extend");
     success = extendToNode(node, tmp_node);
     if (success)
     {

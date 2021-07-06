@@ -48,7 +48,7 @@ double TimeBasedMetrics::cost(const Eigen::VectorXd& configuration1,
 
 double TimeBasedMetrics::utopia(const Eigen::VectorXd &configuration1, const Eigen::VectorXd &configuration2)
 {
-  return cost(configuration1,configuration2);
+  return TimeBasedMetrics::cost(configuration1,configuration2);
 }
 
 

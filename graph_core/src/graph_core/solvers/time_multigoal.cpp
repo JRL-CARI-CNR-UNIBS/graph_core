@@ -55,8 +55,9 @@ bool TimeMultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_ti
     return false;
   }
 
+  ROS_DEBUG("compute goal cost");
   double goal_cost=goal_cost_fcn_->cost(goal_node);
-
+  ROS_DEBUG("check utopia");
   double utopia=goal_cost+metrics_->utopia(goal_node,start_tree_->getRoot());
   if ((utopia)>cost_)
   {
@@ -78,10 +79,13 @@ bool TimeMultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_ti
   TreePtr goal_tree;
   GoalStatus status;
   NodePtr new_node;
+  ROS_DEBUG("check direct connection");
 
   unsigned int index=goal_nodes_.size();
   if (start_tree_->connectToNode(goal_node, new_node,max_time))
   {
+
+    ROS_DEBUG("there is direct connection");
     solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node), metrics_, checker_);
     solution->setTree(start_tree_);
 
@@ -131,6 +135,8 @@ bool TimeMultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_ti
     ROS_DEBUG_STREAM("Goal "<<goal_node->getConfiguration().transpose() << " is the best one with a cost = "  << cost);
 
   init_=true;
+
+
   return true;
 }
 

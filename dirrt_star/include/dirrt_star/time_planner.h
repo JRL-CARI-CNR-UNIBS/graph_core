@@ -93,6 +93,7 @@ protected:
   double collision_thread_=5;
   bool is_running_=false;
   bool stop_=false;
+  double plot_interval_=5;
 
   std::shared_ptr<pathplan::Display> display;
 
