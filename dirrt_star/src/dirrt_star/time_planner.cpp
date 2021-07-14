@@ -192,6 +192,7 @@ bool TimeBasedMultiGoalPlanner::solve ( planning_interface::MotionPlanDetailedRe
   solver->addStart(start_node);
 
   queue_.callAvailable();
+
   bool at_least_a_goal=false;
 
   // joint goal

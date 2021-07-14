@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <dirrt_star/multigoal_planner.h>
 #include <dirrt_star/time_planner.h>
 #include <dirrt_star/hamp_time_planner.h>
+#include <dirrt_star/probabilist_hamp_time_planner.h>
 
 namespace pathplan {
 namespace dirrt_star {

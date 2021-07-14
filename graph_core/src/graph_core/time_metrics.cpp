@@ -43,6 +43,7 @@ double TimeBasedMetrics::cost(const Eigen::VectorXd& configuration1,
                      const Eigen::VectorXd& configuration2)
 {
   double cost = (inv_max_speed_.cwiseProduct(configuration1 - configuration2)).cwiseAbs().maxCoeff()+nu_*(configuration2-configuration1).norm();
+  ROS_INFO_THROTTLE(1,"hey");
   return cost;
 }
 

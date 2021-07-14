@@ -1,4 +1,3 @@
-#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -26,49 +25,41 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/time_metrics.h>
-#include <rosdyn_core/primitives.h>
-#include <visualization_msgs/MarkerArray.h>
-#include <eigen_conversions/eigen_msg.h>
-#include <velocity_scaling_iso15066/ssm15066.h>
+#include <graph_core/avoidance_probabilistic_time_metrics.h>
+
 
 namespace pathplan
 {
-class AvoidanceTimeMetrics;
-typedef std::shared_ptr<AvoidanceTimeMetrics> AvoidanceTimeMetricsPtr;
 
-// Avoidance metrics
-class AvoidanceTimeMetrics: public TimeBasedMetrics
+ProbabilistcAvoidanceTimeMetrics::ProbabilistcAvoidanceTimeMetrics(const Eigen::VectorXd &max_speed,
+                                           const double &nu,
+                                           const ros::NodeHandle &nh):
+  AvoidanceTimeMetrics(max_speed,nu,nh)
 {
-protected:
-  double step_ = 0.1;
-  ros::NodeHandle nh_;
-  rosdyn::ChainPtr chain_;
+  probabilistic_ssm_=std::make_shared<ssm15066::ProbabilisticSSM>(chain_,nh);
+  ssm_=probabilistic_ssm_;
+  occupancy_.resize(0);
+}
 
-  ssm15066::DeterministicSSMPtr ssm_;
+void ProbabilistcAvoidanceTimeMetrics::cleanPoints()
+{
+  points_.resize(3,0);
+  occupancy_.resize(0);
+}
 
-  std::vector<std::string> links_;
-  std::string base_frame_;
+void ProbabilistcAvoidanceTimeMetrics::addPointOccupancy(const Eigen::Vector3d &point, const double& occupancy)
+{
+  points_.conservativeResize(3, points_.cols()+1);
+  points_.col(points_.cols()-1) = point;
+  occupancy_.conservativeResize(points_.cols()+1,1);
+  occupancy_(points_.cols()-1)=std::max(0.0,std::min(occupancy,1.0));
+  probabilistic_ssm_->setPointCloud(points_,occupancy_);
+}
 
-  Eigen::Matrix<double,3,-1> points_;
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  AvoidanceTimeMetrics(const Eigen::VectorXd& max_speed,
-                       const double& nu,
-                       const ros::NodeHandle& nh);
+MetricsPtr ProbabilistcAvoidanceTimeMetrics::clone()
+{
+  return std::make_shared<ProbabilistcAvoidanceTimeMetrics>(max_speed_,nu_,nh_);
+}
 
-  void addPoint(const Eigen::Vector3d& point);
-  void cleanPoints();
-
-  virtual double cost(const Eigen::VectorXd& configuration1,
-                      const Eigen::VectorXd& configuration2);
-  virtual double utopia(const Eigen::VectorXd& configuration1,
-                      const Eigen::VectorXd& configuration2);
-
-  virtual MetricsPtr clone();
-
-  const std::string& getBaseFrame()const {return base_frame_;}
-
-};
 
 }

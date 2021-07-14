@@ -26,42 +26,36 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include <dirrt_star/hamp_time_planner.h>
-
+#include <dirrt_star/probabilist_hamp_time_planner.h>
+#include <sensor_msgs/PointCloud.h>
 
 namespace pathplan {
 namespace dirrt_star {
 
-HAMPTimeBasedMultiGoalPlanner::HAMPTimeBasedMultiGoalPlanner ( const std::string& name,
+ProbabilisticHAMPTimeBasedMultiGoalPlanner::ProbabilisticHAMPTimeBasedMultiGoalPlanner ( const std::string& name,
                                                                const std::string& group,
                                                                const moveit::core::RobotModelConstPtr& model ) :
-  TimeBasedMultiGoalPlanner ( name, group, model )
+  HAMPTimeBasedMultiGoalPlanner ( name, group, model )
 {
-  avoidance_metrics_=std::make_shared<pathplan::AvoidanceTimeMetrics>(max_velocity_,nu_,nh_);
-  metrics_=avoidance_metrics_;
-  world_frame_=avoidance_metrics_->getBaseFrame();
-  T_word_camera.setIdentity();
-  camera_frame_=world_frame_;
-
-  subscribeTopic();
+  probabilistic_avoidance_metrics_=std::make_shared<pathplan::ProbabilistcAvoidanceTimeMetrics>(max_velocity_,nu_,nh_);
+  avoidance_metrics_=probabilistic_avoidance_metrics_;
 }
 
-void HAMPTimeBasedMultiGoalPlanner::subscribeTopic()
+void ProbabilisticHAMPTimeBasedMultiGoalPlanner::subscribeTopic()
 {
   std::string poses_topic;
-  if (!nh_.getParam("poses_topic",poses_topic))
+  if (!nh_.getParam("occupancy_topic",poses_topic))
   {
-    ROS_DEBUG("poses_topic is not defined, using /poses");
-    poses_topic="/poses";
+    ROS_DEBUG("occupancy_topic is not defined, using /occupancy");
+    poses_topic="/occupancy";
   }
   ROS_FATAL("subscribe topic %s",poses_topic.c_str());
 
-  poses_sub=nh_.subscribe<geometry_msgs::PoseArray>(poses_topic,2,&HAMPTimeBasedMultiGoalPlanner::posesCallback,this);
+  poses_sub=nh_.subscribe<sensor_msgs::PointCloud>(poses_topic,2,&ProbabilisticHAMPTimeBasedMultiGoalPlanner::occupancyCallback,this);
 
 }
 
-
-void HAMPTimeBasedMultiGoalPlanner::posesCallback(const geometry_msgs::PoseArrayConstPtr& msg)
+void ProbabilisticHAMPTimeBasedMultiGoalPlanner::occupancyCallback(const sensor_msgs::PointCloudConstPtr& msg)
 {
   Eigen::Vector3d point;
   avoidance_metrics_->cleanPoints();
@@ -81,15 +75,41 @@ void HAMPTimeBasedMultiGoalPlanner::posesCallback(const geometry_msgs::PoseArray
     tf::transformTFToEigen(transform,T_word_camera);
     camera_frame_=msg->header.frame_id;
   }
-  ROS_INFO_THROTTLE(1,"add %zu points", msg->poses.size());
-  for (const geometry_msgs::Pose& p: msg->poses)
+  size_t npoints=msg->points.size();
+
+  int ichannel=-1;
+
+  if (msg->channels.size()==0)
   {
-    point(0)=p.position.x;
-    point(1)=p.position.y;
-    point(2)=p.position.z;
-    avoidance_metrics_->addPoint(point);
+    ROS_ERROR_THROTTLE(1,"%s: there are no channels in the point cloud",name_.c_str());
+    return;
+  }
+  for (size_t ich=0;ich<msg->channels.size();ich++)
+  {
+    if (msg->channels.at(ich).name=="occupancy")
+    {
+      ichannel=ich;
+      break;
+    }
+  }
+  if (ichannel<0)
+  {
+    ROS_ERROR_THROTTLE(1,"%s: there are no channels in the point cloud named 'occupancy'",name_.c_str());
+    return;
+  }
+
+  ROS_INFO_THROTTLE(1,"add %zu points", npoints);
+  for (size_t idx=0;idx<npoints;idx++)
+  {
+    point(0)=msg->points.at(idx).x;
+    point(1)=msg->points.at(idx).y;
+    point(2)=msg->points.at(idx).z;
+    double occupancy=msg->channels.at(0).values.at(idx);
+    probabilistic_avoidance_metrics_->addPointOccupancy(point,occupancy);
   }
 }
+
+
 
 
 }  // namespace dirrt_star

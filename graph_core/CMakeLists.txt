@@ -37,6 +37,7 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/avoidance_goal_cost_function.cpp
   src/${PROJECT_NAME}/avoidance_metrics.cpp
   src/${PROJECT_NAME}/avoidance_time_metrics.cpp
+  src/${PROJECT_NAME}/avoidance_probabilistic_time_metrics.cpp
   src/${PROJECT_NAME}/occupancy_metrics.cpp
   src/${PROJECT_NAME}/time_metrics.cpp
   src/${PROJECT_NAME}/sampler.cpp

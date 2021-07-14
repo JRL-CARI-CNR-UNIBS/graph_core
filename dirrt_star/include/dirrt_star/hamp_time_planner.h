@@ -29,7 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <dirrt_star/time_planner.h>
 #include <graph_core/avoidance_time_metrics.h>
-
+#include <tf/transform_listener.h>
+#include <tf_conversions/tf_eigen.h>
 
 namespace pathplan {
 namespace dirrt_star {
@@ -42,12 +43,17 @@ public:
                 const moveit::core::RobotModelConstPtr& model
               );
 
-  void centroidCb(const geometry_msgs::PoseArrayConstPtr& msg);
-  pathplan::AvoidanceTimeMetricsPtr avoidance_metrics_;
-
 protected:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  tf::TransformListener listener_;
+  std::string camera_frame_;
+  std::string world_frame_;
+  Eigen::Affine3d T_word_camera;
+  ros::Subscriber poses_sub;
 
-
+  void posesCallback(const geometry_msgs::PoseArrayConstPtr& msg);
+  pathplan::AvoidanceTimeMetricsPtr avoidance_metrics_;
+  virtual void subscribeTopic();
 };
 
 }

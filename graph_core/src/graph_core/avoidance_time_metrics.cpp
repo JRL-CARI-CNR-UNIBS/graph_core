@@ -40,9 +40,9 @@ AvoidanceTimeMetrics::AvoidanceTimeMetrics(const Eigen::VectorXd &max_speed,
 
   urdf::Model model;
   model.initParam("robot_description");
-  std::string base_frame = "world";
+  base_frame_ = "world";
   std::string tool_frame = "tip";
-  if (!nh_.getParam("base_frame", base_frame))
+  if (!nh_.getParam("base_frame", base_frame_))
   {
     ROS_ERROR("%s/base_frame not defined", nh_.getNamespace().c_str());
     throw std::invalid_argument("base_frame is not defined");
@@ -61,7 +61,7 @@ AvoidanceTimeMetrics::AvoidanceTimeMetrics(const Eigen::VectorXd &max_speed,
   Eigen::Vector3d grav;
   grav << 0, 0, -9.806;
 
-  chain_ = rosdyn::createChain(model, base_frame, tool_frame, grav);
+  chain_ = rosdyn::createChain(model, base_frame_, tool_frame, grav);
 
   if (!nh_.getParam("links", links_))
   {
@@ -72,7 +72,7 @@ AvoidanceTimeMetrics::AvoidanceTimeMetrics(const Eigen::VectorXd &max_speed,
     for (const std::string& s: links_)
       ROS_INFO("link %s",s.c_str());
 
-  ssm_=std::make_shared<ssm15066::DeterministicSSM>(chain_);
+  ssm_=std::make_shared<ssm15066::DeterministicSSM>(chain_,nh);
 
   points_.resize(3,0);
 }
@@ -85,6 +85,7 @@ void AvoidanceTimeMetrics::addPoint(const Eigen::Vector3d &point)
 {
   points_.conservativeResize(3, points_.cols()+1);
   points_.col(points_.cols()-1) = point;
+  ssm_->setPointCloud(points_);
 }
 
 double AvoidanceTimeMetrics::cost(const Eigen::VectorXd& configuration1,

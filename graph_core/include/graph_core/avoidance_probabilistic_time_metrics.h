@@ -26,48 +26,31 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/time_metrics.h>
-#include <rosdyn_core/primitives.h>
-#include <visualization_msgs/MarkerArray.h>
-#include <eigen_conversions/eigen_msg.h>
+#include <graph_core/avoidance_time_metrics.h>
 #include <velocity_scaling_iso15066/ssm15066.h>
 
 namespace pathplan
 {
-class AvoidanceTimeMetrics;
-typedef std::shared_ptr<AvoidanceTimeMetrics> AvoidanceTimeMetricsPtr;
+class ProbabilistcAvoidanceTimeMetrics;
+typedef std::shared_ptr<ProbabilistcAvoidanceTimeMetrics> ProbabilistcAvoidanceTimeMetricstr;
 
 // Avoidance metrics
-class AvoidanceTimeMetrics: public TimeBasedMetrics
+class ProbabilistcAvoidanceTimeMetrics: public AvoidanceTimeMetrics
 {
 protected:
-  double step_ = 0.1;
-  ros::NodeHandle nh_;
-  rosdyn::ChainPtr chain_;
 
-  ssm15066::DeterministicSSMPtr ssm_;
-
-  std::vector<std::string> links_;
-  std::string base_frame_;
-
-  Eigen::Matrix<double,3,-1> points_;
+  ssm15066::ProbabilisticSSMPtr probabilistic_ssm_;
+  Eigen::VectorXd occupancy_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  AvoidanceTimeMetrics(const Eigen::VectorXd& max_speed,
+  ProbabilistcAvoidanceTimeMetrics(const Eigen::VectorXd& max_speed,
                        const double& nu,
                        const ros::NodeHandle& nh);
 
-  void addPoint(const Eigen::Vector3d& point);
+  void addPointOccupancy(const Eigen::Vector3d& point, const double& occupancy);
   void cleanPoints();
 
-  virtual double cost(const Eigen::VectorXd& configuration1,
-                      const Eigen::VectorXd& configuration2);
-  virtual double utopia(const Eigen::VectorXd& configuration1,
-                      const Eigen::VectorXd& configuration2);
-
   virtual MetricsPtr clone();
-
-  const std::string& getBaseFrame()const {return base_frame_;}
 
 };
 

@@ -27,6 +27,7 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/multigoal_planner.cpp
   src/${PROJECT_NAME}/time_planner.cpp
   src/${PROJECT_NAME}/hamp_time_planner.cpp
+  src/${PROJECT_NAME}/probabilist_hamp_time_planner.cpp
   src/${PROJECT_NAME}/dirrt_star_planner_manager.cpp
 )
 
