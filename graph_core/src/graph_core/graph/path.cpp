@@ -59,6 +59,46 @@ Path::Path(std::vector<ConnectionPtr> connections,
 
 }
 
+Path::Path(std::vector<NodePtr> nodes,
+           const MetricsPtr& metrics,
+           const CollisionCheckerPtr& checker):
+  metrics_(metrics),
+  checker_(checker)
+{
+  assert(nodes_.size() > 0);
+
+  connections_.clear();
+  cost_ = 0;
+  for(unsigned int i=0;i<nodes.size()-1;i++)
+  {
+    NodePtr parent = nodes.at(i);
+    NodePtr child  = nodes.at(i+1);
+
+    double cost = metrics->cost(parent,child);
+
+    ConnectionPtr conn = std::make_shared<Connection>(parent,child);
+    conn->setCost(cost);
+    conn->add();
+
+    connections_.push_back(conn);
+
+    cost_ += cost;
+    change_warp_.push_back(true);
+    change_slip_child_.push_back(true);
+    change_slip_parent_.push_back(true);
+#ifdef NO_SPIRAL
+    change_spiral_.push_back(true);
+#endif
+  }
+
+  change_warp_.at(0) = false;
+  change_slip_child_.at(0) = false;
+  change_slip_parent_.at(0) = false;
+#ifdef NO_SPIRAL
+  change_spiral_.at(0) = false;
+#endif
+
+}
 
 PathPtr Path::clone()
 {
