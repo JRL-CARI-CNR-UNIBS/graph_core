@@ -74,9 +74,8 @@ Path::Path(std::vector<NodePtr> nodes,
     NodePtr parent = nodes.at(i);
     NodePtr child  = nodes.at(i+1);
 
-    double cost = metrics->cost(parent,child);
-
     ConnectionPtr conn = std::make_shared<Connection>(parent,child);
+    double cost = metrics->cost(parent,child);
     conn->setCost(cost);
     conn->add();
 
