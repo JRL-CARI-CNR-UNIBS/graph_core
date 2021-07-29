@@ -202,6 +202,7 @@ bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node, const double &m
 //    tic_cycle = ros::WallTime::now();
 
     NodePtr tmp_node;
+    ROS_DEBUG("calling extend");
     success = extendToNode(node, tmp_node);
     if (success)
     {
@@ -246,7 +247,7 @@ bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire)
 
   bool improved = false;
 
-  ROS_DEBUG("try to find a better parent between %zu nodes", near_nodes.size());
+  //ROS_DEBUG("try to find a better parent between %zu nodes", near_nodes.size());
   for (const NodePtr& node : near_nodes)
   {
     if (node == nearest_node)
@@ -278,7 +279,7 @@ bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire)
     improved = true;
   }
 
-  ROS_DEBUG("try to find a better child between %zu nodes", near_nodes.size());
+  //ROS_DEBUG("try to find a better child between %zu nodes", near_nodes.size());
   for (NodePtr& n : near_nodes)
   {
     if (n == new_node)

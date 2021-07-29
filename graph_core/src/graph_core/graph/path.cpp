@@ -1021,12 +1021,14 @@ bool Path::simplify(const double& distance)
       connections_.insert(connections_.begin() + (ic - 1), conn);
 
       change_warp_.erase(change_warp_.begin() + ic);
-      change_warp_.at(ic - 1) = 1;
       change_slip_parent_.erase(change_slip_parent_.begin() + ic);
-      change_slip_parent_.at(ic - 1) = 1;
       change_slip_child_.erase(change_slip_child_.begin() + ic);
-      change_slip_child_.at(ic - 1) = 1;
-
+      if (ic>1)
+      {
+        change_slip_child_.at(ic - 1) = 1;
+        change_warp_.at(ic - 1) = 1;
+        change_slip_parent_.at(ic - 1) = 1;
+      }
       /*change_warp_.erase(change_warp_.begin() + ic-1);   //se da ancora problemi prova a usare questi anziche quelli sopra
       change_warp_.at(ic - 1) = 1;
       change_slip_parent_.erase(change_slip_parent_.begin() + ic-1);

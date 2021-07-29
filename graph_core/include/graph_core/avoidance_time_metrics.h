@@ -26,50 +26,49 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <graph_core/time_metrics.h>
+#include <rosdyn_core/primitives.h>
+#include <visualization_msgs/MarkerArray.h>
+#include <eigen_conversions/eigen_msg.h>
+#include <velocity_scaling_iso15066/ssm15066.h>
 
-#include <moveit/planning_interface/planning_interface.h>
-#include <dirrt_star/multigoal_planner.h>
-#include <dirrt_star/time_planner.h>
-#include <dirrt_star/hamp_time_planner.h>
-#include <dirrt_star/probabilist_hamp_time_planner.h>
-
-namespace pathplan {
-namespace dirrt_star {
-class PathPlanerManager : public planning_interface::PlannerManager
+namespace pathplan
 {
-public:
-  virtual bool initialize(const robot_model::RobotModelConstPtr& model, const std::string& ns) override;
-  std::string getDescription() const override
-  {
-    return "DIRRT";
-  }
-  bool canServiceRequest(const moveit_msgs::MotionPlanRequest &req) const override;
+class AvoidanceTimeMetrics;
+typedef std::shared_ptr<AvoidanceTimeMetrics> AvoidanceTimeMetricsPtr;
 
-
-
-  void getPlanningAlgorithms(std::vector<std::string> &algs) const override;
-
-
-
-  void setPlannerConfigurations(const planning_interface::PlannerConfigurationMap &pcs) override;
-
-  planning_interface::PlanningContextPtr getPlanningContext(
-    const planning_scene::PlanningSceneConstPtr &planning_scene,
-    const planning_interface::MotionPlanRequest &req,
-    moveit_msgs::MoveItErrorCodes &error_code) const override;
-
-
-
+// Avoidance metrics
+class AvoidanceTimeMetrics: public TimeBasedMetrics
+{
 protected:
-  ros::NodeHandle m_nh;
+  double step_ = 0.1;
+  ros::NodeHandle nh_;
+  rosdyn::ChainPtr chain_;
 
-  std::map< std::string, std::shared_ptr<planning_interface::PlanningContext>> m_planners;
-  moveit::core::RobotModelConstPtr m_robot_model;
-  std::string m_default_planner_config;
+  ssm15066::DeterministicSSMPtr ssm_;
+
+  std::vector<std::string> links_;
+  std::string base_frame_;
+
+  Eigen::Matrix<double,3,-1> points_;
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  AvoidanceTimeMetrics(const Eigen::VectorXd& max_speed,
+                       const double& nu,
+                       const ros::NodeHandle& nh);
+
+  void addPoint(const Eigen::Vector3d& point);
+  void cleanPoints();
+
+  virtual double cost(const Eigen::VectorXd& configuration1,
+                      const Eigen::VectorXd& configuration2);
+  virtual double utopia(const Eigen::VectorXd& configuration1,
+                      const Eigen::VectorXd& configuration2);
+
+  virtual MetricsPtr clone();
+
+  const std::string& getBaseFrame()const {return base_frame_;}
+
 };
 
-//
-
 }
-}
-

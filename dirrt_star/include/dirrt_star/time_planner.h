@@ -30,11 +30,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <moveit/planning_interface/planning_interface.h>
 #include <moveit/robot_state/conversions.h>
 #include <moveit/planning_scene/planning_scene.h>
-#include <graph_core/solvers/multigoal.h>
+#include <graph_core/solvers/time_multigoal.h>
 #include <graph_core/solvers/path_solver.h>
-#include <graph_core/metrics.h>
-#include <graph_core/avoidance_goal_cost_function.h>
-#include <graph_core/avoidance_metrics.h>
+#include <graph_core/time_metrics.h>
+#include <graph_core/time_sampler.h>
 #include <graph_core/parallel_moveit_collision_checker.h>
 #include <graph_core/tube_informed_sampler.h>
 #include <rosparam_utilities/rosparam_utilities.h>
@@ -53,10 +52,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan {
 namespace dirrt_star {
 
-class MultigoalPlanner: public planning_interface::PlanningContext
+class TimeBasedMultiGoalPlanner: public planning_interface::PlanningContext
 {
 public:
-  MultigoalPlanner ( const std::string& name,
+  TimeBasedMultiGoalPlanner ( const std::string& name,
                 const std::string& group,
                 const moveit::core::RobotModelConstPtr& model
               );
@@ -72,40 +71,31 @@ public:
   /** \brief Clear the data structures used by the planner */
   virtual void clear() override;
 
-  void centroidCb(const geometry_msgs::PoseArrayConstPtr& msg);
-
 protected:
   moveit::core::RobotModelConstPtr robot_model_;
-  //planning_scene::PlanningSceneConstPtr pl
-  ros::NodeHandle m_nh;
-  std::shared_ptr<pathplan::Display> display;
+  ros::NodeHandle nh_;
 
-  ros::WallDuration m_max_refining_time;
-  ros::CallbackQueue m_queue;
+  ros::WallDuration max_refining_time_;
+  ros::CallbackQueue queue_;
 
-  bool use_avoidance_goal_=false;
-  bool use_avoidance_metrics_=false;
-  unsigned int m_dof;
+  unsigned int dof_;
   std::vector<std::string> joint_names_;
-  Eigen::VectorXd m_lb;
-  Eigen::VectorXd m_ub;
-  Eigen::VectorXd m_max_speed_;
+  Eigen::VectorXd lower_bounds_;
+  Eigen::VectorXd upper_bounds_;
+  Eigen::VectorXd max_velocity_;
+  double nu_;
   std::string group_;
-  std::string tool_frame;
-  bool display_flag=false;;
 
   pathplan::MetricsPtr metrics_;
-  pathplan::AvoidanceMetricsPtr avoidance_metrics_;
-  pathplan::AvoidanceGoalCostFunctionPtr m_avoidance_goal_cost_fcn;
   pathplan::CollisionCheckerPtr checker;
-
-  ros::Subscriber m_centroid_sub;
 
   double collision_distance=0.04;
   double collision_thread_=5;
-  bool m_is_running=false;
-  bool m_stop=false;
+  bool is_running_=false;
+  bool stop_=false;
+  double plot_interval_=5;
 
+  std::shared_ptr<pathplan::Display> display;
 
 };
 

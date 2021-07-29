@@ -1,6 +1,6 @@
-#pragma once
 /*
-Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
+Copyright (c) 2020, JRL-CARI CNR-STIIMA/UNIBS
+Manuel Beschi manuel.beschi@unibs.it
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,50 +26,30 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#pragma once
 
-#include <moveit/planning_interface/planning_interface.h>
-#include <dirrt_star/multigoal_planner.h>
-#include <dirrt_star/time_planner.h>
+
 #include <dirrt_star/hamp_time_planner.h>
-#include <dirrt_star/probabilist_hamp_time_planner.h>
+#include <graph_core/avoidance_probabilistic_time_metrics.h>
 
 namespace pathplan {
 namespace dirrt_star {
-class PathPlanerManager : public planning_interface::PlannerManager
+
+class ProbabilisticHAMPTimeBasedMultiGoalPlanner: public HAMPTimeBasedMultiGoalPlanner
 {
 public:
-  virtual bool initialize(const robot_model::RobotModelConstPtr& model, const std::string& ns) override;
-  std::string getDescription() const override
-  {
-    return "DIRRT";
-  }
-  bool canServiceRequest(const moveit_msgs::MotionPlanRequest &req) const override;
-
-
-
-  void getPlanningAlgorithms(std::vector<std::string> &algs) const override;
-
-
-
-  void setPlannerConfigurations(const planning_interface::PlannerConfigurationMap &pcs) override;
-
-  planning_interface::PlanningContextPtr getPlanningContext(
-    const planning_scene::PlanningSceneConstPtr &planning_scene,
-    const planning_interface::MotionPlanRequest &req,
-    moveit_msgs::MoveItErrorCodes &error_code) const override;
-
-
+  ProbabilisticHAMPTimeBasedMultiGoalPlanner ( const std::string& name,
+                const std::string& group,
+                const moveit::core::RobotModelConstPtr& model
+              );
 
 protected:
-  ros::NodeHandle m_nh;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  std::map< std::string, std::shared_ptr<planning_interface::PlanningContext>> m_planners;
-  moveit::core::RobotModelConstPtr m_robot_model;
-  std::string m_default_planner_config;
+  pathplan::ProbabilistcAvoidanceTimeMetricstr probabilistic_avoidance_metrics_;
+  void occupancyCallback(const sensor_msgs::PointCloudConstPtr& msg);
+  virtual void subscribeTopic();
 };
 
-//
-
 }
 }
-

@@ -1,4 +1,3 @@
-#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -26,50 +25,41 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <graph_core/avoidance_probabilistic_time_metrics.h>
 
-#include <moveit/planning_interface/planning_interface.h>
-#include <dirrt_star/multigoal_planner.h>
-#include <dirrt_star/time_planner.h>
-#include <dirrt_star/hamp_time_planner.h>
-#include <dirrt_star/probabilist_hamp_time_planner.h>
 
-namespace pathplan {
-namespace dirrt_star {
-class PathPlanerManager : public planning_interface::PlannerManager
+namespace pathplan
 {
-public:
-  virtual bool initialize(const robot_model::RobotModelConstPtr& model, const std::string& ns) override;
-  std::string getDescription() const override
-  {
-    return "DIRRT";
-  }
-  bool canServiceRequest(const moveit_msgs::MotionPlanRequest &req) const override;
 
-
-
-  void getPlanningAlgorithms(std::vector<std::string> &algs) const override;
-
-
-
-  void setPlannerConfigurations(const planning_interface::PlannerConfigurationMap &pcs) override;
-
-  planning_interface::PlanningContextPtr getPlanningContext(
-    const planning_scene::PlanningSceneConstPtr &planning_scene,
-    const planning_interface::MotionPlanRequest &req,
-    moveit_msgs::MoveItErrorCodes &error_code) const override;
-
-
-
-protected:
-  ros::NodeHandle m_nh;
-
-  std::map< std::string, std::shared_ptr<planning_interface::PlanningContext>> m_planners;
-  moveit::core::RobotModelConstPtr m_robot_model;
-  std::string m_default_planner_config;
-};
-
-//
-
-}
+ProbabilistcAvoidanceTimeMetrics::ProbabilistcAvoidanceTimeMetrics(const Eigen::VectorXd &max_speed,
+                                           const double &nu,
+                                           const ros::NodeHandle &nh):
+  AvoidanceTimeMetrics(max_speed,nu,nh)
+{
+  probabilistic_ssm_=std::make_shared<ssm15066::ProbabilisticSSM>(chain_,nh);
+  ssm_=probabilistic_ssm_;
+  occupancy_.resize(0);
 }
 
+void ProbabilistcAvoidanceTimeMetrics::cleanPoints()
+{
+  points_.resize(3,0);
+  occupancy_.resize(0);
+}
+
+void ProbabilistcAvoidanceTimeMetrics::addPointOccupancy(const Eigen::Vector3d &point, const double& occupancy)
+{
+  points_.conservativeResize(3, points_.cols()+1);
+  points_.col(points_.cols()-1) = point;
+  occupancy_.conservativeResize(points_.cols()+1,1);
+  occupancy_(points_.cols()-1)=std::max(0.0,std::min(occupancy,1.0));
+  probabilistic_ssm_->setPointCloud(points_,occupancy_);
+}
+
+MetricsPtr ProbabilistcAvoidanceTimeMetrics::clone()
+{
+  return std::make_shared<ProbabilistcAvoidanceTimeMetrics>(max_speed_,nu_,nh_);
+}
+
+
+}

@@ -26,50 +26,34 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <graph_core/metrics.h>
+#include <rosdyn_core/primitives.h>
+#include <visualization_msgs/MarkerArray.h>
+#include <eigen_conversions/eigen_msg.h>
 
-#include <moveit/planning_interface/planning_interface.h>
-#include <dirrt_star/multigoal_planner.h>
-#include <dirrt_star/time_planner.h>
-#include <dirrt_star/hamp_time_planner.h>
-#include <dirrt_star/probabilist_hamp_time_planner.h>
-
-namespace pathplan {
-namespace dirrt_star {
-class PathPlanerManager : public planning_interface::PlannerManager
+namespace pathplan
 {
-public:
-  virtual bool initialize(const robot_model::RobotModelConstPtr& model, const std::string& ns) override;
-  std::string getDescription() const override
-  {
-    return "DIRRT";
-  }
-  bool canServiceRequest(const moveit_msgs::MotionPlanRequest &req) const override;
 
 
-
-  void getPlanningAlgorithms(std::vector<std::string> &algs) const override;
-
-
-
-  void setPlannerConfigurations(const planning_interface::PlannerConfigurationMap &pcs) override;
-
-  planning_interface::PlanningContextPtr getPlanningContext(
-    const planning_scene::PlanningSceneConstPtr &planning_scene,
-    const planning_interface::MotionPlanRequest &req,
-    moveit_msgs::MoveItErrorCodes &error_code) const override;
-
-
-
+// Avoidance metrics
+class TimeBasedMetrics: public Metrics
+{
 protected:
-  ros::NodeHandle m_nh;
+  Eigen::VectorXd max_speed_;
+  Eigen::VectorXd inv_max_speed_;
+  double nu_=1e-2;
 
-  std::map< std::string, std::shared_ptr<planning_interface::PlanningContext>> m_planners;
-  moveit::core::RobotModelConstPtr m_robot_model;
-  std::string m_default_planner_config;
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  TimeBasedMetrics(const Eigen::VectorXd& max_speed, const double &nu=1e-2);
+
+  virtual double cost(const Eigen::VectorXd& configuration1,
+                      const Eigen::VectorXd& configuration2);
+  virtual double utopia(const Eigen::VectorXd& configuration1,
+                      const Eigen::VectorXd& configuration2);
+
+
 };
-
-//
+typedef std::shared_ptr<TimeBasedMetrics> SpeedMetricsPtr;
 
 }
-}
-

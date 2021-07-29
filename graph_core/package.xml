@@ -35,6 +35,7 @@
   <depend>human_probablistic_occupancy</depend>
   <depend>eigen_conversions</depend>
   <depend>geometry_msgs</depend>
+  <depend>velocity_scaling_iso15066</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

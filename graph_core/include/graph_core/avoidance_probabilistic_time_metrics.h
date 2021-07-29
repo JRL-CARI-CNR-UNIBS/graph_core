@@ -26,50 +26,32 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <graph_core/avoidance_time_metrics.h>
+#include <velocity_scaling_iso15066/ssm15066.h>
 
-#include <moveit/planning_interface/planning_interface.h>
-#include <dirrt_star/multigoal_planner.h>
-#include <dirrt_star/time_planner.h>
-#include <dirrt_star/hamp_time_planner.h>
-#include <dirrt_star/probabilist_hamp_time_planner.h>
-
-namespace pathplan {
-namespace dirrt_star {
-class PathPlanerManager : public planning_interface::PlannerManager
+namespace pathplan
 {
-public:
-  virtual bool initialize(const robot_model::RobotModelConstPtr& model, const std::string& ns) override;
-  std::string getDescription() const override
-  {
-    return "DIRRT";
-  }
-  bool canServiceRequest(const moveit_msgs::MotionPlanRequest &req) const override;
+class ProbabilistcAvoidanceTimeMetrics;
+typedef std::shared_ptr<ProbabilistcAvoidanceTimeMetrics> ProbabilistcAvoidanceTimeMetricstr;
 
-
-
-  void getPlanningAlgorithms(std::vector<std::string> &algs) const override;
-
-
-
-  void setPlannerConfigurations(const planning_interface::PlannerConfigurationMap &pcs) override;
-
-  planning_interface::PlanningContextPtr getPlanningContext(
-    const planning_scene::PlanningSceneConstPtr &planning_scene,
-    const planning_interface::MotionPlanRequest &req,
-    moveit_msgs::MoveItErrorCodes &error_code) const override;
-
-
-
+// Avoidance metrics
+class ProbabilistcAvoidanceTimeMetrics: public AvoidanceTimeMetrics
+{
 protected:
-  ros::NodeHandle m_nh;
 
-  std::map< std::string, std::shared_ptr<planning_interface::PlanningContext>> m_planners;
-  moveit::core::RobotModelConstPtr m_robot_model;
-  std::string m_default_planner_config;
+  ssm15066::ProbabilisticSSMPtr probabilistic_ssm_;
+  Eigen::VectorXd occupancy_;
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  ProbabilistcAvoidanceTimeMetrics(const Eigen::VectorXd& max_speed,
+                       const double& nu,
+                       const ros::NodeHandle& nh);
+
+  void addPointOccupancy(const Eigen::Vector3d& point, const double& occupancy);
+  void cleanPoints();
+
+  virtual MetricsPtr clone();
+
 };
 
-//
-
 }
-}
-
