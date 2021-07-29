@@ -14,14 +14,17 @@
   <build_depend>moveit_core</build_depend>
   <build_depend>moveit_ros_planning</build_depend>
   <build_depend>roscpp</build_depend>
+  <build_depend>velocity_scaling_iso15066</build_depend>
   <build_export_depend>graph_core</build_export_depend>
   <build_export_depend>moveit_core</build_export_depend>
   <build_export_depend>moveit_ros_planning</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>
+  <build_export_depend>velocity_scaling_iso15066</build_export_depend>
   <exec_depend>graph_core</exec_depend>
   <exec_depend>moveit_core</exec_depend>
   <exec_depend>moveit_ros_planning</exec_depend>
   <exec_depend>roscpp</exec_depend>
+  <exec_depend>velocity_scaling_iso15066</exec_depend>
 
   <export>
     <moveit_core plugin="${prefix}/plugin.xml"/>
