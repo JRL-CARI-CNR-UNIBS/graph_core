@@ -22,6 +22,7 @@
   <exec_depend>moveit_core</exec_depend>
   <exec_depend>moveit_ros_planning</exec_depend>
   <exec_depend>roscpp</exec_depend>
+  <depend>velocity_scaling_iso15066</depend>
 
   <export>
     <moveit_core plugin="${prefix}/plugin.xml"/>
