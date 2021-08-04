@@ -231,8 +231,18 @@ bool MultigoalSolver::config(const ros::NodeHandle& nh)
   }
   if (tube_radius_<=0)
   {
-    ROS_WARN("%s/local_bias cannot be negative, set equal to 0.01",nh.getNamespace().c_str());
+    ROS_WARN("%s/tube_radius cannot be negative, set equal to 0.01",nh.getNamespace().c_str());
     tube_radius_=0.01;
+  }
+  if (!nh.getParam("forgetting_factor",forgetting_factor_))
+  {
+    ROS_WARN("%s/forgetting_factor is not set. using 0.01",nh.getNamespace().c_str());
+    tube_radius_=0.3;
+  }
+  if (tube_radius_<=0)
+  {
+    ROS_WARN("%s/forgetting_factor cannot be negative, set equal to 0.0",nh.getNamespace().c_str());
+    forgetting_factor_=0.0;
   }
 
 
