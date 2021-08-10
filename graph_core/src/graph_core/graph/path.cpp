@@ -559,6 +559,8 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
   ROS_INFO_STREAM("conf: "<<configuration.transpose());
   ROS_INFO_STREAM("parent0: "<<connections_.at(0)->getParent()->getConfiguration().transpose());
   ROS_INFO_STREAM("child0: "<<connections_.at(0)->getChild()->getConfiguration().transpose());
+
+  return NULL;
 }
 
 Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool& in_conn)
