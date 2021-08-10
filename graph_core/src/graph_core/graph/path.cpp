@@ -565,7 +565,6 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
 
 Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool& in_conn)
 {
-
   Eigen::VectorXd parent = conn->getParent()->getConfiguration();
   Eigen::VectorXd child = conn->getChild()->getConfiguration();
 
@@ -626,7 +625,6 @@ Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const Co
 
   if(c<=c_pitagora) s = std::sqrt(b*b-distance*distance);
   else s = - std::sqrt(b*b-distance*distance);
-
 
   Eigen::VectorXd projection = parent+(child-parent)*s/a;
 
