@@ -61,7 +61,7 @@ protected:
   double reward_=1.0;
   double forgetting_factor_=0.999;
   double tube_radius_=0.01;
-  double utopia_tolerance=1.003;
+  double utopia_tolerance_=1.003;
   bool extend_ = false;
   virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity());
   virtual void clean(){}

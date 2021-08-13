@@ -239,12 +239,22 @@ bool MultigoalSolver::config(const ros::NodeHandle& nh)
     ROS_WARN("%s/forgetting_factor is not set. using 0.01",nh.getNamespace().c_str());
     tube_radius_=0.3;
   }
-  if (tube_radius_<=0)
+  if (forgetting_factor_<=0)
   {
     ROS_WARN("%s/forgetting_factor cannot be negative, set equal to 0.0",nh.getNamespace().c_str());
     forgetting_factor_=0.0;
   }
-
+  if (!nh.getParam("utopia_tolerance",utopia_tolerance_))
+  {
+    ROS_WARN("%s/utopia_tolerance is not set. using 0.01",nh.getNamespace().c_str());
+    utopia_tolerance_=0.01;
+  }
+  if (utopia_tolerance_<=0.0)
+  {
+    ROS_WARN("%s/utopia_tolerance cannot be negative, set equal to 0.0",nh.getNamespace().c_str());
+    utopia_tolerance_=0.0;
+  }
+  utopia_tolerance_+=1.0;
 
   configured_=true;
   return true;
@@ -258,7 +268,7 @@ bool MultigoalSolver::update(PathPtr& solution)
     ROS_WARN("MultigoalSolver is not initialized");
     return false;
   }
-  if (cost_ <= utopia_tolerance * best_utopia_)
+  if (cost_ <= utopia_tolerance_ * best_utopia_)
   {
     ROS_DEBUG("Find the final solution");
     solution=solution_;
@@ -344,7 +354,7 @@ bool MultigoalSolver::update(PathPtr& solution)
         costs_.at(igoal) = path_costs_.at(igoal)+goal_costs_.at(igoal);
 
         solved_ = true;
-        if (path_costs_.at(igoal)<=(utopias_.at(igoal)*utopia_tolerance))
+        if (path_costs_.at(igoal)<=(utopias_.at(igoal)*utopia_tolerance_))
         {
           ROS_DEBUG("Goal %u reaches its utopia. cost = %f, utopia =%f",igoal,path_costs_.at(igoal),utopias_.at(igoal));
           status_.at(igoal)=GoalStatus::done;
