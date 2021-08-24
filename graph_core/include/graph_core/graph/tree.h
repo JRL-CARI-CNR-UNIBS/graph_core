@@ -99,8 +99,10 @@ public:
   bool rewire(const Eigen::VectorXd& configuration,
               double r_rewire);
 
-  bool rewireToNode(const NodePtr& n,
-              double r_rewire);
+  bool rewireToNode(const NodePtr& n,  //PERCHE NOMI DIVERSI? NON BASTANO GLI INGRESSI DIFFERENTI?
+                    double r_rewire);
+
+  bool rewireOnly(NodePtr& node, double r_rewire);
 
   NodePtr findClosestNode(const Eigen::VectorXd& configuration);
 

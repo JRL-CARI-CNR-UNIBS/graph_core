@@ -31,6 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
+class RRTStar;
+typedef std::shared_ptr<RRTStar> RRTStarPtr;
 
 class RRTStar: public RRTConnect
 {
