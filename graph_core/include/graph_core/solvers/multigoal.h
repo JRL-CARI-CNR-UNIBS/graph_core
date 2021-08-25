@@ -64,7 +64,8 @@ protected:
   double tube_radius_=0.01;
   double utopia_tolerance_=1.003;
   bool extend_ = false;
-
+  bool knearest_=false;
+  double dimension_;
   virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity());
   virtual void clean(){}
 

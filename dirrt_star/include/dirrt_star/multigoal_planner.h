@@ -101,7 +101,7 @@ protected:
 
   ros::Subscriber m_centroid_sub;
 
-  double collision_distance=0.04;
+  double collision_distance_=0.04;
   double collision_thread_=5;
   bool m_is_running=false;
   bool m_stop=false;

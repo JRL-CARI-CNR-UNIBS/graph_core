@@ -59,6 +59,8 @@ protected:
   void queueConnection(const Eigen::VectorXd& configuration1,
                        const Eigen::VectorXd& configuration2);
 
+  collision_detection::CollisionRequest req_;
+  collision_detection::CollisionResult res_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   ParallelMoveitCollisionChecker(const planning_scene::PlanningScenePtr& planning_scene,

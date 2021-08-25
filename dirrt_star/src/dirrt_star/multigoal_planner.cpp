@@ -189,7 +189,7 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
   }
 
   planning_scene::PlanningScenePtr ptr=planning_scene::PlanningScene::clone(planning_scene_);
-  checker=std::make_shared<pathplan::ParallelMoveitCollisionChecker>(ptr,group_,collision_thread_,collision_distance);
+  checker=std::make_shared<pathplan::ParallelMoveitCollisionChecker>(ptr,group_,collision_thread_,collision_distance_);
 
   moveit::core::RobotState start_state(robot_model_);
   moveit::core::robotStateMsgToRobotState(request_.start_state,start_state);
@@ -354,7 +354,7 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
     }
   }
 
-  ROS_INFO_STREAM(*solver);
+  ROS_DEBUG_STREAM(*solver);
 
 
   if (!found_a_solution)

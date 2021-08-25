@@ -40,6 +40,8 @@ bool MultigoalSolver::addStart(const NodePtr& start_node, const double &max_time
     ROS_ERROR("Solver is not configured.");
     return false;
   }
+  dimension_=start_node->getConfiguration().size();
+
   solved_ = false;
   start_tree_ = std::make_shared<Tree>(start_node, Forward, max_distance_, checker_, metrics_);
   setProblem(max_time);
@@ -216,6 +218,11 @@ bool MultigoalSolver::config(const ros::NodeHandle& nh)
     ROS_WARN("%s/extend is not set. using false (connect algorithm)",nh.getNamespace().c_str());
     max_distance_=1.0;
   }
+  if (!nh.getParam("k_nearest",knearest_))
+  {
+    ROS_WARN("%s/k_nearest is not set. using false (rewire using nodes in the radius)",nh.getNamespace().c_str());
+    knearest_=false;
+  }
   if (!nh.getParam("local_bias",local_bias_))
   {
     ROS_WARN("%s/local_bias is not set. using 0.3",nh.getNamespace().c_str());
@@ -307,6 +314,7 @@ bool MultigoalSolver::update(PathPtr& solution)
     }
     if (ud_(gen_)>prob)
       continue;
+    bool improved=false;
     switch (status_.at(igoal))
     {
 
@@ -376,7 +384,20 @@ bool MultigoalSolver::update(PathPtr& solution)
 
       break;
     case GoalStatus::refine:
-      if (start_tree_->rewire(tube_samplers_.at(igoal)->sample(), r_rewire_))
+
+      if (not knearest_)
+      {
+//        double r_rrt=1.1*  std::pow(2.0*(1.0+1.0/dimension_),1.0/dimension_)*std::pow(sampler_->getSpecificVolume(),1.0/dimension_);
+//        double cardDbl=start_tree_->getNumberOfNodes()+1.0;
+//        r_rewire_=r_rrt * std::pow(log(cardDbl) / cardDbl, 1.0 /dimension_);
+//        ROS_INFO_THROTTLE(1,"radius = %f",r_rewire_);
+        improved=start_tree_->rewire(tube_samplers_.at(igoal)->sample(), r_rewire_);
+      }
+      else
+      {
+        improved=start_tree_->rewireK(tube_samplers_.at(igoal)->sample());
+      }
+      if (improved)
       {
         if (start_tree_->costToNode(goal_nodes_.at(igoal)) >= (path_costs_.at(igoal) - 1e-8))
           continue;

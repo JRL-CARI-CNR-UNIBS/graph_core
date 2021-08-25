@@ -44,6 +44,7 @@ protected:
   Direction direction_;
   double max_distance_=1;
   double tolerance_ = 1e-6;
+  double k_rrt_;
   unsigned int maximum_nodes_ = 5000; // legare il massimo numero di punti al volume????
   CollisionCheckerPtr checker_;
   MetricsPtr metrics_;
@@ -103,6 +104,8 @@ public:
   bool rewire(const Eigen::VectorXd& configuration,
               double r_rewire);
 
+  bool rewireK(const Eigen::VectorXd& configuration);
+
   bool rewireToNode(const NodePtr& n,
                     double r_rewire);
 
@@ -118,6 +121,7 @@ public:
   bool addTree(TreePtr& additional_tree, const double &max_time = std::numeric_limits<double>::infinity());
 
   std::vector<NodePtr> near(const NodePtr& node, const double& r_rewire);
+  std::map<double, NodePtr> nearK(const NodePtr& node);
 
   bool isInTree(const NodePtr& node);
   bool isInTree(const NodePtr& node, std::vector<NodePtr>::iterator& it);
