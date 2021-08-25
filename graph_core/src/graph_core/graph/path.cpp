@@ -1137,6 +1137,28 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_fro
   return validity;
 }
 
+XmlRpc::XmlRpcValue Path::toXmlRpcValue(bool reverse) const
+{
+  XmlRpc::XmlRpcValue x;
+  if (connections_.size()==0)
+    return x;
+  x.setSize(connections_.size()+1);
+
+  if (not reverse)
+  {
+    x[0]=connections_.at(0)->getParent()->toXmlRpcValue();
+    for (size_t idx=0;idx<connections_.size();idx++)
+      x[idx+1]=connections_.at(idx)->getChild()->toXmlRpcValue();
+  }
+  else
+  {
+    x[0]=connections_.back()->getChild()->toXmlRpcValue();
+    for (size_t idx=0;idx<connections_.size();idx++)
+      x[idx+1]=connections_.at(connections_.size()-idx-1)->getParent()->toXmlRpcValue();
+  }
+  return x;
+}
+
 std::ostream& operator<<(std::ostream& os, const Path& path)
 {
   os << "cost = " << path.cost_ << std::endl;

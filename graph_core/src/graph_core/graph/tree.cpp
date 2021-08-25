@@ -539,6 +539,28 @@ bool Tree::addBranch(const std::vector<ConnectionPtr> &connections)
 
 }
 
+bool Tree::addTree(TreePtr &additional_tree, const double &max_time)
+{
+  if (not isInTree(additional_tree->getRoot()))
+  {
+    NodePtr new_node;
+    if (not connectToNode(additional_tree->getRoot(),new_node,max_time))
+      return false;
+  }
+
+  if (additional_tree->getDirection()!=direction_)
+  {
+    return false;
+  }
+
+  std::vector<NodePtr> additional_nodes=additional_tree->getNodes();
+  for (size_t inode=1;inode<additional_nodes.size();inode++)
+  {
+    addNode(additional_nodes.at(inode),false);
+  }
+  return true;
+}
+
 bool Tree::isInTree(const NodePtr &node)
 {
   std::vector<NodePtr>::iterator it;
@@ -739,10 +761,170 @@ void Tree::populateTreeFromNode(const NodePtr& node)
   }
 }
 
+
+XmlRpc::XmlRpcValue Tree::toXmlRpcValue() const
+{
+  XmlRpc::XmlRpcValue tree;
+  XmlRpc::XmlRpcValue nodes;
+  XmlRpc::XmlRpcValue connections;
+  int iconn=0;
+
+  for (size_t inode=0;inode<nodes_.size();inode++)
+  {
+    const NodePtr& n=nodes_.at(inode);
+    nodes[inode]=n->toXmlRpcValue();
+    std::vector<NodePtr> dest;
+    if (direction_==Forward)
+      dest=n->getChildren();
+    else
+      dest=n->getParents();
+
+    for (size_t idest=0;idest<dest.size();idest++)
+    {
+      for (size_t in2=0;in2<nodes_.size();in2++)
+      {
+        if (nodes_.at(in2)==dest.at(idest))
+        {
+          XmlRpc::XmlRpcValue connection;
+          connection[0]=(int)inode;
+          connection[1]=(int)in2;
+          connections[iconn++]=connection;
+          break;
+        }
+      }
+    }
+  }
+  tree["nodes"]=nodes;
+  tree["connections"]=connections;
+  return tree;
+}
+
 std::ostream& operator<<(std::ostream& os, const Tree& tree)
 {
   os << "number of nodes = " << tree.nodes_.size() << std::endl;
   os << "root = " << *tree.root_;
   return os;
 }
+
+TreePtr Tree::fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
+                              const Direction& direction,
+                              const double& max_distance,
+                              const CollisionCheckerPtr& checker,
+                              const MetricsPtr& metrics,
+                              const bool &lazy)
+{
+  if (not x.hasMember("nodes"))
+  {
+    ROS_ERROR("loading from XmlRpcValue a tree without 'nodes' field");
+    return NULL;
+  }
+  if (not x.hasMember("connections"))
+  {
+    ROS_ERROR("loading from XmlRpcValue a tree without 'connections' field");
+    return NULL;
+  }
+
+  XmlRpc::XmlRpcValue nodes=x["nodes"];
+  XmlRpc::XmlRpcValue connections=x["connections"];
+  if (nodes.getType()!= XmlRpc::XmlRpcValue::Type::TypeArray)
+  {
+    ROS_ERROR("loading from XmlRpcValue a tree where 'nodes' is not an array");
+    return NULL;
+  }
+  if (connections.getType()!= XmlRpc::XmlRpcValue::Type::TypeArray)
+  {
+    ROS_ERROR("loading from XmlRpcValue a tree where 'connections' is not an array");
+    return NULL;
+  }
+  NodePtr root=Node::fromXmlRpcValue(nodes[0]);
+  if (not lazy)
+  {
+    if (not checker->check(root->getConfiguration()))
+    {
+      ROS_DEBUG("root is in collision");
+      return NULL;
+    }
+  }
+  assert(root);
+
+
+  std::vector<NodePtr> nodes_vector(nodes.size());
+  nodes_vector.at(0)=root;
+  for (int inode=1;inode<nodes.size();inode++)
+  {
+    nodes_vector.at(inode)=Node::fromXmlRpcValue(nodes[inode]);
+  }
+
+  for (int iconn=0;iconn<connections.size();iconn++)
+  {
+    int in1=connections[iconn][0];
+    int in2=connections[iconn][1];
+
+    NodePtr& n1=nodes_vector.at(in1);
+    NodePtr& n2=nodes_vector.at(in2);
+    ConnectionPtr conn;
+    if (direction==Forward)
+    {
+      conn=std::make_shared<Connection>(n1,n2);
+      conn->setCost(metrics->cost(n1,n2));
+    }
+    else
+    {
+      conn=std::make_shared<Connection>(n2,n1);
+      conn->setCost(metrics->cost(n2,n1));
+    }
+    conn->add();
+  }
+  pathplan::TreePtr tree=std::make_shared<Tree>(root,direction,max_distance,checker,metrics);
+  for (int inode=1;inode<nodes.size();inode++)
+  {
+    tree->addNode(nodes_vector.at(inode),false);
+  }
+
+  if (not lazy)
+  {
+    tree->recheckCollision();
+  }
+  return tree;
+}
+
+bool Tree::recheckCollision()
+{
+  return recheckCollisionFromNode(root_);
+}
+bool Tree::recheckCollisionFromNode(NodePtr& n)
+{
+  std::vector<NodePtr> white_list;
+  unsigned int removed_nodes;
+  if (direction_==Forward)
+  {
+    for (ConnectionPtr conn: n->child_connections_)
+    {
+      NodePtr n=conn->getChild();
+      if (not checker_->checkConnection(conn))
+      {
+        purgeFromHere(n,white_list,removed_nodes);
+        return false;
+      }
+      if (not recheckCollisionFromNode(n))
+        return false;
+    }
+  }
+  else
+  {
+    for (ConnectionPtr conn: n->parent_connections_)
+    {
+      NodePtr n=conn->getParent();
+      if (not checker_->checkConnection(conn))
+      {
+        purgeFromHere(n,white_list,removed_nodes);
+        return false;
+      }
+      if (not recheckCollisionFromNode(n))
+        return false;
+    }
+  }
+  return true;
+}
+
 }  // end namespace pathplan

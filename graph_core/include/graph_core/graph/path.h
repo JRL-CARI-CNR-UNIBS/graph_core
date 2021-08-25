@@ -222,6 +222,8 @@ public:
   bool slipChild();
   bool slipParent();
 
+
+  XmlRpc::XmlRpcValue toXmlRpcValue(bool reverse=false) const;
 #ifdef NO_SPIRAL
   bool spiral();
 #endif

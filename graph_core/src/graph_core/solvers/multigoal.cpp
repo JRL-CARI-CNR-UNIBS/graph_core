@@ -203,6 +203,14 @@ bool MultigoalSolver::config(const ros::NodeHandle& nh)
     ROS_WARN("%s/max_distance is not set. using 1.0",nh.getNamespace().c_str());
     max_distance_=1.0;
   }
+  r_rewire_ = 2.0*max_distance_;
+  if (!nh.getParam("rewire_radius",max_distance_))
+  {
+    ROS_WARN("%s/rewire_radius is not set. using 2.0*max_distance",nh.getNamespace().c_str());
+    r_rewire_=2.0*max_distance_;
+  }
+
+
   if (!nh.getParam("extend",extend_))
   {
     ROS_WARN("%s/extend is not set. using false (connect algorithm)",nh.getNamespace().c_str());
@@ -278,7 +286,6 @@ bool MultigoalSolver::update(PathPtr& solution)
 
 
   bool global_improvement=false;
-  double r_rewire = start_tree_->getMaximumDistance();
   double old_cost=cost_;
 
 
@@ -369,7 +376,7 @@ bool MultigoalSolver::update(PathPtr& solution)
 
       break;
     case GoalStatus::refine:
-      if (start_tree_->rewire(tube_samplers_.at(igoal)->sample(), r_rewire))
+      if (start_tree_->rewire(tube_samplers_.at(igoal)->sample(), r_rewire_))
       {
         if (start_tree_->costToNode(goal_nodes_.at(igoal)) >= (path_costs_.at(igoal) - 1e-8))
           continue;

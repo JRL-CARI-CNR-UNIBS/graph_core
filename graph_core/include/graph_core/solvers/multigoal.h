@@ -56,6 +56,7 @@ protected:
   double cost_at_last_clean=std::numeric_limits<double>::infinity();
   double best_utopia_=std::numeric_limits<double>::infinity();
   int best_goal_index=-1;
+  double r_rewire_=1.;
   double max_distance_=1.0;
   double local_bias_=0.3;
   double reward_=1.0;
@@ -63,6 +64,7 @@ protected:
   double tube_radius_=0.01;
   double utopia_tolerance_=1.003;
   bool extend_ = false;
+
   virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity());
   virtual void clean(){}
 

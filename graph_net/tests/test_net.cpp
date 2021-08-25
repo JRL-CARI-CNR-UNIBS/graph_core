@@ -14,8 +14,8 @@
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "test_net");
-  ros::NodeHandle nh;
-
+  ros::NodeHandle nh("~");
+  ROS_INFO_STREAM("Namespace = "<<nh.getNamespace());
   ros::AsyncSpinner aspin(4);
 
   std::string group_name = "manipulator";
@@ -55,6 +55,7 @@ int main(int argc, char **argv)
   int n_waypoints=nh.param("net_waypoints",10);
   ROS_INFO("Creating %d waypoints",n_waypoints);
   std::vector<pathplan::NodePtr> waypoints;
+  nh.setParam("grid/trees",n_waypoints);
 
   while ((int)waypoints.size()<n_waypoints)
   {
@@ -65,30 +66,29 @@ int main(int argc, char **argv)
     {
       pathplan::NodePtr n=std::make_shared<pathplan::Node>(q);
       waypoints.push_back(n);
-      display.displayNode(n);
+      display.displayNode(n,"pathplan",{1,1,1,1});
     }
   }
 
   pathplan::MetricsPtr metrics_=std::make_shared<pathplan::Metrics>();
 
 
-  std::map<std::pair<pathplan::NodePtr,pathplan::NodePtr>,pathplan::PathPtr> net;
   double icolor=0;
-  for (const pathplan::NodePtr& start: waypoints)
+  ros::WallTime tstart=ros::WallTime::now();
+  for (size_t istart=0;istart<waypoints.size();istart++)
   {
-    std::cout << "node " << start <<" is connected with: ";
+    pathplan::NodePtr& start = waypoints.at(istart);
+    nh.setParam("grid/root_"+std::to_string(istart),start->toXmlRpcValue());
     int connections=0;
     icolor++;
     std::vector<double> color(4);
     color.at(3)=1.0;
     color.at(0)=icolor++/n_waypoints;
 
-    for (const pathplan::NodePtr& goal: waypoints)
+    for (size_t igoal=istart+1;igoal<waypoints.size();igoal++)
     {
-      if (start==goal)
-      {
-        continue;
-      }
+      pathplan::NodePtr& goal = waypoints.at(igoal);
+
       if (not ros::ok())
         return 0;
       pathplan::TreeSolverPtr solver=std::make_shared<pathplan::MultigoalSolver>(metrics_, checker, sampler);
@@ -103,17 +103,19 @@ int main(int argc, char **argv)
       pathplan::PathPtr solution;
       if (solver->solve(solution,1000000,max_time))
       {
-        std::pair<pathplan::NodePtr,pathplan::NodePtr> p(start,goal);
-        std::pair<std::pair<pathplan::NodePtr,pathplan::NodePtr>,pathplan::PathPtr> s(p,solution);
-        net.insert(s);
+        std::string n1="node_"+std::to_string(istart);
+        std::string n2="node_"+std::to_string(igoal);
+        nh.setParam("grid/"+n1+"/"+n2+"/path",solution->toXmlRpcValue());
+        nh.setParam("grid/"+n2+"/"+n1+"/path",solution->toXmlRpcValue(false)); // reverse
         connections++;
         display.displayPath(solution,"pathplan",color);
-
       }
     }
-    std::cout << connections << " waypoints"<< std::endl;
+    std::cout << "node " << istart <<" is connected with: " << connections << " waypoints"<< std::endl;
   }
 
+  ros::WallTime tend=ros::WallTime::now();
+  ROS_INFO("Grid %d x %d computed in %f seconds",n_waypoints,n_waypoints,(tend-tstart).toSec());
   return 0;
 }
 

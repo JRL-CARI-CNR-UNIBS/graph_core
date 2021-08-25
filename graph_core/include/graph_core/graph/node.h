@@ -71,8 +71,11 @@ public:
   }
   ~Node();
 
+
+  XmlRpc::XmlRpcValue toXmlRpcValue() const;
   friend std::ostream& operator<<(std::ostream& os, const Node& path);
 
+  static NodePtr fromXmlRpcValue(const XmlRpc::XmlRpcValue& x);
 };
 
 std::ostream& operator<<(std::ostream& os, const Node& node);

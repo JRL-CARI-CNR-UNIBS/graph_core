@@ -33,7 +33,7 @@ int main(int argc, char **argv)
 
   ROS_INFO("growing parent tree");
   pathplan::NodePtr new_node;
-  for (int idx=0;idx<100;idx++)
+  for (int idx=0;idx<10;idx++)
   {
     tree->connect(sampler->sample(),new_node);
   }
@@ -43,8 +43,8 @@ int main(int argc, char **argv)
   ROS_INFO_STREAM("subtree = " << *subtree);
 
 
-  ROS_INFO("growing child tree");
-  for (int idx=0;idx<100;idx++)
+  ROS_INFO("growing child tree\n");
+  for (int idx=0;idx<10;idx++)
   {
     subtree->connect(sampler->sample(),new_node);
   }
@@ -52,6 +52,10 @@ int main(int argc, char **argv)
   ROS_INFO_STREAM("tree = " << *tree);
   ROS_INFO_STREAM("subtree = " << *subtree);
 
-
+  ROS_INFO("TMP test set xlmrpc");
+  nh.setParam("tree",tree->toXmlRpcValue());
+  ROS_INFO("TMP test load xlmrpc");
+  pathplan::TreePtr t2=pathplan::Tree::fromXmlRpcValue(tree->toXmlRpcValue(),pathplan::Direction::Forward,1,checker,metrics);
+  ROS_INFO_STREAM("tree2 = " << *t2);
   return 0;
 }
