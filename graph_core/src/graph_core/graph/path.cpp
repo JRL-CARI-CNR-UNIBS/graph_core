@@ -824,6 +824,7 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
         conn_child->add();
 
         conn->remove();
+        tree_->addNode(actual_node);  //CHIEDI se necessario
 
         std::vector<ConnectionPtr> conn_vector;
 

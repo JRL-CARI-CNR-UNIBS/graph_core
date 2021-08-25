@@ -230,7 +230,7 @@ bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node, const double &m
 }
 
 bool Tree::rewireOnly(NodePtr& node, double r_rewire)
-{
+{  
   std::vector<NodePtr> near_nodes = near(node, r_rewire);
   NodePtr nearest_node = node->getParents().at(0);
   double cost_to_node = costToNode(node);
