@@ -329,14 +329,14 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire)
   return improved;
 }
 
-bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire)
+bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire, NodePtr& new_node)
 {
   if (direction_ == Backward)
   {
     ROS_ERROR("rewiring is available only on forward tree");
     return false;
   }
-  NodePtr new_node;
+
   if (!extend(configuration, new_node))
   {
     return false;
@@ -408,15 +408,22 @@ bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire)
   //  return improved;
 }
 
+bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire)
+{
+  NodePtr new_node;
 
-bool Tree::rewireToNode(const NodePtr& n, double r_rewire)
+  return rewire(configuration,r_rewire,new_node);
+}
+
+
+bool Tree::rewireToNode(const NodePtr& n, double r_rewire, NodePtr& new_node)
 {
   if (direction_ == Backward)
   {
     ROS_ERROR("rewiring is available only on forward tree");
     return false;
   }
-  NodePtr new_node;
+
   if (!extendToNode(n, new_node))
   {
     return false;
@@ -488,6 +495,14 @@ bool Tree::rewireToNode(const NodePtr& n, double r_rewire)
 
   //  return improved;
 }
+
+bool Tree::rewireToNode(const NodePtr& n, double r_rewire)
+{
+  NodePtr new_node;
+
+  return rewireToNode(n,r_rewire,new_node);
+}
+
 
 std::vector<NodePtr> Tree::near(const NodePtr &node, const double &r_rewire)
 {

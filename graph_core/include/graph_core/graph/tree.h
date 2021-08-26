@@ -99,8 +99,17 @@ public:
   bool rewire(const Eigen::VectorXd& configuration,
               double r_rewire);
 
-  bool rewireToNode(const NodePtr& n,  //PERCHE NOMI DIVERSI? NON BASTANO GLI INGRESSI DIFFERENTI?
+  bool rewire(const Eigen::VectorXd& configuration,
+              double r_rewire,
+              NodePtr& new_node);
+
+  bool rewireToNode(const NodePtr& n,
                     double r_rewire);
+
+  bool rewireToNode(const NodePtr& n,
+                    double r_rewire,
+                    NodePtr& new_node);
+
   //if what_rewire is 1 it searches for the best parent for node inside the radius r_rewire, if 2 it verifies if node is a better parent for the other nodes inside r_rewire, if 0 it does both
   bool rewireOnly(NodePtr& node, double r_rewire, const int &what_rewire = 0);
 
