@@ -59,6 +59,45 @@ Path::Path(std::vector<ConnectionPtr> connections,
 
 }
 
+Path::Path(std::vector<NodePtr> nodes,
+           const MetricsPtr& metrics,
+           const CollisionCheckerPtr& checker):
+  metrics_(metrics),
+  checker_(checker)
+{
+  assert(nodes_.size() > 0);
+
+  connections_.clear();
+  cost_ = 0;
+  for(unsigned int i=0;i<nodes.size()-1;i++)
+  {
+    NodePtr parent = nodes.at(i);
+    NodePtr child  = nodes.at(i+1);
+
+    ConnectionPtr conn = std::make_shared<Connection>(parent,child);
+    double cost = metrics->cost(parent,child);
+    conn->setCost(cost);
+    conn->add();
+
+    connections_.push_back(conn);
+
+    cost_ += cost;
+    change_warp_.push_back(true);
+    change_slip_child_.push_back(true);
+    change_slip_parent_.push_back(true);
+#ifdef NO_SPIRAL
+    change_spiral_.push_back(true);
+#endif
+  }
+
+  change_warp_.at(0) = false;
+  change_slip_child_.at(0) = false;
+  change_slip_parent_.at(0) = false;
+#ifdef NO_SPIRAL
+  change_spiral_.at(0) = false;
+#endif
+
+}
 
 PathPtr Path::clone()
 {
@@ -520,11 +559,12 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
   ROS_INFO_STREAM("conf: "<<configuration.transpose());
   ROS_INFO_STREAM("parent0: "<<connections_.at(0)->getParent()->getConfiguration().transpose());
   ROS_INFO_STREAM("child0: "<<connections_.at(0)->getChild()->getConfiguration().transpose());
+
+  return NULL;
 }
 
 Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool& in_conn)
 {
-
   Eigen::VectorXd parent = conn->getParent()->getConfiguration();
   Eigen::VectorXd child = conn->getChild()->getConfiguration();
 
@@ -585,7 +625,6 @@ Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const Co
 
   if(c<=c_pitagora) s = std::sqrt(b*b-distance*distance);
   else s = - std::sqrt(b*b-distance*distance);
-
 
   Eigen::VectorXd projection = parent+(child-parent)*s/a;
 
@@ -752,7 +791,7 @@ const Eigen::VectorXd Path::projectOnClosestConnectionKeepingCurvilinearAbscissa
   return projection;
 }
 
-NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr& conn, bool& rewire)
+NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr& conn, const bool& rewire)
 {
   if(conn != NULL)
   {
@@ -785,6 +824,7 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
         conn_child->add();
 
         conn->remove();
+        tree_->addNode(actual_node);  //CHIEDI se necessario
 
         std::vector<ConnectionPtr> conn_vector;
 

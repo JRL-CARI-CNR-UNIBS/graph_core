@@ -66,6 +66,7 @@ protected:
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Path(std::vector<ConnectionPtr> connections, const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
+  Path(std::vector<NodePtr> nodes, const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
   const double& cost()
   {
     computeCost();
@@ -78,7 +79,7 @@ public:
   }
 
   //It creates a node corresponding to the configuration and creates the correct connections inside the current_path_
-  NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr &conn, bool& rewire);
+  NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr &conn, const bool &rewire);
 
   //It gives the connection to which the configuration belongs
   ConnectionPtr findConnection(const Eigen::VectorXd& configuration, int& idx);
