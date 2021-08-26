@@ -229,66 +229,101 @@ bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node, const double &m
   return false;
 }
 
-bool Tree::rewireOnly(NodePtr& node, double r_rewire)
-{  
+bool Tree::rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire)
+{
+  if(what_rewire >2 || what_rewire <0)
+  {
+    ROS_ERROR("what_rewire parameter shoudl be 0,1 or 2");
+    assert(0);
+    return false;
+  }
+
+  bool rewire_parent;
+  bool rewire_children;
+
+  switch(what_rewire)
+  {
+  case 0:
+    rewire_parent   = true ;
+    rewire_children = true ;
+
+    break;
+  case 1:
+    rewire_parent   = true ;
+    rewire_children = false;
+
+    break;
+  case 2:
+    rewire_parent   = false;
+    rewire_children = true ;
+
+    break;
+  }
+
   std::vector<NodePtr> near_nodes = near(node, r_rewire);
   NodePtr nearest_node = node->getParents().at(0);
   double cost_to_node = costToNode(node);
 
   bool improved = false;
 
-  //ROS_DEBUG("try to find a better parent between %zu nodes", near_nodes.size());
-  for (const NodePtr& n : near_nodes)
+  if(rewire_parent)
   {
-    if (n == nearest_node)
-      continue;
-    if (n == node)
-      continue;
+    //ROS_DEBUG("try to find a better parent between %zu nodes", near_nodes.size());
+    for (const NodePtr& n : near_nodes)
+    {
+      if (n == nearest_node)
+        continue;
+      if (n == node)
+        continue;
 
-    double cost_to_near = costToNode(n);
+      double cost_to_near = costToNode(n);
 
-    if (cost_to_near >= cost_to_node)
-      continue;
+      if (cost_to_near >= cost_to_node)
+        continue;
 
-    double cost_near_to_node = metrics_->cost(n, node);
+      double cost_near_to_node = metrics_->cost(n, node);
 
-    if ((cost_to_near + cost_near_to_node) >= cost_to_node)
-      continue;
+      if ((cost_to_near + cost_near_to_node) >= cost_to_node)
+        continue;
 
-    if (!checker_->checkPath(n->getConfiguration(), node->getConfiguration()))
-      continue;
+      if (!checker_->checkPath(n->getConfiguration(), node->getConfiguration()))
+        continue;
 
-    node->parent_connections_.at(0)->remove();
+      node->parent_connections_.at(0)->remove();
 
-    ConnectionPtr conn = std::make_shared<Connection>(n, node);
-    conn->setCost(cost_near_to_node);
-    conn->add();
-    nearest_node = n;
-    cost_to_node = cost_to_near + cost_near_to_node;
-    improved = true;
+      ConnectionPtr conn = std::make_shared<Connection>(n, node);
+      conn->setCost(cost_near_to_node);
+      conn->add();
+      nearest_node = n;
+      cost_to_node = cost_to_near + cost_near_to_node;
+      improved = true;
+    }
   }
 
-  //ROS_DEBUG("try to find a better child between %zu nodes", near_nodes.size());
-  for (NodePtr& n : near_nodes)
+  if(rewire_children)
   {
-    if (n == node)
-      continue;
+    //ROS_DEBUG("try to find a better child between %zu nodes", near_nodes.size());
+    for (NodePtr& n : near_nodes)
+    {
+      if (n == node)
+        continue;
 
-    double cost_to_near = costToNode(n);
-    if (cost_to_node >= cost_to_near)
-      continue;
+      double cost_to_near = costToNode(n);
+      if (cost_to_node >= cost_to_near)
+        continue;
 
-    double cost_node_to_near = metrics_->cost(node->getConfiguration(), n->getConfiguration());
-    if ((cost_to_node + cost_node_to_near) >= cost_to_near)
-      continue;
+      double cost_node_to_near = metrics_->cost(node->getConfiguration(), n->getConfiguration());
+      if ((cost_to_node + cost_node_to_near) >= cost_to_near)
+        continue;
 
-    if (!checker_->checkPath(node->getConfiguration(), n->getConfiguration()))
-      continue;
+      if (!checker_->checkPath(node->getConfiguration(), n->getConfiguration()))
+        continue;
 
-    n->parent_connections_.at(0)->remove();
-    ConnectionPtr conn = std::make_shared<Connection>(node, n);
-    conn->setCost(cost_node_to_near);
-    conn->add();
+      n->parent_connections_.at(0)->remove();
+      ConnectionPtr conn = std::make_shared<Connection>(node, n);
+      conn->setCost(cost_node_to_near);
+      conn->add();
+    }
   }
 
   return improved;
