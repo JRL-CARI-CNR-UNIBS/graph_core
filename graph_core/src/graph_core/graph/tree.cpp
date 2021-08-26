@@ -263,6 +263,9 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire)
   }
 
   std::vector<NodePtr> near_nodes = near(node, r_rewire);
+  ROS_INFO_STREAM("size "<< near_nodes.size());
+  ROS_INFO_STREAM("N PARENTS: "<<node->getParents().size()<<"N CHILDREN: "<<node->getChildren().size());
+
   NodePtr nearest_node = node->getParents().at(0);
   double cost_to_node = costToNode(node);
 
