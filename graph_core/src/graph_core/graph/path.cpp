@@ -1159,6 +1159,12 @@ XmlRpc::XmlRpcValue Path::toXmlRpcValue(bool reverse) const
   return x;
 }
 
+void Path::flip()
+{
+  for (ConnectionPtr conn: connections_)
+    conn->flip();
+}
+
 std::ostream& operator<<(std::ostream& os, const Path& path)
 {
   os << "cost = " << path.cost_ << std::endl;

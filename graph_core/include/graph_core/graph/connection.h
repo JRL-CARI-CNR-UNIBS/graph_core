@@ -71,6 +71,7 @@ public:
   }
   ConnectionPtr clone();
 
+  void flip();
 
   friend std::ostream& operator<<(std::ostream& os, const Connection& connection);
   ~Connection();

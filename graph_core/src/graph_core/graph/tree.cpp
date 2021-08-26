@@ -992,6 +992,27 @@ TreePtr Tree::fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
   return tree;
 }
 
+
+bool Tree::changeRoot(const NodePtr& node)
+{
+
+  std::vector<NodePtr>::iterator it;
+  if (not isInTree(node,it))
+    return false;
+
+  std::vector<ConnectionPtr> connections = getConnectionToNode(node);
+  for (ConnectionPtr& conn: connections)
+  {
+    conn->flip();
+  }
+  // root should be the first node;
+  *it=root_;
+  nodes_.at(0)=node;
+  root_=node;
+
+  return true;
+}
+
 bool Tree::recheckCollision()
 {
   return recheckCollisionFromNode(root_);

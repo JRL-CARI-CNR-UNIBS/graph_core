@@ -222,6 +222,7 @@ public:
   bool slipChild();
   bool slipParent();
 
+  void flip();
 
   XmlRpc::XmlRpcValue toXmlRpcValue(bool reverse=false) const;
 #ifdef NO_SPIRAL
