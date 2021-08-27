@@ -231,11 +231,52 @@ bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node, const double &m
   return false;
 }
 
+bool Tree::checkPathToNode(const NodePtr& node, std::vector<ConnectionPtr>& checked_connections)
+{
+  std::vector<ConnectionPtr> connections_to_check;
+  std::vector<ConnectionPtr> path_connections = getConnectionToNode(node);
+
+  for(const ConnectionPtr conn: path_connections)
+  {
+    bool already_checked = false;
+    for(const ConnectionPtr checked_conn: checked_connections) //check if the connection considered has not already been verified
+    {
+      if(checked_conn == conn)
+      {
+        already_checked = true;
+        if(checked_conn->getCost() == std::numeric_limits<double>::infinity()) return false;
+
+        break;
+      }
+    }
+
+    if(!already_checked) connections_to_check.push_back(conn);
+  }
+
+  for(const ConnectionPtr conn: connections_to_check)
+  {
+    if(!checker_->checkConnection(conn))
+    {
+      conn->setCost(std::numeric_limits<double>::infinity());
+      checked_connections.push_back(conn);
+
+      return false;
+    }
+    else
+    {
+      conn->setCost(metrics_->cost(conn->getParent(),conn->getChild()));
+      checked_connections.push_back(conn);
+    }
+  }
+
+  return true;
+}
+
 bool Tree::rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire)
 {
   if(what_rewire >2 || what_rewire <0)
   {
-    ROS_ERROR("what_rewire parameter shoudl be 0,1 or 2");
+    ROS_ERROR("what_rewire parameter should be 0,1 or 2");
     assert(0);
     return false;
   }
@@ -248,32 +289,27 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire)
   case 0:
     rewire_parent   = true ;
     rewire_children = true ;
-
     break;
   case 1:
     rewire_parent   = true ;
     rewire_children = false;
-
     break;
   case 2:
     rewire_parent   = false;
     rewire_children = true ;
-
     break;
   }
 
+  if(node == root_) rewire_parent = false;
+
   std::vector<NodePtr> near_nodes = near(node, r_rewire);
-  ROS_INFO_STREAM("size "<< near_nodes.size());
-  ROS_INFO_STREAM("N PARENTS: "<<node->getParents().size()<<"N CHILDREN: "<<node->getChildren().size());
-
-  NodePtr nearest_node = node->getParents().at(0);
   double cost_to_node = costToNode(node);
-
   bool improved = false;
 
   if(rewire_parent)
   {
     //ROS_DEBUG("try to find a better parent between %zu nodes", near_nodes.size());
+    NodePtr nearest_node = node->getParents().at(0);
     for (const NodePtr& n : near_nodes)
     {
       if (n == nearest_node)
@@ -299,7 +335,8 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire)
       ConnectionPtr conn = std::make_shared<Connection>(n, node);
       conn->setCost(cost_near_to_node);
       conn->add();
-      nearest_node = n;
+
+      //nearest_node = n; PER ME NON CI VA
       cost_to_node = cost_to_near + cost_near_to_node;
       improved = true;
     }
@@ -328,6 +365,136 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire)
       ConnectionPtr conn = std::make_shared<Connection>(node, n);
       conn->setCost(cost_node_to_near);
       conn->add();
+
+      improved = true;
+    }
+  }
+
+  return improved;
+}
+
+bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& checked_connections, double r_rewire, const int& what_rewire)
+{
+  if(what_rewire >2 || what_rewire <0)
+  {
+    ROS_ERROR("what_rewire parameter should be 0,1 or 2");
+    assert(0);
+    return false;
+  }
+
+  bool rewire_parent;
+  bool rewire_children;
+
+  switch(what_rewire)
+  {
+  case 0:
+    rewire_parent   = true ;
+    rewire_children = true ;
+    break;
+  case 1:
+    rewire_parent   = true ;
+    rewire_children = false;
+    break;
+  case 2:
+    rewire_parent   = false;
+    rewire_children = true ;
+    break;
+  }
+
+  if(node == root_) rewire_parent = false;
+  std::vector<NodePtr> near_nodes = near(node, r_rewire);
+
+  //validate connections to node
+  double cost_to_node;
+  if(!checkPathToNode(node,checked_connections))
+    cost_to_node = std::numeric_limits<double>::infinity();
+  else
+    cost_to_node= costToNode(node);
+
+  bool improved = false;
+
+  if(rewire_parent)
+  {
+    //ROS_DEBUG("try to find a better parent between %zu nodes", near_nodes.size());
+    NodePtr nearest_node = node->getParents().at(0);
+    for (const NodePtr& n : near_nodes)
+    {
+      if (n == nearest_node)
+        continue;
+      if (n == node)
+        continue;
+
+      double cost_to_near = costToNode(n);
+
+      if (cost_to_near >= cost_to_node)
+        continue;
+
+      double cost_near_to_node = metrics_->cost(n, node);
+
+      if ((cost_to_near + cost_near_to_node) >= cost_to_node)
+        continue;
+
+      if(!checkPathToNode(n,checked_connections)) //validate connections to n
+        continue;
+
+      if (!checker_->checkPath(n->getConfiguration(), node->getConfiguration()))
+        continue;
+
+      node->parent_connections_.at(0)->remove();
+
+      ConnectionPtr conn = std::make_shared<Connection>(n, node);
+      conn->setCost(cost_near_to_node);
+      conn->add();
+      checked_connections.push_back(conn);
+
+      //nearest_node = n; PER ME NON CI VA
+      cost_to_node = cost_to_near + cost_near_to_node;
+      improved = true;
+    }
+  }
+
+  if(cost_to_node == std::numeric_limits<double>::infinity()) rewire_children = false;
+
+  if(rewire_children)
+  {
+    //ROS_DEBUG("try to find a better child between %zu nodes", near_nodes.size());
+    for (NodePtr& n : near_nodes)
+    {
+      if (n == node)
+        continue;
+
+      double cost_to_near = costToNode(n);
+      bool checked = false;
+
+      if (cost_to_node >= cost_to_near)
+      {
+        if(checkPathToNode(n,checked_connections)) //if path to n is free, cost_to_node >= cost_to_near is really true
+          continue;
+
+        checked = true;
+      }
+
+      double cost_node_to_near = metrics_->cost(node, n);
+      if ((cost_to_node + cost_node_to_near) >= cost_to_near)
+      {
+        if(checked) continue;
+        else
+        {
+          if(checkPathToNode(n,checked_connections)) //if path to n is free, cost_to_node +cost_node_to_near >= cost_to_near is really true
+            continue;
+        }
+      }
+
+      if (!checker_->checkPath(node->getConfiguration(), n->getConfiguration()))
+        continue;
+
+      n->parent_connections_.at(0)->remove();
+      ConnectionPtr conn = std::make_shared<Connection>(node, n);
+      conn->setCost(cost_node_to_near);
+      conn->add();
+      checked_connections.push_back(conn);
+
+      improved = true;
     }
   }
 
@@ -409,9 +576,27 @@ bool Tree::rewireK(const Eigen::VectorXd &configuration)
     ConnectionPtr conn = std::make_shared<Connection>(new_node, n);
     conn->setCost(cost_new_to_near);
     conn->add();
+
+    improved = true;
   }
 
   return improved;
+}
+
+bool Tree::rewireWithPathCheck(const Eigen::VectorXd &configuration, std::vector<ConnectionPtr> &checked_connections, double r_rewire, NodePtr& new_node)
+{
+  if (direction_ == Backward)
+  {
+    ROS_ERROR("rewiring is available only on forward tree");
+    return false;
+  }
+
+  if (!extend(configuration, new_node))
+  {
+    return false;
+  }
+
+  return rewireOnlyWithPathCheck(new_node,checked_connections,r_rewire);
 }
 
 bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire, NodePtr& new_node)
@@ -428,69 +613,6 @@ bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire, NodePtr
   }
 
   return rewireOnly(new_node,r_rewire);
-
-  //  std::vector<NodePtr> near_nodes = near(new_node, r_rewire);
-  //  NodePtr nearest_node = new_node->getParents().at(0);
-  //  double cost_to_new = costToNode(new_node);
-
-  //  bool improved = false;
-
-  //  //ROS_DEBUG("try to find a better parent between %zu nodes", near_nodes.size());
-  //  for (const NodePtr& node : near_nodes)
-  //  {
-  //    if (node == nearest_node)
-  //      continue;
-  //    if (node == new_node)
-  //      continue;
-
-  //    double cost_to_near = costToNode(node);
-
-  //    if (cost_to_near >= cost_to_new)
-  //      continue;
-
-  //    double cost_near_to_new = metrics_->cost(node, new_node);
-
-  //    if ((cost_to_near + cost_near_to_new) >= cost_to_new)
-  //      continue;
-
-  //    if (!checker_->checkPath(node->getConfiguration(), new_node->getConfiguration()))
-  //      continue;
-
-
-  //    new_node->parent_connections_.at(0)->remove();
-
-  //    ConnectionPtr conn = std::make_shared<Connection>(node, new_node);
-  //    conn->setCost(cost_near_to_new);
-  //    conn->add();
-  //    nearest_node = node;
-  //    cost_to_new = cost_to_near + cost_near_to_new;
-  //    improved = true;
-  //  }
-
-  //  //ROS_DEBUG("try to find a better child between %zu nodes", near_nodes.size());
-  //  for (NodePtr& n : near_nodes)
-  //  {
-  //    if (n == new_node)
-  //      continue;
-
-  //    double cost_to_near = costToNode(n);
-  //    if (cost_to_new >= cost_to_near)
-  //      continue;
-
-  //    double cost_new_to_near = metrics_->cost(new_node->getConfiguration(), n->getConfiguration());
-  //    if ((cost_to_new + cost_new_to_near) >= cost_to_near)
-  //      continue;
-
-  //    if (!checker_->checkPath(new_node->getConfiguration(), n->getConfiguration()))
-  //      continue;
-
-  //    n->parent_connections_.at(0)->remove();
-  //    ConnectionPtr conn = std::make_shared<Connection>(new_node, n);
-  //    conn->setCost(cost_new_to_near);
-  //    conn->add();
-  //  }
-
-  //  return improved;
 }
 
 bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire)
@@ -515,70 +637,6 @@ bool Tree::rewireToNode(const NodePtr& n, double r_rewire, NodePtr& new_node)
   }
 
   return rewireOnly(new_node,r_rewire);
-
-  //  std::vector<NodePtr> near_nodes = near(new_node, r_rewire);
-  //  NodePtr nearest_node = new_node->getParents().at(0);
-  //  double cost_to_new = costToNode(new_node);
-
-  //  bool improved = false;
-
-  //  ROS_DEBUG("try to find a better parent between %zu nodes", near_nodes.size());
-  //  for (const NodePtr& node : near_nodes)
-  //  {
-  //    if (node == nearest_node)
-  //      continue;
-  //    if (node == new_node)
-  //      continue;
-
-  //    double cost_to_near = costToNode(node);
-
-  //    if (cost_to_near >= cost_to_new)
-  //      continue;
-
-  //    double cost_near_to_new = metrics_->cost(node, new_node);
-
-  //    if ((cost_to_near + cost_near_to_new) >= cost_to_new)
-  //      continue;
-
-  //    if (!checker_->checkPath(node->getConfiguration(), new_node->getConfiguration()))
-  //      continue;
-
-
-  //    new_node->parent_connections_.at(0)->remove();
-
-  //    ConnectionPtr conn = std::make_shared<Connection>(node, new_node);
-  //    conn->setCost(cost_near_to_new);
-  //    conn->add();
-  //    nearest_node = node;
-  //    cost_to_new = cost_to_near + cost_near_to_new;
-  //    improved = true;
-  //  }
-
-  //  ROS_DEBUG("try to find a better child between %zu nodes", near_nodes.size());
-  //  for (NodePtr& n : near_nodes)
-  //  {
-  //    if (n == new_node)
-  //      continue;
-
-  //    double cost_to_near = costToNode(n);
-  //    if (cost_to_new >= cost_to_near)
-  //      continue;
-
-  //    double cost_new_to_near = metrics_->cost(new_node->getConfiguration(), n->getConfiguration());
-  //    if ((cost_to_new + cost_new_to_near) >= cost_to_near)
-  //      continue;
-
-  //    if (!checker_->checkPath(new_node->getConfiguration(), n->getConfiguration()))
-  //      continue;
-
-  //    n->parent_connections_.at(0)->remove();
-  //    ConnectionPtr conn = std::make_shared<Connection>(new_node, n);
-  //    conn->setCost(cost_new_to_near);
-  //    conn->add();
-
-  //  }
-
-  //  return improved;
 }
 
 bool Tree::rewireToNode(const NodePtr& n, double r_rewire)

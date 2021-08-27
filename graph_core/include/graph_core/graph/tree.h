@@ -107,6 +107,13 @@ public:
               double r_rewire);
 
   bool rewireK(const Eigen::VectorXd& configuration);
+
+  //Useful for replanning:  extend+rewireAndCheckPath -> new sample and rewire considering only nodes with path to them collision-free
+  bool rewireWithPathCheck(const Eigen::VectorXd& configuration,
+                              std::vector<ConnectionPtr> &checked_connections,
+                              double r_rewire,
+                              NodePtr& new_node);
+
   bool rewire(const Eigen::VectorXd& configuration,
               double r_rewire,
               NodePtr& new_node);
@@ -120,6 +127,10 @@ public:
 
   //if what_rewire is 1 it searches for the best parent for node inside the radius r_rewire, if 2 it verifies if node is a better parent for the other nodes inside r_rewire, if 0 it does both
   bool rewireOnly(NodePtr& node, double r_rewire, const int &what_rewire = 0);
+  //Useful for replanning: rewireOnly considering those nodes that have a free path from the root to them
+  bool rewireOnlyWithPathCheck(NodePtr& node,std::vector<ConnectionPtr> &checked_connections, double r_rewire, const int& what_rewire = 0);
+
+  bool checkPathToNode(const NodePtr &node, std::vector<ConnectionPtr>& checked_connections);
 
   NodePtr findClosestNode(const Eigen::VectorXd& configuration);
 
