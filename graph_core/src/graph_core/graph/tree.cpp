@@ -489,9 +489,11 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
         continue;
 
       n->parent_connections_.at(0)->remove();
+
       ConnectionPtr conn = std::make_shared<Connection>(node, n);
       conn->setCost(cost_node_to_near);
       conn->add();
+
       checked_connections.push_back(conn);
 
       improved = true;
@@ -1181,21 +1183,28 @@ TreePtr Tree::fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
 
 bool Tree::changeRoot(const NodePtr& node)
 {
-
+  ROS_INFO_STREAM("node " << *node);
+  ROS_INFO_STREAM("root_ " << *root_);
   std::vector<NodePtr>::iterator it;
   if (not isInTree(node,it))
     return false;
+  ROS_INFO_STREAM("it " << **it);
 
   std::vector<ConnectionPtr> connections = getConnectionToNode(node);
   for (ConnectionPtr& conn: connections)
   {
     conn->flip();
   }
+  ROS_INFO_STREAM("node " << *node);
+  ROS_INFO_STREAM("root_ " << *root_);
   // root should be the first node;
   *it=root_;
+  ROS_INFO_STREAM("it " << **it);
   nodes_.at(0)=node;
   root_=node;
 
+  ROS_INFO_STREAM("node " << *node);
+  ROS_INFO_STREAM("root_ " << *root_);
   return true;
 }
 

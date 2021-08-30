@@ -65,7 +65,7 @@ Path::Path(std::vector<NodePtr> nodes,
   metrics_(metrics),
   checker_(checker)
 {
-  assert(nodes_.size() > 0);
+  assert(nodes.size() > 0);
 
   connections_.clear();
   cost_ = 0;
