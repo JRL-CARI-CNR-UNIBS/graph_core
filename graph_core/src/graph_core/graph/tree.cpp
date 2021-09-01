@@ -96,30 +96,40 @@ bool Tree::tryExtend(const Eigen::VectorXd &configuration,
 
 bool Tree::extend(const Eigen::VectorXd &configuration, NodePtr &new_node)
 {
+  ConnectionPtr conn;   //CHIEDI
+  return extend(configuration,new_node,conn);
+}
+
+bool Tree::extend(const Eigen::VectorXd &configuration, NodePtr &new_node, ConnectionPtr &connection)
+{
   NodePtr closest_node;
   Eigen::VectorXd next_configuration;
   if (!tryExtend(configuration,
                  next_configuration,
                  closest_node))
   {
+    connection = NULL;
     return false;
   }
 
   new_node = std::make_shared<Node>(next_configuration);
+  ConnectionPtr conn;
   if (direction_ == Forward)
   {
     double cost = metrics_->cost(closest_node, new_node);
-    ConnectionPtr conn = std::make_shared<Connection>(closest_node, new_node);
+    conn = std::make_shared<Connection>(closest_node, new_node);
     conn->add();
     conn->setCost(cost);
   }
   else
   {
     double cost = metrics_->cost(new_node, closest_node);
-    ConnectionPtr conn = std::make_shared<Connection>(new_node, closest_node);
+    conn = std::make_shared<Connection>(new_node, closest_node);
     conn->add();
     conn->setCost(cost);
   }
+
+  connection = conn;
   //nodes_.push_back(new_node);
   addNode(new_node,false);
   return true;
@@ -375,6 +385,14 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire)
 
 bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& checked_connections, double r_rewire, const int& what_rewire)
 {
+  int cont =0;
+  for(const NodePtr tree_node : getNodes()) //ELIMINA
+  {
+    if(tree_node->getParents().size() == 0 && tree_node->getChildren().size() == 0)
+      cont +=1;
+  }
+  if(cont>0) ROS_INFO_STREAM("INIZIO ONLY: NODES DISCONNECTED: "<<cont);
+
   if(what_rewire >2 || what_rewire <0)
   {
     ROS_ERROR("what_rewire parameter should be 0,1 or 2");
@@ -401,7 +419,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
     break;
   }
 
-  if(node == root_) rewire_parent = false;
+  if(node->getParents().size() == 0) rewire_parent = false;
   std::vector<NodePtr> near_nodes = near(node, r_rewire);
 
   //validate connections to node
@@ -450,6 +468,14 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
       //nearest_node = n; PER ME NON CI VA
       cost_to_node = cost_to_near + cost_near_to_node;
       improved = true;
+
+      int cont =0;
+      for(const NodePtr tree_node : getNodes()) //ELIMINA
+      {
+        if(tree_node->getParents().size() == 0 && tree_node->getChildren().size() == 0)
+          cont +=1;
+      }
+      if(cont>0) ROS_INFO_STREAM("REW PARENT NODES DISCONNECTED: "<<cont);
     }
   }
 
@@ -462,6 +488,11 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
     {
       if (n == node)
         continue;
+      if(n->getParents().size() == 0)
+      {
+
+        continue;
+      }
 
       double cost_to_near = costToNode(n);
       bool checked = false;
@@ -497,8 +528,24 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
       checked_connections.push_back(conn);
 
       improved = true;
+
+      int cont =0;
+      for(const NodePtr tree_node : getNodes()) //ELIMINA
+      {
+        if(tree_node->getParents().size() == 0 && tree_node->getChildren().size() == 0)
+          cont +=1;
+      }
+      if(cont>0) ROS_INFO_STREAM("REW CHILDREN NODES DISCONNECTED: "<<cont);
     }
   }
+
+  cont =0;
+  for(const NodePtr tree_node : getNodes()) //ELIMINA
+  {
+    if(tree_node->getParents().size() == 0 && tree_node->getChildren().size() == 0)
+      cont +=1;
+  }
+  if(cont>0) ROS_INFO_STREAM("FINE ONLY: NODES DISCONNECTED: "<<cont);
 
   return improved;
 }
@@ -587,16 +634,37 @@ bool Tree::rewireK(const Eigen::VectorXd &configuration)
 
 bool Tree::rewireWithPathCheck(const Eigen::VectorXd &configuration, std::vector<ConnectionPtr> &checked_connections, double r_rewire, NodePtr& new_node)
 {
+  int cont =0;
+  for(const NodePtr tree_node : getNodes()) //ELIMINA
+  {
+    if(tree_node->getParents().size() == 0 && tree_node->getChildren().size() == 0)
+      cont +=1;
+  }
+  if(cont>0) ROS_INFO_STREAM("PRIMA EXTEND NODES DISCONNECTED: "<<cont);
+
   if (direction_ == Backward)
   {
     ROS_ERROR("rewiring is available only on forward tree");
     return false;
   }
 
-  if (!extend(configuration, new_node))
+  ConnectionPtr new_conn;
+  if (!extend(configuration,new_node,new_conn))
   {
     return false;
   }
+
+  cont =0;
+  for(const NodePtr tree_node : getNodes()) //ELIMINA
+  {
+    if(tree_node->getParents().size() == 0 && tree_node->getChildren().size() == 0)
+      cont +=1;
+  }
+  if(cont>0) ROS_INFO_STREAM("DOPO EXTEND NODES DISCONNECTED: "<<cont);
+
+  checked_connections.push_back(new_conn);
+
+  if(new_node->getParents().size()==0 && new_node->getChildren().size()==0) ROS_INFO_STREAM("NODE ISOLATED -> NODE: \n"<<*new_node);
 
   return rewireOnlyWithPathCheck(new_node,checked_connections,r_rewire);
 }

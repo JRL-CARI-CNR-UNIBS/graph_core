@@ -93,6 +93,10 @@ public:
   bool extend(const Eigen::VectorXd& configuration,
               NodePtr& new_node);
 
+  bool extend(const Eigen::VectorXd& configuration,
+              NodePtr& new_node,
+              ConnectionPtr& connection);
+
   bool extendToNode(const NodePtr& node,
                     NodePtr& new_node);
 
