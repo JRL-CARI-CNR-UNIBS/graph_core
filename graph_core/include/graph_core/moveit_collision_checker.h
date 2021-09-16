@@ -28,7 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <graph_core/collision_checker.h>
-#include <moveit/planning_scene/planning_scene.h>
 
 namespace pathplan
 {
@@ -90,6 +89,16 @@ public:
   virtual void setPlanningScene(planning_scene::PlanningScenePtr &planning_scene)
   {
     planning_scene_ = planning_scene;
+  }
+
+  std::string getGroupName() override
+  {
+    return group_name_;
+  }
+
+  planning_scene::PlanningScenePtr getPlanningScene() override
+  {
+    return planning_scene_;
   }
 
 };

@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <eigen3/Eigen/Core>
 #include <moveit_msgs/PlanningScene.h>
 #include <graph_core/graph/connection.h>
+#include <moveit/planning_scene/planning_scene.h>
 
 namespace pathplan
 {
@@ -49,6 +50,13 @@ public:
   }
 
   virtual void setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg){}
+
+  virtual std::string getGroupName()
+  {
+    return "";
+  }
+
+  virtual planning_scene::PlanningScenePtr getPlanningScene() {}
 
   virtual CollisionCheckerPtr clone()
   {
