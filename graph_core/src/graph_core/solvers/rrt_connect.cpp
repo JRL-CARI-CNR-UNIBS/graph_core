@@ -144,12 +144,9 @@ bool RRTConnect::update(const Eigen::VectorXd& point, PathPtr &solution)
     return true;
   }
 
-
-
   NodePtr new_node;
   if (start_tree_->connect(point, new_node))
   {
-
     if ((new_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
     {
       if (checker_->checkPath(new_node->getConfiguration(), goal_node_->getConfiguration()))
