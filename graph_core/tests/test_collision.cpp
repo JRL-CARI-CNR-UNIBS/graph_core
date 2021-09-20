@@ -176,6 +176,21 @@ int main(int argc, char **argv)
   ROS_INFO("ParallelMoveitCollisionChecker: Average time = %f ms on %d attempts",1e3*time_par/(double)attempts,attempts);
   ROS_INFO("Erros = %d over %d attempts",errors,iters);
 
+  double collision_time_for_a_configuration=0;
+  for (int idx=0;idx<iters;idx++)
+  {
+    if (!ros::ok())
+      break;
+    ROS_INFO_THROTTLE(10,"%d iter of %d",idx,iters);
+    Eigen::VectorXd q1=sampler->sample();
 
+
+    attempts++;
+    ros::WallTime t0=ros::WallTime::now();
+    bool fl1=checker1->check(q1);
+    ros::WallTime t1=ros::WallTime::now();
+    collision_time_for_a_configuration+=(t1-t0).toSec();
+  }
+  ROS_INFO("MoveitCollisionChecker: Average time for a single collision= %f ms",1e3*collision_time_for_a_configuration/(double)attempts);
   return 0;
 }

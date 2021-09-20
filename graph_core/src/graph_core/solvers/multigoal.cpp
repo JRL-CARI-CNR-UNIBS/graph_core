@@ -161,7 +161,10 @@ bool MultigoalSolver::isBestSolution(const int &index)
     }
     if (status_.at(igoal)==GoalStatus::done)
       continue;
-    tube_samplers_.at(igoal)->setCost(path_cost_+goal_cost_-goal_costs_.at(igoal));
+    if (mixed_strategy_)
+      tube_samplers_.at(igoal)->setCost(path_cost_+goal_cost_-goal_costs_.at(igoal));
+    else if (informed_)
+      sampler_->setCost(path_cost_+goal_cost_-goal_costs_.at(igoal));
   }
 
   if ((cost_<0.9999*cost_at_last_clean) || start_tree_->needCleaning())
@@ -208,19 +211,46 @@ bool MultigoalSolver::config(const ros::NodeHandle& nh)
   r_rewire_ = 2.0*max_distance_;
   if (!nh.getParam("rewire_radius",max_distance_))
   {
-    ROS_WARN("%s/rewire_radius is not set. using 2.0*max_distance",nh.getNamespace().c_str());
+    ROS_DEBUG("%s/rewire_radius is not set. using 2.0*max_distance",nh.getNamespace().c_str());
     r_rewire_=2.0*max_distance_;
   }
 
 
+  if (!nh.getParam("informed",informed_))
+  {
+    ROS_DEBUG("%s/informed is not set. using true (informed set enble)",nh.getNamespace().c_str());
+    informed_=true;
+  }
+
+  if (!nh.getParam("mixed_strategy",mixed_strategy_))
+  {
+    ROS_DEBUG("%s/mixed_strategy is not set. enable it if informed set is enable",nh.getNamespace().c_str());
+    mixed_strategy_=informed_;
+  }
+  if (not informed_ && mixed_strategy_)
+  {
+    ROS_WARN("you cannot use mixed_strategy without informed set enable, turning it on");
+    informed_=true;
+  }
+  if (!nh.getParam("bidirectional",bidirectional_))
+  {
+    ROS_DEBUG("%s/bidirectional is not set. using true",nh.getNamespace().c_str());
+    bidirectional_=true;
+  }
+
   if (!nh.getParam("extend",extend_))
   {
     ROS_WARN("%s/extend is not set. using false (connect algorithm)",nh.getNamespace().c_str());
-    max_distance_=1.0;
+    extend_=false;
+  }
+  if (!nh.getParam("warp",warp_))
+  {
+    ROS_DEBUG("%s/warp is not set. using false (connect algorithm)",nh.getNamespace().c_str());
+    warp_=false;
   }
   if (!nh.getParam("k_nearest",knearest_))
   {
-    ROS_WARN("%s/k_nearest is not set. using false (rewire using nodes in the radius)",nh.getNamespace().c_str());
+    ROS_DEBUG("%s/k_nearest is not set. using false (rewire using nodes in the radius)",nh.getNamespace().c_str());
     knearest_=false;
   }
   if (!nh.getParam("local_bias",local_bias_))
@@ -300,7 +330,12 @@ bool MultigoalSolver::update(PathPtr& solution)
   {
     NodePtr new_start_node, new_goal_node;
     bool add_to_start, add_to_goal;
-    Eigen::VectorXd configuration = tube_samplers_.at(igoal)->sample();
+    Eigen::VectorXd configuration;
+    if (mixed_strategy_)
+      configuration = tube_samplers_.at(igoal)->sample();
+    else
+      configuration = sampler_->sample();
+    bool is_goal_biased=ud_(gen_)<goal_bias_;
 
     double prob=1.0;
     double min_prob=0.2;
@@ -320,49 +355,114 @@ bool MultigoalSolver::update(PathPtr& solution)
 
     case GoalStatus::search:
 
-
-      if (extend_)
-        add_to_start = start_tree_->extend(configuration, new_start_node);
-      else
-        add_to_start = start_tree_->connect(configuration, new_start_node);
-
-
-      if (add_to_start)
+      if (not bidirectional_) // if only start tree grows
       {
-        if (extend_)
-          add_to_goal = goal_trees_.at(igoal)->extendToNode(new_start_node, new_goal_node);
-        else
-          add_to_goal = goal_trees_.at(igoal)->connectToNode(new_start_node, new_goal_node);
+        if (is_goal_biased) // if it is goal biased try to connect goal
+        {
+          ROS_INFO_THROTTLE(0.1,"GOAL BIAS nodes size =%u",start_tree_->getNumberOfNodes());
+          if (extend_)
+            add_to_start = start_tree_->extendToNode(goal_nodes_.at(igoal), new_start_node);
+          else
+            add_to_start = start_tree_->connectToNode(goal_nodes_.at(igoal), new_start_node);
+
+          if (new_start_node==goal_nodes_.at(igoal))
+          {
+            ROS_INFO_THROTTLE(0.1,"GOAL BIAS connected!");
+            improved=true;
+            goal_trees_.at(igoal)->cleanTree();
+          }
+        }
+        else // not is_goal_bias, add a new random node
+        {
+          ROS_INFO_THROTTLE(0.1,"nodes size =%u",start_tree_->getNumberOfNodes());
+          if (extend_)
+            add_to_start = start_tree_->extend(configuration, new_start_node);
+          else
+            add_to_start = start_tree_->connect(configuration, new_start_node);
+//          if (add_to_start) // if a new node is added, check if it near to the goal
+//          {
+//            if (metrics_->utopia(new_start_node,goal_nodes_.at(igoal))<50)
+//            {
+//              // if yes, try to extend to the goal
+//              ROS_INFO_THROTTLE(0.1,"try connect the goal");
+//              add_to_start = start_tree_->extendToNode(goal_nodes_.at(igoal), new_start_node);
+//              if (new_start_node==goal_nodes_.at(igoal)) // a solution is found
+//              {
+//                improved=true;
+//                goal_trees_.at(igoal)->cleanTree();
+//              }
+//            }
+//          }
+        }
       }
-      else
+      else  // birectional
       {
-        if (extend_)
-          add_to_goal = goal_trees_.at(igoal)->extend(configuration, new_goal_node);
-        else
-          add_to_goal = goal_trees_.at(igoal)->connect(configuration, new_goal_node);
+        if (is_goal_biased) // if it is goal biased try to connect goal
+        {
+          if (extend_)
+            add_to_start = start_tree_->extendToNode(goal_nodes_.at(igoal), new_start_node);
+          else
+            add_to_start = start_tree_->connectToNode(goal_nodes_.at(igoal), new_start_node);
+
+          if (new_start_node==goal_nodes_.at(igoal))
+          {
+            improved=true;
+            goal_trees_.at(igoal)->cleanTree();
+          }
+        }
+        else // not is_goal_bias, add a new random node
+        {
+          // add node to the start tree
+          if (extend_)
+            add_to_start = start_tree_->extend(configuration, new_start_node);
+          else
+            add_to_start = start_tree_->connect(configuration, new_start_node);
+
+
+          if (add_to_start) // if it is added, try to add it to the goal tree
+          {
+            if (extend_)
+              add_to_goal = goal_trees_.at(igoal)->extendToNode(new_start_node, new_goal_node);
+            else
+              add_to_goal = goal_trees_.at(igoal)->connectToNode(new_start_node, new_goal_node);
+          }
+          else  // if it is not added, add a random node to the goal tree
+          {
+            if (extend_)
+              add_to_goal = goal_trees_.at(igoal)->extend(configuration, new_goal_node);
+            else
+              add_to_goal = goal_trees_.at(igoal)->connect(configuration, new_goal_node);
+          }
+
+          if (add_to_start && add_to_goal && new_goal_node == new_start_node) // a solution is found
+          {
+            goal_trees_.at(igoal)->keepOnlyThisBranch(goal_trees_.at(igoal)->getConnectionToNode(new_goal_node));
+            start_tree_->addBranch(goal_trees_.at(igoal)->getConnectionToNode(new_goal_node));
+            improved=true;
+          }
+        }
       }
 
-      if (add_to_start && add_to_goal && new_goal_node == new_start_node)
+      if (improved)
       {
-        goal_trees_.at(igoal)->keepOnlyThisBranch(goal_trees_.at(igoal)->getConnectionToNode(new_goal_node));
-        start_tree_->addBranch(goal_trees_.at(igoal)->getConnectionToNode(new_goal_node));
-
         solutions_.at(igoal) = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_nodes_.at(igoal)), metrics_, checker_);
         solutions_.at(igoal)->setTree(start_tree_);
 
         double cost_1=solutions_.at(igoal)->cost();
-        ros::WallTime twarp=ros::WallTime::now();
-        for (int iwarp=0;iwarp<10;iwarp++)
+        if (warp_)
         {
-          solutions_.at(igoal)->warp();
+          ros::WallTime twarp=ros::WallTime::now();
+          for (int iwarp=0;iwarp<10;iwarp++)
+          {
+            solutions_.at(igoal)->warp();
+          }
+          ROS_DEBUG("warp: cost from %f to %f in %f second",cost_1,solutions_.at(igoal)->cost(),(ros::WallTime::now()-twarp).toSec());
+
+          double cost_0=solutions_.at(igoal)->cost();
+          ros::WallTime tsimpl=ros::WallTime::now();
+          solutions_.at(igoal)->simplify();
+          ROS_DEBUG("simplify: cost from %f to %f in %f second",cost_0,solutions_.at(igoal)->cost(),(ros::WallTime::now()-tsimpl).toSec());
         }
-        ROS_DEBUG("warp: cost from %f to %f in %f second",cost_1,solutions_.at(igoal)->cost(),(ros::WallTime::now()-twarp).toSec());
-
-        double cost_0=solutions_.at(igoal)->cost();
-        ros::WallTime tsimpl=ros::WallTime::now();
-        solutions_.at(igoal)->simplify();
-        ROS_DEBUG("simplify: cost from %f to %f in %f second",cost_0,solutions_.at(igoal)->cost(),(ros::WallTime::now()-tsimpl).toSec());
-
         tube_samplers_.at(igoal)->setPath(solutions_.at(igoal));
         tube_samplers_.at(igoal)->setRadius(tube_radius_*solutions_.at(igoal)->cost());
         path_costs_.at(igoal) = solutions_.at(igoal)->cost();
@@ -382,20 +482,23 @@ bool MultigoalSolver::update(PathPtr& solution)
         global_improvement=isBestSolution(igoal) || global_improvement;
       }
 
+
       break;
     case GoalStatus::refine:
 
+
+
       if (not knearest_)
       {
-//        double r_rrt=1.1*  std::pow(2.0*(1.0+1.0/dimension_),1.0/dimension_)*std::pow(sampler_->getSpecificVolume(),1.0/dimension_);
-//        double cardDbl=start_tree_->getNumberOfNodes()+1.0;
-//        r_rewire_=r_rrt * std::pow(log(cardDbl) / cardDbl, 1.0 /dimension_);
-//        ROS_INFO_THROTTLE(1,"radius = %f",r_rewire_);
-        improved=start_tree_->rewire(tube_samplers_.at(igoal)->sample(), r_rewire_);
+        //        double r_rrt=1.1*  std::pow(2.0*(1.0+1.0/dimension_),1.0/dimension_)*std::pow(sampler_->getSpecificVolume(),1.0/dimension_);
+        //        double cardDbl=start_tree_->getNumberOfNodes()+1.0;
+        //        r_rewire_=r_rrt * std::pow(log(cardDbl) / cardDbl, 1.0 /dimension_);
+        improved=start_tree_->rewire(configuration, r_rewire_,new_start_node);
+
       }
       else
       {
-        improved=start_tree_->rewireK(tube_samplers_.at(igoal)->sample());
+        improved=start_tree_->rewireK(configuration);
       }
       if (improved)
       {
@@ -405,18 +508,20 @@ bool MultigoalSolver::update(PathPtr& solution)
         solutions_.at(igoal) = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_nodes_.at(igoal)), metrics_, checker_);
         solutions_.at(igoal)->setTree(start_tree_);
         double cost_1=solutions_.at(igoal)->cost();
-        ros::WallTime twarp=ros::WallTime::now();
-        for (int iwarp=0;iwarp<10;iwarp++)
+        if (warp_)
         {
-          solutions_.at(igoal)->warp();
+          ros::WallTime twarp=ros::WallTime::now();
+          for (int iwarp=0;iwarp<10;iwarp++)
+          {
+            solutions_.at(igoal)->warp();
+          }
+          ROS_DEBUG("warp: cost from %f to %f in %f second",cost_1,solutions_.at(igoal)->cost(),(ros::WallTime::now()-twarp).toSec());
+
+          double cost_0=solutions_.at(igoal)->cost();
+          ros::WallTime tsimpl=ros::WallTime::now();
+          solutions_.at(igoal)->simplify();
+          ROS_DEBUG("simplify: cost from %f to %f in %f second",cost_0,solutions_.at(igoal)->cost(),(ros::WallTime::now()-tsimpl).toSec());
         }
-        ROS_DEBUG("warp: cost from %f to %f in %f second",cost_1,solutions_.at(igoal)->cost(),(ros::WallTime::now()-twarp).toSec());
-
-        double cost_0=solutions_.at(igoal)->cost();
-        ros::WallTime tsimpl=ros::WallTime::now();
-        solutions_.at(igoal)->simplify();
-        ROS_DEBUG("simplify: cost from %f to %f in %f second",cost_0,solutions_.at(igoal)->cost(),(ros::WallTime::now()-tsimpl).toSec());
-
 
         tube_samplers_.at(igoal)->setPath(solutions_.at(igoal));
         tube_samplers_.at(igoal)->setRadius(tube_radius_*solutions_.at(igoal)->cost());
@@ -431,6 +536,53 @@ bool MultigoalSolver::update(PathPtr& solution)
         else
           ROS_DEBUG("Goal %u refines solution with cost %f",igoal,costs_.at(igoal));
         global_improvement=isBestSolution(igoal) || global_improvement;
+      }
+      else if (new_start_node)
+      {
+        // try connect with the goal
+        double cost_to_goal=metrics_->cost(new_start_node,goal_nodes_.at(igoal));
+        if (cost_to_goal<max_distance_ && (start_tree_->costToNode(new_start_node)+cost_to_goal)<path_costs_.at(igoal))
+        {
+          if (checker_->checkPath(new_start_node->getConfiguration(),
+                                  goal_nodes_.at(igoal)->getConfiguration()))
+          {
+            goal_nodes_.at(igoal)->parent_connections_.at(0)->remove();
+            ConnectionPtr conn=std::make_shared<Connection>(new_start_node,goal_nodes_.at(igoal));
+            conn->setCost(cost_to_goal);
+            conn->add();
+            solutions_.at(igoal) = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_nodes_.at(igoal)), metrics_, checker_);
+            solutions_.at(igoal)->setTree(start_tree_);
+            double cost_1=solutions_.at(igoal)->cost();
+            if (warp_)
+            {
+              ros::WallTime twarp=ros::WallTime::now();
+              for (int iwarp=0;iwarp<10;iwarp++)
+              {
+                solutions_.at(igoal)->warp();
+              }
+              ROS_DEBUG("warp: cost from %f to %f in %f second",cost_1,solutions_.at(igoal)->cost(),(ros::WallTime::now()-twarp).toSec());
+
+              double cost_0=solutions_.at(igoal)->cost();
+              ros::WallTime tsimpl=ros::WallTime::now();
+              solutions_.at(igoal)->simplify();
+              ROS_DEBUG("simplify: cost from %f to %f in %f second",cost_0,solutions_.at(igoal)->cost(),(ros::WallTime::now()-tsimpl).toSec());
+            }
+
+            tube_samplers_.at(igoal)->setPath(solutions_.at(igoal));
+            tube_samplers_.at(igoal)->setRadius(tube_radius_*solutions_.at(igoal)->cost());
+            path_costs_.at(igoal) = solutions_.at(igoal)->cost();
+            costs_.at(igoal) = path_costs_.at(igoal)+goal_costs_.at(igoal);
+            if (costs_.at(igoal)<=(utopias_.at(igoal)+1e-8))
+            {
+              ROS_DEBUG("Goal %u reaches its utopia. cost = %f, utopia =%f",igoal,costs_.at(igoal),utopias_.at(igoal));
+              cleanTree();
+              status_.at(igoal)=GoalStatus::done;
+            }
+            else
+              ROS_DEBUG("Goal %u refines solution with cost %f",igoal,costs_.at(igoal));
+            global_improvement=isBestSolution(igoal) || global_improvement;
+          }
+        }
       }
       break;
     case GoalStatus::discard:

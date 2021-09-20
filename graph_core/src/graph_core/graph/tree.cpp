@@ -120,7 +120,6 @@ bool Tree::extend(const Eigen::VectorXd &configuration, NodePtr &new_node)
     conn->add();
     conn->setCost(cost);
   }
-  //nodes_.push_back(new_node);
   addNode(new_node,false);
   return true;
 }
@@ -233,6 +232,7 @@ bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node, const double &m
 
 bool Tree::rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire)
 {
+//  ROS_INFO("is it me?");
   if(what_rewire >2 || what_rewire <0)
   {
     ROS_ERROR("what_rewire parameter shoudl be 0,1 or 2");
@@ -327,7 +327,7 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire)
       conn->add();
     }
   }
-
+//  ROS_INFO("it's Cesare all along");
   return improved;
 }
 
@@ -962,6 +962,22 @@ bool Tree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, 
     removed_nodes++;
   }
   return true;
+}
+
+void Tree::cleanTree()
+{
+  std::vector<NodePtr> successors;
+  std::vector<NodePtr> white_list;
+  unsigned int removed_nodes;
+  if (direction_==Direction::Forward)
+    successors=root_->getChildren();
+  else
+    successors=root_->getParents();
+  for (NodePtr& n: successors)
+  {
+    if (isInTree(n))
+      purgeFromHere(n,white_list,removed_nodes);
+  }
 }
 
 void Tree::populateTreeFromNode(const NodePtr& node)

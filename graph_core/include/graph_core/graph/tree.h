@@ -131,7 +131,7 @@ public:
 
   bool addBranch(const std::vector<ConnectionPtr>& connections);
   bool addTree(TreePtr& additional_tree, const double &max_time = std::numeric_limits<double>::infinity());
-
+  void cleanTree();
   std::vector<NodePtr> near(const NodePtr& node, const double& r_rewire);
   std::map<double, NodePtr> nearK(const NodePtr& node);
 
