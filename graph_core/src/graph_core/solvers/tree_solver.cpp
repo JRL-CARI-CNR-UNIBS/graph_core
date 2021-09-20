@@ -50,6 +50,23 @@ bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const do
   return false;
 }
 
+bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node, const ros::NodeHandle& nh, PathPtr& solution, unsigned int max_iter)
+{
+  config(nh);
+  addStart(start_node);
+  addGoal(goal_node);
+
+  if (!solve(solution, 10000))
+  {
+    ROS_INFO("No solutions found");
+    assert(0);
+
+    return false;
+  }
+
+  return true;
+}
+
 bool TreeSolver::setSolution(const PathPtr &solution, const bool& solved)
 {
   solution_ = solution;

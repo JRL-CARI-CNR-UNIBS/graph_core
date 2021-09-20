@@ -30,30 +30,61 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
-class RRTConnect;
-typedef std::shared_ptr<RRTConnect> RRTConnectPtr;
+#define FAILED_ITER 3
+class AnytimeRRT;
+typedef std::shared_ptr<AnytimeRRT> AnytimeRRTPtr;
 
-class RRTConnect: public RRT
+class AnytimeRRT: public RRT
 {
 protected:
-  NodePtr goal_node_;
-  double max_distance_;
-  double utopia_;
-  virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity()) override;
-  virtual void clean(){}
+  double bias_;
+  double delta_; //dist_bias and cost_bias update factor
+  double cost_impr_;  //cost improvement factor (new cost < (1-cost_impr_)*path_cost_)
+  bool new_tree_solved_;
+  TreePtr new_tree_;
+
+  bool improve(NodePtr &start_node,
+               PathPtr& solution,
+               const unsigned int& max_iter = 100,
+               const double &max_time = std::numeric_limits<double>::infinity());
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  RRTConnect(const MetricsPtr& metrics,
+  AnytimeRRT(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
-             const SamplerPtr& sampler):
-    RRT(metrics, checker, sampler) {}
+             const SamplerPtr& sampler): RRT(metrics, checker, sampler)
+  {
+    bias_ = 0.9;
+    setParameters();
+  }
 
+  void setDelta(const double& delta = 0.1)
+  {
+    delta_ = delta;
+  }
+
+  void setCostImprovementFactor(const double& impr = 0.1)
+  {
+    cost_impr_ = impr;
+  }
+
+  void setParameters(const double& delta = 0.1, const double& impr = 0.1)
+  {
+    setDelta(delta);
+    setCostImprovementFactor(impr);
+  }
+
+  virtual bool solve(PathPtr& solution,
+                     const unsigned int& max_iter = 100,
+                     const double &max_time = std::numeric_limits<double>::infinity()) override;
+  virtual bool config(const ros::NodeHandle& nh) override;
+  virtual void resetProblem() override;
   virtual bool update(const Eigen::VectorXd& point, PathPtr& solution) override;
   virtual bool update(const NodePtr& n, PathPtr& solution) override;
   virtual bool update(PathPtr& solution) override;
-
-  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler);
+  virtual TreeSolverPtr clone(const MetricsPtr& metrics,
+                              const CollisionCheckerPtr& checker,
+                              const SamplerPtr& sampler) override;
 
 };
 

@@ -62,6 +62,8 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/solvers/rrt_connect.cpp
   src/${PROJECT_NAME}/solvers/birrt.cpp
   src/${PROJECT_NAME}/solvers/rrt_star.cpp
+  src/${PROJECT_NAME}/solvers/rrt.cpp
+  src/${PROJECT_NAME}/solvers/anytime_rrt.cpp
   src/${PROJECT_NAME}/solvers/path_solver.cpp
   )
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -88,6 +90,13 @@ target_link_libraries(test_subtree
 add_executable(       test_precomputing_tree tests/test_precomputing_tree.cpp)
 add_dependencies(     test_precomputing_tree ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(test_precomputing_tree
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
+add_executable(       test_solver tests/test_AnytimeRRT.cpp)
+add_dependencies(     test_solver ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_solver
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )

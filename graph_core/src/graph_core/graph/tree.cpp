@@ -46,9 +46,6 @@ Tree::Tree(const NodePtr& root,
   k_rrt_=1.1*std::pow(2.0,dimension+1)*std::exp(1)*(1.0+1.0/dimension);
 }
 
-
-
-
 NodePtr Tree::findClosestNode(const Eigen::VectorXd &configuration)
 {
   NodePtr closest_node;
@@ -72,12 +69,36 @@ bool Tree::tryExtend(const Eigen::VectorXd &configuration,
   closest_node = findClosestNode(configuration);
   assert(closest_node);
 
-  double distance = (closest_node->getConfiguration() - configuration).norm();
+  return tryExtendFromNode(configuration,next_configuration,closest_node);
+}
+
+bool Tree::tryExtendFromNode(const Eigen::VectorXd &configuration,
+                             Eigen::VectorXd &next_configuration,
+                             NodePtr& node)
+{
+  assert(node);
+  double distance = selectNextConfiguration(configuration,next_configuration,node);
+
+  if (distance < tolerance_)
+    return true;
+  else
+    if (checker_->checkPath(node->getConfiguration(), next_configuration))
+      return true;
+
+  return false;
+}
+
+double Tree::selectNextConfiguration(const Eigen::VectorXd& configuration,
+                                     Eigen::VectorXd& next_configuration,
+                                     const NodePtr& node)
+{
+  assert(node);
+
+  double distance = (node->getConfiguration() - configuration).norm();
 
   if (distance < tolerance_)
   {
     next_configuration = configuration;
-    return true;
   }
   else if (distance < max_distance_)
   {
@@ -85,14 +106,36 @@ bool Tree::tryExtend(const Eigen::VectorXd &configuration,
   }
   else
   {
-    next_configuration = closest_node->getConfiguration() + (configuration - closest_node->getConfiguration()) / distance * max_distance_;
+    next_configuration = node->getConfiguration() + (configuration - node->getConfiguration()) / distance * max_distance_;
   }
 
-  if (checker_->checkPath(closest_node->getConfiguration(), next_configuration))
-    return true;
-
-  return false;
+  return distance;
 }
+
+bool Tree::extendOnly(NodePtr& closest_node, NodePtr &new_node, ConnectionPtr &connection)
+{
+  ConnectionPtr conn;
+  if (direction_ == Forward)
+  {
+    double cost = metrics_->cost(closest_node, new_node);
+    conn = std::make_shared<Connection>(closest_node, new_node);
+    conn->add();
+    conn->setCost(cost);
+  }
+  else
+  {
+    double cost = metrics_->cost(new_node, closest_node);
+    conn = std::make_shared<Connection>(new_node, closest_node);
+    conn->add();
+    conn->setCost(cost);
+  }
+
+  connection = conn;
+  addNode(new_node,false);
+
+  return true;
+}
+
 
 bool Tree::extend(const Eigen::VectorXd &configuration, NodePtr &new_node)
 {
@@ -113,26 +156,7 @@ bool Tree::extend(const Eigen::VectorXd &configuration, NodePtr &new_node, Conne
   }
 
   new_node = std::make_shared<Node>(next_configuration);
-  ConnectionPtr conn;
-  if (direction_ == Forward)
-  {
-    double cost = metrics_->cost(closest_node, new_node);
-    conn = std::make_shared<Connection>(closest_node, new_node);
-    conn->add();
-    conn->setCost(cost);
-  }
-  else
-  {
-    double cost = metrics_->cost(new_node, closest_node);
-    conn = std::make_shared<Connection>(new_node, closest_node);
-    conn->add();
-    conn->setCost(cost);
-  }
-
-  connection = conn;
-  //nodes_.push_back(new_node);
-  addNode(new_node,false);
-  return true;
+  return extendOnly(closest_node,new_node,connection);
 }
 
 bool Tree::extendToNode(const NodePtr& node,
@@ -150,7 +174,6 @@ bool Tree::extendToNode(const NodePtr& node,
   bool attached = false;
   if ((next_configuration - node->getConfiguration()).norm() < tolerance_)
   {
-
     attached = true;
     new_node = node;
   }
@@ -196,23 +219,76 @@ bool Tree::connect(const Eigen::VectorXd &configuration, NodePtr &new_node)
   return false;
 }
 
+bool Tree::informedExtend(const Eigen::VectorXd &configuration, NodePtr &new_node, Eigen::VectorXd &goal, const double& cost2beat, const double& bias)
+{
+  struct node_and_conf
+  {
+    NodePtr tree_node;
+    Eigen::VectorXd new_conf;
+    double distance;
+  };
+
+  std::map<double,NodePtr> closest_nodes_map = nearK(configuration);
+  if(closest_nodes_map.size() == 0) assert(0);
+
+  double heuristic, distance, cost2node;
+  Eigen::VectorXd new_configuration;
+  std::multimap<double,node_and_conf> best_nodes_map;
+
+  for(const std::pair<double,NodePtr>& n: closest_nodes_map)
+  {
+    distance = selectNextConfiguration(configuration,new_configuration,n.second);
+    cost2node = costToNode(n.second);
+    heuristic = bias*distance+(1-bias)*cost2node;
+
+    node_and_conf n_c;
+    n_c.tree_node = n.second;
+    n_c.new_conf = new_configuration;
+    n_c.distance = distance;
+
+    if((cost2node+distance+(goal-new_configuration).norm())< cost2beat)
+      best_nodes_map.insert(std::pair<double,node_and_conf>(heuristic,n_c));
+  }
+
+  bool extend_ok = false;
+  node_and_conf tree_node;
+  for(const std::pair<double,node_and_conf>& n: best_nodes_map)
+  {
+    tree_node = n.second;
+    if (tree_node.distance < tolerance_)
+    {
+      extend_ok = true;
+      break;
+    }
+    else
+    {
+      if (checker_->checkPath(tree_node.tree_node->getConfiguration(), tree_node.new_conf))
+      {
+        extend_ok = true;
+        break;
+      }
+    }
+  }
+
+  if(extend_ok)
+  {
+    ConnectionPtr connection;
+    new_node = std::make_shared<Node>(tree_node.new_conf);
+    return extendOnly(tree_node.tree_node,new_node,connection);
+  }
+  else
+    return false;
+}
+
 bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node, const double &max_time)
 {
   ros::WallTime tic = ros::WallTime::now();
-
-  //  ros::WallTime toc, tic_cycle, toc_cycle;
-  //  double time =  max_time;
-  //  double mean = 0.0;
-  //  std::vector<double> time_vector;
-  //  if(time<=0.0) return false;
 
   if(max_time<=0.0) return false;
 
   bool success = true;
   while (success)
   {
-    //    tic_cycle = ros::WallTime::now();
-
     NodePtr tmp_node;
     ROS_DEBUG("calling extend");
     success = extendToNode(node, tmp_node);
@@ -225,18 +301,6 @@ bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node, const double &m
     }
 
     if((ros::WallTime::now()-tic).toSec() >= 0.98*max_time) break;
-
-    //    toc_cycle = ros::WallTime::now();
-    //    time_vector.push_back((toc_cycle-tic_cycle).toSec());
-    //    mean = std::accumulate(time_vector.begin(), time_vector.end(),0.0)/((double) time_vector.size());
-    //    toc = ros::WallTime::now();
-    //    time = max_time-(toc-tic).toSec();
-    //    if(time<0.7*mean || time<=0.0)
-    //    {
-    //      //ROS_ERROR("TIME OUT");
-    //      break;
-    //    }
-
   }
   return false;
 }
@@ -695,12 +759,17 @@ std::vector<NodePtr> Tree::near(const NodePtr &node, const double &r_rewire)
 
 std::map<double,NodePtr> Tree::nearK(const NodePtr &node)
 {
+  return nearK(node->getConfiguration());
+}
+
+std::map<double,NodePtr> Tree::nearK(const Eigen::VectorXd &conf)
+{
   size_t k=std::ceil(k_rrt_*std::log(nodes_.size()+1));
   std::map<double,NodePtr> nodes;
   for (const NodePtr& n : nodes_)
   {
 
-    double dist = (n->getConfiguration() - node->getConfiguration()).norm();
+    double dist = (n->getConfiguration() - conf).norm();
     if (nodes.size()<k)
     {
       nodes.insert(std::pair<double,NodePtr>(dist,n));
@@ -857,7 +926,6 @@ bool Tree::addBranch(const std::vector<ConnectionPtr> &connections)
       addNode(n,false);
   }
   return true;
-
 }
 
 bool Tree::addTree(TreePtr &additional_tree, const double &max_time)

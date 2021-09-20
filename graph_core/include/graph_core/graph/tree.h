@@ -90,6 +90,14 @@ public:
                  Eigen::VectorXd& next_configuration,
                  NodePtr& closest_node);
 
+  bool tryExtendFromNode(const Eigen::VectorXd& configuration,
+                       Eigen::VectorXd& next_configuration,
+                       NodePtr& node);
+
+  double selectNextConfiguration(const Eigen::VectorXd& configuration,
+                                 Eigen::VectorXd& next_configuration,
+                                 const NodePtr &node);
+
   bool extend(const Eigen::VectorXd& configuration,
               NodePtr& new_node);
 
@@ -97,11 +105,19 @@ public:
               NodePtr& new_node,
               ConnectionPtr& connection);
 
+  bool extendOnly(NodePtr &closest_node,
+                  NodePtr& new_node,
+                  ConnectionPtr& connection);
+
   bool extendToNode(const NodePtr& node,
                     NodePtr& new_node);
 
   bool connect(const Eigen::VectorXd& configuration,
                NodePtr& new_node);
+
+  bool informedExtend(const Eigen::VectorXd& configuration,   //Used in AnytimeRRT
+                        NodePtr& new_node,
+                        Eigen::VectorXd &goal, const double &cost2beat, const double &bias);
 
   bool connectToNode(const NodePtr& node,
                      NodePtr& new_node,
@@ -114,9 +130,9 @@ public:
 
   //Useful for replanning:  extend+rewireAndCheckPath -> new sample and rewire considering only nodes with path to them collision-free
   bool rewireWithPathCheck(const Eigen::VectorXd& configuration,
-                              std::vector<ConnectionPtr> &checked_connections,
-                              double r_rewire,
-                              NodePtr& new_node);
+                           std::vector<ConnectionPtr> &checked_connections,
+                           double r_rewire,
+                           NodePtr& new_node);
 
   bool rewire(const Eigen::VectorXd& configuration,
               double r_rewire,
@@ -149,6 +165,7 @@ public:
 
   std::vector<NodePtr> near(const NodePtr& node, const double& r_rewire);
   std::map<double, NodePtr> nearK(const NodePtr& node);
+  std::map<double, NodePtr> nearK(const Eigen::VectorXd& conf);
 
   bool isInTree(const NodePtr& node);
   bool isInTree(const NodePtr& node, std::vector<NodePtr>::iterator& it);
