@@ -31,8 +31,6 @@ namespace pathplan
 {
 bool RRTConnect::setProblem(const double &max_time)
 {
-  ROS_INFO("RRTConnect SetProblem");
-
   if (!start_tree_)
     return false;
   if (!goal_node_)
@@ -77,7 +75,7 @@ bool RRTConnect::update(PathPtr &solution)
   if (sampler_->collapse())
     return false;
 
-  return update(sampler_->sample(), solution);
+  return RRTConnect::update(sampler_->sample(), solution);
 }
 
 bool RRTConnect::update(const Eigen::VectorXd& point, PathPtr &solution)
@@ -94,9 +92,9 @@ bool RRTConnect::update(const Eigen::VectorXd& point, PathPtr &solution)
   NodePtr new_node;
   if (start_tree_->connect(point, new_node))
   {
-    if ((new_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
+    if((new_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
     {
-      if (checker_->checkPath(new_node->getConfiguration(), goal_node_->getConfiguration()))
+      if(checker_->checkPath(new_node->getConfiguration(), goal_node_->getConfiguration()))
       {
         ConnectionPtr conn = std::make_shared<Connection>(new_node, goal_node_);
         conn->setCost(metrics_->cost(new_node, goal_node_));
@@ -132,7 +130,6 @@ bool RRTConnect::update(const NodePtr& n, PathPtr &solution)
   NodePtr new_node;
   if (start_tree_->connectToNode(n, new_node))
   {
-
     if ((new_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
     {
       if (checker_->checkPath(new_node->getConfiguration(), goal_node_->getConfiguration()))

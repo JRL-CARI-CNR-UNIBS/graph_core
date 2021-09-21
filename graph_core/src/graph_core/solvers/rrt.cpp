@@ -47,6 +47,7 @@ bool RRT::addGoal(const NodePtr &goal_node, const double &max_time)
   }
   solved_ = false;
   goal_node_ = goal_node;
+
   goal_cost_=goal_cost_fcn_->cost(goal_node);
   setProblem(max_time);
 
@@ -86,8 +87,6 @@ void RRT::resetProblem()
 
 bool RRT::setProblem(const double &max_time)
 {
-  ROS_INFO("RRT SetProblem");
-
   if (!start_tree_)
     return false;
   if (!goal_node_)
@@ -132,7 +131,7 @@ bool RRT::update(PathPtr &solution)
   if (sampler_->collapse())
     return false;
 
-  return update(sampler_->sample(), solution);
+  return RRT::update(sampler_->sample(), solution);
 }
 
 bool RRT::update(const Eigen::VectorXd& point, PathPtr &solution)
@@ -168,6 +167,7 @@ bool RRT::update(const Eigen::VectorXd& point, PathPtr &solution)
       }
     }
   }
+
   return false;
 }
 

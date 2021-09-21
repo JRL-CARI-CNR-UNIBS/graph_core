@@ -49,9 +49,9 @@ public:
     TreeSolver(metrics, checker, sampler) {}
   virtual bool config(const ros::NodeHandle& nh);
 
-  virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()); //max_time not used
-  virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity());  //max_time not used
-  virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()); //max_time not used
+  virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity());
+  virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity());
+  virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity());
 
   virtual void resetProblem();
   virtual bool update(const Eigen::VectorXd& point, PathPtr& solution);

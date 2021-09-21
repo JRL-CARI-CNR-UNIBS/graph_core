@@ -40,14 +40,24 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   unsigned int n_failed_iter = 0;
 
   // RRT to find quickly a first sub-optimal solution
-  while(time<max_time && solved_ == false && n_failed_iter<FAILED_ITER)
+  RRT rrt(metrics_,checker_,sampler_);  //CHIEDI COME EVITARE
+  rrt.config(nh_);
+  rrt.addStart(start_tree_->getRoot(),(max_time-time));
+  time = (ros::WallTime::now()-tic).toSec();
+  rrt.addGoal(goal_node_,(max_time-time));
+
+  while(time<0.98*max_time && solved_ == false && n_failed_iter<FAILED_ITER)
   {
-    bool success = RRT::solve(solution,max_iter,max_time);
+    bool success = rrt.solve(solution,max_iter,(max_time-time));
     if(!success)
       n_failed_iter += 1;
 
-    if(success == true && solved_ == false)
-      assert(0);
+    if(success)
+    {
+      solved_= true;
+      path_cost_ = rrt.getPathCost();
+      cost_ = rrt.getCost();
+    }
 
     time = (ros::WallTime::now()-tic).toSec();
   }
@@ -55,29 +65,34 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   if(solved_ == false)
     return false;
 
+  ROS_INFO_STREAM("Path cost: "<<path_cost_);
+
   if (path_cost_ <= 1.003 * utopia_)
   {
+    ROS_INFO("Utopia reached!");
     completed_=true;
     solution=solution_;
     return true;
   }
 
-  // Informed RRTs to find better solutions
+  // Informed trees to find better solutions
   n_failed_iter = 0;
   time = (ros::WallTime::now()-tic).toSec();
-  while(time<max_time && completed_ == false && n_failed_iter<FAILED_ITER)
+  while(time<0.98*max_time && completed_ == false && n_failed_iter<FAILED_ITER)
   {
     NodePtr start_node = std::make_shared<Node>(start_tree_->getRoot()->getConfiguration());
     goal_node_ = std::make_shared<Node>(goal_node_->getConfiguration());
 
-    bool success = AnytimeRRT::improve(start_node,solution,max_iter,max_time);
+    bool success = AnytimeRRT::improve(start_node,solution,max_iter,(max_time-time));
     if(!success)
       n_failed_iter += 1;
 
-    if(success != new_tree_solved_) assert(0);
+    if(success != new_tree_solved_)
+      assert(0);
 
     if(path_cost_ <= 1.003 * utopia_)
     {
+      ROS_INFO("Utopia reached!");
       completed_=true;
       solution=solution_;
       return true;
@@ -104,14 +119,11 @@ bool AnytimeRRT::improve(NodePtr& start_node, PathPtr& solution, const unsigned 
   {
     if(update(solution))
     {
-      //ROS_INFO("Solved in %u iterations", iter);
-      new_tree_solved_ = true;
+      ROS_INFO_STREAM("Improved path cost: "<<path_cost_);
 
-      if(new_tree_solved_)
-      {
-        start_tree_ = new_tree_;
-        solution_->setTree(start_tree_); //do not delete
-      }
+      new_tree_solved_ = true;
+      start_tree_ = new_tree_;
+      solution_->setTree(start_tree_); //do not delete
 
       return true;
     }

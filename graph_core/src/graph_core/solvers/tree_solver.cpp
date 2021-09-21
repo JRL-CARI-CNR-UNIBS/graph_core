@@ -50,19 +50,28 @@ bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const do
   return false;
 }
 
-bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node, const ros::NodeHandle& nh, PathPtr& solution, unsigned int max_iter)
+bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node, const ros::NodeHandle& nh, PathPtr &solution, const double &max_time, const unsigned int max_iter)
 {
   config(nh);
   addStart(start_node);
   addGoal(goal_node);
 
-  if (!solve(solution, 10000))
+  ros::WallTime tic = ros::WallTime::now();
+
+  if (!solve(solution, max_iter, max_time))
   {
     ROS_INFO("No solutions found");
+
+    ros::WallTime toc = ros::WallTime::now();
+    ROS_INFO_STREAM("time: "<<(toc-tic).toSec()<<" max_t: "<<max_time);
+
     assert(0);
 
     return false;
   }
+
+  ros::WallTime toc = ros::WallTime::now();
+  ROS_INFO_STREAM("time: "<<(toc-tic).toSec()<<" max_t: "<<max_time);
 
   return true;
 }

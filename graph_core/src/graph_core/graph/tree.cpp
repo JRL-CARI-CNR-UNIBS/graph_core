@@ -139,7 +139,7 @@ bool Tree::extendOnly(NodePtr& closest_node, NodePtr &new_node, ConnectionPtr &c
 
 bool Tree::extend(const Eigen::VectorXd &configuration, NodePtr &new_node)
 {
-  ConnectionPtr conn;   //CHIEDI
+  ConnectionPtr conn;
   return extend(configuration,new_node,conn);
 }
 
@@ -209,7 +209,7 @@ bool Tree::connect(const Eigen::VectorXd &configuration, NodePtr &new_node)
   {
     NodePtr tmp_node;
     success = extend(configuration, tmp_node);
-    if (success)
+    if(success)
     {
       new_node = tmp_node;
       if ((new_node->getConfiguration() - configuration).norm() < tolerance_)
@@ -221,7 +221,7 @@ bool Tree::connect(const Eigen::VectorXd &configuration, NodePtr &new_node)
 
 bool Tree::informedExtend(const Eigen::VectorXd &configuration, NodePtr &new_node, Eigen::VectorXd &goal, const double& cost2beat, const double& bias)
 {
-  struct node_and_conf
+  struct extension
   {
     NodePtr tree_node;
     Eigen::VectorXd new_conf;
@@ -233,7 +233,7 @@ bool Tree::informedExtend(const Eigen::VectorXd &configuration, NodePtr &new_nod
 
   double heuristic, distance, cost2node;
   Eigen::VectorXd new_configuration;
-  std::multimap<double,node_and_conf> best_nodes_map;
+  std::multimap<double,extension> best_nodes_map;
 
   for(const std::pair<double,NodePtr>& n: closest_nodes_map)
   {
@@ -241,28 +241,28 @@ bool Tree::informedExtend(const Eigen::VectorXd &configuration, NodePtr &new_nod
     cost2node = costToNode(n.second);
     heuristic = bias*distance+(1-bias)*cost2node;
 
-    node_and_conf n_c;
-    n_c.tree_node = n.second;
-    n_c.new_conf = new_configuration;
-    n_c.distance = distance;
+    extension ext;
+    ext.tree_node = n.second;
+    ext.new_conf = new_configuration;
+    ext.distance = distance;
 
-    if((cost2node+distance+(goal-new_configuration).norm())< cost2beat)
-      best_nodes_map.insert(std::pair<double,node_and_conf>(heuristic,n_c));
+    if((cost2node+distance+(goal-new_configuration).norm())<cost2beat)  //if and only if the new conf underestimation of cost is less than the cost to beat it is added to the tree
+      best_nodes_map.insert(std::pair<double,extension>(heuristic,ext));  //give priority to parents with the best heuristics
   }
 
   bool extend_ok = false;
-  node_and_conf tree_node;
-  for(const std::pair<double,node_and_conf>& n: best_nodes_map)
+  extension ext;
+  for(const std::pair<double,extension>& n: best_nodes_map)
   {
-    tree_node = n.second;
-    if (tree_node.distance < tolerance_)
+    ext = n.second;
+    if (ext.distance < tolerance_)
     {
       extend_ok = true;
       break;
     }
     else
     {
-      if (checker_->checkPath(tree_node.tree_node->getConfiguration(), tree_node.new_conf))
+      if (checker_->checkPath(ext.tree_node->getConfiguration(), ext.new_conf))
       {
         extend_ok = true;
         break;
@@ -273,8 +273,8 @@ bool Tree::informedExtend(const Eigen::VectorXd &configuration, NodePtr &new_nod
   if(extend_ok)
   {
     ConnectionPtr connection;
-    new_node = std::make_shared<Node>(tree_node.new_conf);
-    return extendOnly(tree_node.tree_node,new_node,connection);
+    new_node = std::make_shared<Node>(ext.new_conf);
+    return extendOnly(ext.tree_node,new_node,connection);
   }
   else
     return false;
