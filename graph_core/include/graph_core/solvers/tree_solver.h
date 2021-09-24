@@ -108,14 +108,34 @@ public:
     goal_cost_fcn_=goal_cost_fcn;
   }
 
-  const bool& completed()const
+  GoalCostFunctionPtr getGoalCostFunction()
+  {
+    return goal_cost_fcn_;
+  }
+
+  const bool completed()const
   {
     return completed_;
   }
 
-  const bool& solved()const
+  const bool solved()const
   {
     return solved_;
+  }
+
+  const bool init()const
+  {
+    return init_;
+  }
+
+  const bool configured()const
+  {
+    return configured_;
+  }
+
+  const unsigned int dof()const
+  {
+    return dof_;
   }
 
   virtual bool setSolution(const PathPtr &solution, const bool& solved=false);
@@ -149,9 +169,39 @@ public:
     return path_cost_;
   }
 
+  double getGoalCost()
+  {
+    return goal_cost_;
+  }
+
   double getCost()
   {
     return cost_;
+  }
+
+  void setSolved(const bool& solved)
+  {
+    solved_ = solved;
+  }
+
+  virtual void setStartTree(const TreePtr& tree)
+  {
+    start_tree_ = tree;
+  }
+
+  void setCompleted(const bool& completed)
+  {
+    completed_ = completed;
+  }
+
+  void setInit(const bool& init)
+  {
+    init_ = init;
+  }
+
+  void setPathCost(const double& path_cost)
+  {
+    path_cost_ = path_cost;
   }
 
   void setChecker(const CollisionCheckerPtr& checker)
@@ -173,6 +223,21 @@ public:
   {
     return metrics_;
   }
+
+  double updateCost()
+  {
+    path_cost_ = solution_->cost();
+    cost_ = path_cost_+goal_cost_;
+    return cost_;
+  }
+
+  double updateCost(const NodePtr& goal_node)
+  {
+    goal_cost_ = goal_cost_fcn_->cost(goal_node);
+    return updateCost();
+  }
+
+   bool importFromSolver(const TreeSolverPtr& solver);
 
   friend std::ostream& operator<<(std::ostream& os, const TreeSolver& solver);
 

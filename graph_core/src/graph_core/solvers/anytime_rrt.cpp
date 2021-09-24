@@ -30,33 +30,73 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
-bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const double& max_time)
+bool AnytimeRRT::solveWithRRT(PathPtr& solution,
+                              const unsigned int& max_iter,
+                              const double &max_time)
 {
   ros::WallTime tic = ros::WallTime::now();
 
   if(max_time <=0.0) return false;
 
-  double time = (ros::WallTime::now()-tic).toSec();
-  unsigned int n_failed_iter = 0;
+  for (unsigned int iter = 0; iter < max_iter; iter++)
+  {
+    if (RRT::update(solution))
+    {
+      solved_ = true;
+      return true;
+    }
+
+    if((ros::WallTime::now()-tic).toSec()>=0.98*max_time) break;
+  }
+  return false;
+}
+
+void AnytimeRRT::importFromSolver(const AnytimeRRTPtr& solver)
+{
+  ROS_INFO_STREAM("Import from AnytimeRRT solver");
+
+  RRT::importFromSolver(solver);
+
+  bias_            = solver->getBias();
+  delta_           = solver->getDelta();
+  new_tree_        = solver->getNewTree();
+  cost_impr_       = solver->getCostImpr();
+  new_tree_solved_ = solver->getNewTreeSolved();
+}
+
+bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const double& max_time)
+{
+  ros::WallTime tic = ros::WallTime::now();
+  double time;
+
+  if(solved_)
+  {
+    solution = solution_;
+
+    if (path_cost_ <= 1.003 * utopia_)
+    {
+      ROS_INFO("Utopia reached!");
+      completed_=true;
+    }
+
+    return true;
+  }
+
+  if(max_time <=0.0) return false;
 
   // RRT to find quickly a first sub-optimal solution
-  RRT rrt(metrics_,checker_,sampler_);  //CHIEDI COME EVITARE
-  rrt.config(nh_);
-  rrt.addStart(start_tree_->getRoot(),(max_time-time));
+  unsigned int n_failed_iter = 0;
   time = (ros::WallTime::now()-tic).toSec();
-  rrt.addGoal(goal_node_,(max_time-time));
-
   while(time<0.98*max_time && solved_ == false && n_failed_iter<FAILED_ITER)
   {
-    bool success = rrt.solve(solution,max_iter,(max_time-time));
+    bool success = AnytimeRRT::solveWithRRT(solution,max_iter,(max_time-time));
     if(!success)
       n_failed_iter += 1;
 
     if(success)
     {
       solved_= true;
-      path_cost_ = rrt.getPathCost();
-      cost_ = rrt.getCost();
+      solution_ = solution;
     }
 
     time = (ros::WallTime::now()-tic).toSec();
@@ -71,7 +111,6 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   {
     ROS_INFO("Utopia reached!");
     completed_=true;
-    solution=solution_;
     return true;
   }
 
@@ -94,13 +133,17 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     {
       ROS_INFO("Utopia reached!");
       completed_=true;
-      solution=solution_;
       return true;
     }
 
     time = (ros::WallTime::now()-tic).toSec();
   }
   return solved_;
+}
+bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solution, const unsigned int& max_iter, const double &max_time)
+{
+  goal_node_ = goal_node;
+  return improve(start_node, solution, max_iter, max_time);
 }
 
 bool AnytimeRRT::improve(NodePtr& start_node, PathPtr& solution, const unsigned int& max_iter, const double &max_time)
@@ -115,9 +158,11 @@ bool AnytimeRRT::improve(NodePtr& start_node, PathPtr& solution, const unsigned 
   bias_ = bias_-delta_;
   if(bias_<0.1) bias_ = 0.1;
 
+  sampler_->setCost(path_cost_); //(1-cost_impr_)*path_cost_
+
   for (unsigned int iter = 0; iter < max_iter; iter++)
   {
-    if(update(solution))
+    if(AnytimeRRT::update(solution))
     {
       ROS_INFO_STREAM("Improved path cost: "<<path_cost_);
 
@@ -163,7 +208,7 @@ bool AnytimeRRT::update(PathPtr &solution)
   if (sampler_->collapse())
     return false;
 
-  return update(sampler_->sample(), solution);
+  return AnytimeRRT::update(sampler_->sample(), solution);
 }
 
 bool AnytimeRRT::update(const Eigen::VectorXd& point, PathPtr &solution)
@@ -201,7 +246,6 @@ bool AnytimeRRT::update(const Eigen::VectorXd& point, PathPtr &solution)
     }
   }
   return false;
-
 }
 
 bool AnytimeRRT::update(const NodePtr& n, PathPtr &solution)

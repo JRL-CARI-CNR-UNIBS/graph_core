@@ -38,9 +38,20 @@ bool RRT::config(const ros::NodeHandle& nh)
   return true;
 }
 
+void RRT::importFromSolver(const RRTPtr& solver)
+{
+  ROS_INFO_STREAM("Import from RRT solver");
+
+  TreeSolver::importFromSolver(solver);
+
+  goal_node_    = solver->getGoal();
+  max_distance_ = solver->getMaxDistance();
+  utopia_       = solver->getUtopia();
+}
+
 bool RRT::addGoal(const NodePtr &goal_node, const double &max_time)
 {
-  if (!configured_)
+  if(!configured_)
   {
     ROS_ERROR("Solver is not configured.");
     return false;

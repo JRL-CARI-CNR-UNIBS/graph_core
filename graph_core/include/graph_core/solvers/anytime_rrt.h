@@ -43,10 +43,9 @@ protected:
   bool new_tree_solved_;
   TreePtr new_tree_;
 
-  bool improve(NodePtr &start_node,
-               PathPtr& solution,
-               const unsigned int& max_iter = 100,
-               const double &max_time = std::numeric_limits<double>::infinity());
+  bool solveWithRRT(PathPtr& solution,
+                    const unsigned int& max_iter = 100,
+                    const double &max_time = std::numeric_limits<double>::infinity());
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -56,6 +55,31 @@ public:
   {
     bias_ = 0.9;
     setParameters();
+  }
+
+  double getBias()
+  {
+    return bias_;
+  }
+
+  double getDelta()
+  {
+    return delta_;
+  }
+
+  double getCostImpr()
+  {
+    return cost_impr_;
+  }
+
+  bool getNewTreeSolved()
+  {
+    return new_tree_solved_;
+  }
+
+  TreePtr getNewTree()
+  {
+    return new_tree_;
   }
 
   void setDelta(const double& delta = 0.1)
@@ -73,6 +97,19 @@ public:
     setDelta(delta);
     setCostImprovementFactor(impr);
   }
+
+  bool improve(NodePtr &start_node,
+               PathPtr& solution,
+               const unsigned int& max_iter = 100,
+               const double &max_time = std::numeric_limits<double>::infinity());
+
+  bool improve(NodePtr &start_node,
+               NodePtr &goal_node,
+               PathPtr& solution,
+               const unsigned int& max_iter = 100,
+               const double &max_time = std::numeric_limits<double>::infinity());
+
+  void importFromSolver(const AnytimeRRTPtr& solver);
 
   virtual bool solve(PathPtr& solution,
                      const unsigned int& max_iter = 100,

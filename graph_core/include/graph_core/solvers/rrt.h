@@ -47,12 +47,38 @@ public:
              const CollisionCheckerPtr& checker,
              const SamplerPtr& sampler):
     TreeSolver(metrics, checker, sampler) {}
-  virtual bool config(const ros::NodeHandle& nh);
 
+  virtual void setUtopia(const double& utopia)
+  {
+    utopia_ = utopia;
+  }
+
+  void setGoal(const NodePtr& goal)
+  {
+    goal_node_ = goal;
+  }
+
+  NodePtr getGoal()
+  {
+    return goal_node_;
+  }
+
+  double getUtopia()
+  {
+    return utopia_;
+  }
+
+  double getMaxDistance()
+  {
+    return max_distance_;
+  }
+
+  void importFromSolver(const RRTPtr& solver);
+
+  virtual bool config(const ros::NodeHandle& nh);
   virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity());
   virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity());
   virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity());
-
   virtual void resetProblem();
   virtual bool update(const Eigen::VectorXd& point, PathPtr& solution);
   virtual bool update(const NodePtr& n, PathPtr& solution);

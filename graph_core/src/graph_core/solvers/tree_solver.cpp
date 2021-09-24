@@ -80,10 +80,32 @@ bool TreeSolver::setSolution(const PathPtr &solution, const bool& solved)
 {
   solution_ = solution;
   solution_->setTree(start_tree_);
+
+  path_cost_ = solution->cost();
+  cost_ = path_cost_+goal_cost_; //chiedi
+
   solved_=solved;
   if (solved_)
     clean();
   return true;
+}
+
+bool TreeSolver::importFromSolver(const TreeSolverPtr& solver)
+{
+  ROS_INFO_STREAM("Import from Tree solver");
+
+  solved_        = solver->solved();             //copy the value   CHIEDI
+  completed_     = solver->completed();          //copy the value
+  init_          = solver->init();               //copy the value
+  configured_    = solver->configured();         //copy the value
+  dof_           = solver->dof();                //copy the value
+  nh_            = solver->getNodeHandle();
+  goal_cost_fcn_ = solver->getGoalCostFunction();
+  path_cost_     = solver->getPathCost();
+  goal_cost_     = solver->getGoalCost();
+  cost_          = solver->getCost();
+  start_tree_    = solver->getStartTree();
+  solution_      = solver->getSolution();
 }
 
 }

@@ -1096,7 +1096,10 @@ unsigned int Tree::purgeNodes(const SamplerPtr& sampler, const std::vector<NodeP
 bool Tree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes)
 {
   if (std::find(white_list.begin(), white_list.end(), node) != white_list.end())
+  {
+    ROS_INFO("QUA");
     return false;
+  }
   assert(node);
   std::vector<NodePtr> successors;
 
