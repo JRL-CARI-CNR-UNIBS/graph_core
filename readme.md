@@ -11,7 +11,7 @@ The software can be installed using rosinstall files.
 Then, download and merge the rosinstall file:
 ```
 cd ~/catkin_ws
-wget https://bitbucket.org/iras-ind/human_aware_motion_planners/raw/b1d545049aa78ab35e3918e4d30fbc395416ad40/human_aware.rosinstall
+wget https://raw.githubusercontent.com/JRL-CARI-CNR-UNIBS/cari_motion_planning/master/human_aware.rosinstall
 wstool merge -t src ./human_aware.rosinstall
 ```
 Now, do the same with the required dependencies:

@@ -1,9 +1,0 @@
-cylinder_radius: 1
-cylinder_width: 1
-max_dof: 10
-min_dof: 2
-measures_ratio: 0.5
-trials: 4 # 30
-tube_radius: 0.02
-forgetting_factor: 0.999
-maximum_iter: 100000
