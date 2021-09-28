@@ -92,7 +92,7 @@ target_link_libraries(test_precomputing_tree
   ${catkin_LIBRARIES}
 )
 
-add_executable(       narrow_pass_test tests/narrow_pass_test.cpp)
+add_executable(       narrow_pass_test tests/narrow_pass_test1.cpp)
 add_dependencies(     narrow_pass_test ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(narrow_pass_test
   ${PROJECT_NAME}
