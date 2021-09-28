@@ -107,7 +107,7 @@ bool RRT::setProblem(const double &max_time)
   init_ = true;
   NodePtr new_node;
 
-  if(start_tree_->extendToNode(goal_node_, new_node))  //max_time can't be used with extend function
+  if(start_tree_->connectToNode(goal_node_, new_node,max_time))  //for direct connection to goal
   {
     solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);

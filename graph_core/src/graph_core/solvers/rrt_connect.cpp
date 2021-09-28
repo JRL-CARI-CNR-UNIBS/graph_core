@@ -29,38 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
-bool RRTConnect::setProblem(const double &max_time)
-{
-  if (!start_tree_)
-    return false;
-  if (!goal_node_)
-    return false;
-
-  utopia_ = (goal_node_->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
-  init_ = true;
-  NodePtr new_node;
-
-  if (start_tree_->connectToNode(goal_node_, new_node, max_time))
-  {
-    solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
-    solution_->setTree(start_tree_);
-
-    path_cost_ = solution_->cost();
-
-    sampler_->setCost(path_cost_);
-    start_tree_->addNode(goal_node_);
-
-    solved_ = true;
-    PATH_COMMENT_STREAM("A direct solution is found\n" << *solution_);
-  }
-  else
-  {
-    path_cost_ = std::numeric_limits<double>::infinity();
-  }
-  cost_=path_cost_+goal_cost_;
-  return true;
-}
-
 bool RRTConnect::update(PathPtr &solution)
 {
   PATH_COMMENT("RRTConnect::update");

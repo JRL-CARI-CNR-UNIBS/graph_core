@@ -36,7 +36,6 @@ typedef std::shared_ptr<RRTConnect> RRTConnectPtr;
 class RRTConnect: public RRT
 {
 protected:
-  virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity()) override;
   virtual void clean(){}
 
 public:

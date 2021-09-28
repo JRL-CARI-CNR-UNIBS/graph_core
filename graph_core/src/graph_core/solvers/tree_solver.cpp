@@ -82,7 +82,7 @@ bool TreeSolver::setSolution(const PathPtr &solution, const bool& solved)
   solution_->setTree(start_tree_);
 
   path_cost_ = solution->cost();
-  cost_ = path_cost_+goal_cost_; //chiedi
+  cost_ = path_cost_+goal_cost_; //CHIEDI
 
   solved_=solved;
   if (solved_)

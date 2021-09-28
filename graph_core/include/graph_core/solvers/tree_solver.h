@@ -83,15 +83,6 @@ public:
     goal_cost_fcn_=std::make_shared<GoalCostFunction>();
   }
 
-  const double& cost() const
-  {
-    return cost_;
-  }
-
-  virtual bool config(const ros::NodeHandle& nh)
-  {
-    return false;
-  }
   virtual bool update(PathPtr& solution) = 0;
   virtual bool update(const Eigen::VectorXd& point, PathPtr& solution){return false;}
   virtual bool update(const NodePtr& n, PathPtr& solution){return false;}
@@ -102,6 +93,20 @@ public:
   virtual bool computePath(const NodePtr &start_node, const NodePtr &goal_node, const ros::NodeHandle& nh, PathPtr &solution, const double &max_time = std::numeric_limits<double>::infinity(), const unsigned int max_iter = 10000);
   virtual void resetProblem()=0;
   virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler) = 0;
+
+  virtual bool setSolution(const PathPtr &solution, const bool& solved=false);
+
+  bool importFromSolver(const TreeSolverPtr& solver);
+
+  const double& cost() const
+  {
+    return cost_;
+  }
+
+  virtual bool config(const ros::NodeHandle& nh)
+  {
+    return false;
+  }
 
   void setGoalCostFunction(const GoalCostFunctionPtr& goal_cost_fcn)
   {
@@ -138,7 +143,6 @@ public:
     return dof_;
   }
 
-  virtual bool setSolution(const PathPtr &solution, const bool& solved=false);
   TreePtr getStartTree() const
   {
     return start_tree_;
@@ -236,8 +240,6 @@ public:
     goal_cost_ = goal_cost_fcn_->cost(goal_node);
     return updateCost();
   }
-
-   bool importFromSolver(const TreeSolverPtr& solver);
 
   friend std::ostream& operator<<(std::ostream& os, const TreeSolver& solver);
 
