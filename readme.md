@@ -1,4 +1,4 @@
-This package provides a human-aware motion planner for robot manipulators. 
+This package provides a human-aware motion planner for robot manipulators.
 
 ## Installation
 
@@ -26,7 +26,7 @@ cd ~/catkin_ws
 wstool update -t src
 rosdep install --from-paths src --ignore-src -r -y
 ```
-## Confifuration
+## Configuration
 
 See [readme](dirrt_star/readme.md) in dirrt_star.
 

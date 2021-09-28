@@ -40,68 +40,50 @@
 # MODIFY THE PARAMETERS WITH THE COMMENT ***CHANGE IT***
 # ========================================================================
 group_names_map:
-  pickplace_planner: group_name  ***CHANGE IT***
-  pickplace_planner2: group_name  ***CHANGE IT***
+  mixed_strategy: group_name  ***CHANGE IT***
+  informed_rrt: group_name  ***CHANGE IT***
+  RRTstar: group_name  ***CHANGE IT***
+  warp_strategy: group_name  ***CHANGE IT***
+default_planner_config: mixed_strategy
 
-default_planner_config: pickplace_planner # optional: specify the default planner if they are more than one. If it is not specified, use the first available.
-
-pickplace_planner:
+mixed_strategy:
   type: Multigoal
-  max_distance: 0.2 # max distance between two edges of the tree. Default value is ok
-  max_refine_time: 1.0 # The time duration in seconds that the replanner uses to refine the first solution. A small value produces faster but nonoptimal solutions ***CHANGE IT IF NEEDED***
-  extend: false # use RRT-extend instead of RRT-Connect. Default value is ok
-  local_bias: 0.25 # sampling bias on the actual solution.  Default value is ok
-  tube_radius: 0.02 # tube of the local sampling.  Default value is ok
-  use_avoidance_goal: true # set true if the human avoidance is done only at the goal. Useful in Multigoal planning. ***CHANGE IT***
-  use_avoidance_path: false # set true if the human avoidance is done during the path. It is slower than use_avoidance_goal. ***CHANGE IT***
-  #If use_avoidance_goal and use_avoidance_path are both true, use_avoidance_path is used.
+  max_distance: 0.5
+  max_refine_time: 1500.0
+  rewire_radius: 2.0
+  extend: true
+  local_bias: 0.5 # initial probability of local sampling
+  forgetting_factor: 0.999
+  tube_radius: 0.02
+  utopia_tolerance: 0.01
 
-  detector_topic: /combined_poses #topic name of the message type geometry_msgs/PoseArray. ***CHANGE IT IF NEEDED***
-  base_frame: world #base_frame of the chain. ***CHANGE IT***
-  tool_frame: open_tip #tool_frame of the chain. ***CHANGE IT***
-
-  min_distance: 0.4 # minimum distance between robot and human in meters. if distance<=min_distance the penalty is equal to the max_penalty. Default value is ok
-  max_distance: 0.6 # maximum distance  between robot and human in meters. if distance>=max_distance the penalty is 0. Default value is ok
-  max_penalty: 10.0 # maximum penalty due to the distance between robot and human. Default value is ok
-  display_bubbles: false #display penalty bubbles in rviz on topic "/goal_cost_function/avoidance_points". Default value is ok
-  links: # links used for measuring the distance between robot and human. ***CHANGE IT***
-  - open_tip
-  - tool0
-  - wrist_1_link
-  - wrist_2_link
-  - wrist_3_link
-  - forearm_link
-  - upper_arm_link
-
-  max_accuracy: 0.7
-
-
-pickplace_planner2:
+warp_strategy:
   type: Multigoal
-  max_distance: 0.2 # max distance between two edges of the tree. Default value is ok
-  max_refine_time: 1.0 # The time duration in seconds that the replanner uses to refine the first solution. A small value produces faster but nonoptimal solutions ***CHANGE IT IF NEEDED***
-  extend: false # use RRT-extend instead of RRT-Connect. Default value is ok
-  local_bias: 0.25 # sampling bias on the actual solution.  Default value is ok
-  tube_radius: 0.02 # tube of the local sampling.  Default value is ok
-  use_avoidance_goal: true # set true if the human avoidance is done only at the goal. Useful in Multigoal planning. ***CHANGE IT***
-  use_avoidance_path: false # set true if the human avoidance is done during the path. It is slower than use_avoidance_goal. ***CHANGE IT***
-  #If use_avoidance_goal and use_avoidance_path are both true, use_avoidance_path is used.
+  max_distance: 0.5
+  max_refine_time: 1500.0
+  rewire_radius: 2.0
+  extend: true
+  local_bias: 0.25
+  forgetting_factor: 0
+  tube_radius: 0.02
+  informed: false
+  warp: true
+  utopia_tolerance: 0.001
 
-  detector_topic: /combined_poses #topic name of the message type geometry_msgs/PoseArray. ***CHANGE IT IF NEEDED***
-  base_frame: world #base_frame of the chain. ***CHANGE IT***
-  tool_frame: open_tip #tool_frame of the chain. ***CHANGE IT***
 
-  min_distance: 0.4 # minimum distance between robot and human in meters. if distance<=min_distance the penalty is equal to the max_penalty. Default value is ok
-  max_distance: 0.6 # maximum distance  between robot and human in meters. if distance>=max_distance the penalty is 0. Default value is ok
-  max_penalty: 10.0 # maximum penalty due to the distance between robot and human. Default value is ok
-  display_bubbles: false #display penalty bubbles in rviz on topic "/goal_cost_function/avoidance_points". Default value is ok
-  links: # links used for measuring the distance between robot and human. ***CHANGE IT***
-  - open_tip
-  - tool0
-  - wrist_1_link
-  - wrist_2_link
-  - wrist_3_link
-  - forearm_link
-  - upper_arm_link
+RRTstar:
+  type: Multigoal
+  max_distance: 0.5
+  max_refine_time: 1500.0
+  rewire_radius: 0.5
+  extend: true
+  utopia_tolerance: 0.001
+  informed: false
+  mixed_strategy: false
 
-  max_accuracy: 0.7
+informed_rrt:
+  type: Multigoal
+  max_distance: 0.5
+  max_refine_time: 1500.0
+  extend: true
+  utopia_tolerance: 0.001
