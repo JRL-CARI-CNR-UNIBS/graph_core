@@ -39,6 +39,9 @@ ParallelMoveitCollisionChecker::ParallelMoveitCollisionChecker(const planning_sc
   MoveitCollisionChecker(planning_scene,group_name,min_distance),
   threads_num_(threads_num)
 {
+  min_distance_ = min_distance;
+  group_name_ = group_name;
+
   if (threads_num<=0)
     throw std::invalid_argument("number of thread should be positive");
 
@@ -52,6 +55,13 @@ ParallelMoveitCollisionChecker::ParallelMoveitCollisionChecker(const planning_sc
     planning_scenes_.push_back(planning_scene::PlanningScene::clone(planning_scene_));
     queues_.push_back(std::vector<std::vector<double>>());
   }
+
+  req_.distance=false;
+  req_.group_name=group_name;
+  req_.verbose=false;
+  req_.contacts=false;
+  req_.cost=false;
+
 }
 
 void ParallelMoveitCollisionChecker::resetQueue()
@@ -113,20 +123,36 @@ void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
     }
     assert(configuration.size()>0);
     state->setJointGroupPositions(group_name_, configuration);
+    state->update();
     if (!state->satisfiesBounds())
     {
       at_least_a_collision_=true;
       stop_check_=true;
       break;
     }
-    state->update();
-    state->updateCollisionBodyTransforms();
+//    state->updateCollisionBodyTransforms();
+
     if (!planning_scenes_.at(thread_idx)->isStateValid(*state,group_name_))
     {
       at_least_a_collision_=true;
       stop_check_=true;
       break;
     }
+
+//    if (!planning_scenes_.at(thread_idx)->isStateFeasible(*state))
+//    {
+//      at_least_a_collision_=true;
+//      stop_check_=true;
+//      break;
+//    }
+//    planning_scenes_.at(thread_idx)->checkCollision(req_,res_);
+//    if (res_.collision)
+//    {
+//      at_least_a_collision_=true;
+//      stop_check_=true;
+//      break;
+//    }
+
   }
 }
 
@@ -186,6 +212,7 @@ void ParallelMoveitCollisionChecker::queueConnection(const Eigen::VectorXd& conf
   double distance = (configuration2 - configuration1).norm();
   if (distance < min_distance_)
     return;
+
 
   Eigen::VectorXd conf(configuration1.size());
   double n = 2;
@@ -274,5 +301,11 @@ bool ParallelMoveitCollisionChecker::checkConnections(const std::vector<Connecti
   return checkAllQueues();
 }
 
+
+CollisionCheckerPtr ParallelMoveitCollisionChecker::clone()
+{
+  planning_scene::PlanningScenePtr planning_scene = planning_scene::PlanningScene::clone(planning_scenes_.at(0));
+  return std::make_shared<ParallelMoveitCollisionChecker>(planning_scene,group_name_,threads_num_,min_distance_);
+}
 
 }  // pathplan

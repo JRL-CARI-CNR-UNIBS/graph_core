@@ -73,6 +73,7 @@ bool RRTStar::addGoal(const NodePtr &goal_node)
 }
 bool RRTStar::config(const ros::NodeHandle& nh)
 {
+  nh_ = nh;
   dof_=sampler_->getDimension();
   r_rewire_factor_ = 1.1* std::pow( 2*(1+1/dof_), 1./dof_);
   solved_ = true;
@@ -119,7 +120,7 @@ bool RRTStar::update(const Eigen::VectorXd& point, PathPtr& solution)
     solution_->setTree(start_tree_);
 
     path_cost_ = solution_->cost();
-
+    cost_ = path_cost_+goal_cost_;
 
     sampler_->setCost(path_cost_);
   }
@@ -173,6 +174,11 @@ bool RRTStar::solve(PathPtr &solution, const unsigned int& max_iter)
     }
   }
   return improved;
+}
+
+TreeSolverPtr RRTStar::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler)
+{
+  return std::make_shared<RRTStar>(metrics,checker,sampler);
 }
 
 }

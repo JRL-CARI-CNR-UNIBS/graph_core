@@ -32,6 +32,7 @@ namespace pathplan
 
 bool RRTConnect::config(const ros::NodeHandle& nh)
 {
+  nh_ = nh;
   max_distance_ = 1;
   configured_=true;
   return true;
@@ -211,6 +212,10 @@ bool RRTConnect::update(const NodePtr& n, PathPtr &solution)
 
 }
 
+TreeSolverPtr RRTConnect::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler)
+{
+  return std::make_shared<RRTConnect>(metrics,checker,sampler);
+}
 
 
 }

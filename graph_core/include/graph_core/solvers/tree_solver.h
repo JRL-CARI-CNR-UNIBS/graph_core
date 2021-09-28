@@ -44,6 +44,7 @@ class TreeSolver: public std::enable_shared_from_this<TreeSolver>
 {
 protected:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  ros::NodeHandle nh_;
   MetricsPtr metrics_;
   CollisionCheckerPtr checker_;
   SamplerPtr sampler_;
@@ -99,6 +100,7 @@ public:
   virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;
   virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;
   virtual void resetProblem()=0;
+  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler) = 0;
 
   void setGoalCostFunction(const GoalCostFunctionPtr& goal_cost_fcn)
   {
@@ -124,6 +126,11 @@ public:
   PathPtr getSolution() const
   {
     return solution_;
+  }
+
+  ros::NodeHandle getNodeHandle()
+  {
+    return nh_;
   }
 
   void setSampler(const SamplerPtr& sampler)

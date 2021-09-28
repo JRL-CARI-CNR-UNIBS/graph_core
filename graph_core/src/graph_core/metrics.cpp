@@ -62,4 +62,9 @@ double Metrics::utopia(const Eigen::VectorXd& configuration1,
   return (configuration1 - configuration2).norm();
 }
 
+MetricsPtr Metrics::clone()
+{
+  return std::make_shared<Metrics>();
+}
+
 }

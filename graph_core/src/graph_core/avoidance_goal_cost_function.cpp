@@ -70,7 +70,6 @@ AvoidanceGoalCostFunction::AvoidanceGoalCostFunction(const ros::NodeHandle &nh):
     ROS_ERROR("%s/display_bubbles not defined, use false", nh_.getNamespace().c_str());
     plot=false;
   }
-  ROS_INFO("!/(");
   Eigen::Vector3d grav;
   grav << 0, 0, -9.806;
 
@@ -81,9 +80,6 @@ AvoidanceGoalCostFunction::AvoidanceGoalCostFunction(const ros::NodeHandle &nh):
     ROS_ERROR("%s/links not defined, use all links", nh_.getNamespace().c_str());
     links_=chain_->getLinksName();
   }
-  else
-    for (const std::string& s: links_)
-      ROS_INFO("link %s",s.c_str());
 
   points_.resize(3,0);
   inv_delta_distance_=1.0/(max_distance_-min_distance_);

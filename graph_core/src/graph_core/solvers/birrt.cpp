@@ -33,6 +33,7 @@ namespace pathplan
 
 bool BiRRT::config(const ros::NodeHandle &nh)
 {
+  nh_ = nh;
   extend_ = false;
   return RRTConnect::config(nh);
 
@@ -176,6 +177,11 @@ bool BiRRT::update(const NodePtr& n, PathPtr& solution)
 
   }
   return false;
+}
+
+TreeSolverPtr BiRRT::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler)
+{
+  return std::make_shared<BiRRT>(metrics,checker,sampler);
 }
 
 }

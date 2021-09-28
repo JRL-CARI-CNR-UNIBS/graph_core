@@ -34,8 +34,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
+class InformedSampler;
+typedef std::shared_ptr<InformedSampler> InformedSamplerPtr;
 
-class InformedSampler
+class InformedSampler: public std::enable_shared_from_this<InformedSampler>
 {
 protected:
   Eigen::VectorXd start_configuration_;

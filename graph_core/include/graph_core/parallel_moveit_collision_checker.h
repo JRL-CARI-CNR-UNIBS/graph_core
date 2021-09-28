@@ -43,6 +43,9 @@ protected:
   bool stop_check_;
   bool at_least_a_collision_;
 
+  std::string group_name_;
+  double min_distance_;
+
   std::vector<std::vector<std::vector<double>>> queues_;
   std::vector<std::thread> threads;
   std::vector<planning_scene::PlanningScenePtr> planning_scenes_;
@@ -56,6 +59,8 @@ protected:
   void queueConnection(const Eigen::VectorXd& configuration1,
                        const Eigen::VectorXd& configuration2);
 
+  collision_detection::CollisionRequest req_;
+  collision_detection::CollisionResult res_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   ParallelMoveitCollisionChecker(const planning_scene::PlanningScenePtr& planning_scene,
@@ -76,6 +81,8 @@ public:
                                  const Eigen::VectorXd& this_conf);
 
   virtual bool checkConnections(const std::vector<ConnectionPtr>& connections);
+
+  virtual CollisionCheckerPtr clone();
 
 };
 }  // namaspace pathplan

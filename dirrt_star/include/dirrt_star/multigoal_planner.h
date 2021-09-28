@@ -33,7 +33,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/solvers/multigoal.h>
 #include <graph_core/solvers/path_solver.h>
 #include <graph_core/metrics.h>
-#include <graph_core/speed_metrics.h>
 #include <graph_core/avoidance_goal_cost_function.h>
 #include <graph_core/avoidance_metrics.h>
 #include <graph_core/parallel_moveit_collision_checker.h>
@@ -102,7 +101,7 @@ protected:
 
   ros::Subscriber m_centroid_sub;
 
-  double collision_distance=0.04;
+  double collision_distance_=0.04;
   double collision_thread_=5;
   bool m_is_running=false;
   bool m_stop=false;

@@ -38,6 +38,7 @@ PathLocalOptimizer::PathLocalOptimizer(const CollisionCheckerPtr &checker, const
 }
 void PathLocalOptimizer::config(ros::NodeHandle &nh)
 {
+  nh_ = nh;
   max_stall_gen_ = 10;
   stall_gen_ = 0;
 }
@@ -103,17 +104,19 @@ bool PathLocalOptimizer::step(PathPtr& solution)
 bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iteration, const double& max_time)
 {
   ros::WallTime tic = ros::WallTime::now();
-  ros::WallTime toc, tic_cycle, toc_cycle;
-  double time = max_time;
-  double mean = 0.0;
-  std::vector<double> time_vector;
-  if(time<=0.0) return false;
+  //  ros::WallTime toc, tic_cycle, toc_cycle;
+  //  double time = max_time;
+  //  double mean = 0.0;
+  //  std::vector<double> time_vector;
+  //  if(time<=0.0) return false;
+
+  if(max_time<=0.0) return false;
 
   unsigned int iter = 0;
   solution = path_;
   while (iter++ < max_iteration)
   {
-    tic_cycle = ros::WallTime::now();
+    //    tic_cycle = ros::WallTime::now();
 
     if (solved_)
     {
@@ -122,13 +125,15 @@ bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iterat
     }
     step(solution);
 
-    toc_cycle = ros::WallTime::now();
-    time_vector.push_back((toc_cycle-tic_cycle).toSec());
-    mean = std::accumulate(time_vector.begin(), time_vector.end(),0.0)/((double) time_vector.size());
-    toc = ros::WallTime::now();
-    time = max_time-(toc-tic).toSec();
+    //    toc_cycle = ros::WallTime::now();
+    //    time_vector.push_back((toc_cycle-tic_cycle).toSec());
+    //    mean = std::accumulate(time_vector.begin(), time_vector.end(),0.0)/((double) time_vector.size());
+    //    toc = ros::WallTime::now();
+    //    time = max_time-(toc-tic).toSec();
 
-    if(time<0.7*mean || time<=0.0) break;
+    //    if(time<0.7*mean || time<=0.0) break;
+
+    if((ros::WallTime::now()-tic).toSec() >= 0.98*max_time) break;
   }
   return solved_;
 }

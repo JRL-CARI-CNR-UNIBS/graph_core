@@ -39,6 +39,14 @@ bool PathPlanerManager::initialize(const moveit::core::RobotModelConstPtr& model
 
   std::map<std::string,std::string> planner_map;
   m_nh=ros::NodeHandle(ns);
+
+
+  if (!m_nh.getParam("default_planner_config",m_default_planner_config))
+  {
+    ROS_DEBUG("default planning config not set");
+    m_default_planner_config="";
+  }
+
   m_nh.getParam("group_names_map",planner_map);
   for (std::pair<std::string,std::string> p: planner_map)
   {
@@ -61,24 +69,42 @@ bool PathPlanerManager::initialize(const moveit::core::RobotModelConstPtr& model
     {
       ptr= std::make_shared<MultigoalPlanner>(ns+"/"+p.first,p.second,model);
     }
+    else if (!type.compare("TimeBasedMultigoal"))
+    {
+      ptr= std::make_shared<TimeBasedMultiGoalPlanner>(ns+"/"+p.first,p.second,model);
+    }
+    else if (!type.compare("HAMPTimeBasedMultigoal"))
+    {
+      ptr= std::make_shared<HAMPTimeBasedMultiGoalPlanner>(ns+"/"+p.first,p.second,model);
+    }
+    else if (!type.compare("ProbabilisticHAMPTimeBasedMultiGoalPlanner"))
+    {
+      ptr= std::make_shared<ProbabilisticHAMPTimeBasedMultiGoalPlanner>(ns+"/"+p.first,p.second,model);
+    }
     else
     {
-      ROS_WARN_STREAM(ns+"/"+p.first+"/type is '"<<type<<"'. Available ones are: Multigoal. Skip this planner");
+      ROS_WARN_STREAM(ns+"/"+p.first+"/type is '"<<type<<"'. Available ones are: Multigoal, TimeBasedMultigoal, HAMPTimeBasedMultigoal, ProbabilisticHAMPTimeBasedMultiGoalPlanner. Skip this planner");
       continue;
     }
-    m_planners.insert(std::pair<std::string, std::shared_ptr<planning_interface::PlanningContext>>(p.second,ptr));
+
+    ROS_INFO("Planned Id=%s on group %s",p.first.c_str(),p.second.c_str());
+    m_planners.insert(std::pair<std::string, std::shared_ptr<planning_interface::PlanningContext>>(p.first,ptr));
   }
   return true;
 }
 
 bool PathPlanerManager::canServiceRequest(const moveit_msgs::MotionPlanRequest& req) const
 {
-  if(m_planners.count(req.group_name) == 0)
+  bool ok=false;
+  for (std::pair<std::string, std::shared_ptr<planning_interface::PlanningContext>> planner: m_planners)
   {
-    return false;
+    if (!planner.second->getGroupName().compare(req.group_name))
+    {
+      ROS_INFO("Planned Id=%s can be used for group %s",planner.first.c_str(),req.group_name.c_str());
+      ok=true;
+    }
   }
-  // Get planner
-  return m_planners.find(req.group_name)!=m_planners.end();
+  return ok;
 }
 
 
@@ -87,14 +113,58 @@ planning_interface::PlanningContextPtr PathPlanerManager::getPlanningContext(
   const planning_interface::MotionPlanRequest &req,
   moveit_msgs::MoveItErrorCodes &error_code) const
 {
-  ROS_DEBUG("Search a planner for group %s",req.group_name.c_str());
-
-  if (m_planners.find(req.group_name) == m_planners.end())
+  bool any_planner=false;
+  std::string planner_id;
+  if (req.planner_id.size()==0)
   {
-    ROS_ERROR("Planner not found for group %s.", req.group_name.c_str());
+    if (m_default_planner_config.size()==0)
+    {
+      ROS_DEBUG("Search a planner for group %s",req.group_name.c_str());
+      any_planner=true;
+    }
+    else
+    {
+      ROS_DEBUG("Use default planner %s",m_default_planner_config.c_str());
+      planner_id=m_default_planner_config;
+    }
+  }
+  else
+  {
+    ROS_DEBUG("Search planner %s for group %s",req.planner_id.c_str(),req.group_name.c_str());
+    planner_id=req.planner_id;
+  }
+
+  bool ok=false;
+  for (std::pair<std::string, std::shared_ptr<planning_interface::PlanningContext>> planner: m_planners)
+  {
+    ROS_DEBUG("planner %s for group %s",planner.first.c_str(),planner.second->getGroupName().c_str());
+    if (!planner.second->getGroupName().compare(req.group_name))
+    {
+      if (any_planner)
+      {
+        planner_id=planner.first;
+        ok=true;
+        break;
+      }
+      else if (!planner.first.compare(planner_id))
+      {
+        ROS_DEBUG("Planned Id=%s can be used for group %s",planner.first.c_str(),req.group_name.c_str());
+        ok=true;
+      }
+    }
+  }
+  if (!ok)
+  {
+    ROS_ERROR("Planner %s not found for group %s.", planner_id.c_str(), req.group_name.c_str());
+    ROS_ERROR("Available planners are:\n");
+    for (std::pair<std::string, std::shared_ptr<planning_interface::PlanningContext>> planner: m_planners)
+      ROS_ERROR("- planner %s, group  %s",planner.first.c_str(),planner.second->getGroupName().c_str());
     return nullptr;
   }
-  std::shared_ptr<planning_interface::PlanningContext> planner = m_planners.at(req.group_name);
+
+//  req.planner_id
+
+  std::shared_ptr<planning_interface::PlanningContext> planner = m_planners.at(planner_id);
   if (!planner)
   {
     ROS_ERROR("Planner not found");
@@ -102,7 +172,7 @@ planning_interface::PlanningContextPtr PathPlanerManager::getPlanningContext(
   }
   else
   {
-    ROS_DEBUG("founded planner %s",planner->getName().c_str());
+    ROS_INFO("Using  planner %s for planning on the group %s",planner->getName().c_str(),req.group_name.c_str());
   }
 
   planner->setPlanningScene(planning_scene);
@@ -113,7 +183,8 @@ planning_interface::PlanningContextPtr PathPlanerManager::getPlanningContext(
 
 void PathPlanerManager::getPlanningAlgorithms ( std::vector< std::string >& algs ) const
 {
-  planning_interface::PlannerManager::getPlanningAlgorithms ( algs );
+  for (std::pair<std::string, std::shared_ptr<planning_interface::PlanningContext>> planner: m_planners)
+    algs.push_back(planner.first);
 }
 
 void PathPlanerManager::setPlannerConfigurations ( const planning_interface::PlannerConfigurationMap& pcs )

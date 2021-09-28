@@ -66,6 +66,11 @@ public:
     }
   }
 
+  virtual CollisionCheckerPtr clone()
+  {
+    planning_scene::PlanningScenePtr planning_scene = planning_scene::PlanningScene::clone(planning_scene_);
+    return std::make_shared<MoveitCollisionChecker>(planning_scene,group_name_,min_distance_);
+  }
 
   virtual bool check(const Eigen::VectorXd& configuration)
   {

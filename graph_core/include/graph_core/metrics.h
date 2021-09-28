@@ -30,7 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/graph/node.h>
 namespace pathplan
 {
-
+class Metrics;
+typedef std::shared_ptr<Metrics> MetricsPtr;
 
 
 // Euclidean metrics
@@ -53,7 +54,8 @@ public:
   virtual double utopia(const Eigen::VectorXd& configuration1,
                       const Eigen::VectorXd& configuration2);
 
+  virtual MetricsPtr clone();
+
 };
-typedef std::shared_ptr<Metrics> MetricsPtr;
 
 }

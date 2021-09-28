@@ -33,15 +33,17 @@ namespace pathplan
 bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const double& max_time)
 {
   ros::WallTime tic = ros::WallTime::now();
-  ros::WallTime toc, tic_cycle, toc_cycle;
-  double time =  max_time;
-  double mean = 0.0;
-  std::vector<double> time_vector;
-  if(time<=0.0) return false;
+//  ros::WallTime toc, tic_cycle, toc_cycle;
+//  double time =  max_time;
+//  double mean = 0.0;
+//  std::vector<double> time_vector;
+//  if(time<=0.0) return false;
+
+  if(max_time <=0.0) return false;
 
   for (unsigned int iter = 0; iter < max_iter; iter++)
   {
-    tic_cycle = ros::WallTime::now();
+//    tic_cycle = ros::WallTime::now();
 
     if (update(solution))
     {
@@ -50,17 +52,19 @@ bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const do
       return true;
     }
 
-    toc_cycle = ros::WallTime::now();
-    time_vector.push_back((toc_cycle-tic_cycle).toSec());
-    mean = std::accumulate(time_vector.begin(), time_vector.end(),0.0)/((double) time_vector.size());
-    toc = ros::WallTime::now();
-    time = max_time-(toc-tic).toSec();
+//    toc_cycle = ros::WallTime::now();
+//    time_vector.push_back((toc_cycle-tic_cycle).toSec());
+//    mean = std::accumulate(time_vector.begin(), time_vector.end(),0.0)/((double) time_vector.size());
+//    toc = ros::WallTime::now();
+//    time = max_time-(toc-tic).toSec();
 
-    if(time<0.7*mean || time<=0.0)
-    {
-      //ROS_ERROR("TIME OUT->time: %f , mean: %f",time,mean);
-      break;
-    }
+//    if(time<0.7*mean || time<=0.0)
+//    {
+//      //ROS_ERROR("TIME OUT->time: %f , mean: %f",time,mean);
+//      break;
+//    }
+
+    if((ros::WallTime::now()-tic).toSec()>=0.98*max_time) break;
   }
   return false;
 }
@@ -74,4 +78,5 @@ bool TreeSolver::setSolution(const PathPtr &solution, const bool& solved)
     clean();
   return true;
 }
+
 }

@@ -42,6 +42,8 @@ Tree::Tree(const NodePtr& root,
   metrics_(metrics)
 {
   nodes_.push_back(root);
+  double dimension=root->getConfiguration().size();
+  k_rrt_=1.1*std::pow(2.0,dimension+1)*std::exp(1)*(1.0+1.0/dimension);
 }
 
 
@@ -118,7 +120,6 @@ bool Tree::extend(const Eigen::VectorXd &configuration, NodePtr &new_node)
     conn->add();
     conn->setCost(cost);
   }
-  //nodes_.push_back(new_node);
   addNode(new_node,false);
   return true;
 }
@@ -187,18 +188,22 @@ bool Tree::connect(const Eigen::VectorXd &configuration, NodePtr &new_node)
 bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node, const double &max_time)
 {
   ros::WallTime tic = ros::WallTime::now();
-  ros::WallTime toc, tic_cycle, toc_cycle;
-  double time =  max_time;
-  double mean = 0.0;
-  std::vector<double> time_vector;
-  if(time<=0.0) return false;
+
+  //  ros::WallTime toc, tic_cycle, toc_cycle;
+  //  double time =  max_time;
+  //  double mean = 0.0;
+  //  std::vector<double> time_vector;
+  //  if(time<=0.0) return false;
+
+  if(max_time<=0.0) return false;
 
   bool success = true;
   while (success)
   {
-    tic_cycle = ros::WallTime::now();
+    //    tic_cycle = ros::WallTime::now();
 
     NodePtr tmp_node;
+    ROS_DEBUG("calling extend");
     success = extendToNode(node, tmp_node);
     if (success)
     {
@@ -208,22 +213,126 @@ bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node, const double &m
         return true;
     }
 
-    toc_cycle = ros::WallTime::now();
-    time_vector.push_back((toc_cycle-tic_cycle).toSec());
-    mean = std::accumulate(time_vector.begin(), time_vector.end(),0.0)/((double) time_vector.size());
-    toc = ros::WallTime::now();
-    time = max_time-(toc-tic).toSec();
+    if((ros::WallTime::now()-tic).toSec() >= 0.98*max_time) break;
 
-    if(time<0.7*mean || time<=0.0)
-    {
-      //ROS_ERROR("TIME OUT");
-      break;
-    }
+    //    toc_cycle = ros::WallTime::now();
+    //    time_vector.push_back((toc_cycle-tic_cycle).toSec());
+    //    mean = std::accumulate(time_vector.begin(), time_vector.end(),0.0)/((double) time_vector.size());
+    //    toc = ros::WallTime::now();
+    //    time = max_time-(toc-tic).toSec();
+    //    if(time<0.7*mean || time<=0.0)
+    //    {
+    //      //ROS_ERROR("TIME OUT");
+    //      break;
+    //    }
+
   }
   return false;
 }
 
-bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire)
+bool Tree::rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire)
+{
+//  ROS_INFO("is it me?");
+  if(what_rewire >2 || what_rewire <0)
+  {
+    ROS_ERROR("what_rewire parameter shoudl be 0,1 or 2");
+    assert(0);
+    return false;
+  }
+
+  bool rewire_parent;
+  bool rewire_children;
+
+  switch(what_rewire)
+  {
+  case 0:
+    rewire_parent   = true ;
+    rewire_children = true ;
+
+    break;
+  case 1:
+    rewire_parent   = true ;
+    rewire_children = false;
+
+    break;
+  case 2:
+    rewire_parent   = false;
+    rewire_children = true ;
+
+    break;
+  }
+
+  std::vector<NodePtr> near_nodes = near(node, r_rewire);
+  NodePtr nearest_node = node->getParents().at(0);
+  double cost_to_node = costToNode(node);
+
+  bool improved = false;
+
+  if(rewire_parent)
+  {
+    //ROS_DEBUG("try to find a better parent between %zu nodes", near_nodes.size());
+    for (const NodePtr& n : near_nodes)
+    {
+      if (n == nearest_node)
+        continue;
+      if (n == node)
+        continue;
+
+      double cost_to_near = costToNode(n);
+
+      if (cost_to_near >= cost_to_node)
+        continue;
+
+      double cost_near_to_node = metrics_->cost(n, node);
+
+      if ((cost_to_near + cost_near_to_node) >= cost_to_node)
+        continue;
+
+      if (!checker_->checkPath(n->getConfiguration(), node->getConfiguration()))
+        continue;
+
+      node->parent_connections_.at(0)->remove();
+
+      ConnectionPtr conn = std::make_shared<Connection>(n, node);
+      conn->setCost(cost_near_to_node);
+      conn->add();
+      nearest_node = n;
+      cost_to_node = cost_to_near + cost_near_to_node;
+      improved = true;
+    }
+  }
+
+  if(rewire_children)
+  {
+    //ROS_DEBUG("try to find a better child between %zu nodes", near_nodes.size());
+    for (NodePtr& n : near_nodes)
+    {
+      if (n == node)
+        continue;
+
+      double cost_to_near = costToNode(n);
+      if (cost_to_node >= cost_to_near)
+        continue;
+
+      double cost_node_to_near = metrics_->cost(node->getConfiguration(), n->getConfiguration());
+      if ((cost_to_node + cost_node_to_near) >= cost_to_near)
+        continue;
+
+      if (!checker_->checkPath(node->getConfiguration(), n->getConfiguration()))
+        continue;
+
+      n->parent_connections_.at(0)->remove();
+      ConnectionPtr conn = std::make_shared<Connection>(node, n);
+      conn->setCost(cost_node_to_near);
+      conn->add();
+    }
+  }
+//  ROS_INFO("it's Cesare all along");
+  return improved;
+}
+
+
+bool Tree::rewireK(const Eigen::VectorXd &configuration)
 {
   if (direction_ == Backward)
   {
@@ -235,15 +344,17 @@ bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire)
   {
     return false;
   }
-  std::vector<NodePtr> near_nodes = near(new_node, r_rewire);
+  std::map<double,NodePtr> near_nodes = nearK(new_node);
   NodePtr nearest_node = new_node->getParents().at(0);
   double cost_to_new = costToNode(new_node);
 
   bool improved = false;
 
-  ROS_DEBUG("try to find a better parent between %zu nodes", near_nodes.size());
-  for (const NodePtr& node : near_nodes)
+  //ROS_DEBUG("try to find a better parent between %zu nodes", near_nodes.size());
+  for (const std::pair<double,NodePtr>& p : near_nodes)
   {
+    const NodePtr& node=p.second;
+
     if (node == nearest_node)
       continue;
     if (node == new_node)
@@ -273,9 +384,10 @@ bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire)
     improved = true;
   }
 
-  ROS_DEBUG("try to find a better child between %zu nodes", near_nodes.size());
-  for (NodePtr& n : near_nodes)
+  //ROS_DEBUG("try to find a better child between %zu nodes", near_nodes.size());
+  for (const std::pair<double,NodePtr>& p : near_nodes)
   {
+    const NodePtr& n=p.second;
     if (n == new_node)
       continue;
 
@@ -299,83 +411,180 @@ bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire)
   return improved;
 }
 
-
-bool Tree::rewireToNode(const NodePtr& n, double r_rewire)
+bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire, NodePtr& new_node)
 {
   if (direction_ == Backward)
   {
     ROS_ERROR("rewiring is available only on forward tree");
     return false;
   }
+
+  if (!extend(configuration, new_node))
+  {
+    return false;
+  }
+
+  return rewireOnly(new_node,r_rewire);
+
+  //  std::vector<NodePtr> near_nodes = near(new_node, r_rewire);
+  //  NodePtr nearest_node = new_node->getParents().at(0);
+  //  double cost_to_new = costToNode(new_node);
+
+  //  bool improved = false;
+
+  //  //ROS_DEBUG("try to find a better parent between %zu nodes", near_nodes.size());
+  //  for (const NodePtr& node : near_nodes)
+  //  {
+  //    if (node == nearest_node)
+  //      continue;
+  //    if (node == new_node)
+  //      continue;
+
+  //    double cost_to_near = costToNode(node);
+
+  //    if (cost_to_near >= cost_to_new)
+  //      continue;
+
+  //    double cost_near_to_new = metrics_->cost(node, new_node);
+
+  //    if ((cost_to_near + cost_near_to_new) >= cost_to_new)
+  //      continue;
+
+  //    if (!checker_->checkPath(node->getConfiguration(), new_node->getConfiguration()))
+  //      continue;
+
+
+  //    new_node->parent_connections_.at(0)->remove();
+
+  //    ConnectionPtr conn = std::make_shared<Connection>(node, new_node);
+  //    conn->setCost(cost_near_to_new);
+  //    conn->add();
+  //    nearest_node = node;
+  //    cost_to_new = cost_to_near + cost_near_to_new;
+  //    improved = true;
+  //  }
+
+  //  //ROS_DEBUG("try to find a better child between %zu nodes", near_nodes.size());
+  //  for (NodePtr& n : near_nodes)
+  //  {
+  //    if (n == new_node)
+  //      continue;
+
+  //    double cost_to_near = costToNode(n);
+  //    if (cost_to_new >= cost_to_near)
+  //      continue;
+
+  //    double cost_new_to_near = metrics_->cost(new_node->getConfiguration(), n->getConfiguration());
+  //    if ((cost_to_new + cost_new_to_near) >= cost_to_near)
+  //      continue;
+
+  //    if (!checker_->checkPath(new_node->getConfiguration(), n->getConfiguration()))
+  //      continue;
+
+  //    n->parent_connections_.at(0)->remove();
+  //    ConnectionPtr conn = std::make_shared<Connection>(new_node, n);
+  //    conn->setCost(cost_new_to_near);
+  //    conn->add();
+  //  }
+
+  //  return improved;
+}
+
+bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire)
+{
   NodePtr new_node;
+
+  return rewire(configuration,r_rewire,new_node);
+}
+
+
+bool Tree::rewireToNode(const NodePtr& n, double r_rewire, NodePtr& new_node)
+{
+  if (direction_ == Backward)
+  {
+    ROS_ERROR("rewiring is available only on forward tree");
+    return false;
+  }
+
   if (!extendToNode(n, new_node))
   {
     return false;
   }
-  std::vector<NodePtr> near_nodes = near(new_node, r_rewire);
-  NodePtr nearest_node = new_node->getParents().at(0);
-  double cost_to_new = costToNode(new_node);
 
-  bool improved = false;
+  return rewireOnly(new_node,r_rewire);
 
-  ROS_DEBUG("try to find a better parent between %zu nodes", near_nodes.size());
-  for (const NodePtr& node : near_nodes)
-  {
-    if (node == nearest_node)
-      continue;
-    if (node == new_node)
-      continue;
+  //  std::vector<NodePtr> near_nodes = near(new_node, r_rewire);
+  //  NodePtr nearest_node = new_node->getParents().at(0);
+  //  double cost_to_new = costToNode(new_node);
 
-    double cost_to_near = costToNode(node);
+  //  bool improved = false;
 
-    if (cost_to_near >= cost_to_new)
-      continue;
+  //  ROS_DEBUG("try to find a better parent between %zu nodes", near_nodes.size());
+  //  for (const NodePtr& node : near_nodes)
+  //  {
+  //    if (node == nearest_node)
+  //      continue;
+  //    if (node == new_node)
+  //      continue;
 
-    double cost_near_to_new = metrics_->cost(node, new_node);
+  //    double cost_to_near = costToNode(node);
 
-    if ((cost_to_near + cost_near_to_new) >= cost_to_new)
-      continue;
+  //    if (cost_to_near >= cost_to_new)
+  //      continue;
 
-    if (!checker_->checkPath(node->getConfiguration(), new_node->getConfiguration()))
-      continue;
+  //    double cost_near_to_new = metrics_->cost(node, new_node);
+
+  //    if ((cost_to_near + cost_near_to_new) >= cost_to_new)
+  //      continue;
+
+  //    if (!checker_->checkPath(node->getConfiguration(), new_node->getConfiguration()))
+  //      continue;
 
 
-    new_node->parent_connections_.at(0)->remove();
+  //    new_node->parent_connections_.at(0)->remove();
 
-    ConnectionPtr conn = std::make_shared<Connection>(node, new_node);
-    conn->setCost(cost_near_to_new);
-    conn->add();
-    nearest_node = node;
-    cost_to_new = cost_to_near + cost_near_to_new;
-    improved = true;
-  }
+  //    ConnectionPtr conn = std::make_shared<Connection>(node, new_node);
+  //    conn->setCost(cost_near_to_new);
+  //    conn->add();
+  //    nearest_node = node;
+  //    cost_to_new = cost_to_near + cost_near_to_new;
+  //    improved = true;
+  //  }
 
-  ROS_DEBUG("try to find a better child between %zu nodes", near_nodes.size());
-  for (NodePtr& n : near_nodes)
-  {
-    if (n == new_node)
-      continue;
+  //  ROS_DEBUG("try to find a better child between %zu nodes", near_nodes.size());
+  //  for (NodePtr& n : near_nodes)
+  //  {
+  //    if (n == new_node)
+  //      continue;
 
-    double cost_to_near = costToNode(n);
-    if (cost_to_new >= cost_to_near)
-      continue;
+  //    double cost_to_near = costToNode(n);
+  //    if (cost_to_new >= cost_to_near)
+  //      continue;
 
-    double cost_new_to_near = metrics_->cost(new_node->getConfiguration(), n->getConfiguration());
-    if ((cost_to_new + cost_new_to_near) >= cost_to_near)
-      continue;
+  //    double cost_new_to_near = metrics_->cost(new_node->getConfiguration(), n->getConfiguration());
+  //    if ((cost_to_new + cost_new_to_near) >= cost_to_near)
+  //      continue;
 
-    if (!checker_->checkPath(new_node->getConfiguration(), n->getConfiguration()))
-      continue;
+  //    if (!checker_->checkPath(new_node->getConfiguration(), n->getConfiguration()))
+  //      continue;
 
-    n->parent_connections_.at(0)->remove();
-    ConnectionPtr conn = std::make_shared<Connection>(new_node, n);
-    conn->setCost(cost_new_to_near);
-    conn->add();
+  //    n->parent_connections_.at(0)->remove();
+  //    ConnectionPtr conn = std::make_shared<Connection>(new_node, n);
+  //    conn->setCost(cost_new_to_near);
+  //    conn->add();
 
-  }
+  //  }
 
-  return improved;
+  //  return improved;
 }
+
+bool Tree::rewireToNode(const NodePtr& n, double r_rewire)
+{
+  NodePtr new_node;
+
+  return rewireToNode(n,r_rewire,new_node);
+}
+
 
 std::vector<NodePtr> Tree::near(const NodePtr &node, const double &r_rewire)
 {
@@ -387,6 +596,27 @@ std::vector<NodePtr> Tree::near(const NodePtr &node, const double &r_rewire)
     if (dist < r_rewire)
     {
       nodes.push_back(n);
+    }
+  }
+  return nodes;
+}
+
+std::map<double,NodePtr> Tree::nearK(const NodePtr &node)
+{
+  size_t k=std::ceil(k_rrt_*std::log(nodes_.size()+1));
+  std::map<double,NodePtr> nodes;
+  for (const NodePtr& n : nodes_)
+  {
+
+    double dist = (n->getConfiguration() - node->getConfiguration()).norm();
+    if (nodes.size()<k)
+    {
+      nodes.insert(std::pair<double,NodePtr>(dist,n));
+    }
+    else if (std::prev(nodes.end())->first > dist)
+    {
+      nodes.erase(prev(nodes.end()));
+      nodes.insert(std::pair<double,NodePtr>(dist,n));
     }
   }
   return nodes;
@@ -536,6 +766,28 @@ bool Tree::addBranch(const std::vector<ConnectionPtr> &connections)
   }
   return true;
 
+}
+
+bool Tree::addTree(TreePtr &additional_tree, const double &max_time)
+{
+  if (not isInTree(additional_tree->getRoot()))
+  {
+    NodePtr new_node;
+    if (not connectToNode(additional_tree->getRoot(),new_node,max_time))
+      return false;
+  }
+
+  if (additional_tree->getDirection()!=direction_)
+  {
+    return false;
+  }
+
+  std::vector<NodePtr> additional_nodes=additional_tree->getNodes();
+  for (size_t inode=1;inode<additional_nodes.size();inode++)
+  {
+    addNode(additional_nodes.at(inode),false);
+  }
+  return true;
 }
 
 bool Tree::isInTree(const NodePtr &node)
@@ -712,6 +964,22 @@ bool Tree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, 
   return true;
 }
 
+void Tree::cleanTree()
+{
+  std::vector<NodePtr> successors;
+  std::vector<NodePtr> white_list;
+  unsigned int removed_nodes;
+  if (direction_==Direction::Forward)
+    successors=root_->getChildren();
+  else
+    successors=root_->getParents();
+  for (NodePtr& n: successors)
+  {
+    if (isInTree(n))
+      purgeFromHere(n,white_list,removed_nodes);
+  }
+}
+
 void Tree::populateTreeFromNode(const NodePtr& node)
 {
   std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
@@ -738,10 +1006,191 @@ void Tree::populateTreeFromNode(const NodePtr& node)
   }
 }
 
+
+XmlRpc::XmlRpcValue Tree::toXmlRpcValue() const
+{
+  XmlRpc::XmlRpcValue tree;
+  XmlRpc::XmlRpcValue nodes;
+  XmlRpc::XmlRpcValue connections;
+  int iconn=0;
+
+  for (size_t inode=0;inode<nodes_.size();inode++)
+  {
+    const NodePtr& n=nodes_.at(inode);
+    nodes[inode]=n->toXmlRpcValue();
+    std::vector<NodePtr> dest;
+    if (direction_==Forward)
+      dest=n->getChildren();
+    else
+      dest=n->getParents();
+
+    for (size_t idest=0;idest<dest.size();idest++)
+    {
+      for (size_t in2=0;in2<nodes_.size();in2++)
+      {
+        if (nodes_.at(in2)==dest.at(idest))
+        {
+          XmlRpc::XmlRpcValue connection;
+          connection[0]=(int)inode;
+          connection[1]=(int)in2;
+          connections[iconn++]=connection;
+          break;
+        }
+      }
+    }
+  }
+  tree["nodes"]=nodes;
+  tree["connections"]=connections;
+  return tree;
+}
+
 std::ostream& operator<<(std::ostream& os, const Tree& tree)
 {
   os << "number of nodes = " << tree.nodes_.size() << std::endl;
   os << "root = " << *tree.root_;
   return os;
 }
+
+TreePtr Tree::fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
+                              const Direction& direction,
+                              const double& max_distance,
+                              const CollisionCheckerPtr& checker,
+                              const MetricsPtr& metrics,
+                              const bool &lazy)
+{
+  if (not x.hasMember("nodes"))
+  {
+    ROS_ERROR("loading from XmlRpcValue a tree without 'nodes' field");
+    return NULL;
+  }
+  if (not x.hasMember("connections"))
+  {
+    ROS_ERROR("loading from XmlRpcValue a tree without 'connections' field");
+    return NULL;
+  }
+
+  XmlRpc::XmlRpcValue nodes=x["nodes"];
+  XmlRpc::XmlRpcValue connections=x["connections"];
+  if (nodes.getType()!= XmlRpc::XmlRpcValue::Type::TypeArray)
+  {
+    ROS_ERROR("loading from XmlRpcValue a tree where 'nodes' is not an array");
+    return NULL;
+  }
+  if (connections.getType()!= XmlRpc::XmlRpcValue::Type::TypeArray)
+  {
+    ROS_ERROR("loading from XmlRpcValue a tree where 'connections' is not an array");
+    return NULL;
+  }
+  NodePtr root=Node::fromXmlRpcValue(nodes[0]);
+  if (not lazy)
+  {
+    if (not checker->check(root->getConfiguration()))
+    {
+      ROS_DEBUG("root is in collision");
+      return NULL;
+    }
+  }
+  assert(root);
+
+
+  std::vector<NodePtr> nodes_vector(nodes.size());
+  nodes_vector.at(0)=root;
+  for (int inode=1;inode<nodes.size();inode++)
+  {
+    nodes_vector.at(inode)=Node::fromXmlRpcValue(nodes[inode]);
+  }
+
+  for (int iconn=0;iconn<connections.size();iconn++)
+  {
+    int in1=connections[iconn][0];
+    int in2=connections[iconn][1];
+
+    NodePtr& n1=nodes_vector.at(in1);
+    NodePtr& n2=nodes_vector.at(in2);
+    ConnectionPtr conn;
+    if (direction==Forward)
+    {
+      conn=std::make_shared<Connection>(n1,n2);
+      conn->setCost(metrics->cost(n1,n2));
+    }
+    else
+    {
+      conn=std::make_shared<Connection>(n2,n1);
+      conn->setCost(metrics->cost(n2,n1));
+    }
+    conn->add();
+  }
+  pathplan::TreePtr tree=std::make_shared<Tree>(root,direction,max_distance,checker,metrics);
+  for (int inode=1;inode<nodes.size();inode++)
+  {
+    tree->addNode(nodes_vector.at(inode),false);
+  }
+
+  if (not lazy)
+  {
+    tree->recheckCollision();
+  }
+  return tree;
+}
+
+
+bool Tree::changeRoot(const NodePtr& node)
+{
+
+  std::vector<NodePtr>::iterator it;
+  if (not isInTree(node,it))
+    return false;
+
+  std::vector<ConnectionPtr> connections = getConnectionToNode(node);
+  for (ConnectionPtr& conn: connections)
+  {
+    conn->flip();
+  }
+  // root should be the first node;
+  *it=root_;
+  nodes_.at(0)=node;
+  root_=node;
+
+  return true;
+}
+
+bool Tree::recheckCollision()
+{
+  return recheckCollisionFromNode(root_);
+}
+bool Tree::recheckCollisionFromNode(NodePtr& n)
+{
+  std::vector<NodePtr> white_list;
+  unsigned int removed_nodes;
+  if (direction_==Forward)
+  {
+    for (ConnectionPtr conn: n->child_connections_)
+    {
+      NodePtr n=conn->getChild();
+      if (not checker_->checkConnection(conn))
+      {
+        purgeFromHere(n,white_list,removed_nodes);
+        return false;
+      }
+      if (not recheckCollisionFromNode(n))
+        return false;
+    }
+  }
+  else
+  {
+    for (ConnectionPtr conn: n->parent_connections_)
+    {
+      NodePtr n=conn->getParent();
+      if (not checker_->checkConnection(conn))
+      {
+        purgeFromHere(n,white_list,removed_nodes);
+        return false;
+      }
+      if (not recheckCollisionFromNode(n))
+        return false;
+    }
+  }
+  return true;
+}
+
 }  // end namespace pathplan

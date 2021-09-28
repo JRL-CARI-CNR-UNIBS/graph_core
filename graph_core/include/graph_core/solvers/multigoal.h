@@ -56,16 +56,23 @@ protected:
   double cost_at_last_clean=std::numeric_limits<double>::infinity();
   double best_utopia_=std::numeric_limits<double>::infinity();
   int best_goal_index=-1;
+  double r_rewire_=1.;
   double max_distance_=1.0;
   double local_bias_=0.3;
-  double reward_=3.0;
+  double reward_=1.0;
   double forgetting_factor_=0.999;
   double tube_radius_=0.01;
-  double utopia_tolerance=1.003;
+  double utopia_tolerance_=1.003;
+  double goal_bias_=0.05;
+  bool bidirectional_=true;
+  bool informed_=true;
+  bool mixed_strategy_=true;
   bool extend_ = false;
+  bool knearest_=false;
+  double dimension_;
   virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity());
   virtual void clean(){}
-
+  bool warp_=false;
   bool isBestSolution(const int& index);
 
   virtual void printMyself(std::ostream& os) const;
@@ -86,6 +93,8 @@ public:
   virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity());
   virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity());
   virtual void resetProblem();
+  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler);
+
 
   void cleanTree();
 

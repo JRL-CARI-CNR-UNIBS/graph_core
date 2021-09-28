@@ -29,7 +29,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <moveit/planning_interface/planning_interface.h>
 #include <dirrt_star/multigoal_planner.h>
-
+#include <dirrt_star/time_planner.h>
+#include <dirrt_star/hamp_time_planner.h>
+#include <dirrt_star/probabilist_hamp_time_planner.h>
 
 namespace pathplan {
 namespace dirrt_star {
@@ -48,6 +50,7 @@ public:
   void getPlanningAlgorithms(std::vector<std::string> &algs) const override;
 
 
+
   void setPlannerConfigurations(const planning_interface::PlannerConfigurationMap &pcs) override;
 
   planning_interface::PlanningContextPtr getPlanningContext(
@@ -62,6 +65,7 @@ protected:
 
   std::map< std::string, std::shared_ptr<planning_interface::PlanningContext>> m_planners;
   moveit::core::RobotModelConstPtr m_robot_model;
+  std::string m_default_planner_config;
 };
 
 //

@@ -59,6 +59,45 @@ Path::Path(std::vector<ConnectionPtr> connections,
 
 }
 
+Path::Path(std::vector<NodePtr> nodes,
+           const MetricsPtr& metrics,
+           const CollisionCheckerPtr& checker):
+  metrics_(metrics),
+  checker_(checker)
+{
+  assert(nodes_.size() > 0);
+
+  connections_.clear();
+  cost_ = 0;
+  for(unsigned int i=0;i<nodes.size()-1;i++)
+  {
+    NodePtr parent = nodes.at(i);
+    NodePtr child  = nodes.at(i+1);
+
+    ConnectionPtr conn = std::make_shared<Connection>(parent,child);
+    double cost = metrics->cost(parent,child);
+    conn->setCost(cost);
+    conn->add();
+
+    connections_.push_back(conn);
+
+    cost_ += cost;
+    change_warp_.push_back(true);
+    change_slip_child_.push_back(true);
+    change_slip_parent_.push_back(true);
+#ifdef NO_SPIRAL
+    change_spiral_.push_back(true);
+#endif
+  }
+
+  change_warp_.at(0) = false;
+  change_slip_child_.at(0) = false;
+  change_slip_parent_.at(0) = false;
+#ifdef NO_SPIRAL
+  change_spiral_.at(0) = false;
+#endif
+
+}
 
 PathPtr Path::clone()
 {
@@ -318,29 +357,32 @@ bool Path::bisection(const unsigned int &connection_idx,
   return improved;
 }
 
-bool Path::warp(const double &max_time)
+bool Path::warp(const double &min_dist, const double &max_time)
 {
   if(max_time > 0)
   {
     ros::WallTime tic = ros::WallTime::now();
     for (unsigned int idx = 1; idx < connections_.size(); idx++)
     {
-      if (change_warp_.at(idx - 1) || change_warp_.at(idx))
+      if(connections_.at(idx-1)->norm()>min_dist && connections_.at(idx)->norm()>min_dist)
       {
-        Eigen::VectorXd center = 0.5 * (connections_.at(idx - 1)->getParent()->getConfiguration() +
-                                        connections_.at(idx)->getChild()->getConfiguration());
-        Eigen::VectorXd direction = connections_.at(idx - 1)->getChild()->getConfiguration() - center;
-        double max_distance = direction.norm();
-        double min_distance = 0;
-
-        direction.normalize();
-
-        if (!bisection(idx, center, direction, max_distance, min_distance))
+        if (change_warp_.at(idx - 1) || change_warp_.at(idx))
         {
-          change_warp_.at(idx) = 0;
+          Eigen::VectorXd center = 0.5 * (connections_.at(idx - 1)->getParent()->getConfiguration() +
+                                          connections_.at(idx)->getChild()->getConfiguration());
+          Eigen::VectorXd direction = connections_.at(idx - 1)->getChild()->getConfiguration() - center;
+          double max_distance = direction.norm();
+          double min_distance = 0;
+
+          direction.normalize();
+
+          if (!bisection(idx, center, direction, max_distance, min_distance))
+          {
+            change_warp_.at(idx) = 0;
+          }
+          else
+            setChanged(idx);
         }
-        else
-          setChanged(idx);
       }
 
       if((ros::WallTime::now()-tic).toSec()>=0.98*max_time) break;
@@ -517,11 +559,12 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
   ROS_INFO_STREAM("conf: "<<configuration.transpose());
   ROS_INFO_STREAM("parent0: "<<connections_.at(0)->getParent()->getConfiguration().transpose());
   ROS_INFO_STREAM("child0: "<<connections_.at(0)->getChild()->getConfiguration().transpose());
+
+  return NULL;
 }
 
 Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool& in_conn)
 {
-
   Eigen::VectorXd parent = conn->getParent()->getConfiguration();
   Eigen::VectorXd child = conn->getChild()->getConfiguration();
 
@@ -582,7 +625,6 @@ Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const Co
 
   if(c<=c_pitagora) s = std::sqrt(b*b-distance*distance);
   else s = - std::sqrt(b*b-distance*distance);
-
 
   Eigen::VectorXd projection = parent+(child-parent)*s/a;
 
@@ -749,7 +791,7 @@ const Eigen::VectorXd Path::projectOnClosestConnectionKeepingCurvilinearAbscissa
   return projection;
 }
 
-NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr& conn, bool& rewire)
+NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr& conn, const bool& rewire)
 {
   if(conn != NULL)
   {
@@ -782,6 +824,7 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
         conn_child->add();
 
         conn->remove();
+        tree_->addNode(actual_node);  //CHIEDI se necessario
 
         std::vector<ConnectionPtr> conn_vector;
 
@@ -979,12 +1022,14 @@ bool Path::simplify(const double& distance)
       connections_.insert(connections_.begin() + (ic - 1), conn);
 
       change_warp_.erase(change_warp_.begin() + ic);
-      change_warp_.at(ic - 1) = 1;
       change_slip_parent_.erase(change_slip_parent_.begin() + ic);
-      change_slip_parent_.at(ic - 1) = 1;
       change_slip_child_.erase(change_slip_child_.begin() + ic);
-      change_slip_child_.at(ic - 1) = 1;
-
+      if (ic>1)
+      {
+        change_slip_child_.at(ic - 1) = 1;
+        change_warp_.at(ic - 1) = 1;
+        change_slip_parent_.at(ic - 1) = 1;
+      }
       /*change_warp_.erase(change_warp_.begin() + ic-1);   //se da ancora problemi prova a usare questi anziche quelli sopra
       change_warp_.at(ic - 1) = 1;
       change_slip_parent_.erase(change_slip_parent_.begin() + ic-1);
@@ -1130,6 +1175,34 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_fro
   }
 
   return validity;
+}
+
+XmlRpc::XmlRpcValue Path::toXmlRpcValue(bool reverse) const
+{
+  XmlRpc::XmlRpcValue x;
+  if (connections_.size()==0)
+    return x;
+  x.setSize(connections_.size()+1);
+
+  if (not reverse)
+  {
+    x[0]=connections_.at(0)->getParent()->toXmlRpcValue();
+    for (size_t idx=0;idx<connections_.size();idx++)
+      x[idx+1]=connections_.at(idx)->getChild()->toXmlRpcValue();
+  }
+  else
+  {
+    x[0]=connections_.back()->getChild()->toXmlRpcValue();
+    for (size_t idx=0;idx<connections_.size();idx++)
+      x[idx+1]=connections_.at(connections_.size()-idx-1)->getParent()->toXmlRpcValue();
+  }
+  return x;
+}
+
+void Path::flip()
+{
+  for (ConnectionPtr conn: connections_)
+    conn->flip();
 }
 
 std::ostream& operator<<(std::ostream& os, const Path& path)

@@ -164,6 +164,8 @@ void MultigoalPlanner::clear()
 
 bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
 {
+
+
   ros::WallDuration max_planning_time=ros::WallDuration(request_.allowed_planning_time);
   ros::WallTime start_time = ros::WallTime::now();
   ros::WallTime refine_time = ros::WallTime::now();
@@ -187,7 +189,7 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
   }
 
   planning_scene::PlanningScenePtr ptr=planning_scene::PlanningScene::clone(planning_scene_);
-  checker=std::make_shared<pathplan::ParallelMoveitCollisionChecker>(ptr,group_,collision_thread_,collision_distance);
+  checker=std::make_shared<pathplan::ParallelMoveitCollisionChecker>(ptr,group_,collision_thread_,collision_distance_);
 
   moveit::core::RobotState start_state(robot_model_);
   moveit::core::robotStateMsgToRobotState(request_.start_state,start_state);
@@ -252,7 +254,7 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
   // joint goal
   for (unsigned int iGoal=0;iGoal<request_.goal_constraints.size();iGoal++)
   {
-    ROS_DEBUG("Processing goal %u",iGoal++);
+    ROS_DEBUG("Processing goal %u",iGoal);
 
     moveit_msgs::Constraints goal=request_.goal_constraints.at(iGoal);
 
@@ -334,13 +336,14 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
     if (!found_a_solution && solver->solved())
     {
       assert(solution);
-      ROS_INFO("Find a first solution (cost=%f) in %f seconds",solver->cost(),(ros::WallTime::now()-start_time).toSec());
+      ROS_DEBUG("Find a first solution (cost=%f) in %f seconds",solver->cost(),(ros::WallTime::now()-start_time).toSec());
+      ROS_DEBUG_STREAM(*solver);
       found_a_solution=true;
       refine_time = ros::WallTime::now();
     }
     if (solver->completed())
     {
-      ROS_INFO("Optimization completed (cost=%f) in %f seconds (%u iterations)",solver->cost(),(ros::WallTime::now()-start_time).toSec(),iteration);
+      ROS_DEBUG("Optimization completed (cost=%f) in %f seconds (%u iterations)",solver->cost(),(ros::WallTime::now()-start_time).toSec(),iteration);
       break;
     }
 
@@ -351,7 +354,7 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
     }
   }
 
-  ROS_INFO_STREAM(*solver);
+  ROS_DEBUG_STREAM(*solver);
 
 
   if (!found_a_solution)

@@ -44,6 +44,7 @@ protected:
   Direction direction_;
   double max_distance_=1;
   double tolerance_ = 1e-6;
+  double k_rrt_;
   unsigned int maximum_nodes_ = 5000; // legare il massimo numero di punti al volume????
   CollisionCheckerPtr checker_;
   MetricsPtr metrics_;
@@ -51,14 +52,14 @@ protected:
   std::vector<NodePtr> nodes_;
 
   void purgeNodeOutsideEllipsoid(NodePtr& node,
-                                         const SamplerPtr& sampler,
-                                         const std::vector<NodePtr>& white_list,
-                                         unsigned int& removed_nodes);
+                                 const SamplerPtr& sampler,
+                                 const std::vector<NodePtr>& white_list,
+                                 unsigned int& removed_nodes);
 
   void purgeNodeOutsideEllipsoids(NodePtr& node,
-                                         const std::vector<SamplerPtr>& samplers,
-                                         const std::vector<NodePtr>& white_list,
-                                         unsigned int& removed_nodes);
+                                  const std::vector<SamplerPtr>& samplers,
+                                  const std::vector<NodePtr>& white_list,
+                                  unsigned int& removed_nodes);
 
   // add children(Forward direction) or parents (Backforward direction) to the tree. node is not added (throw exception if it is not member of the tree)
   void populateTreeFromNode(const NodePtr& node);
@@ -74,6 +75,12 @@ public:
   {
     return root_;
   }
+  std::vector<NodePtr> getNodes()
+  {
+    return nodes_;
+  }
+
+  bool changeRoot(const NodePtr& node);
 
   virtual void addNode(const NodePtr& node, const bool& check_if_present = true);
   virtual void removeNode(const std::vector<NodePtr>::iterator& it);
@@ -99,8 +106,20 @@ public:
   bool rewire(const Eigen::VectorXd& configuration,
               double r_rewire);
 
+  bool rewireK(const Eigen::VectorXd& configuration);
+  bool rewire(const Eigen::VectorXd& configuration,
+              double r_rewire,
+              NodePtr& new_node);
+
   bool rewireToNode(const NodePtr& n,
-              double r_rewire);
+                    double r_rewire);
+
+  bool rewireToNode(const NodePtr& n,
+                    double r_rewire,
+                    NodePtr& new_node);
+
+  //if what_rewire is 1 it searches for the best parent for node inside the radius r_rewire, if 2 it verifies if node is a better parent for the other nodes inside r_rewire, if 0 it does both
+  bool rewireOnly(NodePtr& node, double r_rewire, const int &what_rewire = 0);
 
   NodePtr findClosestNode(const Eigen::VectorXd& configuration);
 
@@ -111,8 +130,10 @@ public:
   bool keepOnlyThisBranch(const std::vector<ConnectionPtr>& connections);
 
   bool addBranch(const std::vector<ConnectionPtr>& connections);
-
+  bool addTree(TreePtr& additional_tree, const double &max_time = std::numeric_limits<double>::infinity());
+  void cleanTree();
   std::vector<NodePtr> near(const NodePtr& node, const double& r_rewire);
+  std::map<double, NodePtr> nearK(const NodePtr& node);
 
   bool isInTree(const NodePtr& node);
   bool isInTree(const NodePtr& node, std::vector<NodePtr>::iterator& it);
@@ -127,12 +148,26 @@ public:
   bool purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
   bool needCleaning(){return nodes_.size()>maximum_nodes_;}
 
+  bool recheckCollision(); //return true if there are no collisions
+  bool recheckCollisionFromNode(NodePtr &n); //return true if there are no collisions
+
   const double& getMaximumDistance() const {return max_distance_;}
   const Direction& getDirection() const {return direction_;}
   MetricsPtr& getMetrics() {return metrics_;}
   CollisionCheckerPtr& getChecker() {return checker_;}
+
+  XmlRpc::XmlRpcValue toXmlRpcValue() const;
   friend std::ostream& operator<<(std::ostream& os, const Tree& tree);
+
+  static TreePtr fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
+                                 const Direction& direction,
+                                 const double& max_distance,
+                                 const CollisionCheckerPtr& checker,
+                                 const MetricsPtr& metrics,
+                                 const bool& lazy=false);
 };
 
 std::ostream& operator<<(std::ostream& os, const Tree& tree);
+
+
 }

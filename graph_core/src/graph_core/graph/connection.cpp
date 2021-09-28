@@ -76,6 +76,13 @@ void Connection::remove()
     ROS_FATAL("child already destroied");
 
 }
+
+void Connection::flip()
+{
+  remove(); // remove connection from parent and child
+  parent_.swap(child_);
+  add(); // add new connection from new parent and child
+}
 Connection::~Connection()
 {
 }

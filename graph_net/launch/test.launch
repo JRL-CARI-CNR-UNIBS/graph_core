@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<launch>
+
+<node pkg="graph_net"  type="test_net" name="test_net" output="screen">
+  <rosparam command="load" file="$(find graph_net)/config/config.yaml"/>
+</node>
+
+</launch>

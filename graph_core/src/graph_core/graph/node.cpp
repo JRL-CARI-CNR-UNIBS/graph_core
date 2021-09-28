@@ -145,6 +145,29 @@ std::vector<NodePtr> Node::getParents() const
 }
 
 
+XmlRpc::XmlRpcValue Node::toXmlRpcValue() const
+{
+  XmlRpc::XmlRpcValue x;
+  x.setSize(configuration_.size());
+  for (int idx=0;idx<configuration_.size();idx++)
+    x[idx]=configuration_(idx);
+  return x;
+}
+
+NodePtr Node::fromXmlRpcValue(const XmlRpc::XmlRpcValue& x)
+{
+  if (x.getType()!= XmlRpc::XmlRpcValue::Type::TypeArray)
+  {
+    ROS_ERROR("loading from XmlRpcValue a node, but XmlRpcValue is not an array");
+    return NULL;
+  }
+  Eigen::VectorXd conf(x.size());
+  for (int idx=0;idx<x.size();idx++)
+  {
+    conf(idx)=x[idx];
+  }
+  return std::make_shared<Node>(conf);
+}
 
 std::ostream& operator<<(std::ostream& os, const Node& node)
 {
@@ -154,5 +177,4 @@ std::ostream& operator<<(std::ostream& os, const Node& node)
 
   return os;
 }
-
 }

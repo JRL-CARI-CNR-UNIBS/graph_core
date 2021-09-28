@@ -31,6 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
+class RRTStar;
+typedef std::shared_ptr<RRTStar> RRTStarPtr;
 
 class RRTStar: public RRTConnect
 {
@@ -50,6 +52,8 @@ public:
   virtual bool solve(PathPtr &solution, const unsigned int& max_iter=100);
   virtual bool update(const Eigen::VectorXd& point, PathPtr& solution);
   virtual bool update(const NodePtr& n, PathPtr& solution);
+  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler);
+
 
 };
 }
