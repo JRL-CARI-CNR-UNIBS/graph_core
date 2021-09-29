@@ -38,7 +38,7 @@ bool RRT::config(const ros::NodeHandle& nh)
   return true;
 }
 
-void RRT::importFromSolver(const RRTPtr& solver)
+void RRT::importFromSolver(const RRTPtr &solver)
 {
   ROS_INFO_STREAM("Import from RRT solver");
 
@@ -47,6 +47,21 @@ void RRT::importFromSolver(const RRTPtr& solver)
   goal_node_    = solver->getGoal();
   max_distance_ = solver->getMaxDistance();
   utopia_       = solver->getUtopia();
+}
+void RRT::importFromSolver(const TreeSolverPtr& solver)
+{
+  const std::type_info& tree_solver_type = typeid(TreeSolver);
+  const std::type_info& rrt_type = typeid(RRT);
+  const std::type_info& type = typeid(*solver);
+
+  if(std::type_index(type) == std::type_index(tree_solver_type))
+    TreeSolver::importFromSolver(solver);
+
+  else if(std::type_index(type) == std::type_index(rrt_type))
+    RRT::importFromSolver(std::static_pointer_cast<RRT>(solver));
+
+  else
+    TreeSolver::importFromSolver(solver);
 }
 
 bool RRT::addGoal(const NodePtr &goal_node, const double &max_time)

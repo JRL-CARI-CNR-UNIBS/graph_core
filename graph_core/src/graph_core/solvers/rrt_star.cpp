@@ -73,7 +73,8 @@ bool RRTStar::addGoal(const NodePtr &goal_node)
 }
 bool RRTStar::config(const ros::NodeHandle& nh)
 {
-  nh_ = nh;
+  RRTConnect::config(nh);
+
   dof_=sampler_->getDimension();
   r_rewire_factor_ = 1.1* std::pow( 2*(1+1/dof_), 1./dof_);
   solved_ = true;

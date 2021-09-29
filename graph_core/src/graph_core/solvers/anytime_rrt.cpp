@@ -55,13 +55,33 @@ void AnytimeRRT::importFromSolver(const AnytimeRRTPtr& solver)
 {
   ROS_INFO_STREAM("Import from AnytimeRRT solver");
 
-  RRT::importFromSolver(solver);
+  RRT::importFromSolver(std::static_pointer_cast<RRT>(solver));
 
   bias_            = solver->getBias();
   delta_           = solver->getDelta();
   new_tree_        = solver->getNewTree();
   cost_impr_       = solver->getCostImpr();
   new_tree_solved_ = solver->getNewTreeSolved();
+}
+
+void AnytimeRRT::importFromSolver(const TreeSolverPtr& solver)
+{
+  const std::type_info& tree_solver_type = typeid(TreeSolver);
+  const std::type_info& rrt_type = typeid(RRT);
+  const std::type_info& anytime_rrt_type = typeid(AnytimeRRT);
+  const std::type_info& type = typeid(*solver);
+
+  if(std::type_index(type) == std::type_index(tree_solver_type))
+    TreeSolver::importFromSolver(solver);
+
+  else if(std::type_index(type) == std::type_index(rrt_type))
+    RRT::importFromSolver(std::static_pointer_cast<RRT>(solver));
+
+  else if(std::type_index(type) == std::type_index(anytime_rrt_type))
+    AnytimeRRT::importFromSolver(std::static_pointer_cast<AnytimeRRT>(solver));
+
+  else
+    RRT::importFromSolver(std::static_pointer_cast<RRT>(solver));
 }
 
 bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const double& max_time)

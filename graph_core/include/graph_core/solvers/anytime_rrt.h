@@ -110,6 +110,7 @@ public:
                const double &max_time = std::numeric_limits<double>::infinity());
 
   void importFromSolver(const AnytimeRRTPtr& solver);
+  void importFromSolver(const TreeSolverPtr& solver); //CHIEDI
 
   virtual bool solve(PathPtr& solution,
                      const unsigned int& max_iter = 100,
