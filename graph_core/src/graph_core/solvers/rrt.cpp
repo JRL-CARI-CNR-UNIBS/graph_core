@@ -50,14 +50,10 @@ void RRT::importFromSolver(const RRTPtr &solver)
 }
 void RRT::importFromSolver(const TreeSolverPtr& solver)
 {
-  const std::type_info& tree_solver_type = typeid(TreeSolver);
   const std::type_info& rrt_type = typeid(RRT);
   const std::type_info& type = typeid(*solver);
 
-  if(std::type_index(type) == std::type_index(tree_solver_type))
-    TreeSolver::importFromSolver(solver);
-
-  else if(std::type_index(type) == std::type_index(rrt_type))
+  if(std::type_index(type) == std::type_index(rrt_type))
     RRT::importFromSolver(std::static_pointer_cast<RRT>(solver));
 
   else
