@@ -93,9 +93,8 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     {
       ROS_INFO("Utopia reached!");
       completed_=true;
+      return true;
     }
-
-    return true;
   }
 
   if(max_time <=0.0) return false;
@@ -216,7 +215,7 @@ bool AnytimeRRT::update(PathPtr &solution)
 
   if (completed_ || new_tree_solved_)
   {
-    PATH_COMMENT("already found the best solution solution");
+    PATH_COMMENT("already found the best solution");
     solution = solution_;
     return true;
   }
@@ -233,7 +232,7 @@ bool AnytimeRRT::update(const Eigen::VectorXd& point, PathPtr &solution)
 
   if (completed_ || new_tree_solved_)
   {
-    PATH_COMMENT("already found the best solution solution");
+    PATH_COMMENT("already found the best solution");
     solution = solution_;
     return true;
   }
