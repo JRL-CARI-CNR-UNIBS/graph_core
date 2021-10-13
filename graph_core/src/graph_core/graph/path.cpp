@@ -609,45 +609,6 @@ Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const Co
   }
 
   return projection;
-
-  // //////////////////////////////////////////////////
-  /*  double a = (parent-child).norm();
-  double b = (parent-point).norm();
-  double c = (point-child).norm();
-
-  double p = (a+b+c)/2.0;
-  double A = std::sqrt(p*(p-a)*(p-b)*(p-c)); //Erone's formula
-
-  distance = 2.0*A/a;  //A=a*h/2 -> h=2A/a
-
-  double c_pitagora = std::sqrt(b*b+a*a);
-  double s; //distance parent-projection
-
-  if(c<=c_pitagora) s = std::sqrt(b*b-distance*distance);
-  else s = - std::sqrt(b*b-distance*distance);
-
-  Eigen::VectorXd projection = parent+(child-parent)*s/a;
-
-  if(s/a>=0 && s/a<=1)
-  {
-    in_conn = 1;
-  }
-  else if(conn == connections_.front() && s/a<0)  //if the point is before the start it is projected on the start
-  {
-    projection = parent; //the start
-    in_conn = 1;
-  }
-  else if(conn == connections_.back() && s/a>1)  //if the point is before the start it is projected on the start
-  {
-    projection = child;  //the goal
-    in_conn = 1;
-  }
-  else
-  {
-    in_conn = 0;
-  }
-
-  return projection;*/
 }
 
 const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& point)

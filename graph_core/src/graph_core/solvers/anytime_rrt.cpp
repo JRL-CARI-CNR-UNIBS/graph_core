@@ -100,11 +100,12 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   if(max_time <=0.0) return false;
 
   // RRT to find quickly a first sub-optimal solution
+  bool success;
   unsigned int n_failed_iter = 0;
   time = (ros::WallTime::now()-tic).toSec();
   while(time<0.98*max_time && solved_ == false && n_failed_iter<FAILED_ITER)
   {
-    bool success = AnytimeRRT::solveWithRRT(solution,max_iter,(max_time-time));
+    success = AnytimeRRT::solveWithRRT(solution,max_iter,(max_time-time));
     if(!success)
       n_failed_iter += 1;
 
@@ -130,18 +131,22 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   }
 
   // Informed trees to find better solutions
+  NodePtr initial_root = start_tree_->getRoot();
+  NodePtr initial_goal = goal_node_;
+
+  bool improved;
   n_failed_iter = 0;
   time = (ros::WallTime::now()-tic).toSec();
   while(time<0.98*max_time && completed_ == false && n_failed_iter<FAILED_ITER)
   {
-    NodePtr start_node = std::make_shared<Node>(start_tree_->getRoot()->getConfiguration());
+    NodePtr start_node = std::make_shared<Node>(initial_root->getConfiguration());
     goal_node_ = std::make_shared<Node>(goal_node_->getConfiguration());
 
-    bool success = AnytimeRRT::improve(start_node,solution,max_iter,(max_time-time));
-    if(!success)
+    improved = AnytimeRRT::improve(start_node,solution,max_iter,(max_time-time));
+    if(!improved)
       n_failed_iter += 1;
 
-    if(success != new_tree_solved_)
+    if(improved != new_tree_solved_)
       assert(0);
 
     if(path_cost_ <= 1.003 * utopia_)
@@ -153,6 +158,12 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
 
     time = (ros::WallTime::now()-tic).toSec();
   }
+
+  if(improved)
+  {
+    //scollega root e goal nuovi e collegaci quelli originali
+  }
+
   return solved_;
 }
 bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solution, const unsigned int& max_iter, const double &max_time)
@@ -197,7 +208,7 @@ bool AnytimeRRT::config(const ros::NodeHandle& nh)
 {
   bias_ = 0.9;
   setParameters();
-  RRT::config(nh);
+  return RRT::config(nh);
 }
 
 void AnytimeRRT::resetProblem()

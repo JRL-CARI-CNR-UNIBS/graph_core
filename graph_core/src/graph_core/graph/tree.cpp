@@ -1097,7 +1097,6 @@ bool Tree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, 
 {
   if (std::find(white_list.begin(), white_list.end(), node) != white_list.end())
   {
-    ROS_INFO("QUA");
     return false;
   }
   assert(node);
