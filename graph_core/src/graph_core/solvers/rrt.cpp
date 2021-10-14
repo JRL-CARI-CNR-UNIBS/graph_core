@@ -70,6 +70,8 @@ bool RRT::addGoal(const NodePtr &goal_node, const double &max_time)
   solved_ = false;
   goal_node_ = goal_node;
 
+  ROS_INFO_STREAM("RRT INITIAL GOAL_ PTR: "<< goal_node_);
+
   goal_cost_=goal_cost_fcn_->cost(goal_node);
   setProblem(max_time);
 
@@ -85,6 +87,8 @@ bool RRT::addStart(const NodePtr &start_node, const double &max_time)
   }
   solved_ = false;
   start_tree_ = std::make_shared<Tree>(start_node, Forward, max_distance_, checker_, metrics_);
+
+  ROS_INFO_STREAM("RRT INITIAL ROOT PTR: "<< start_tree_->getRoot());
 
   setProblem(max_time);
 

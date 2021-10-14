@@ -117,7 +117,7 @@ public:
 
   bool informedExtend(const Eigen::VectorXd& configuration,   //Used in AnytimeRRT
                         NodePtr& new_node,
-                        Eigen::VectorXd &goal, const double &cost2beat, const double &bias);
+                        const Eigen::VectorXd &goal, const double &cost2beat, const double &bias);
 
   bool connectToNode(const NodePtr& node,
                      NodePtr& new_node,

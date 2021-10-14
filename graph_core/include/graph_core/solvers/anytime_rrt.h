@@ -40,8 +40,10 @@ protected:
   double bias_;
   double delta_; //dist_bias and cost_bias update factor
   double cost_impr_;  //cost improvement factor (new cost < (1-cost_impr_)*path_cost_)
+  double cost2beat_;
   bool new_tree_solved_;
   TreePtr new_tree_;
+  NodePtr tmp_goal_node_;
 
   bool solveWithRRT(PathPtr& solution,
                     const unsigned int& max_iter = 100,
@@ -100,6 +102,19 @@ public:
 
   bool improve(NodePtr &start_node,
                PathPtr& solution,
+               const double &cost2beat,
+               const unsigned int& max_iter = 100,
+               const double &max_time = std::numeric_limits<double>::infinity());
+
+  bool improve(NodePtr &start_node,
+               PathPtr& solution,
+               const unsigned int& max_iter = 100,
+               const double &max_time = std::numeric_limits<double>::infinity());
+
+  bool improve(NodePtr &start_node,
+               NodePtr &goal_node,
+               PathPtr& solution,
+               const double &cost2beat,
                const unsigned int& max_iter = 100,
                const double &max_time = std::numeric_limits<double>::infinity());
 

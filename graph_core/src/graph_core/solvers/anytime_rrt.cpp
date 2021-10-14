@@ -30,26 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
-bool AnytimeRRT::solveWithRRT(PathPtr& solution,
-                              const unsigned int& max_iter,
-                              const double &max_time)
-{
-  ros::WallTime tic = ros::WallTime::now();
-
-  if(max_time <=0.0) return false;
-
-  for (unsigned int iter = 0; iter < max_iter; iter++)
-  {
-    if (RRT::update(solution))
-    {
-      solved_ = true;
-      return true;
-    }
-
-    if((ros::WallTime::now()-tic).toSec()>=0.98*max_time) break;
-  }
-  return false;
-}
 
 void AnytimeRRT::importFromSolver(const AnytimeRRTPtr& solver)
 {
@@ -80,6 +60,27 @@ void AnytimeRRT::importFromSolver(const TreeSolverPtr& solver)
     TreeSolver::importFromSolver(solver);
 }
 
+bool AnytimeRRT::solveWithRRT(PathPtr& solution,
+                              const unsigned int& max_iter,
+                              const double &max_time)
+{
+  ros::WallTime tic = ros::WallTime::now();
+
+  if(max_time <=0.0) return false;
+
+  for (unsigned int iter = 0; iter < max_iter; iter++)
+  {
+    if (RRT::update(solution))
+    {
+      solved_ = true;
+      return true;
+    }
+
+    if((ros::WallTime::now()-tic).toSec()>=0.98*max_time) break;
+  }
+  return false;
+}
+
 bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const double& max_time)
 {
   ros::WallTime tic = ros::WallTime::now();
@@ -102,6 +103,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   // RRT to find quickly a first sub-optimal solution
   bool success;
   unsigned int n_failed_iter = 0;
+
   time = (ros::WallTime::now()-tic).toSec();
   while(time<0.98*max_time && solved_ == false && n_failed_iter<FAILED_ITER)
   {
@@ -130,19 +132,32 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     return true;
   }
 
+  ROS_INFO_STREAM("start tree "<<start_tree_);
+
   // Informed trees to find better solutions
   NodePtr initial_root = start_tree_->getRoot();
   NodePtr initial_goal = goal_node_;
 
+//  ROS_INFO_STREAM("ORIGINAL GOAL PTR: "<< initial_goal);
+//  ROS_INFO_STREAM("ORIGINAL ROOT PTR: "<< initial_root);
+
   bool improved;
   n_failed_iter = 0;
+
   time = (ros::WallTime::now()-tic).toSec();
   while(time<0.98*max_time && completed_ == false && n_failed_iter<FAILED_ITER)
   {
     NodePtr start_node = std::make_shared<Node>(initial_root->getConfiguration());
-    goal_node_ = std::make_shared<Node>(goal_node_->getConfiguration());
-
     improved = AnytimeRRT::improve(start_node,solution,max_iter,(max_time-time));
+
+    ROS_INFO_STREAM("1new tree "<<new_tree_);
+    ROS_INFO_STREAM("1start tree "<<start_tree_);
+
+    ROS_INFO_STREAM("failed: "<<n_failed_iter<<" ---------------");
+
+    if(start_tree_!=new_tree_)
+      assert(0);
+
     if(!improved)
       n_failed_iter += 1;
 
@@ -159,27 +174,62 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     time = (ros::WallTime::now()-tic).toSec();
   }
 
-  if(improved)
-  {
-    //scollega root e goal nuovi e collegaci quelli originali
-  }
+//  ROS_INFO_STREAM("FINAL GOAL_ PTR: "<< goal_node_);
+//  ROS_INFO_STREAM("FINAL ROOT PTR: "<< start_tree_->getRoot());
+
+//  ROS_INFO_STREAM("ORIGINAL2 GOAL PTR: "<< initial_goal);
+//  ROS_INFO_STREAM("ORIGINAL2 ROOT PTR: "<< initial_root);
+
+//  if(improved)
+//  {
+//    *initial_root = *(start_tree_->getRoot());
+//    *initial_goal = *goal_node_;
+
+//  }
+
+//  start_tree_->changeRoot(initial_root);
+//  goal_node_ = initial_goal;
+
+  ROS_INFO("fuori improved");
+  ROS_INFO_STREAM("AFTER CHANGE GOAL_ PTR: "<< goal_node_);
+  ROS_INFO_STREAM("AFTER CHANGE ROOT PTR: "<< start_tree_->getRoot());
 
   return solved_;
-}
-bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solution, const unsigned int& max_iter, const double &max_time)
-{
-  goal_node_ = goal_node;
-  return improve(start_node, solution, max_iter, max_time);
 }
 
 bool AnytimeRRT::improve(NodePtr& start_node, PathPtr& solution, const unsigned int& max_iter, const double &max_time)
 {
+  double cost2beat = (1-cost_impr_)*path_cost_;
+  return improve(start_node, solution, cost2beat, max_iter, max_time);
+}
+
+bool AnytimeRRT::improve(NodePtr& start_node, PathPtr& solution, const double& cost2beat, const unsigned int& max_iter, const double &max_time)
+{
+  NodePtr tmp_goal_node = std::make_shared<Node>(goal_node_->getConfiguration());
+  return improve(start_node, tmp_goal_node, solution, cost2beat, max_iter, max_time);
+}
+
+bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solution, const unsigned int& max_iter, const double &max_time)
+{
+  double cost2beat = (1-cost_impr_)*path_cost_;
+  return improve(start_node, goal_node, solution, cost2beat, max_iter, max_time);
+}
+
+bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solution, const double& cost2beat, const unsigned int& max_iter, const double &max_time)
+{
   ros::WallTime tic = ros::WallTime::now();
+
+  new_tree_ = NULL;  //keep here
 
   if(max_time <=0.0) return false;
 
+  ROS_INFO_STREAM("-new tree "<<new_tree_);
   new_tree_ = std::make_shared<Tree>(start_node, Forward, max_distance_, checker_, metrics_);
+  ROS_INFO_STREAM("-new tree "<<new_tree_);
   new_tree_solved_ = false;
+
+  tmp_goal_node_ = goal_node;
+  cost2beat_ = cost2beat;
 
   bias_ = bias_-delta_;
   if(bias_<0.1) bias_ = 0.1;
@@ -192,14 +242,29 @@ bool AnytimeRRT::improve(NodePtr& start_node, PathPtr& solution, const unsigned 
     {
       ROS_INFO_STREAM("Improved path cost: "<<path_cost_);
 
+      ROS_INFO_STREAM("00new tree "<<new_tree_);
+      ROS_INFO_STREAM("00start tree "<<start_tree_);
+
       new_tree_solved_ = true;
       start_tree_ = new_tree_;
+
+      ROS_INFO_STREAM("new tree "<<new_tree_);
+      ROS_INFO_STREAM("start tree "<<start_tree_);
+
+      if(start_tree_ != new_tree_)
+        assert(0);
+      if(start_tree_->getRoot() != start_node)
+        assert(0);
       solution_->setTree(start_tree_); //do not delete
 
       return true;
     }
 
-    if((ros::WallTime::now()-tic).toSec()>=0.98*max_time) break;
+    if((ros::WallTime::now()-tic).toSec()>=0.98*max_time)
+    {
+      ROS_INFO_STREAM("max time: "<<max_time<<" time: "<<(ros::WallTime::now()-tic).toSec());
+      break;
+    }
   }
   return false;
 }
@@ -248,25 +313,40 @@ bool AnytimeRRT::update(const Eigen::VectorXd& point, PathPtr &solution)
     return true;
   }
 
-  NodePtr new_node;
-  Eigen::VectorXd goal_conf = goal_node_->getConfiguration();
-  if (new_tree_->informedExtend(point,new_node, goal_conf, (1-cost_impr_)*path_cost_,bias_))
+  if(!tmp_goal_node_)
   {
-    if ((new_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
+    ROS_ERROR("tmp_goal_node_ not defined");
+    return false;
+  }
+
+  if(goal_node_->getConfiguration() != tmp_goal_node_->getConfiguration())
+    assert(0);
+
+  NodePtr new_node;
+  if (new_tree_->informedExtend(point,new_node, tmp_goal_node_->getConfiguration(), cost2beat_, bias_))
+  {
+    if ((new_node->getConfiguration() - tmp_goal_node_->getConfiguration()).norm() < max_distance_)
     {
-      if(checker_->checkPath(new_node->getConfiguration(), goal_node_->getConfiguration()))
+      if(checker_->checkPath(new_node->getConfiguration(), tmp_goal_node_->getConfiguration()))
       {
-        ConnectionPtr conn = std::make_shared<Connection>(new_node, goal_node_);
-        conn->setCost(metrics_->cost(new_node, goal_node_));
+        ConnectionPtr conn = std::make_shared<Connection>(new_node, tmp_goal_node_);
+        conn->setCost(metrics_->cost(new_node, tmp_goal_node_));
         conn->add();
-        solution_ = std::make_shared<Path>(new_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
+        solution_ = std::make_shared<Path>(new_tree_->getConnectionToNode(tmp_goal_node_), metrics_, checker_);
         solution_->setTree(new_tree_);
-        new_tree_->addNode(goal_node_);
+
+        new_tree_->addNode(tmp_goal_node_);
+        goal_node_ = tmp_goal_node_;
+
         path_cost_ = solution_->cost();
         cost_=path_cost_+goal_cost_;
+        cost2beat_ = (1-cost_impr_)*path_cost_;
+
         sampler_->setCost(path_cost_);
+
         solution = solution_;
         new_tree_solved_ = true;
+
         return true;
       }
     }

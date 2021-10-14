@@ -219,7 +219,7 @@ bool Tree::connect(const Eigen::VectorXd &configuration, NodePtr &new_node)
   return false;
 }
 
-bool Tree::informedExtend(const Eigen::VectorXd &configuration, NodePtr &new_node, Eigen::VectorXd &goal, const double& cost2beat, const double& bias)
+bool Tree::informedExtend(const Eigen::VectorXd &configuration, NodePtr &new_node,const Eigen::VectorXd &goal, const double& cost2beat, const double& bias)
 {
   struct extension
   {
@@ -836,6 +836,10 @@ std::vector<ConnectionPtr> Tree::getConnectionToNode(NodePtr node)
       {
         ROS_ERROR("a node of forward-direction tree should have only a parent");
         ROS_ERROR_STREAM("node \n" << *node);
+
+        ROS_INFO_STREAM("current root "<<root_);
+        ROS_INFO_STREAM("node "<<node);
+
         assert(0);
       }
       connections.push_back(node->parent_connections_.at(0));
