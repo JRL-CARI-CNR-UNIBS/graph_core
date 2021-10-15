@@ -41,9 +41,7 @@ protected:
   double delta_; //dist_bias and cost_bias update factor
   double cost_impr_;  //cost improvement factor (new cost < (1-cost_impr_)*path_cost_)
   double cost2beat_;
-  bool new_tree_solved_;
   TreePtr new_tree_;
-  NodePtr tmp_goal_node_;
 
   bool solveWithRRT(PathPtr& solution,
                     const unsigned int& max_iter = 100,
@@ -72,11 +70,6 @@ public:
   double getCostImpr()
   {
     return cost_impr_;
-  }
-
-  bool getNewTreeSolved()
-  {
-    return new_tree_solved_;
   }
 
   TreePtr getNewTree()

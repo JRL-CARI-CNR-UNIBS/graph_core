@@ -41,7 +41,6 @@ void AnytimeRRT::importFromSolver(const AnytimeRRTPtr& solver)
   delta_           = solver->getDelta();
   new_tree_        = solver->getNewTree();
   cost_impr_       = solver->getCostImpr();
-  new_tree_solved_ = solver->getNewTreeSolved();
 }
 
 void AnytimeRRT::importFromSolver(const TreeSolverPtr& solver)
@@ -72,7 +71,9 @@ bool AnytimeRRT::solveWithRRT(PathPtr& solution,
   {
     if (RRT::update(solution))
     {
-      solved_ = true;
+      solved_= true;
+      solution_ = solution;
+
       return true;
     }
 
@@ -90,7 +91,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   {
     solution = solution_;
 
-    if (path_cost_ <= 1.003 * utopia_)
+    if (path_cost_ <= 1.03 * utopia_)
     {
       ROS_INFO("Utopia reached!");
       completed_=true;
@@ -108,14 +109,9 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   while(time<0.98*max_time && solved_ == false && n_failed_iter<FAILED_ITER)
   {
     success = AnytimeRRT::solveWithRRT(solution,max_iter,(max_time-time));
+
     if(!success)
       n_failed_iter += 1;
-
-    if(success)
-    {
-      solved_= true;
-      solution_ = solution;
-    }
 
     time = (ros::WallTime::now()-tic).toSec();
   }
@@ -125,7 +121,9 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
 
   ROS_INFO_STREAM("Path cost: "<<path_cost_);
 
-  if (path_cost_ <= 1.003 * utopia_)
+  ROS_INFO_STREAM(" ---------------");
+
+  if (path_cost_ <= 1.03 * utopia_)
   {
     ROS_INFO("Utopia reached!");
     completed_=true;
@@ -133,38 +131,36 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   }
 
   ROS_INFO_STREAM("start tree "<<start_tree_);
+  for(const Eigen::VectorXd conf: solution_->getWaypoints())
+    ROS_INFO_STREAM(conf.transpose());
 
   // Informed trees to find better solutions
-  NodePtr initial_root = start_tree_->getRoot();
-  NodePtr initial_goal = goal_node_;
-
-//  ROS_INFO_STREAM("ORIGINAL GOAL PTR: "<< initial_goal);
-//  ROS_INFO_STREAM("ORIGINAL ROOT PTR: "<< initial_root);
-
   bool improved;
   n_failed_iter = 0;
 
   time = (ros::WallTime::now()-tic).toSec();
   while(time<0.98*max_time && completed_ == false && n_failed_iter<FAILED_ITER)
   {
-    NodePtr start_node = std::make_shared<Node>(initial_root->getConfiguration());
+    NodePtr start_node = std::make_shared<Node>(start_tree_->getRoot()->getConfiguration());
     improved = AnytimeRRT::improve(start_node,solution,max_iter,(max_time-time));
 
     ROS_INFO_STREAM("1new tree "<<new_tree_);
     ROS_INFO_STREAM("1start tree "<<start_tree_);
 
-    ROS_INFO_STREAM("failed: "<<n_failed_iter<<" ---------------");
-
-    if(start_tree_!=new_tree_)
-      assert(0);
-
     if(!improved)
+    {
       n_failed_iter += 1;
+      ROS_INFO_STREAM("failed: "<<n_failed_iter);
+    }
+    else
+      n_failed_iter = 0;
 
-    if(improved != new_tree_solved_)
+    ROS_INFO_STREAM(" ---------------");
+
+    if(improved && start_tree_!=new_tree_)
       assert(0);
 
-    if(path_cost_ <= 1.003 * utopia_)
+    if(path_cost_ <= 1.03 * utopia_)
     {
       ROS_INFO("Utopia reached!");
       completed_=true;
@@ -174,25 +170,17 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     time = (ros::WallTime::now()-tic).toSec();
   }
 
-//  ROS_INFO_STREAM("FINAL GOAL_ PTR: "<< goal_node_);
-//  ROS_INFO_STREAM("FINAL ROOT PTR: "<< start_tree_->getRoot());
+  ROS_INFO("FINE IMPROVE");
 
-//  ROS_INFO_STREAM("ORIGINAL2 GOAL PTR: "<< initial_goal);
-//  ROS_INFO_STREAM("ORIGINAL2 ROOT PTR: "<< initial_root);
+  ROS_INFO("SOLUTION");
+  ROS_INFO_STREAM(solution->getConnections().front()->getParent());
+  for(const ConnectionPtr conn:solution->getConnections())
+    ROS_INFO_STREAM(conn->getChild());
 
-//  if(improved)
-//  {
-//    *initial_root = *(start_tree_->getRoot());
-//    *initial_goal = *goal_node_;
-
-//  }
-
-//  start_tree_->changeRoot(initial_root);
-//  goal_node_ = initial_goal;
-
-  ROS_INFO("fuori improved");
-  ROS_INFO_STREAM("AFTER CHANGE GOAL_ PTR: "<< goal_node_);
-  ROS_INFO_STREAM("AFTER CHANGE ROOT PTR: "<< start_tree_->getRoot());
+  ROS_INFO("SOLUTION_");
+  ROS_INFO_STREAM(solution_->getConnections().front()->getParent());
+  for(const ConnectionPtr conn:solution_->getConnections())
+    ROS_INFO_STREAM(conn->getChild());
 
   return solved_;
 }
@@ -219,16 +207,20 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
 {
   ros::WallTime tic = ros::WallTime::now();
 
-  new_tree_ = NULL;  //keep here
+  if(max_time <=0.0)
+    return false;
 
-  if(max_time <=0.0) return false;
+  if (path_cost_ <= 1.03 * utopia_)
+  {
+    ROS_INFO("Utopia reached!");
+    completed_=true;
+    return false;
+  }
 
-  ROS_INFO_STREAM("-new tree "<<new_tree_);
+  goal_node_ = goal_node;
   new_tree_ = std::make_shared<Tree>(start_node, Forward, max_distance_, checker_, metrics_);
   ROS_INFO_STREAM("-new tree "<<new_tree_);
-  new_tree_solved_ = false;
 
-  tmp_goal_node_ = goal_node;
   cost2beat_ = cost2beat;
 
   bias_ = bias_-delta_;
@@ -245,8 +237,8 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
       ROS_INFO_STREAM("00new tree "<<new_tree_);
       ROS_INFO_STREAM("00start tree "<<start_tree_);
 
-      new_tree_solved_ = true;
-      start_tree_ = new_tree_;
+      if(solution->getTree() != solution_->getTree())
+        assert(0);
 
       ROS_INFO_STREAM("new tree "<<new_tree_);
       ROS_INFO_STREAM("start tree "<<start_tree_);
@@ -255,17 +247,16 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
         assert(0);
       if(start_tree_->getRoot() != start_node)
         assert(0);
-      solution_->setTree(start_tree_); //do not delete
 
+      ROS_INFO_STREAM("start_node "<<start_node<<" root "<<start_tree_->getRoot());
       return true;
     }
 
+
     if((ros::WallTime::now()-tic).toSec()>=0.98*max_time)
-    {
-      ROS_INFO_STREAM("max time: "<<max_time<<" time: "<<(ros::WallTime::now()-tic).toSec());
       break;
-    }
   }
+  ROS_INFO_STREAM("start_node "<<start_node<<" root "<<start_tree_->getRoot());
   return false;
 }
 
@@ -280,7 +271,6 @@ void AnytimeRRT::resetProblem()
 {
   new_tree_ = NULL;
   completed_ = false;
-  new_tree_solved_ = false;
 
   RRT::resetProblem();
 }
@@ -289,7 +279,7 @@ bool AnytimeRRT::update(PathPtr &solution)
 {
   PATH_COMMENT("AnytimeRRT::update");
 
-  if (completed_ || new_tree_solved_)
+  if (completed_)
   {
     PATH_COMMENT("already found the best solution");
     solution = solution_;
@@ -306,48 +296,118 @@ bool AnytimeRRT::update(const Eigen::VectorXd& point, PathPtr &solution)
 {
   PATH_COMMENT("AnytimeRRT::update");
 
-  if (completed_ || new_tree_solved_)
+  if (completed_)
   {
     PATH_COMMENT("already found the best solution");
     solution = solution_;
     return true;
   }
 
-  if(!tmp_goal_node_)
-  {
-    ROS_ERROR("tmp_goal_node_ not defined");
-    return false;
-  }
-
-  if(goal_node_->getConfiguration() != tmp_goal_node_->getConfiguration())
-    assert(0);
-
   NodePtr new_node;
-  if (new_tree_->informedExtend(point,new_node, tmp_goal_node_->getConfiguration(), cost2beat_, bias_))
+  if (new_tree_->informedExtend(point,new_node, goal_node_->getConfiguration(), cost2beat_, bias_))
   {
-    if ((new_node->getConfiguration() - tmp_goal_node_->getConfiguration()).norm() < max_distance_)
+    if ((new_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
     {
-      if(checker_->checkPath(new_node->getConfiguration(), tmp_goal_node_->getConfiguration()))
+      if(checker_->checkPath(new_node->getConfiguration(), goal_node_->getConfiguration()))
       {
-        ConnectionPtr conn = std::make_shared<Connection>(new_node, tmp_goal_node_);
-        conn->setCost(metrics_->cost(new_node, tmp_goal_node_));
-        conn->add();
-        solution_ = std::make_shared<Path>(new_tree_->getConnectionToNode(tmp_goal_node_), metrics_, checker_);
-        solution_->setTree(new_tree_);
+        ROS_INFO("CONNECTING TO GOAL");
 
-        new_tree_->addNode(tmp_goal_node_);
-        goal_node_ = tmp_goal_node_;
+        std::vector<ConnectionPtr> conn2node = new_tree_->getConnectionToNode(new_node);
+        double cost_node2goal = metrics_->cost(new_node, goal_node_);
+        double new_solution_cost = cost_node2goal;
+        for(const ConnectionPtr& conn: conn2node)
+          new_solution_cost += conn->getCost();
 
-        path_cost_ = solution_->cost();
-        cost_=path_cost_+goal_cost_;
-        cost2beat_ = (1-cost_impr_)*path_cost_;
+        if(new_solution_cost<solution_->cost())
+        {
+          //Rewire goal
 
-        sampler_->setCost(path_cost_);
+          ROS_INFO_STREAM("before remove goal: "<<*goal_node_);
+          start_tree_->removeNode(goal_node_);
+          ROS_INFO_STREAM("after remove goal: "<<*goal_node_);
 
-        solution = solution_;
-        new_tree_solved_ = true;
+          ConnectionPtr conn = std::make_shared<Connection>(new_node, goal_node_);
+          conn->setCost(cost_node2goal);
+          conn->add();
 
-        return true;
+          if(new_tree_->isInTree(goal_node_))
+            assert(0);
+
+          ROS_INFO_STREAM("after connect goal: "<<*goal_node_);
+
+          new_tree_->addNode(goal_node_);
+
+          //Rewire root
+          std::vector<NodePtr> root_children;
+          std::vector<double> root2children_cost;
+          NodePtr root          = start_tree_->getRoot();
+          NodePtr new_tree_root = new_tree_  ->getRoot();
+
+          //Save new tree root children
+          for(const ConnectionPtr& conn2child : new_tree_root->child_connections_)
+          {
+            if(conn2child->getParent() != new_tree_->getRoot())
+              assert(0);
+
+            root_children.push_back(conn2child->getChild());
+            root2children_cost.push_back(conn2child->getCost());
+          }
+
+          ROS_INFO_STREAM("before remove root: "<<*root);
+          ROS_INFO_STREAM("before remove new root: "<<*new_tree_root);
+
+          //Replace the new tree root with the old root
+          start_tree_->removeNode(root);
+          new_tree_  ->removeNode(new_tree_root);
+
+          ROS_INFO_STREAM("after remove root: "<<*root);
+          ROS_INFO_STREAM("after remove new root: "<<*new_tree_root);
+
+          for(unsigned int i=0; i<root_children.size(); i++)
+          {
+            ConnectionPtr conn = std::make_shared<Connection>(root, root_children.at(i));
+            conn->setCost(root2children_cost.at(i));
+            conn->add();
+          }
+
+          if(start_tree_->isInTree(root))
+            assert(0);
+
+          if(new_tree_->isInTree(new_tree_root))
+            assert(0);
+
+          new_tree_->addNode(root);
+          ROS_INFO_STREAM("after connect root: "<<*root);
+          ROS_INFO_STREAM("new root: "<<*new_tree_root);
+
+          start_tree_ = new_tree_;
+
+          NodePtr tmp = goal_node_;
+          while(true)
+          {
+            ROS_INFO_STREAM(tmp->getConfiguration().transpose());
+            if(tmp->getParents().size()==0)
+              break;
+            else
+              tmp = tmp->getParents().at(0);
+          }
+
+          solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
+          solution->setTree(start_tree_);
+          solution_ = solution;
+
+          ROS_INFO("SOL SET");
+
+          path_cost_ = solution_->cost();
+          cost_=path_cost_+goal_cost_;
+          cost2beat_ = (1-cost_impr_)*path_cost_;
+
+          sampler_->setCost(path_cost_);
+
+          return true;
+        }
+        else
+          return false;
       }
     }
   }
