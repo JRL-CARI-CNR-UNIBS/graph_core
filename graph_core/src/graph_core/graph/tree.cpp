@@ -827,15 +827,11 @@ double Tree::costToNode(NodePtr node)
 
 std::vector<ConnectionPtr> Tree::getConnectionToNode(NodePtr node)
 {
-  ROS_INFO_STREAM("init node "<<node << " "<<node->getConfiguration().transpose());
-
   std::vector<ConnectionPtr> connections;
   if (direction_ == Forward)
   {
     while (node != root_)
     {
-      ROS_INFO_STREAM("node "<<node << " "<<node->getConfiguration().transpose());
-
       if (node->parent_connections_.size() != 1)
       {
         ROS_ERROR("a node of forward-direction tree should have only a parent");
