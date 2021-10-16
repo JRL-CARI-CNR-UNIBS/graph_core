@@ -41,6 +41,7 @@ protected:
   double delta_; //dist_bias and cost_bias update factor
   double cost_impr_;  //cost improvement factor (new cost < (1-cost_impr_)*path_cost_)
   double cost2beat_;
+  NodePtr tmp_goal_node_;
   TreePtr new_tree_;
 
   bool solveWithRRT(PathPtr& solution,
@@ -53,7 +54,6 @@ public:
              const CollisionCheckerPtr& checker,
              const SamplerPtr& sampler): RRT(metrics, checker, sampler)
   {
-    bias_ = 0.9;
     setParameters();
   }
 
@@ -89,6 +89,7 @@ public:
 
   void setParameters(const double& delta = 0.1, const double& impr = 0.1)
   {
+    bias_ = 0.9;
     setDelta(delta);
     setCostImprovementFactor(impr);
   }
