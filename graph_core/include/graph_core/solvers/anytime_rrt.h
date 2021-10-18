@@ -41,8 +41,9 @@ protected:
   double delta_; //dist_bias and cost_bias update factor
   double cost_impr_;  //cost improvement factor (new cost < (1-cost_impr_)*path_cost_)
   double cost2beat_;
-  NodePtr tmp_goal_node_;
   TreePtr new_tree_;
+  NodePtr start_node_;
+  NodePtr tmp_goal_node_;
 
   bool solveWithRRT(PathPtr& solution,
                     const unsigned int& max_iter = 100,
@@ -121,6 +122,7 @@ public:
   void importFromSolver(const AnytimeRRTPtr& solver);
   void importFromSolver(const TreeSolverPtr& solver); //CHIEDI
 
+  virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity());
   virtual bool solve(PathPtr& solution,
                      const unsigned int& max_iter = 100,
                      const double &max_time = std::numeric_limits<double>::infinity()) override;
