@@ -50,6 +50,10 @@ void RRT::importFromSolver(const RRTPtr &solver)
 }
 void RRT::importFromSolver(const TreeSolverPtr& solver)
 {
+//  RRTPtr rrt_type = std::dynamic_pointer_cast<RRT>(solver);
+//  https://stackoverflow.com/questions/351845/finding-the-type-of-an-object-in-c/4325139
+//  http://www.cplusplus.com/reference/memory/dynamic_pointer_cast/
+
   const std::type_info& rrt_type = typeid(RRT);
   const std::type_info& type = typeid(*solver);
 

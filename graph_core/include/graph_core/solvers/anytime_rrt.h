@@ -63,6 +63,11 @@ public:
     return bias_;
   }
 
+  double getCost2Beat()
+  {
+    return cost2beat_;
+  }
+
   double getDelta()
   {
     return delta_;
@@ -71,6 +76,11 @@ public:
   double getCostImpr()
   {
     return cost_impr_;
+  }
+
+  NodePtr getStartNode()
+  {
+    return start_node_;
   }
 
   TreePtr getNewTree()

@@ -46,6 +46,7 @@ void AnytimeRRT::importFromSolver(const AnytimeRRTPtr& solver)
   delta_           = solver->getDelta();
   new_tree_        = solver->getNewTree();
   cost_impr_       = solver->getCostImpr();
+  start_node_      = solver->getStartNode();
 }
 
 void AnytimeRRT::importFromSolver(const TreeSolverPtr& solver)
@@ -134,14 +135,18 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   }
 
   // Informed trees to find better solutions
+  NodePtr start_node = start_node_;
+  NodePtr goal_node  = goal_node_;
+
   bool improved;
   n_failed_iter = 0;
 
   time = (ros::WallTime::now()-tic).toSec();
   while(time<0.98*max_time && completed_ == false && n_failed_iter<FAILED_ITER)
   {
-    NodePtr start_node = std::make_shared<Node>(start_tree_->getRoot()->getConfiguration());
-    improved = AnytimeRRT::improve(start_node,solution,max_iter,(max_time-time));
+    NodePtr tmp_start_node = std::make_shared<Node>(start_node->getConfiguration());
+    NodePtr tmp_goal_node  = std::make_shared<Node>(goal_node->getConfiguration());
+    improved = AnytimeRRT::improve(tmp_start_node,tmp_goal_node,solution,max_iter,(max_time-time));
 
     if(!improved)
       n_failed_iter += 1;
@@ -155,10 +160,68 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     {
       ROS_INFO("Utopia reached!");
       completed_=true;
-      return true;
+      break;
     }
 
     time = (ros::WallTime::now()-tic).toSec();
+  }
+
+  if(start_node != start_node_ || goal_node != goal_node_)
+  {
+    //Rewire the tree goal
+    goal_node->disconnect();
+
+    ConnectionPtr conn = std::make_shared<Connection>(solution_->getConnections().back()->getParent(), goal_node);
+    conn->setCost(solution_->getConnections().back()->getCost());
+    conn->add();
+
+    start_tree_->removeNode(goal_node_);
+    goal_node_ = goal_node;
+    start_tree_->addNode(goal_node_);
+
+    //Rewire the tree root
+    start_node->disconnect();
+    NodePtr root = start_tree_->getRoot();
+
+    std::vector<NodePtr> root_children;
+    std::vector<double> root2children_cost;
+
+    NodePtr root_child_on_path = start_tree_->getConnectionToNode(goal_node_).front()->getChild();
+    double cost_first_conn_on_path = start_tree_->getConnectionToNode(goal_node_).front()->getCost();
+
+    for(const ConnectionPtr& conn2child : root->child_connections_)
+    {
+      if(conn2child->getParent() != start_tree_->getRoot())
+        assert(0);
+
+      if(conn2child->getChild() != root_child_on_path)
+      {
+        root_children.push_back(conn2child->getChild());
+        root2children_cost.push_back(conn2child->getCost());
+      }
+    }
+
+    start_tree_->changeRoot(goal_node_); //change root before removing the old root
+    start_tree_->removeNode(root);
+
+    for(unsigned int i=0; i<root_children.size(); i++)
+    {
+      ConnectionPtr conn = std::make_shared<Connection>(start_node, root_children.at(i));
+      conn->setCost(root2children_cost.at(i));
+      conn->add();
+    }
+
+    ConnectionPtr conn2node_on_path = std::make_shared<Connection>(root_child_on_path,start_node);
+    conn2node_on_path->setCost(cost_first_conn_on_path);
+    conn2node_on_path->add();
+
+    start_node_ = start_node;
+    start_tree_->addNode(start_node_);
+    start_tree_->changeRoot(start_node_);
+
+    solution_ = solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
+    solution->setTree(start_tree_);
+
   }
 
   return solved_;
@@ -189,35 +252,25 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
   if(max_time <=0.0)
     return false;
 
-  //  double old_utopia = utopia_;
-  //  NodePtr old_start = start_node_;
-  //  bool start_goal_changed = false; //sistema multigoal o valuta di eliminarlo
+  double utopia = utopia_;
 
-  //  if((start_node->getConfiguration() != start_node_->getConfiguration()) || (goal_node->getConfiguration()  != goal_node_->getConfiguration()))
-  //  {
-  //    ROS_INFO_STREAM("START AND/OR GOAL CHANGED. START: "<<start_node->getConfiguration().transpose()<<" GOAL: "<<goal_node->getConfiguration().transpose());
-
-  //    utopia_ = (goal_node->getConfiguration() - start_node->getConfiguration()).norm(); //start and goal may be different from the previous ones
-  //    completed_ = false;
-  //    start_goal_changed = true;
-  //  }
-  //  else
-  //  {
-  //    if (path_cost_ <= 1.03 * utopia_)
-  //    {
-  //      ROS_INFO_STREAM("Utopia reached! Utopia: "<<utopia_<<" path cost: "<<path_cost_);
-  //      completed_=true;
-  //      return false;
-  //    }
-  //  }
-
-  utopia_ = (goal_node->getConfiguration() - start_node->getConfiguration()).norm(); //start and goal may be different from the previous ones
-  completed_ = false;
-
-  if (path_cost_ <= 1.03 * utopia_)
+  if(start_node->getConfiguration() != start_node_->getConfiguration() ||
+     goal_node->getConfiguration()  != goal_node_->getConfiguration())
   {
-    ROS_INFO_STREAM("Utopia reached! Utopia: "<<utopia_<<" path cost: "<<path_cost_);
+    utopia = (goal_node->getConfiguration() - start_node->getConfiguration()).norm(); //start and goal may be different from the previous ones
+    completed_ = false;
+  }
+
+  if (path_cost_ <= 1.03 * utopia) //also if start and/or goal are changed, the old path is better to follow
+  {
+    ROS_INFO_STREAM("Utopia reached! Utopia: "<<utopia<<" path cost: "<<path_cost_);
     completed_=true;
+    return false;
+  }
+
+  if(cost2beat <= utopia)
+  {
+    ROS_INFO_STREAM("The cost to beat is less than utopia, impossible to reach! Utopia: "<<utopia<<" cost to beat: "<<cost2beat);
     return false;
   }
 
@@ -309,73 +362,28 @@ bool AnytimeRRT::update(const Eigen::VectorXd& point, PathPtr &solution)
 
         if(new_solution_cost<solution_->cost())
         {
-          //Rewire goal
-          start_tree_->removeNode(goal_node_);
-          *goal_node_ = *tmp_goal_node_; //chiedi
           if(tmp_goal_node_->getParents().size() != 0)
             assert(0);
+
+          start_tree_->removeNode(goal_node_);
+          goal_node_ = tmp_goal_node_;
 
           ConnectionPtr conn_node2goal = std::make_shared<Connection>(new_node, goal_node_);
           conn_node2goal->setCost(cost_node2goal);
           conn_node2goal->add();
 
-          if(new_tree_->isInTree(goal_node_))
-            assert(0);
-
           new_tree_->addNode(goal_node_);
-
-          //Rewire root
-          std::vector<NodePtr> root_children;
-          std::vector<double> root2children_cost;
-          NodePtr root          = start_tree_->getRoot();
-          NodePtr new_tree_root = new_tree_  ->getRoot();
-
-          //Save new tree root children
-          NodePtr root_child_on_path = new_tree_->getConnectionToNode(goal_node_).front()->getChild();
-          double cost_first_conn_on_path = new_tree_->getConnectionToNode(goal_node_).front()->getCost();
-
-          for(const ConnectionPtr& conn2child : new_tree_root->child_connections_)
-          {
-            if(conn2child->getParent() != new_tree_->getRoot())
-              assert(0);
-
-            if(conn2child->getChild() != root_child_on_path)
-            {
-              root_children.push_back(conn2child->getChild());
-              root2children_cost.push_back(conn2child->getCost());
-            }
-          }
-
-          //Replace the new tree root with the old root
-          new_tree_->changeRoot(goal_node_); //change root before removing the old root
-
-          start_tree_->removeNode(root);
-          new_tree_  ->removeNode(new_tree_root);
-          *root = *new_tree_root; //chiedi
-
-          for(unsigned int i=0; i<root_children.size(); i++)
-          {
-            ConnectionPtr conn = std::make_shared<Connection>(root, root_children.at(i));
-            conn->setCost(root2children_cost.at(i));
-            conn->add();
-          }
-
-          ConnectionPtr conn2node_on_path = std::make_shared<Connection>(root_child_on_path,root);
-          conn2node_on_path->setCost(cost_first_conn_on_path);
-          conn2node_on_path->add();
-
-          new_tree_->addNode(root);
-          new_tree_->changeRoot(root);
-
           start_tree_ = new_tree_;
 
           solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
           solution->setTree(start_tree_);
           solution_ = solution;
 
+          start_node_ = start_tree_->getRoot();
+          utopia_ = (goal_node_->getConfiguration()-start_node_->getConfiguration()).norm();
+
           path_cost_ = solution_->cost();
           cost_ = path_cost_+goal_cost_;
-          cost2beat_ = (1-cost_impr_)*path_cost_;
 
           sampler_->setCost(path_cost_);
 
