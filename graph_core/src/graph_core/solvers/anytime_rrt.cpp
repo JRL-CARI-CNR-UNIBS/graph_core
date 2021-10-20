@@ -51,14 +51,10 @@ void AnytimeRRT::importFromSolver(const AnytimeRRTPtr& solver)
 
 void AnytimeRRT::importFromSolver(const TreeSolverPtr& solver)
 {
-  const std::type_info& rrt_type = typeid(RRT);
-  const std::type_info& anytime_rrt_type = typeid(AnytimeRRT);
-  const std::type_info& type = typeid(*solver);
-
-  if(std::type_index(type) == std::type_index(anytime_rrt_type))  //Check before RRT
+  if(std::dynamic_pointer_cast<pathplan::AnytimeRRT>(solver) != NULL)
     AnytimeRRT::importFromSolver(std::static_pointer_cast<AnytimeRRT>(solver));
 
-  else if(std::type_index(type) == std::type_index(rrt_type))
+  else if(std::dynamic_pointer_cast<pathplan::RRT>(solver) != NULL)
     RRT::importFromSolver(std::static_pointer_cast<RRT>(solver));
 
   else
@@ -221,7 +217,6 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
 
     solution_ = solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution->setTree(start_tree_);
-
   }
 
   return solved_;
@@ -252,14 +247,8 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
   if(max_time <=0.0)
     return false;
 
-  double utopia = utopia_;
-
-  if(start_node->getConfiguration() != start_node_->getConfiguration() ||
-     goal_node->getConfiguration()  != goal_node_->getConfiguration())
-  {
-    utopia = (goal_node->getConfiguration() - start_node->getConfiguration()).norm(); //start and goal may be different from the previous ones
-    completed_ = false;
-  }
+  double utopia = (goal_node->getConfiguration() - start_node->getConfiguration()).norm(); //start and goal may be different from the previous ones
+  completed_ = false;
 
   if (path_cost_ <= 1.03 * utopia) //also if start and/or goal are changed, the old path is better to follow
   {
