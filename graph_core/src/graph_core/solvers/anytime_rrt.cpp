@@ -30,12 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
-bool AnytimeRRT::addStart(const NodePtr &start_node, const double &max_time)
-{
-  start_node_ = start_node;
-  return RRT::addStart(start_node,max_time);
-}
-
 void AnytimeRRT::importFromSolver(const AnytimeRRTPtr& solver)
 {
   ROS_INFO_STREAM("Import from AnytimeRRT solver");
@@ -46,7 +40,6 @@ void AnytimeRRT::importFromSolver(const AnytimeRRTPtr& solver)
   delta_           = solver->getDelta();
   new_tree_        = solver->getNewTree();
   cost_impr_       = solver->getCostImpr();
-  start_node_      = solver->getStartNode();
 }
 
 void AnytimeRRT::importFromSolver(const TreeSolverPtr& solver)
@@ -131,7 +124,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   }
 
   // Informed trees to find better solutions
-  NodePtr start_node = start_node_;
+  NodePtr start_node = start_tree_->getRoot();
   NodePtr goal_node  = goal_node_;
 
   bool improved;
@@ -162,7 +155,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     time = (ros::WallTime::now()-tic).toSec();
   }
 
-  if(start_node != start_node_ || goal_node != goal_node_)
+  if(start_node != start_tree_->getRoot()|| goal_node != goal_node_)
   {
     //Rewire the tree goal
     goal_node->disconnect();
@@ -211,13 +204,15 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     conn2node_on_path->setCost(cost_first_conn_on_path);
     conn2node_on_path->add();
 
-    start_node_ = start_node;
-    start_tree_->addNode(start_node_);
-    start_tree_->changeRoot(start_node_);
+    start_tree_->addNode(start_node);
+    start_tree_->changeRoot(start_node);
 
     solution_ = solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution->setTree(start_tree_);
   }
+
+  ROS_INFO_STREAM("start: "<<start_node);
+  ROS_INFO_STREAM("goal: " <<goal_node);
 
   return solved_;
 }
@@ -368,8 +363,7 @@ bool AnytimeRRT::update(const Eigen::VectorXd& point, PathPtr &solution)
           solution->setTree(start_tree_);
           solution_ = solution;
 
-          start_node_ = start_tree_->getRoot();
-          utopia_ = (goal_node_->getConfiguration()-start_node_->getConfiguration()).norm();
+          utopia_ = (goal_node_->getConfiguration()-start_tree_->getRoot()->getConfiguration()).norm();
 
           path_cost_ = solution_->cost();
           cost_ = path_cost_+goal_cost_;
