@@ -44,6 +44,7 @@ group_names_map:
   informed_rrt: group_name  ***CHANGE IT***
   RRTstar: group_name  ***CHANGE IT***
   warp_strategy: group_name  ***CHANGE IT***
+  goal_hamp_multigoal:  group_name  ***CHANGE IT***
 default_planner_config: mixed_strategy
 
 mixed_strategy:
