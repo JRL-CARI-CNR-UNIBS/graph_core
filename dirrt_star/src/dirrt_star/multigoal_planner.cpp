@@ -257,52 +257,79 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
     ROS_DEBUG("Processing goal %u",iGoal);
 
     moveit_msgs::Constraints goal=request_.goal_constraints.at(iGoal);
-
-    Eigen::VectorXd goal_configuration( goal.joint_constraints.size() );
-    moveit::core::RobotState goal_state(robot_model_);
-
-    for (auto c: goal.joint_constraints)
-      goal_state.setJointPositions(c.joint_name,&c.position);
-    goal_state.copyJointGroupPositions(group_,goal_configuration);
-
-    goal_state.updateCollisionBodyTransforms();
-    COMMENT("check collision on goal %u",iGoal);
-
-    if (!checker->check(goal_configuration))
+    if (goal.joint_constraints.size()==0)
     {
-      ROS_DEBUG("goal %u is in collision",iGoal);
+      ROS_DEBUG("Goal %u is a Cartesian goal",iGoal);
 
-      if (request_.goal_constraints.size()<5)
+      if (goal.position_constraints.size()!=1 || goal.orientation_constraints.size()!=1)
       {
+        ROS_DEBUG("Goal %u has no position or orientation",iGoal);
+        continue;
+      }
 
-        if (!goal_state.satisfiesBounds())
-        {
-          ROS_INFO_STREAM("End state: " << goal_configuration.transpose()<<" is  Out of bound");
-        }
+      Eigen::Quaterniond q_w_tool;
+      q_w_tool.x()=goal.orientation_constraints.at(0).orientation.x;
+      q_w_tool.y()=goal.orientation_constraints.at(0).orientation.y;
+      q_w_tool.z()=goal.orientation_constraints.at(0).orientation.z;
+      q_w_tool.w()=goal.orientation_constraints.at(0).orientation.w;
 
-        collision_detection::CollisionRequest col_req;
-        collision_detection::CollisionResult col_res;
-        col_req.contacts = true;
-        col_req.group_name=group_;
-        planning_scene_->checkCollision(col_req,col_res,goal_state);
-        if (col_res.collision)
+
+      Eigen::Affine3d T_w_tool;
+      T_w_tool.setIdentity();
+      T_w_tool=q_w_tool;
+      T_w_tool.translation()(0)=goal.position_constraints.at(0).target_point_offset.x;
+      T_w_tool.translation()(1)=goal.position_constraints.at(0).target_point_offset.y;
+      T_w_tool.translation()(2)=goal.position_constraints.at(0).target_point_offset.z;
+
+    }
+    else // joint constraints
+    {
+      ROS_DEBUG("Goal %u is a joint goal",iGoal);
+      Eigen::VectorXd goal_configuration( goal.joint_constraints.size() );
+      moveit::core::RobotState goal_state(robot_model_);
+
+      for (auto c: goal.joint_constraints)
+        goal_state.setJointPositions(c.joint_name,&c.position);
+      goal_state.copyJointGroupPositions(group_,goal_configuration);
+
+      goal_state.updateCollisionBodyTransforms();
+      COMMENT("check collision on goal %u",iGoal);
+
+      if (!checker->check(goal_configuration))
+      {
+        ROS_DEBUG("goal %u is in collision",iGoal);
+
+        if (request_.goal_constraints.size()<5)
         {
-          ROS_INFO_STREAM("End state: " << goal_configuration.transpose()<<" is colliding");
-          for (const  std::pair<std::pair<std::string, std::string>, std::vector<collision_detection::Contact> >& contact: col_res.contacts)
+
+          if (!goal_state.satisfiesBounds())
           {
-            ROS_INFO("contact between %s and %s",contact.first.first.c_str(),contact.first.second.c_str());
+            ROS_INFO_STREAM("End state: " << goal_configuration.transpose()<<" is  Out of bound");
+          }
+
+          collision_detection::CollisionRequest col_req;
+          collision_detection::CollisionResult col_res;
+          col_req.contacts = true;
+          col_req.group_name=group_;
+          planning_scene_->checkCollision(col_req,col_res,goal_state);
+          if (col_res.collision)
+          {
+            ROS_INFO_STREAM("End state: " << goal_configuration.transpose()<<" is colliding");
+            for (const  std::pair<std::pair<std::string, std::string>, std::vector<collision_detection::Contact> >& contact: col_res.contacts)
+            {
+              ROS_INFO("contact between %s and %s",contact.first.first.c_str(),contact.first.second.c_str());
+            }
           }
         }
+        continue;
       }
-      continue;
+      COMMENT("goal is valid");
+
+      pathplan::NodePtr goal_node=std::make_shared<pathplan::Node>(goal_configuration);
+      solver->addGoal(goal_node);
+      at_least_a_goal=true;
     }
-    COMMENT("goal is valid");
-
-    pathplan::NodePtr goal_node=std::make_shared<pathplan::Node>(goal_configuration);
-    solver->addGoal(goal_node);
-    at_least_a_goal=true;
   }
-
 
 
   if (!at_least_a_goal)
