@@ -113,11 +113,6 @@ public:
     goal_cost_fcn_=goal_cost_fcn;
   }
 
-  GoalCostFunctionPtr getGoalCostFunction()
-  {
-    return goal_cost_fcn_;
-  }
-
   const bool completed()const
   {
     return completed_;
@@ -143,17 +138,24 @@ public:
     return dof_;
   }
 
+  GoalCostFunctionPtr& getGoalCostFunction() //GoalCostFunctionPtr getGoalCostFunction() const
+  {
+    ROS_INFO_STREAM("goal cost fcn: "<<goal_cost_fcn_);
+    ROS_INFO_STREAM("root cost: "<<goal_cost_fcn_->cost(start_tree_->getRoot()->getConfiguration()));
+    return goal_cost_fcn_;
+  }
+
   TreePtr getStartTree() const
   {
     return start_tree_;
   }
 
-  PathPtr getSolution() const
+  PathPtr& getSolution()   //PathPtr getSolution() const
   {
     return solution_;
   }
 
-  ros::NodeHandle getNodeHandle()
+  ros::NodeHandle getNodeHandle() const
   {
     return nh_;
   }
@@ -168,17 +170,17 @@ public:
     return sampler_;
   }
 
-  double getPathCost()
+  double getPathCost() const
   {
     return path_cost_;
   }
 
-  double getGoalCost()
+  double getGoalCost() const
   {
     return goal_cost_;
   }
 
-  double getCost()
+  double getCost() const
   {
     return cost_;
   }
