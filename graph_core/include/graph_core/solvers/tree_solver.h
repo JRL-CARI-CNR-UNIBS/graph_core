@@ -125,6 +125,7 @@ public:
 
   const bool solved()const
   {
+    ROS_INFO_STREAM("solved: "<<solved_);
     return solved_;
   }
 

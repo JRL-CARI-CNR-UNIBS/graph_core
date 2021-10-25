@@ -94,7 +94,12 @@ bool TreeSolver::importFromSolver(const TreeSolverPtr& solver)
 {
   ROS_INFO_STREAM("Import from Tree solver");
 
+  ROS_INFO("prima solved");
+
   solved_        = solver->solved();
+
+  ROS_INFO("dopo solved");
+
   completed_     = solver->completed();
   init_          = solver->init();
   configured_    = solver->configured();

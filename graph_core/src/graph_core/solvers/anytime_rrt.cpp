@@ -52,6 +52,8 @@ void AnytimeRRT::importFromSolver(const TreeSolverPtr& solver)
 
   else
     TreeSolver::importFromSolver(solver);
+
+  ROS_INFO_STREAM("GOAL CONF: "<<goal_node_->getConfiguration().transpose());
 }
 
 bool AnytimeRRT::solveWithRRT(PathPtr& solution,
