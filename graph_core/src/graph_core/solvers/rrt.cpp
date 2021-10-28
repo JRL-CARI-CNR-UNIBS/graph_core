@@ -54,7 +54,10 @@ void RRT::importFromSolver(const TreeSolverPtr& solver)
     RRT::importFromSolver(std::static_pointer_cast<RRT>(solver));
 
   else
+  {
     TreeSolver::importFromSolver(solver);
+    //max_distance_ = 1.0;
+  }
 }
 
 bool RRT::addGoal(const NodePtr &goal_node, const double &max_time)

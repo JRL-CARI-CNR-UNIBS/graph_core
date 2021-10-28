@@ -90,6 +90,8 @@ public:
   NodePtr findCloserNode(const Eigen::VectorXd& configuration);
   NodePtr findCloserNode(const NodePtr& node);
   NodePtr findCloserNode(const NodePtr& node, double &dist);
+  PathPtr getSubpathFromConf(const Eigen::VectorXd& conf, const bool get_copy);
+  PathPtr getSubpathToConf(const Eigen::VectorXd& conf, const bool get_copy);
   PathPtr getSubpathFromNode(const NodePtr& node);
   PathPtr getSubpathToNode(const NodePtr& node);
   PathPtr getSubpathFromNode(const Eigen::VectorXd& conf);
