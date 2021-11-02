@@ -106,6 +106,7 @@ public:
   double getNormFromConf(const Eigen::VectorXd& conf);
 
 
+  std::vector<NodePtr> getNodes();
   std::vector<Eigen::VectorXd> getWaypoints();
 
   /*std::vector<bool> change_warp_;

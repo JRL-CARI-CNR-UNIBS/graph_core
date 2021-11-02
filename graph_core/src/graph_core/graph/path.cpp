@@ -508,6 +508,20 @@ bool Path::resample(const double &distance)
 
 }
 
+std::vector<NodePtr> Path::getNodes()
+{
+  std::vector<NodePtr> nodes;
+  if (connections_.size() == 0)
+    return nodes;
+
+  nodes.push_back(connections_.at(0)->getParent());
+  for (const ConnectionPtr& conn : connections_)
+    nodes.push_back(conn->getChild());
+
+  return nodes;
+}
+
+
 std::vector<Eigen::VectorXd> Path::getWaypoints()
 {
   std::vector<Eigen::VectorXd> wp;
