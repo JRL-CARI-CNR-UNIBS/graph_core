@@ -44,9 +44,11 @@ The repository contains two main packages:
 - dirrt_start: it contains dirrt_start_planner_manager, which acts as interface between the motion planner and MoveIt!, and it defines planner types (e.g. multigoal_planner), which are the actual motion planners classes.
 - graph_core: it contains the basic classes for nodes, trees, paths and the definition of solvers, collision checkers, samplers, metrics, and cost functions.
  
+![Dirrt_start big picture](documentation/Dirrt_start_big_picture.png)
+
 ### dirrt_start_planner_manager
 
-It is the interface between MoveIt! and the motion planner.​
+It is the interface between MoveIt! and the motion planner.
 
 MoveIt! requests a planning through the getPlanningContext method. The planner manager returns a pointer to the planner, which will be used by MoveIt!
 
