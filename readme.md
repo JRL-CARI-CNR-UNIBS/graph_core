@@ -43,8 +43,8 @@ The repository contains two main packages:
 
 - dirrt_start: it contains dirrt_start_planner_manager, which acts as interface between the motion planner and MoveIt!, and it defines planner types (e.g. multigoal_planner), which are the actual motion planners classes.
 - graph_core: it contains the basic classes for nodes, trees, paths and the definition of solvers, collision checkers, samplers, metrics, and cost functions.
- 
-![Dirrt_start big picture](documentation/Dirrt_start_big_picture.png)
+
+![Dirrt_start big picture](documentation/dirrt_start_big_picture.png)
 
 ### dirrt_start_planner_manager
 
@@ -82,7 +82,7 @@ The class has a method "solve" that will be called by MoveIt to solve the planni
 
 When the solver is created, it requires a metric, a collision checker, and a sampler. The types of available solvers are in graph_core/solvers. The types of metrics, checkers, and samplers are defined in graph_core.
 
-### Solvers 
+### Solvers
 
 Solvers are defined in graph_core/solvers (e.g. multigoal). All solvers are derived from the class TreeSolve. The main methods of a solver are:
 
