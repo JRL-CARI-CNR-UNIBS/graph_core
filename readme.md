@@ -64,7 +64,11 @@ Planner types are defined in dirrt_star. Example are multigoal_planner, time_pla
 
 Note: planner types should be limited. Before creating a new planner type check whether you can achieve the same result by changing parameters of existing planner types.
 
-Example: a human-aware planner with cost function along the whole path or only on the goal configuration can be created by enabling or disabling the parameters avoidance_path and avoidance_goal
+Example 1: two different configurations of the same planner type (Multigoal) are created in the picture below. By tuning the parameters of the planners differently, it is possible to achieve different planning performance.
+
+![Planner configurations](documentation/planner_configuration_example.png)
+
+Example 2: a human-aware planner with cost function along the whole path or only on the goal configuration can be created by enabling or disabling the parameters avoidance_path and avoidance_goal
 
 ### An example: the multigoal planner type
 
