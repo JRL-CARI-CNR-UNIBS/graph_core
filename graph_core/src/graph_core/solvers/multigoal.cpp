@@ -537,7 +537,7 @@ bool MultigoalSolver::update(PathPtr& solution)
           ROS_DEBUG("Goal %u refines solution with cost %f",igoal,costs_.at(igoal));
         global_improvement=isBestSolution(igoal) || global_improvement;
       }
-      else if (new_start_node)
+      else if (new_start_node)  // is an improvement?????
       {
         // try connect with the goal
         double cost_to_goal=metrics_->cost(new_start_node,goal_nodes_.at(igoal));
