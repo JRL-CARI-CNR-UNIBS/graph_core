@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(graph_core)
 add_compile_options(-std=c++11 -funroll-loops -Wall -Ofast)
-set(CMAKE_BUILD_TYPE Release)
+#sset(CMAKE_BUILD_TYPE Release)
 #add_compile_options(-std=c++14)
-#set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Debug)
 
 
 find_package(catkin REQUIRED COMPONENTS
@@ -62,6 +62,8 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/solvers/rrt_connect.cpp
   src/${PROJECT_NAME}/solvers/birrt.cpp
   src/${PROJECT_NAME}/solvers/rrt_star.cpp
+  src/${PROJECT_NAME}/solvers/rrt.cpp
+  src/${PROJECT_NAME}/solvers/anytime_rrt.cpp
   src/${PROJECT_NAME}/solvers/path_solver.cpp
   )
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

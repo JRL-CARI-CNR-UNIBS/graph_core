@@ -95,7 +95,6 @@ bool RRTStar::update(PathPtr& solution)
 
 }
 
-
 bool RRTStar::update(const Eigen::VectorXd& point, PathPtr& solution)
 {
   if (!init_)

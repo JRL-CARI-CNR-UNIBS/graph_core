@@ -25,13 +25,112 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/solvers/rrt_connect.h>
+#include <graph_core/solvers/rrt.h>
 
 namespace pathplan
 {
-bool RRTConnect::update(PathPtr &solution)
+
+bool RRT::config(const ros::NodeHandle& nh)
 {
-  PATH_COMMENT("RRTConnect::update");
+  nh_ = nh;
+  max_distance_ = 1.0;
+  configured_=true;
+  return true;
+}
+
+void RRT::importFromSolver(const RRTPtr& solver)
+{
+  ROS_INFO_STREAM("Import from RRT solver");
+
+  TreeSolver::importFromSolver(solver);
+
+  goal_node_    = solver->getGoal();
+  max_distance_ = solver->getMaxDistance();
+  utopia_       = solver->getUtopia();
+}
+
+bool RRT::addGoal(const NodePtr &goal_node, const double &max_time)
+{
+  if(!configured_)
+  {
+    ROS_ERROR("Solver is not configured.");
+    return false;
+  }
+  solved_ = false;
+  goal_node_ = goal_node;
+
+  goal_cost_=goal_cost_fcn_->cost(goal_node);
+  setProblem(max_time);
+
+  return true;
+}
+
+bool RRT::addStart(const NodePtr &start_node, const double &max_time)
+{
+  if (!configured_)
+  {
+    ROS_ERROR("Solver is not configured.");
+    return false;
+  }
+  solved_ = false;
+  start_tree_ = std::make_shared<Tree>(start_node, Forward, max_distance_, checker_, metrics_);
+
+  setProblem(max_time);
+
+  return true;
+}
+
+bool RRT::addStartTree(const TreePtr &start_tree, const double &max_time)
+{
+  assert(start_tree);
+  start_tree_ = start_tree;
+  solved_ = false;
+
+  setProblem(max_time);
+  return true;
+}
+void RRT::resetProblem()
+{
+  goal_node_.reset();
+  start_tree_.reset();
+  solved_=false;
+}
+
+bool RRT::setProblem(const double &max_time)
+{
+  if (!start_tree_)
+    return false;
+  if (!goal_node_)
+    return false;
+
+  utopia_ = (goal_node_->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
+  init_ = true;
+  NodePtr new_node;
+
+  if(start_tree_->connectToNode(goal_node_, new_node,max_time))  //for direct connection to goal
+  {
+    solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
+    solution_->setTree(start_tree_);
+
+    path_cost_ = solution_->cost();
+
+    sampler_->setCost(path_cost_);
+    start_tree_->addNode(goal_node_);
+
+    solved_ = true;
+    PATH_COMMENT_STREAM("A direct solution is found\n" << *solution_);
+  }
+  else
+  {
+    path_cost_ = std::numeric_limits<double>::infinity();
+  }
+  cost_=path_cost_+goal_cost_;
+  return true;
+}
+
+bool RRT::update(PathPtr &solution)
+{
+  PATH_COMMENT("RRT::update");
 
   if (solved_)
   {
@@ -43,12 +142,12 @@ bool RRTConnect::update(PathPtr &solution)
   if (sampler_->collapse())
     return false;
 
-  return RRTConnect::update(sampler_->sample(), solution);
+  return RRT::update(sampler_->sample(), solution);
 }
 
-bool RRTConnect::update(const Eigen::VectorXd& point, PathPtr &solution)
+bool RRT::update(const Eigen::VectorXd& point, PathPtr &solution)
 {
-  PATH_COMMENT("RRTConnect::update");
+  PATH_COMMENT("RRT::update");
 
   if (solved_)
   {
@@ -58,11 +157,11 @@ bool RRTConnect::update(const Eigen::VectorXd& point, PathPtr &solution)
   }
 
   NodePtr new_node;
-  if (start_tree_->connect(point, new_node))
+  if (start_tree_->extend(point, new_node))
   {
-    if((new_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
+    if ((new_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
     {
-      if(checker_->checkPath(new_node->getConfiguration(), goal_node_->getConfiguration()))
+      if (checker_->checkPath(new_node->getConfiguration(), goal_node_->getConfiguration()))
       {
         ConnectionPtr conn = std::make_shared<Connection>(new_node, goal_node_);
         conn->setCost(metrics_->cost(new_node, goal_node_));
@@ -79,14 +178,13 @@ bool RRTConnect::update(const Eigen::VectorXd& point, PathPtr &solution)
       }
     }
   }
-  return false;
 
+  return false;
 }
 
-
-bool RRTConnect::update(const NodePtr& n, PathPtr &solution)
+bool RRT::update(const NodePtr& n, PathPtr &solution)
 {
-  PATH_COMMENT("RRTConnect::update");
+  PATH_COMMENT("RRT::update");
 
   if (solved_)
   {
@@ -96,7 +194,7 @@ bool RRTConnect::update(const NodePtr& n, PathPtr &solution)
   }
 
   NodePtr new_node;
-  if (start_tree_->connectToNode(n, new_node))
+  if (start_tree_->extendToNode(n, new_node))
   {
     if ((new_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
     {
@@ -121,9 +219,9 @@ bool RRTConnect::update(const NodePtr& n, PathPtr &solution)
 
 }
 
-TreeSolverPtr RRTConnect::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler)
+TreeSolverPtr RRT::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler)
 {
-  return std::make_shared<RRTConnect>(metrics,checker,sampler);
+  return std::make_shared<RRT>(metrics,checker,sampler);
 }
 
 

@@ -87,7 +87,6 @@ public:
     bound_width_ = 0.5 * (lower_bound_ - upper_bound_);
     ellipse_axis_.resize(ndof_);
 
-
     rot_matrix_ = computeRotationMatrix(start_configuration_, stop_configuration_);
 
     ROS_DEBUG_STREAM("rot_matrix_:\n" << rot_matrix_);

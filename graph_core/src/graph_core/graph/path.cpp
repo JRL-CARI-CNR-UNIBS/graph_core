@@ -65,7 +65,7 @@ Path::Path(std::vector<NodePtr> nodes,
   metrics_(metrics),
   checker_(checker)
 {
-  assert(nodes_.size() > 0);
+  assert(nodes.size() > 0);
 
   connections_.clear();
   cost_ = 0;
@@ -824,7 +824,7 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
         conn_child->add();
 
         conn->remove();
-        tree_->addNode(actual_node);  //CHIEDI se necessario
+        tree_->addNode(actual_node);
 
         std::vector<ConnectionPtr> conn_vector;
 
