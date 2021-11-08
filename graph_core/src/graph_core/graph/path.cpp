@@ -774,7 +774,7 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
     assert(0);
   }
 
-  if(conn != NULL)
+  if(conn)
   {
     NodePtr parent = conn->getParent();
     NodePtr child = conn->getChild();

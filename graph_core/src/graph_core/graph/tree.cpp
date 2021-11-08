@@ -533,7 +533,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
       conn->add();
       checked_connections.push_back(conn);
 
-      //nearest_node = n; PER ME NON CI VA
+//      nearest_node = n; //PER ME NON CI VA
       cost_to_node = cost_to_near + cost_near_to_node;
       improved = true;
     }
