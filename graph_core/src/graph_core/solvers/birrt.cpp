@@ -47,7 +47,7 @@ bool BiRRT::addGoal(const NodePtr &goal_node, const double &max_time)
 
 bool BiRRT::update(PathPtr &solution)
 {
-  PATH_COMMENT("RRTConnect::update");
+  PATH_COMMENT("Birrt::update");
   if (solved_)
   {
     PATH_COMMENT("alreay found a solution");

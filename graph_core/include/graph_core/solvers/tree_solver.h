@@ -83,6 +83,21 @@ public:
     goal_cost_fcn_=std::make_shared<GoalCostFunction>();
   }
 
+  virtual bool update(PathPtr& solution) = 0;
+  virtual bool update(const Eigen::VectorXd& point, PathPtr& solution){return false;}
+  virtual bool update(const NodePtr& n, PathPtr& solution){return false;}
+
+  virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100, const double &max_time = std::numeric_limits<double>::infinity());
+  virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;
+  virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;
+  virtual bool computePath(const NodePtr &start_node, const NodePtr &goal_node, const ros::NodeHandle& nh, PathPtr &solution, const double &max_time = std::numeric_limits<double>::infinity(), const unsigned int max_iter = 10000);
+  virtual void resetProblem()=0;
+  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler) = 0;
+
+  virtual bool setSolution(const PathPtr &solution, const bool& solved=false);
+
+  bool importFromSolver(const TreeSolverPtr& solver);
+
   const double& cost() const
   {
     return cost_;
@@ -92,32 +107,42 @@ public:
   {
     return false;
   }
-  virtual bool update(PathPtr& solution) = 0;
-  virtual bool update(const Eigen::VectorXd& point, PathPtr& solution){return false;}
-  virtual bool update(const NodePtr& n, PathPtr& solution){return false;}
-
-  virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100, const double &max_time = std::numeric_limits<double>::infinity());
-  virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;
-  virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;
-  virtual void resetProblem()=0;
-  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler) = 0;
 
   void setGoalCostFunction(const GoalCostFunctionPtr& goal_cost_fcn)
   {
     goal_cost_fcn_=goal_cost_fcn;
   }
 
-  const bool& completed()const
+  GoalCostFunctionPtr getGoalCostFunction()
+  {
+    return goal_cost_fcn_;
+  }
+
+  const bool completed()const
   {
     return completed_;
   }
 
-  const bool& solved()const
+  const bool solved()const
   {
     return solved_;
   }
 
-  virtual bool setSolution(const PathPtr &solution, const bool& solved=false);
+  const bool init()const
+  {
+    return init_;
+  }
+
+  const bool configured()const
+  {
+    return configured_;
+  }
+
+  const unsigned int dof()const
+  {
+    return dof_;
+  }
+
   TreePtr getStartTree() const
   {
     return start_tree_;
@@ -143,6 +168,46 @@ public:
     return sampler_;
   }
 
+  double getPathCost()
+  {
+    return path_cost_;
+  }
+
+  double getGoalCost()
+  {
+    return goal_cost_;
+  }
+
+  double getCost()
+  {
+    return cost_;
+  }
+
+  void setSolved(const bool& solved)
+  {
+    solved_ = solved;
+  }
+
+  virtual void setStartTree(const TreePtr& tree)
+  {
+    start_tree_ = tree;
+  }
+
+  void setCompleted(const bool& completed)
+  {
+    completed_ = completed;
+  }
+
+  void setInit(const bool& init)
+  {
+    init_ = init;
+  }
+
+  void setPathCost(const double& path_cost)
+  {
+    path_cost_ = path_cost;
+  }
+
   void setChecker(const CollisionCheckerPtr& checker)
   {
     checker_ = checker;
@@ -161,6 +226,19 @@ public:
   MetricsPtr getMetrics() const
   {
     return metrics_;
+  }
+
+  double updateCost()
+  {
+    path_cost_ = solution_->cost();
+    cost_ = path_cost_+goal_cost_;
+    return cost_;
+  }
+
+  double updateCost(const NodePtr& goal_node)
+  {
+    goal_cost_ = goal_cost_fcn_->cost(goal_node);
+    return updateCost();
   }
 
   friend std::ostream& operator<<(std::ostream& os, const TreeSolver& solver);

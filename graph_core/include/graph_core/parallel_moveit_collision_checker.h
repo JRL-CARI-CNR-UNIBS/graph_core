@@ -28,7 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <graph_core/moveit_collision_checker.h>
-#include <moveit/planning_scene/planning_scene.h>
 #include <thread>
 #include <mutex>
 
@@ -83,6 +82,16 @@ public:
   virtual bool checkConnections(const std::vector<ConnectionPtr>& connections);
 
   virtual CollisionCheckerPtr clone();
+
+  std::string getGroupName() override
+  {
+    return group_name_;
+  }
+
+  virtual planning_scene::PlanningScenePtr getPlanningScene() override
+  {
+    return planning_scene_;
+  }
 
 };
 }  // namaspace pathplan

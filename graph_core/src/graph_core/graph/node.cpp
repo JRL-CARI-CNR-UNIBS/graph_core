@@ -98,12 +98,23 @@ void Node::remoteChildConnection(const ConnectionPtr &connection)
 
 void Node::disconnect()
 {
+  disconnectParentConnections();
+  disconnectChildConnections();
+}
+
+void Node::disconnectParentConnections()
+{
   for (ConnectionPtr& conn : parent_connections_)
   {
     if (conn)
       if (conn->getParent())
         conn->getParent()->remoteChildConnection(conn);
   }
+  parent_connections_.clear();
+}
+
+void Node::disconnectChildConnections()
+{
   for (ConnectionPtr& conn : child_connections_)
   {
     if (conn)
@@ -111,8 +122,6 @@ void Node::disconnect()
         conn->getChild()->remoteParentConnection(conn);
   }
   child_connections_.clear();
-  parent_connections_.clear();
-
 }
 
 Node::~Node()

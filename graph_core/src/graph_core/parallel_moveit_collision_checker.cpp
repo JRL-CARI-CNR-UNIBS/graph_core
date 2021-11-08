@@ -130,7 +130,7 @@ void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
       stop_check_=true;
       break;
     }
-//    state->updateCollisionBodyTransforms();
+    //    state->updateCollisionBodyTransforms();
 
     if (!planning_scenes_.at(thread_idx)->isStateValid(*state,group_name_))
     {
@@ -139,19 +139,19 @@ void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
       break;
     }
 
-//    if (!planning_scenes_.at(thread_idx)->isStateFeasible(*state))
-//    {
-//      at_least_a_collision_=true;
-//      stop_check_=true;
-//      break;
-//    }
-//    planning_scenes_.at(thread_idx)->checkCollision(req_,res_);
-//    if (res_.collision)
-//    {
-//      at_least_a_collision_=true;
-//      stop_check_=true;
-//      break;
-//    }
+    //    if (!planning_scenes_.at(thread_idx)->isStateFeasible(*state))
+    //    {
+    //      at_least_a_collision_=true;
+    //      stop_check_=true;
+    //      break;
+    //    }
+    //    planning_scenes_.at(thread_idx)->checkCollision(req_,res_);
+    //    if (res_.collision)
+    //    {
+    //      at_least_a_collision_=true;
+    //      stop_check_=true;
+    //      break;
+    //    }
 
   }
 }
@@ -203,7 +203,6 @@ void ParallelMoveitCollisionChecker::setPlanningScene(planning_scene::PlanningSc
     planning_scenes_.at(idx)=planning_scene::PlanningScene::clone(planning_scene_);
   }
 }
-
 
 void ParallelMoveitCollisionChecker::queueConnection(const Eigen::VectorXd& configuration1,
                                                      const Eigen::VectorXd& configuration2)
@@ -301,10 +300,9 @@ bool ParallelMoveitCollisionChecker::checkConnections(const std::vector<Connecti
   return checkAllQueues();
 }
 
-
 CollisionCheckerPtr ParallelMoveitCollisionChecker::clone()
 {
-  planning_scene::PlanningScenePtr planning_scene = planning_scene::PlanningScene::clone(planning_scenes_.at(0));
+  planning_scene::PlanningScenePtr planning_scene = planning_scene::PlanningScene::clone(planning_scene_);
   return std::make_shared<ParallelMoveitCollisionChecker>(planning_scene,group_name_,threads_num_,min_distance_);
 }
 

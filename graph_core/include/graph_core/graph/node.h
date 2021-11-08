@@ -63,6 +63,8 @@ public:
   std::vector<NodePtr> getParents() const;
 
   void disconnect();
+  void disconnectParentConnections();
+  void disconnectChildConnections();
   void remoteParentConnection(const ConnectionPtr& connection);
   void remoteChildConnection(const ConnectionPtr& connection);
   const Eigen::VectorXd& getConfiguration()

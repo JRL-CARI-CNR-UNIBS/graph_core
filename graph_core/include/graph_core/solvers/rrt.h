@@ -26,31 +26,65 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/solvers/rrt.h>
+#include <graph_core/solvers/tree_solver.h>
 
 namespace pathplan
 {
-class RRTConnect;
-typedef std::shared_ptr<RRTConnect> RRTConnectPtr;
+class RRT;
+typedef std::shared_ptr<RRT> RRTPtr;
 
-class RRTConnect: public RRT
+class RRT: public TreeSolver
 {
 protected:
-  virtual void clean(){}
+  NodePtr goal_node_;
+  double max_distance_;
+  double utopia_;
+  virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity()); //max_time not used
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  RRTConnect(const MetricsPtr& metrics,
+  RRT(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
              const SamplerPtr& sampler):
-    RRT(metrics, checker, sampler) {}
+    TreeSolver(metrics, checker, sampler) {}
 
-  virtual bool update(const Eigen::VectorXd& point, PathPtr& solution) override;
-  virtual bool update(const NodePtr& n, PathPtr& solution) override;
-  virtual bool update(PathPtr& solution) override;
+  virtual void setUtopia(const double& utopia)
+  {
+    utopia_ = utopia;
+  }
 
-  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler);
+  void setGoal(const NodePtr& goal)
+  {
+    goal_node_ = goal;
+  }
 
+  NodePtr getGoal()
+  {
+    return goal_node_;
+  }
+
+  double getUtopia()
+  {
+    return utopia_;
+  }
+
+  double getMaxDistance()
+  {
+    return max_distance_;
+  }
+
+  void importFromSolver(const RRTPtr& solver);
+
+  virtual bool config(const ros::NodeHandle& nh);
+  virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity());
+  virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity());
+  virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity());
+  virtual void resetProblem();
+  virtual bool update(const Eigen::VectorXd& point, PathPtr& solution);
+  virtual bool update(const NodePtr& n, PathPtr& solution);
+  virtual bool update(PathPtr& solution);
+
+  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler) override;
 };
 
 }

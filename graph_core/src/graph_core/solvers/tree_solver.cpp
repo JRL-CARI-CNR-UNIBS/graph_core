@@ -33,18 +33,11 @@ namespace pathplan
 bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const double& max_time)
 {
   ros::WallTime tic = ros::WallTime::now();
-//  ros::WallTime toc, tic_cycle, toc_cycle;
-//  double time =  max_time;
-//  double mean = 0.0;
-//  std::vector<double> time_vector;
-//  if(time<=0.0) return false;
 
   if(max_time <=0.0) return false;
 
   for (unsigned int iter = 0; iter < max_iter; iter++)
   {
-//    tic_cycle = ros::WallTime::now();
-
     if (update(solution))
     {
       //ROS_INFO("Solved in %u iterations", iter);
@@ -52,31 +45,67 @@ bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const do
       return true;
     }
 
-//    toc_cycle = ros::WallTime::now();
-//    time_vector.push_back((toc_cycle-tic_cycle).toSec());
-//    mean = std::accumulate(time_vector.begin(), time_vector.end(),0.0)/((double) time_vector.size());
-//    toc = ros::WallTime::now();
-//    time = max_time-(toc-tic).toSec();
-
-//    if(time<0.7*mean || time<=0.0)
-//    {
-//      //ROS_ERROR("TIME OUT->time: %f , mean: %f",time,mean);
-//      break;
-//    }
-
     if((ros::WallTime::now()-tic).toSec()>=0.98*max_time) break;
   }
   return false;
+}
+
+bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node, const ros::NodeHandle& nh, PathPtr &solution, const double &max_time, const unsigned int max_iter)
+{
+  config(nh);
+  addStart(start_node);
+  addGoal(goal_node);
+
+  ros::WallTime tic = ros::WallTime::now();
+
+  if (!solve(solution, max_iter, max_time))
+  {
+    ROS_INFO("No solutions found");
+
+    ros::WallTime toc = ros::WallTime::now();
+    ROS_INFO_STREAM("time: "<<(toc-tic).toSec()<<" max_t: "<<max_time);
+
+    assert(0);
+
+    return false;
+  }
+
+  ros::WallTime toc = ros::WallTime::now();
+  ROS_INFO_STREAM("time: "<<(toc-tic).toSec()<<" max_t: "<<max_time);
+
+  return true;
 }
 
 bool TreeSolver::setSolution(const PathPtr &solution, const bool& solved)
 {
   solution_ = solution;
   solution_->setTree(start_tree_);
+
+  path_cost_ = solution->cost();
+  cost_ = path_cost_+goal_cost_; //CHIEDI
+
   solved_=solved;
   if (solved_)
     clean();
   return true;
+}
+
+bool TreeSolver::importFromSolver(const TreeSolverPtr& solver)
+{
+  ROS_INFO_STREAM("Import from Tree solver");
+
+  solved_        = solver->solved();             //copy the value   CHIEDI
+  completed_     = solver->completed();          //copy the value
+  init_          = solver->init();               //copy the value
+  configured_    = solver->configured();         //copy the value
+  dof_           = solver->dof();                //copy the value
+  nh_            = solver->getNodeHandle();
+  goal_cost_fcn_ = solver->getGoalCostFunction();
+  path_cost_     = solver->getPathCost();
+  goal_cost_     = solver->getGoalCost();
+  cost_          = solver->getCost();
+  start_tree_    = solver->getStartTree();
+  solution_      = solver->getSolution();
 }
 
 }
