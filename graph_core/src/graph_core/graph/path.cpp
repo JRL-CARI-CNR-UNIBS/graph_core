@@ -766,12 +766,95 @@ const Eigen::VectorXd Path::projectOnClosestConnectionKeepingCurvilinearAbscissa
   return projection;
 }
 
+bool Path::removeNodeAddedInConn(const NodePtr& node)
+{
+  bool found = false;
+  unsigned int idx_node;
+  std::vector<NodePtr> nodes = getNodes();
+  for(unsigned int i=0;i<nodes.size();i++)
+  {
+    if(nodes.at(i) == node)
+    {
+      idx_node = i;
+      found = true;
+    }
+  }
+
+  if(!found)
+  {
+    ROS_ERROR("The node does not belong to the path");
+    ROS_INFO_STREAM(*node<<"\n"<<node);
+    return false;
+  }
+  else
+  {
+    if(idx_node == 0 || idx_node == nodes.size()-1)
+      return true;
+    else
+    {
+      std::vector<ConnectionPtr> conn_before_parent, conn_after_child;
+      if(idx_node-1>0)
+        conn_before_parent.insert(conn_before_parent.begin(),connections_.begin(),connections_.begin()+(idx_node-1));
+      if(idx_node+1<connections_.size())
+        conn_after_child  .insert(conn_after_child  .begin(),connections_.begin()+(idx_node+1),connections_.end()) ;
+
+      ConnectionPtr conn_parent = connections_.at(idx_node-1);
+      ConnectionPtr conn_child  = connections_.at(idx_node);
+
+      NodePtr parent = conn_parent->getParent();
+      NodePtr child  = conn_child->getChild();
+
+      if((conn_parent->getChild() != node) || (conn_child->getParent() != node))
+        assert(0);
+
+      Eigen::VectorXd vector_parent_node, vector_node_child;
+      vector_parent_node = (node->getConfiguration()-parent->getConfiguration())/(node->getConfiguration()-parent->getConfiguration()).norm();
+      vector_node_child  = (child->getConfiguration()-node->getConfiguration())/(child->getConfiguration()-node->getConfiguration()).norm();
+
+      if((vector_parent_node-vector_node_child).norm()>1e-06)
+      {
+        ROS_ERROR("The node was not added along an already existing connection");
+        ROS_INFO_STREAM("parent:\n "<<*parent);
+        ROS_INFO_STREAM("node:\n   "<<*node);
+        ROS_INFO_STREAM("child:\n  "<<*child);
+
+        assert(0);
+      }
+
+      double cost = conn_parent->getCost() + conn_child->getCost();
+
+      conn_parent->remove();
+      conn_child->remove();
+      tree_->removeNode(node);
+
+      ConnectionPtr conn_parent_child = std::make_shared<Connection>(parent,child);
+      conn_parent_child->setCost(cost);
+      conn_parent_child->add();
+
+      connections_.clear();
+      connections_ = conn_before_parent;
+      connections_.push_back(conn_parent_child);
+      if(!conn_after_child.empty())
+        connections_.insert(connections_.end(),conn_after_child.begin(),conn_after_child.end());
+
+      for(const NodePtr n: getNodes())
+      {
+        if(n == node)
+          assert(0);
+      }
+
+      return true;
+    }
+  }
+}
+
 NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr& conn, const bool& rewire)
 {
   if(rewire && !tree_)
   {
     ROS_ERROR("Tree not set, the new node can't be added to the path");
     assert(0);
+    return NULL;
   }
 
   if(conn)
@@ -782,18 +865,19 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
     double dist_parent2conf = (parent->getConfiguration()-configuration).norm();
     double dist_child2conf  = (child ->getConfiguration()-configuration).norm();
 
-    NodePtr actual_node;
     if(dist_parent2conf<1e-06) //if the current conf is too close to the parent or to the child, it is approximated with the parent/child
     {
-      actual_node = parent;
+      ROS_WARN("Node equal to parent");
+      return parent;
     }
     else if(dist_child2conf<1e-06)
     {
-      actual_node = child;
+      ROS_WARN("Node equal to child");
+      return child;
     }
     else
     {
-      actual_node = std::make_shared<Node>(configuration);
+      NodePtr actual_node = std::make_shared<Node>(configuration);
 
       if(rewire)
       {
@@ -819,6 +903,12 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
           cost_child  = metrics_->cost(actual_node->getConfiguration(),child->getConfiguration());
         }
 
+        ROS_INFO_STREAM("PRIMA DI CONN REMOVE\n parent "<<conn->getParent()->getConfiguration().transpose()<<" child "<<conn->getChild()->getConfiguration().transpose());
+        conn->remove();
+        ROS_INFO("DOPO DI CONN REMOVE");
+
+        tree_->addNode(actual_node);
+
         ConnectionPtr conn_parent = std::make_shared<Connection>(parent, actual_node);
         conn_parent->setCost(cost_parent);
         conn_parent->add();
@@ -826,9 +916,6 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
         ConnectionPtr conn_child = std::make_shared<Connection>(actual_node,child);
         conn_child->setCost(cost_child);
         conn_child->add();
-
-        conn->remove();
-        tree_->addNode(actual_node);
 
         std::vector<ConnectionPtr> conn_vector;
 
@@ -862,13 +949,15 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
           conn_sup = subpath_child->getConnections();
           conn_vector.insert(conn_vector.end(),conn_sup.begin(),conn_sup.end());
         }
-        this->setConnections(conn_vector);
+        setConnections(conn_vector);
       }
+      return actual_node;
     }
-    return actual_node;
   }
 
   ROS_ERROR("Connection not found, the node can't be created");
+
+  return NULL;
 }
 
 NodePtr Path::findCloserNode(const Eigen::VectorXd& configuration, double &dist)
