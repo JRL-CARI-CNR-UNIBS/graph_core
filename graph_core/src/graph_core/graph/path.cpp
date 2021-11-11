@@ -219,28 +219,35 @@ double Path::getCostFromConf(const Eigen::VectorXd &conf)
   }
   else
   {
-    if(conf == connections_.at(0)->getParent()->getConfiguration()) return cost_;
+    if(conf == connections_.at(0)->getParent()->getConfiguration())
+      return cost_;
 
     if(idx < connections_.size()-1)
     {
       for(unsigned int i=idx+1;i<connections_.size();i++)
       {
         cost += connections_.at(i)->getCost();
-        if(cost == std::numeric_limits<double>::infinity()) return std::numeric_limits<double>::infinity();
+        if(cost == std::numeric_limits<double>::infinity())
+          return std::numeric_limits<double>::infinity();
       }
     }
 
-    if(conf == this_conn->getParent()->getConfiguration()) cost += this_conn->getCost();
-    else if (conf == this_conn->getChild()->getConfiguration()) cost += 0;
+    if(conf == this_conn->getParent()->getConfiguration())
+      cost += this_conn->getCost();
+    else if (conf == this_conn->getChild()->getConfiguration())
+      cost += 0;
     else
     {
       if(this_conn->getCost() == std::numeric_limits<double>::infinity())
       {
         ConnectionPtr conn = std::make_shared<Connection>(std::make_shared<Node>(conf),this_conn->getChild());
-        if(checker_->checkConnection(conn)) cost += metrics_->cost(conf,this_conn->getChild()->getConfiguration());
-        else cost = std::numeric_limits<double>::infinity();
+        if(checker_->checkConnection(conn))
+          cost += metrics_->cost(conf,this_conn->getChild()->getConfiguration());
+        else
+          cost = std::numeric_limits<double>::infinity();
       }
-      else cost += metrics_->cost(conf,this_conn->getChild()->getConfiguration());
+      else
+        cost += metrics_->cost(conf,this_conn->getChild()->getConfiguration());
     }
   }
   return cost;
@@ -777,6 +784,8 @@ bool Path::removeNodeAddedInConn(const NodePtr& node)
     {
       idx_node = i;
       found = true;
+
+      break;
     }
   }
 
@@ -811,14 +820,14 @@ bool Path::removeNodeAddedInConn(const NodePtr& node)
       vector_parent_node = (node->getConfiguration()-parent->getConfiguration())/(node->getConfiguration()-parent->getConfiguration()).norm();
       vector_node_child  = (child->getConfiguration()-node->getConfiguration())/(child->getConfiguration()-node->getConfiguration()).norm();
 
-      if((vector_parent_node-vector_node_child).norm()>1e-06)
+      if((vector_parent_node-vector_node_child).norm()>1e-08)
       {
         ROS_ERROR("The node was not added along an already existing connection");
         ROS_INFO_STREAM("parent:\n "<<*parent);
         ROS_INFO_STREAM("node:\n   "<<*node);
         ROS_INFO_STREAM("child:\n  "<<*child);
 
-        assert(0);
+        return false;
       }
 
       double cost = conn_parent->getCost() + conn_child->getCost();
@@ -862,23 +871,12 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
     NodePtr parent = conn->getParent();
     NodePtr child = conn->getChild();
 
-    double dist_parent2conf = (parent->getConfiguration()-configuration).norm();
-    double dist_child2conf  = (child ->getConfiguration()-configuration).norm();
-
-    bool start = false;
-    bool goal = false;
-
-    if((parent->getConfiguration()-getWaypoints().front()).norm()<1e-06)
-      start = true;
-    if((child->getConfiguration()-getWaypoints().back()).norm()<1e-06)
-      goal = true;
-
-    if(dist_parent2conf<1e-06 && !start) //if the current conf is too close to the parent or to the child, it is approximated with the parent/child
+    if(parent->getConfiguration() == configuration)
     {
       ROS_WARN("Node equal to parent");
       return parent;
     }
-    else if(dist_child2conf<1e-06 && !goal)
+    else if(child ->getConfiguration() == configuration)
     {
       ROS_WARN("Node equal to child");
       return child;

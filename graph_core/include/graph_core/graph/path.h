@@ -49,8 +49,6 @@ protected:
   double min_length_ = 0.04;
   TreePtr tree_;
 
-  NodePtr node = std::make_shared<Node>(duehduie)
-
   std::vector<bool> change_warp_;
   std::vector<bool> change_slip_parent_;
   std::vector<bool> change_slip_child_;
