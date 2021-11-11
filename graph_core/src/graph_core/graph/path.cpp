@@ -865,12 +865,20 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
     double dist_parent2conf = (parent->getConfiguration()-configuration).norm();
     double dist_child2conf  = (child ->getConfiguration()-configuration).norm();
 
-    if(dist_parent2conf<1e-06) //if the current conf is too close to the parent or to the child, it is approximated with the parent/child
+    bool start = false;
+    bool goal = false;
+
+    if((parent->getConfiguration()-getWaypoints().front()).norm()<1e-06)
+      start = true;
+    if((child->getConfiguration()-getWaypoints().back()).norm()<1e-06)
+      goal = true;
+
+    if(dist_parent2conf<1e-06 && !start) //if the current conf is too close to the parent or to the child, it is approximated with the parent/child
     {
       ROS_WARN("Node equal to parent");
       return parent;
     }
-    else if(dist_child2conf<1e-06)
+    else if(dist_child2conf<1e-06 && !goal)
     {
       ROS_WARN("Node equal to child");
       return child;
