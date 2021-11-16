@@ -87,6 +87,17 @@ Connection::~Connection()
 {
 }
 
+bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)
+{
+  // v1 dot v2 = norm(v1)*norm(v2)*cos(angle)
+  double scalar= (child_->getConfiguration()-parent_->getConfiguration()).dot(
+        conn->getChild()->getConfiguration()-conn->getParent()->getConfiguration());
+
+  // v1 dot v2 = norm(v1)*norm(v2) if v1 // v2
+
+  return (scalar>(euclidean_norm_*conn->norm())-toll);
+}
+
 std::ostream& operator<<(std::ostream& os, const Connection& connection)
 {
   os << connection.parent_->getConfiguration().transpose() << " -->" << std::endl;

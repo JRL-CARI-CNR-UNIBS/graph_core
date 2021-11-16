@@ -80,6 +80,7 @@ public:
 
   //It creates a node corresponding to the configuration and creates the correct connections inside the current_path_
   NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr &conn, const bool &rewire);
+  NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, const bool& rewire);
 
   //Remove the node added using addNodeAtCurrentConfig
   bool removeNodeAddedInConn(const NodePtr& node);

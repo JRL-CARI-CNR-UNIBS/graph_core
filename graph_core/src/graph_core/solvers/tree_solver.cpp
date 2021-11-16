@@ -79,7 +79,7 @@ bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node
 bool TreeSolver::setSolution(const PathPtr &solution, const bool& solved)
 {
   solution_ = solution;
-  solution_->setTree(start_tree_);
+  solution_->setTree(start_tree_);   //SE SOLUTION HA IL SUO TREE ED E' DIVERSO?
 
   path_cost_ = solution->cost();
   cost_ = path_cost_+goal_cost_;

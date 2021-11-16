@@ -568,7 +568,7 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
     dist1 = (parent - configuration).norm();
     dist2 = (configuration-child).norm();
 
-    if(std::abs(dist-dist1-dist2)<1.0e-04)
+    if(std::abs(dist-dist1-dist2)<1.0e-05)
     {
       conn = connections_.at(i);
       idx = i;
@@ -813,19 +813,36 @@ bool Path::removeNodeAddedInConn(const NodePtr& node)
       NodePtr parent = conn_parent->getParent();
       NodePtr child  = conn_child->getChild();
 
+      ROS_INFO_STREAM("per remove, parent: "<<parent->getConfiguration().transpose()<<" child: "<<child->getConfiguration().transpose());
+      ROS_INFO_STREAM("conf 2 remove: "<<node->getConfiguration().transpose());
+
       if((conn_parent->getChild() != node) || (conn_child->getParent() != node))
         assert(0);
 
-      Eigen::VectorXd vector_parent_node, vector_node_child;
-      vector_parent_node = (node->getConfiguration()-parent->getConfiguration())/(node->getConfiguration()-parent->getConfiguration()).norm();
-      vector_node_child  = (child->getConfiguration()-node->getConfiguration())/(child->getConfiguration()-node->getConfiguration()).norm();
+      //Eigen::VectorXd vector_parent_node, vector_node_child;  //CHIEDI
+      //vector_parent_node = (node->getConfiguration()-parent->getConfiguration())/(node->getConfiguration()-parent->getConfiguration()).norm();
+      //vector_node_child  = (child->getConfiguration()-node->getConfiguration())/(child->getConfiguration()-node->getConfiguration()).norm();
 
-      if((vector_parent_node-vector_node_child).norm()>1e-08)
+      double dist_parent, dist_child, dist_tot, diff;
+
+      dist_parent = (parent->getConfiguration()-node->getConfiguration()).norm();
+      dist_child = (node->getConfiguration()-child->getConfiguration()).norm();
+      dist_tot = (parent->getConfiguration()-child->getConfiguration()).norm();
+
+      diff = std::abs(dist_tot-(dist_parent+dist_child));
+
+//      if((vector_parent_node-vector_node_child).norm()>1e-08)
+      if(diff > 1e-04)
       {
-        ROS_ERROR("The node was not added along an already existing connection");
+//        ROS_ERROR("The node was not added along an already existing connection! Vector error: %f",(vector_parent_node-vector_node_child).norm());
+
+        ROS_ERROR("The node was not added along an already existing connection!");
         ROS_INFO_STREAM("parent:\n "<<*parent);
         ROS_INFO_STREAM("node:\n   "<<*node);
         ROS_INFO_STREAM("child:\n  "<<*child);
+
+        for(const Eigen::VectorXd& wp:getWaypoints())
+          ROS_INFO_STREAM("wp: "<<wp.transpose());
 
         return false;
       }
@@ -857,6 +874,14 @@ bool Path::removeNodeAddedInConn(const NodePtr& node)
   }
 }
 
+NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, const bool& rewire)
+{
+  ConnectionPtr conn = findConnection(configuration);
+  return addNodeAtCurrentConfig(configuration, conn, rewire);
+
+}
+
+
 NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr& conn, const bool& rewire)
 {
   if(rewire && !tree_)
@@ -871,6 +896,8 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
     NodePtr parent = conn->getParent();
     NodePtr child = conn->getChild();
 
+    ROS_INFO_STREAM("conn per add, parent: "<<parent->getConfiguration().transpose()<<" child: "<<child->getConfiguration().transpose());
+
     if(parent->getConfiguration() == configuration)
     {
       ROS_WARN("Node equal to parent");
@@ -884,6 +911,8 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
     else
     {
       NodePtr actual_node = std::make_shared<Node>(configuration);
+
+      ROS_INFO_STREAM("node added: "<<configuration.transpose());
 
       if(rewire)
       {
