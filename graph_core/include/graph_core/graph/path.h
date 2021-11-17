@@ -82,8 +82,10 @@ public:
   NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr &conn, const bool &rewire);
   NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, const bool& rewire);
 
-  //Remove the node added using addNodeAtCurrentConfig
-  bool removeNodeAddedInConn(const NodePtr& node);
+  //Remove unnecessary nodes
+  bool removeNodes(const std::vector<NodePtr>& white_list, std::vector<NodePtr>& deleted_nodes);
+  bool removeNodes(const std::vector<NodePtr> &white_list);
+  bool removeNodes();
 
   //It gives the connection to which the configuration belongs
   ConnectionPtr findConnection(const Eigen::VectorXd& configuration, int& idx);

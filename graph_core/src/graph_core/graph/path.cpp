@@ -56,7 +56,6 @@ Path::Path(std::vector<ConnectionPtr> connections,
 #ifdef NO_SPIRAL
   change_spiral_.at(0) = false;
 #endif
-
 }
 
 Path::Path(std::vector<NodePtr> nodes,
@@ -773,105 +772,93 @@ const Eigen::VectorXd Path::projectOnClosestConnectionKeepingCurvilinearAbscissa
   return projection;
 }
 
-bool Path::removeNodeAddedInConn(const NodePtr& node)
+bool Path::removeNodes()
 {
-  bool found = false;
-  unsigned int idx_node;
-  std::vector<NodePtr> nodes = getNodes();
-  for(unsigned int i=0;i<nodes.size();i++)
+  std::vector<NodePtr> deleted_nodes, white_list;
+  return removeNodes(white_list, deleted_nodes);
+}
+
+bool Path::removeNodes(const std::vector<NodePtr> &white_list)
+{
+  std::vector<NodePtr> deleted_nodes;
+  return removeNodes(white_list, deleted_nodes);
+}
+
+
+bool Path::removeNodes(const std::vector<NodePtr> &white_list, std::vector<NodePtr> &deleted_nodes)
+{
+  bool removed;
+  bool at_least_one_removed = false;
+  bool skip = false;
+
+  do
   {
-    if(nodes.at(i) == node)
+    removed = false;
+
+    for(unsigned int i=0;i<connections_.size()-1;i++)
     {
-      idx_node = i;
-      found = true;
+      ConnectionPtr conn_parent_node = connections_.at(i);
+      ConnectionPtr conn_node_child  = connections_.at(i+1);
 
-      break;
-    }
-  }
+      NodePtr node = conn_parent_node->getChild();
 
-  if(!found)
-  {
-    ROS_ERROR("The node does not belong to the path");
-    ROS_INFO_STREAM(*node<<"\n"<<node);
-    return false;
-  }
-  else
-  {
-    if(idx_node == 0 || idx_node == nodes.size()-1)
-      return true;
-    else
-    {
-      std::vector<ConnectionPtr> conn_before_parent, conn_after_child;
-      if(idx_node-1>0)
-        conn_before_parent.insert(conn_before_parent.begin(),connections_.begin(),connections_.begin()+(idx_node-1));
-      if(idx_node+1<connections_.size())
-        conn_after_child  .insert(conn_after_child  .begin(),connections_.begin()+(idx_node+1),connections_.end()) ;
-
-      ConnectionPtr conn_parent = connections_.at(idx_node-1);
-      ConnectionPtr conn_child  = connections_.at(idx_node);
-
-      NodePtr parent = conn_parent->getParent();
-      NodePtr child  = conn_child->getChild();
-
-      ROS_INFO_STREAM("per remove, parent: "<<parent->getConfiguration().transpose()<<" child: "<<child->getConfiguration().transpose());
-      ROS_INFO_STREAM("conf 2 remove: "<<node->getConfiguration().transpose());
-
-      if((conn_parent->getChild() != node) || (conn_child->getParent() != node))
+      if(node != conn_node_child->getParent())
         assert(0);
 
-      //Eigen::VectorXd vector_parent_node, vector_node_child;  //CHIEDI
-      //vector_parent_node = (node->getConfiguration()-parent->getConfiguration())/(node->getConfiguration()-parent->getConfiguration()).norm();
-      //vector_node_child  = (child->getConfiguration()-node->getConfiguration())/(child->getConfiguration()-node->getConfiguration()).norm();
-
-      double dist_parent, dist_child, dist_tot, diff;
-
-      dist_parent = (parent->getConfiguration()-node->getConfiguration()).norm();
-      dist_child = (node->getConfiguration()-child->getConfiguration()).norm();
-      dist_tot = (parent->getConfiguration()-child->getConfiguration()).norm();
-
-      diff = std::abs(dist_tot-(dist_parent+dist_child));
-
-//      if((vector_parent_node-vector_node_child).norm()>1e-08)
-      if(diff > 1e-04)
+      skip = false;
+      for(const NodePtr& white_node:white_list)
       {
-//        ROS_ERROR("The node was not added along an already existing connection! Vector error: %f",(vector_parent_node-vector_node_child).norm());
-
-        ROS_ERROR("The node was not added along an already existing connection!");
-        ROS_INFO_STREAM("parent:\n "<<*parent);
-        ROS_INFO_STREAM("node:\n   "<<*node);
-        ROS_INFO_STREAM("child:\n  "<<*child);
-
-        for(const Eigen::VectorXd& wp:getWaypoints())
-          ROS_INFO_STREAM("wp: "<<wp.transpose());
-
-        return false;
+        if(white_node == node)
+        {
+          skip = true;
+          break;
+        }
       }
 
-      double cost = conn_parent->getCost() + conn_child->getCost();
-
-      conn_parent->remove();
-      conn_child->remove();
-      tree_->removeNode(node);
-
-      ConnectionPtr conn_parent_child = std::make_shared<Connection>(parent,child);
-      conn_parent_child->setCost(cost);
-      conn_parent_child->add();
-
-      connections_.clear();
-      connections_ = conn_before_parent;
-      connections_.push_back(conn_parent_child);
-      if(!conn_after_child.empty())
-        connections_.insert(connections_.end(),conn_after_child.begin(),conn_after_child.end());
-
-      for(const NodePtr n: getNodes())
+      if(skip)
+        continue;
+      else
       {
-        if(n == node)
-          assert(0);
-      }
+        if(conn_parent_node->isParallel(conn_node_child) &&
+           node->getParents().size() == 1 &&
+           node->getChildren().size() == 1)
+        {
+          if(tree_)
+            if(node == tree_->getRoot())
+              assert(0);  //node must have 1 parent (root must have zero) and 1 child (root may have many)
 
-      return true;
+          ConnectionPtr new_conn = std::make_shared<pathplan::Connection>(conn_parent_node->getParent(),conn_node_child->getChild());
+          double cost = conn_parent_node->getCost()+conn_node_child->getCost();
+          new_conn->setCost(cost);
+          new_conn->add();
+
+          node->disconnect();
+          deleted_nodes.push_back(node);
+
+          if(tree_)
+            tree_->removeNode(node);
+
+          std::vector<ConnectionPtr> new_connections;
+
+          if(i>0)
+            new_connections.insert(new_connections.begin(),connections_.begin(),connections_.begin()+i);
+
+          new_connections.push_back(new_conn);
+
+          if(i+2<connections_.size())
+            new_connections.insert(new_connections.end(),connections_.begin()+(i+2),connections_.end());
+
+          setConnections(new_connections);
+
+          at_least_one_removed = true;
+          removed = true;
+          break;
+        }
+      }
     }
-  }
+  } while(removed);
+
+  return at_least_one_removed;
 }
 
 NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, const bool& rewire)
@@ -880,7 +867,6 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, const
   return addNodeAtCurrentConfig(configuration, conn, rewire);
 
 }
-
 
 NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr& conn, const bool& rewire)
 {
@@ -938,10 +924,7 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
           cost_child  = metrics_->cost(actual_node->getConfiguration(),child->getConfiguration());
         }
 
-        ROS_INFO_STREAM("PRIMA DI CONN REMOVE\n parent "<<conn->getParent()->getConfiguration().transpose()<<" child "<<conn->getChild()->getConfiguration().transpose());
         conn->remove();
-        ROS_INFO("DOPO DI CONN REMOVE");
-
         tree_->addNode(actual_node);
 
         ConnectionPtr conn_parent = std::make_shared<Connection>(parent, actual_node);
