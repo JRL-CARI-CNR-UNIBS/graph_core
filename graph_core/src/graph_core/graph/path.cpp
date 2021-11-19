@@ -700,7 +700,7 @@ const Eigen::VectorXd Path::projectOnClosestConnectionKeepingPastPrj(const Eigen
   if(min_distance == std::numeric_limits<double>::infinity())
   {
     projection = past_prj;
-    //ROS_ERROR("projection on path not found");
+    ROS_ERROR("projection on path not found");
   }
   else  n_conn = idx;
 
@@ -765,7 +765,6 @@ const Eigen::VectorXd Path::projectOnClosestConnectionKeepingCurvilinearAbscissa
     new_abscissa = past_abscissa;
     projection = past_prj;
     ROS_ERROR("projection on path not found");
-    //ROS_INFO_STREAM("projection: "<<projection.transpose());
   }
   else  n_conn = idx;
 

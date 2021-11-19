@@ -41,6 +41,7 @@ protected:
   double delta_; //dist_bias and cost_bias update factor
   double cost_impr_;  //cost improvement factor (new cost < (1-cost_impr_)*path_cost_)
   double cost2beat_;
+  SamplerPtr improve_sampler_;
   TreePtr new_tree_;
   NodePtr tmp_goal_node_;
 
