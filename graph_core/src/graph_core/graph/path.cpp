@@ -601,9 +601,7 @@ Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const Co
   distance = std::sqrt(point_length*point_length-s*s);
 
   if(s>=0 && s<=conn_length)
-  {
     in_conn = 1;
-  }
   else
     in_conn = 0;
 
@@ -695,7 +693,6 @@ const Eigen::VectorXd Path::projectOnClosestConnectionKeepingPastPrj(const Eigen
       }
     }
   }
-
 
   if(min_distance == std::numeric_limits<double>::infinity())
   {
