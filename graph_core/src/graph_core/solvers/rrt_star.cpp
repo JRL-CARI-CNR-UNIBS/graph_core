@@ -122,7 +122,7 @@ bool RRTStar::update(const Eigen::VectorXd& point, PathPtr& solution)
     solution_->setTree(start_tree_);
 
     path_cost_ = solution_->cost();
-
+    cost_ = path_cost_+goal_cost_;
 
     sampler_->setCost(path_cost_);
   }

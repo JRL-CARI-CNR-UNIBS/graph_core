@@ -79,9 +79,9 @@ void Connection::remove()
 
 void Connection::flip()
 {
-  remove();
+  remove(); // remove connection from parent and child
   parent_.swap(child_);
-  add();
+  add(); // add new connection from new parent and child
 }
 Connection::~Connection()
 {

@@ -63,12 +63,16 @@ protected:
   double forgetting_factor_=0.999;
   double tube_radius_=0.01;
   double utopia_tolerance_=1.003;
+  double goal_bias_=0.05;
+  bool bidirectional_=true;
+  bool informed_=true;
+  bool mixed_strategy_=true;
   bool extend_ = false;
   bool knearest_=false;
   double dimension_;
   virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity());
   virtual void clean(){}
-
+  bool warp_=false;
   bool isBestSolution(const int& index);
 
   virtual void printMyself(std::ostream& os) const;

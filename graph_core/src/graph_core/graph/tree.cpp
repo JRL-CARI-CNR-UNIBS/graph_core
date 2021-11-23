@@ -1130,6 +1130,22 @@ bool Tree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, 
   return true;
 }
 
+void Tree::cleanTree()
+{
+  std::vector<NodePtr> successors;
+  std::vector<NodePtr> white_list;
+  unsigned int removed_nodes;
+  if (direction_==Direction::Forward)
+    successors=root_->getChildren();
+  else
+    successors=root_->getParents();
+  for (NodePtr& n: successors)
+  {
+    if (isInTree(n))
+      purgeFromHere(n,white_list,removed_nodes);
+  }
+}
+
 void Tree::populateTreeFromNode(const NodePtr& node)
 {
   std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
