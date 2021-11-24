@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #include <graph_core/graph/tree.h>
+#include <graph_core/graph/subtree.h>
 #include <graph_core/graph/path.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <moveit/planning_scene/planning_scene.h>
@@ -58,9 +59,9 @@ protected:
   moveit::core::RobotStatePtr state_;
 
   void displayTreeNode(const NodePtr& n,
-                       const Direction& direction,
-                       std::vector<geometry_msgs::Point> &points
-                       );
+                       const TreePtr& tree,
+                       std::vector<geometry_msgs::Point> &points,
+                       const bool check_in_tree = false);
 public:
   Display(const planning_scene::PlanningSceneConstPtr planning_scene,
           const std::string& group_name,
@@ -132,6 +133,14 @@ public:
                   const std::string& ns="pathplan",
                   const std::vector<double>& marker_color= {1,0,0,1.0});
   int displayTree(const TreePtr& tree,
+                  const int &static_id,
+                  const std::string& ns="pathplan",
+                  const std::vector<double>& marker_color= {1,0,0,1.0});
+
+  int displaySubtree(const SubtreePtr& subtree,
+                  const std::string& ns="pathplan",
+                  const std::vector<double>& marker_color= {1,0,0,1.0});
+  int displaySubtree(const SubtreePtr& subtree,
                   const int &static_id,
                   const std::string& ns="pathplan",
                   const std::vector<double>& marker_color= {1,0,0,1.0});

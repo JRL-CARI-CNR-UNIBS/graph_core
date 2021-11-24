@@ -39,21 +39,24 @@ class Subtree: public Tree
 protected:
   TreePtr parent_tree_;
 
-
 public:
 
-
   Subtree(const TreePtr& parent_tree,
-             const NodePtr& root,
-             const Direction &direction,
-             const double &max_distance,
-             const CollisionCheckerPtr &checker,
-             const MetricsPtr &metrics);
+          const NodePtr& root);
+  Subtree(const TreePtr& parent_tree,
+          const NodePtr& root,
+          const Eigen::VectorXd& focus1,
+          const Eigen::VectorXd& focus2,
+          const double& cost);
 
   virtual void addNode(const NodePtr& node, const bool& check_if_present = true);
   virtual void removeNode(const std::vector<NodePtr>::iterator& it);
 
   static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root);
+  static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root,
+                                  const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2,
+                                  const double& cost);
+
 };
 
 

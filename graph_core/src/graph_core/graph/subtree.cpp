@@ -30,15 +30,33 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 Subtree::Subtree(const TreePtr& parent_tree,
-                 const NodePtr& root,
-                 const Direction &direction,
-                 const double &max_distance,
-                 const CollisionCheckerPtr &checker,
-                 const MetricsPtr &metrics):
-  Tree(root,direction,max_distance,checker,metrics),
-  parent_tree_(parent_tree)
+                 const NodePtr& root):
+  parent_tree_(parent_tree),
+  Tree(root,parent_tree->getDirection(),parent_tree->getMaximumDistance(),
+       parent_tree->getChecker(),parent_tree->getMetrics())
 {
   populateTreeFromNode(root);
+}
+
+Subtree::Subtree(const TreePtr& parent_tree,
+                 const NodePtr& root,
+                 const Eigen::VectorXd& focus1,
+                 const Eigen::VectorXd& focus2,
+                 const double& cost):
+  parent_tree_(parent_tree),
+  Tree(root,parent_tree->getDirection(),parent_tree->getMaximumDistance(),
+       parent_tree->getChecker(),parent_tree->getMetrics())
+
+{
+    if(((root->getConfiguration()-focus1).norm()+(root->getConfiguration()-focus2).norm())<cost)
+      populateTreeFromNode(root,focus1,focus2,cost);
+    else
+    {
+      ROS_WARN("Root of subtree is not inside the ellipsoid!");
+      ROS_INFO_STREAM("Root:\n "<<*root<<"\nFocus1: "<<focus1.transpose()<<"\nFocus2: "<<focus1.transpose()<<"\nCost: "<<cost);
+
+      populateTreeFromNode(root);
+    }
 }
 
 void Subtree::addNode(const NodePtr& node, const bool& check_if_present)
@@ -54,10 +72,15 @@ void Subtree::removeNode(const std::vector<NodePtr>::iterator& it)
 }
 
 
-
-
 SubtreePtr Subtree::createSubtree(const TreePtr& parent_tree, const NodePtr& root)
 {
-  return std::make_shared<Subtree>(parent_tree,root,parent_tree->getDirection(),parent_tree->getMaximumDistance(),parent_tree->getChecker(),parent_tree->getMetrics());
+  return std::make_shared<Subtree>(parent_tree,root);
+}
+
+SubtreePtr Subtree::createSubtree(const TreePtr& parent_tree, const NodePtr& root,
+                                  const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2,
+                                  const double& cost)
+{
+  return std::make_shared<Subtree>(parent_tree,root,focus1,focus2,cost);
 }
 }

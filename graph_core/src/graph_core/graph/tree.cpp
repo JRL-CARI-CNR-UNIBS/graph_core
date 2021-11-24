@@ -533,7 +533,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
       conn->add();
       checked_connections.push_back(conn);
 
-//      nearest_node = n; //PER ME NON CI VA
+      //      nearest_node = n; //PER ME NON CI VA
       cost_to_node = cost_to_near + cost_near_to_node;
       improved = true;
     }
@@ -1148,6 +1148,13 @@ void Tree::cleanTree()
 
 void Tree::populateTreeFromNode(const NodePtr& node)
 {
+  Eigen::VectorXd focus1 = node->getConfiguration();
+  Eigen::VectorXd focus2 = node->getConfiguration();
+  populateTreeFromNode(node, focus1, focus2, std::numeric_limits<double>::infinity());
+}
+
+void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost)
+{
   std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
   if (it == nodes_.end())
   {
@@ -1158,18 +1165,25 @@ void Tree::populateTreeFromNode(const NodePtr& node)
   {
     for (const NodePtr& n: node->getChildren())
     {
-      nodes_.push_back(n);
-      populateTreeFromNode(n);
+      if(((n->getConfiguration() - focus1).norm() + (n->getConfiguration() - focus2).norm()) < cost)
+      {
+        nodes_.push_back(n);
+        populateTreeFromNode(n,focus1,focus2,cost);
+      }
     }
   }
   else
   {
     for (const NodePtr& n: node->getParents())
     {
-      nodes_.push_back(n);
-      populateTreeFromNode(n);
+      if(((n->getConfiguration() - focus1).norm() + (n->getConfiguration() - focus2).norm()) < cost)
+      {
+        nodes_.push_back(n);
+        populateTreeFromNode(n,focus1,focus2,cost);
+      }
     }
   }
+
 }
 
 

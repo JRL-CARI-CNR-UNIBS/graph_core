@@ -33,7 +33,10 @@ namespace pathplan
 bool RRT::config(const ros::NodeHandle& nh)
 {
   nh_ = nh;
-  max_distance_ = 1.0;
+
+  if(max_distance_ == 0)
+    max_distance_ = 1.0;
+
   configured_=true;
   return true;
 }

@@ -58,6 +58,11 @@ public:
     goal_node_ = goal;
   }
 
+  void setMaxDistance(const double& distance)
+  {
+    max_distance_ = distance;
+  }
+
   NodePtr getGoal()
   {
     return goal_node_;
