@@ -90,7 +90,7 @@ informed_rrt:
 
 goal_hamp_multigoal:
   type: Multigoal
-  max_distance: 0.5
+  max_distance: 0.5 # maximum distance in meters to connect two nodes
   max_refine_time: 1500.0
   rewire_radius: 2.0
   extend: true
@@ -107,8 +107,8 @@ goal_hamp_multigoal:
   base_frame: world #base_frame of the chain. ***CHANGE IT***
   tool_frame: open_tip #tool_frame of the chain. ***CHANGE IT***
 
-  min_distance: 0.4 # minimum distance between robot and human in meters. if distance<=min_distance the penalty is equal to the max_penalty. Default value is ok
-  max_distance: 0.6 # maximum distance  between robot and human in meters. if distance>=max_distance the penalty is 0. Default value is ok
+  min_avoidance_distance: 0.4 # minimum distance between robot and human in meters. if distance<=min_avoidance_distance the penalty is equal to the max_penalty. Default value is ok
+  max_avoidance_distance: 0.6 # maximum distance  between robot and human in meters. if distance>=max_avoidance_distance the penalty is 0. Default value is ok
   max_penalty: 10.0 # maximum penalty due to the distance between robot and human. Default value is ok
   display_bubbles: false #display penalty bubbles in rviz on topic "/goal_cost_function/avoidance_points". Default value is ok
   links: # links used for measuring the distance between robot and human. ***CHANGE IT***
