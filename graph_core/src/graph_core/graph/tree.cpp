@@ -1186,7 +1186,6 @@ void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focu
 
 }
 
-
 XmlRpc::XmlRpcValue Tree::toXmlRpcValue() const
 {
   XmlRpc::XmlRpcValue tree;

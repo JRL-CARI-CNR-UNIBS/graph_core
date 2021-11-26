@@ -302,7 +302,7 @@ bool AnytimeRRT::config(const ros::NodeHandle& nh)
 
 void AnytimeRRT::resetProblem()
 {
-  new_tree_ = NULL;
+  new_tree_.reset();
   completed_ = false;
 
   RRT::resetProblem();
