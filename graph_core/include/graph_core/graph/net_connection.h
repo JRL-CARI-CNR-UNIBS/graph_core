@@ -27,66 +27,31 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <graph_core/util.h>
-#include <graph_core/graph/node.h>
+#include <graph_core/graph/connection.h>
 namespace pathplan
 {
-class Connection : public std::enable_shared_from_this<Connection>
+class NetConnection;
+typedef std::shared_ptr<NetConnection> NetConnectionPtr;
+
+class NetConnection : public Connection
 {
 protected:
-  NodePtr parent_;
-  NodePtr child_;
-  double cost_;
-  bool valid = false;
-  double euclidean_norm_;
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Connection(const NodePtr& parent, const NodePtr& child);
-  ConnectionPtr pointer()
-  {
-    return shared_from_this();
-  }
+
+  NetConnection(const NodePtr& parent, const NodePtr& child);
 
   virtual void add();
   virtual void remove();
 
   virtual bool isNet()
   {
-    return false;
-  }
-
-  void setCost(const double& cost)
-  {
-    cost_ = cost;
-  }
-  const double& getCost()
-  {
-    return cost_;
-  }
-  double norm()
-  {
-    return euclidean_norm_;
-  }
-  const NodePtr& getParent() const
-  {
-    return parent_;
-  }
-  const NodePtr& getChild() const
-  {
-    return child_;
+    return true;
   }
 
   virtual ConnectionPtr clone();
 
-  void flip();
-
-  bool isParallel(const ConnectionPtr& conn, const double& toll = 1e-06);
-
-  friend std::ostream& operator<<(std::ostream& os, const Connection& connection);
-  ~Connection();
 };
-
-
-
-std::ostream& operator<<(std::ostream& os, const Connection& connection);
 
 }

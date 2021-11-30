@@ -1,4 +1,3 @@
-#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -26,67 +25,53 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/util.h>
-#include <graph_core/graph/node.h>
+#include <graph_core/graph/net_connection.h>
+
 namespace pathplan
 {
-class Connection : public std::enable_shared_from_this<Connection>
+NetConnection::NetConnection(const NodePtr &parent, const NodePtr &child):
+  Connection(parent,child)
 {
-protected:
-  NodePtr parent_;
-  NodePtr child_;
-  double cost_;
-  bool valid = false;
-  double euclidean_norm_;
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Connection(const NodePtr& parent, const NodePtr& child);
-  ConnectionPtr pointer()
+}
+
+void NetConnection::add()
+{
+  valid = true;
+  parent_->addChildConnection(pointer());
+  child_->addNetParentConnection(pointer());
+}
+void NetConnection::remove()
+{
+  if (!valid)
+    return;
+
+  valid = false;
+  if (parent_)
   {
-    return shared_from_this();
+    parent_->remoteChildConnection(pointer());
   }
+  else
+    ROS_FATAL("parent already destroied");
 
-  virtual void add();
-  virtual void remove();
-
-  virtual bool isNet()
+  if (child_)
   {
-    return false;
+    child_->remoteNetParentConnection(pointer());
   }
+  else
+    ROS_FATAL("child already destroied");
 
-  void setCost(const double& cost)
-  {
-    cost_ = cost;
-  }
-  const double& getCost()
-  {
-    return cost_;
-  }
-  double norm()
-  {
-    return euclidean_norm_;
-  }
-  const NodePtr& getParent() const
-  {
-    return parent_;
-  }
-  const NodePtr& getChild() const
-  {
-    return child_;
-  }
+}
 
-  virtual ConnectionPtr clone();
+ConnectionPtr NetConnection::clone()
+{
+  NodePtr new_parent = std::make_shared<Node>(parent_->getConfiguration());
+  NodePtr new_child = std::make_shared<Node>(child_->getConfiguration());
 
-  void flip();
+  NetConnectionPtr new_connection = std::make_shared<NetConnection>(new_parent,new_child);
+  new_connection->setCost(cost_);
+  new_connection->add();
 
-  bool isParallel(const ConnectionPtr& conn, const double& toll = 1e-06);
-
-  friend std::ostream& operator<<(std::ostream& os, const Connection& connection);
-  ~Connection();
-};
-
-
-
-std::ostream& operator<<(std::ostream& os, const Connection& connection);
+  return new_connection;
+}
 
 }

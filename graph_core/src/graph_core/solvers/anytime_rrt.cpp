@@ -51,7 +51,11 @@ void AnytimeRRT::importFromSolver(const TreeSolverPtr& solver)
     RRT::importFromSolver(std::static_pointer_cast<RRT>(solver));
 
   else
+  {
     TreeSolver::importFromSolver(solver);
+    if(max_distance_ <1e-06)
+      max_distance_ = 1.0;
+  }
 }
 
 bool AnytimeRRT::solveWithRRT(PathPtr& solution,

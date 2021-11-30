@@ -34,7 +34,7 @@ bool RRT::config(const ros::NodeHandle& nh)
 {
   nh_ = nh;
 
-  if(max_distance_ == 0)
+  if(max_distance_ < 1e-06)
     max_distance_ = 1.0;
 
   configured_=true;
@@ -59,7 +59,8 @@ void RRT::importFromSolver(const TreeSolverPtr& solver)
   else
   {
     TreeSolver::importFromSolver(solver);
-    //max_distance_ = 1.0;
+    if(max_distance_ <1e-06)
+      max_distance_ = 1.0;
   }
 }
 
@@ -74,6 +75,7 @@ bool RRT::addGoal(const NodePtr &goal_node, const double &max_time)
   goal_node_ = goal_node;
 
   goal_cost_=goal_cost_fcn_->cost(goal_node);
+
   setProblem(max_time);
 
   return true;
@@ -123,6 +125,11 @@ bool RRT::setProblem(const double &max_time)
 
   if(start_tree_->connectToNode(goal_node_, new_node,max_time))  //for direct connection to goal
   {
+
+
+    ROS_ERROR("connected");
+
+
     solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
 

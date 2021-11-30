@@ -27,66 +27,32 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <graph_core/util.h>
-#include <graph_core/graph/node.h>
+#include <graph_core/graph/tree.h>
+#include <graph_core/graph/graph_display.h>
+
 namespace pathplan
 {
-class Connection : public std::enable_shared_from_this<Connection>
+class Net;
+typedef std::shared_ptr<Net> NetPtr;
+
+class Net: public std::enable_shared_from_this<Net>
 {
 protected:
-  NodePtr parent_;
-  NodePtr child_;
-  double cost_;
-  bool valid = false;
-  double euclidean_norm_;
+  TreePtr linked_tree_;
+  std::vector<NodePtr> visited_nodes_;
+  DisplayPtr disp_;
+
+  std::multimap<double,std::vector<ConnectionPtr>> computeConnectionToNode(const NodePtr &node);
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Connection(const NodePtr& parent, const NodePtr& child);
-  ConnectionPtr pointer()
+  Net(const TreePtr& tree): linked_tree_(tree){}
+
+  void setDisp(const DisplayPtr& disp)
   {
-    return shared_from_this();
+    disp_ = disp;
   }
 
-  virtual void add();
-  virtual void remove();
-
-  virtual bool isNet()
-  {
-    return false;
-  }
-
-  void setCost(const double& cost)
-  {
-    cost_ = cost;
-  }
-  const double& getCost()
-  {
-    return cost_;
-  }
-  double norm()
-  {
-    return euclidean_norm_;
-  }
-  const NodePtr& getParent() const
-  {
-    return parent_;
-  }
-  const NodePtr& getChild() const
-  {
-    return child_;
-  }
-
-  virtual ConnectionPtr clone();
-
-  void flip();
-
-  bool isParallel(const ConnectionPtr& conn, const double& toll = 1e-06);
-
-  friend std::ostream& operator<<(std::ostream& os, const Connection& connection);
-  ~Connection();
+  std::multimap<double,std::vector<ConnectionPtr>> getConnectionToNode(const NodePtr& node);
+  std::multimap<double,std::vector<ConnectionPtr>> getConnectionBetweenNodes(const NodePtr& start_node,const NodePtr& goal_node, bool& is_net_connected);
 };
-
-
-
-std::ostream& operator<<(std::ostream& os, const Connection& connection);
 
 }

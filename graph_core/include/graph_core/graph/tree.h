@@ -164,7 +164,7 @@ public:
 
   double costToNode(NodePtr node);
 
-  std::vector<ConnectionPtr> getConnectionToNode(NodePtr node);
+  std::vector<ConnectionPtr> getConnectionToNode(NodePtr node);  //la &?
 
   bool keepOnlyThisBranch(const std::vector<ConnectionPtr>& connections);
 
