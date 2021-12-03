@@ -73,6 +73,13 @@ void Node::addNetParentConnection(const ConnectionPtr &connection)
   assert(connection->getChild() == pointer());
   net_parent_connections_.push_back(connection);
 }
+
+void Node::addNetChildConnection(const ConnectionPtr &connection)
+{
+  assert(connection->getParent() == pointer());
+  net_child_connections_.push_back(connection);
+}
+
 void Node::remoteParentConnection(const ConnectionPtr &connection)
 {
   std::vector<ConnectionPtr>::iterator it = std::find(parent_connections_.begin(), parent_connections_.end(), connection);
@@ -114,11 +121,26 @@ void Node::remoteChildConnection(const ConnectionPtr &connection)
   }
 }
 
+void Node::remoteNetChildConnection(const ConnectionPtr &connection)
+{
+  std::vector<ConnectionPtr>::iterator it = std::find(net_child_connections_.begin(), net_child_connections_.end(), connection);
+  if (it == net_child_connections_.end())
+  {
+    ROS_FATAL("connection is not in the child vector");
+    //  throw std::invalid_argument("connection is not in the child vector");
+  }
+  else
+  {
+    net_child_connections_.erase(it);
+  }
+}
+
 void Node::disconnect()
 {
   disconnectParentConnections();
   disconnectNetParentConnections();
   disconnectChildConnections();
+  disconnectNetChildConnections();
 }
 
 void Node::disconnectParentConnections()
@@ -138,7 +160,7 @@ void Node::disconnectNetParentConnections()
   {
     if (conn)
       if (conn->getParent())
-        conn->getParent()->remoteChildConnection(conn);
+        conn->getParent()->remoteNetChildConnection(conn);
   }
   net_parent_connections_.clear();
 }
@@ -154,6 +176,17 @@ void Node::disconnectChildConnections()
   child_connections_.clear();
 }
 
+void Node::disconnectNetChildConnections()
+{
+  for (ConnectionPtr& conn : net_child_connections_)
+  {
+    if (conn)
+      if (conn->getChild())
+        conn->getChild()->remoteNetParentConnection(conn);
+  }
+  net_child_connections_.clear();
+}
+
 Node::~Node()
 {
   disconnect();
@@ -166,6 +199,20 @@ std::vector<NodePtr> Node::getChildren() const
     return children;
 
   for (const ConnectionPtr& conn : child_connections_)
+  {
+    assert(conn);
+    children.push_back(conn->getChild());
+  }
+  return children;
+}
+
+std::vector<NodePtr> Node::getNetChildren() const
+{
+  std::vector<NodePtr> children;
+  if (net_child_connections_.size()==0)
+    return children;
+
+  for (const ConnectionPtr& conn : net_child_connections_)
   {
     assert(conn);
     children.push_back(conn->getChild());
@@ -223,6 +270,7 @@ std::ostream& operator<<(std::ostream& os, const Node& node)
   os << "parent connections = " << node.parent_connections_.size() << std::endl;
   os << "child connections = " << node.child_connections_.size() << std::endl;
   os << "net parent connections = " << node.net_parent_connections_.size() << std::endl;
+  os << "net child connections = " << node.net_child_connections_.size() << std::endl;
 
   return os;
 }

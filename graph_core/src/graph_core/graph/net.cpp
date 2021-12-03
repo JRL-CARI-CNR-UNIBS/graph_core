@@ -29,81 +29,41 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
-
-std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionBetweenNodes(const NodePtr &start_node, const NodePtr& goal_node, bool& is_net_connected, const bool &get_only_net)
+std::multimap<double,std::vector<ConnectionPtr>> Net::getNetConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node)
 {
-  std::vector<NodePtr> goal_vector;
-  goal_vector.push_back(goal_node);
+  NodePtr net_parent;
+  std::vector<NodePtr> visited_nodes;
+  std::multimap<double,std::vector<ConnectionPtr>> map, parent_map;
 
-  std::vector<bool> is_net_connected_vector;
-  is_net_connected_vector.push_back(is_net_connected);
-
-  if(!linked_tree_->isInTree(start_node))
-    assert(0);
-
-  return getConnectionBetweenNodes(start_node,goal_vector,is_net_connected_vector,get_only_net);
-}
-
-std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionBetweenNodes(const NodePtr &start_node, const std::vector<NodePtr>& goal_vector, std::vector<bool>& is_net_connected_vector, const bool &get_only_net)
-{
-  TreePtr linked_tree = linked_tree_;
-  ROS_INFO("Creating subtree");
-  SubtreePtr subtree = std::make_shared<Subtree>(linked_tree_,start_node);
-  ROS_INFO("Subtree created");
-
-  linked_tree_ = subtree; //temporary substitute the linked tree with the subtree to get the connections to the goals
-
-  std::multimap<double,std::vector<ConnectionPtr>> only_net_map, map;
-
-  for(unsigned int i=0;i<goal_vector.size();i++)
+  for(const ConnectionPtr& net_parent_conn: goal_node->net_parent_connections_)
   {
-    ROS_INFO_STREAM("Goal number "<<i);
+    net_parent = net_parent_conn->getParent();
 
-    is_net_connected_vector.at(i) = false;
-    map = getConnectionToNode(goal_vector.at(i));
+    visited_nodes.clear();
+    visited_nodes.push_back(goal_node);
+    visited_nodes.push_back(net_parent);
 
-    ROS_INFO("Map computed");
+    parent_map = computeConnectionFromNodeToNode(start_node,net_parent,visited_nodes);
 
-    if(!map.empty())
-    {
-      ROS_INFO("Map NOT empty");
-
-      for(const std::pair<double,std::vector<ConnectionPtr>>& pair:map)
+    if(!parent_map.empty())
+      for(std::pair<double,std::vector<ConnectionPtr>> pair:parent_map)
       {
-        ROS_INFO("Map pair");
-
-        for(const ConnectionPtr& conn:pair.second)
-        {
-          if(conn->isNet())
-          {
-            if(get_only_net)
-            {
-              ROS_INFO("Inserting net pair");
-              only_net_map.insert(pair);
-            }
-
-            is_net_connected_vector.at(i) = true;
-            break;
-          }
-        }
-
-        if(is_net_connected_vector.at(i) && !get_only_net)
-        {
-          ROS_INFO("Break");
-          break;
-        }
+        pair.first = pair.first + net_parent_conn->getCost();
+        pair.second.push_back(net_parent_conn);
+        map.insert(pair);
       }
-    }
-    else
-      ROS_INFO("Map empty");
   }
 
-  linked_tree_ = linked_tree;
+  return map;
+}
 
-  if(get_only_net)
-    return only_net_map;
-  else
-    return map;
+
+std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionBetweenNodes(const NodePtr &start_node, const NodePtr& goal_node)
+{
+  std::vector<NodePtr> visited_nodes;
+  visited_nodes.push_back(goal_node);
+
+  return computeConnectionFromNodeToNode(start_node,goal_node,visited_nodes);
 }
 
 std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionToNode(const NodePtr &node)
@@ -111,79 +71,84 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionToNode(const 
   std::vector<NodePtr> visited_nodes;
   visited_nodes.push_back(node);
 
-  return computeConnectionToNode(node,visited_nodes);
+  return computeConnectionFromNodeToNode(linked_tree_->getRoot(),node,visited_nodes);
 }
 
-std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionToNode(const NodePtr& node, std::vector<NodePtr> &visited_nodes)
+std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, std::vector<NodePtr> &visited_nodes)
 {
   std::multimap<double,std::vector<ConnectionPtr>> map;
   std::pair<double,std::vector<ConnectionPtr>> pair;
   NodePtr parent;
 
-  if(node == linked_tree_->getRoot())
+  if(goal_node == linked_tree_->getRoot() || goal_node == start_node)
     return map;
   else
   {
-    if (node->parent_connections_.size() != 1)
+    if(goal_node->parent_connections_.size() != 1)
     {
       ROS_ERROR("a node of a tree should have only a parent");
-      ROS_ERROR_STREAM("node \n" << *node);
+      ROS_ERROR_STREAM("node \n" << *goal_node);
 
       ROS_INFO_STREAM("current root "<<linked_tree_->getRoot());
-      ROS_INFO_STREAM("node "<<node);
+      ROS_INFO_STREAM("goal node "<<goal_node);
+      ROS_INFO_STREAM("start node "<<start_node);
 
       assert(0);
     }
 
-    std::vector<ConnectionPtr> all_parent_connections = node->parent_connections_;
-    all_parent_connections.insert(all_parent_connections.end(),node->net_parent_connections_.begin(),node->net_parent_connections_.end());
+    std::vector<ConnectionPtr> all_parent_connections = goal_node->parent_connections_;
+    all_parent_connections.insert(all_parent_connections.end(),goal_node->net_parent_connections_.begin(),goal_node->net_parent_connections_.end());
 
-    for(const ConnectionPtr conn_parent_node:all_parent_connections)
+    for(const ConnectionPtr conn_parent_goal:all_parent_connections)
     {
-      parent = conn_parent_node->getParent();
+      parent = conn_parent_goal->getParent();
       if(disp_)
       {
         disp_->displayNode(parent,123456);
         disp_->nextButton();
       }
 
-      if(std::find(visited_nodes.begin(), visited_nodes.end(), parent) != visited_nodes.end())
-        continue;
-      else
-        visited_nodes.push_back(parent);
-
-      std::multimap<double,std::vector<ConnectionPtr>> map2parent = computeConnectionToNode(parent,visited_nodes);
-
-      visited_nodes.pop_back();
-
-      if(!map2parent.empty())
-      {
-        for(const std::pair<double,std::vector<ConnectionPtr>>& parent_pair:map2parent)
-        {
-          std::vector<ConnectionPtr> from_start_to_node = parent_pair.second;
-
-          if(from_start_to_node.front()->getParent() != linked_tree_->getRoot())
-            continue;
-          else
-          {
-            from_start_to_node.push_back(conn_parent_node);
-
-            pair.first = parent_pair.first + conn_parent_node->getCost();
-            pair.second = from_start_to_node;
-
-            map.insert(pair);
-          }
-        }
-      }
-      else
+      if(parent == start_node)
       {
         std::vector<ConnectionPtr> from_start_to_node;
-        from_start_to_node.push_back(conn_parent_node);
+        from_start_to_node.push_back(conn_parent_goal);
 
-        pair.first = conn_parent_node->getCost();
+        pair.first = conn_parent_goal->getCost();
         pair.second = from_start_to_node;
 
         map.insert(pair);
+        continue;
+      }
+      else
+      {
+        if(std::find(visited_nodes.begin(), visited_nodes.end(), parent) != visited_nodes.end())
+          continue;
+        else
+          visited_nodes.push_back(parent);
+
+        std::multimap<double,std::vector<ConnectionPtr>> map2parent = computeConnectionFromNodeToNode(start_node,parent,visited_nodes);
+
+        visited_nodes.pop_back();
+
+        if(!map2parent.empty())
+        {
+          for(const std::pair<double,std::vector<ConnectionPtr>>& parent_pair:map2parent)
+          {
+            std::vector<ConnectionPtr> from_start_to_parent = parent_pair.second;
+
+            if(from_start_to_parent.front()->getParent() != start_node)
+              continue;
+            else
+            {
+              from_start_to_parent.push_back(conn_parent_goal);
+
+              pair.first = parent_pair.first + conn_parent_goal->getCost();
+              pair.second = from_start_to_parent;
+
+              map.insert(pair);
+            }
+          }
+        }
       }
     }
     return map;

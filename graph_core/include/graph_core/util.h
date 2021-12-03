@@ -38,9 +38,11 @@ namespace pathplan
 enum Direction {Forward, Backward};
 
 class Connection;
+class NetConnection;
 class Node;
-typedef std::shared_ptr<Node> NodePtr;
 typedef std::shared_ptr<Connection> ConnectionPtr;
+typedef std::shared_ptr<NetConnection> NetConnectionPtr;
+typedef std::shared_ptr<Node> NodePtr;
 
 Eigen::MatrixXd computeRotationMatrix(const Eigen::VectorXd& x1, const Eigen::VectorXd&  x2);
 

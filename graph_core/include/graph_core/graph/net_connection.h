@@ -26,14 +26,10 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/util.h>
 #include <graph_core/graph/connection.h>
 namespace pathplan
 {
-class NetConnection;
-typedef std::shared_ptr<NetConnection> NetConnectionPtr;
-
-class NetConnection : public Connection
+class NetConnection: public Connection
 {
 protected:
 

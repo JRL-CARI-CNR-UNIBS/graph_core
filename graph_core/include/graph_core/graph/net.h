@@ -41,7 +41,8 @@ protected:
   TreePtr linked_tree_;
   DisplayPtr disp_;
 
-  std::multimap<double,std::vector<ConnectionPtr>> computeConnectionToNode(const NodePtr &node, std::vector<NodePtr>& visited_nodes);
+  std::multimap<double,std::vector<ConnectionPtr>> computeConnectionFromNodeToNode(const NodePtr &start_node, const NodePtr &goal_node, std::vector<NodePtr>& visited_nodes);
+
 public:
   Net(const TreePtr& tree): linked_tree_(tree){}
 
@@ -61,9 +62,8 @@ public:
   }
 
   std::multimap<double,std::vector<ConnectionPtr>> getConnectionToNode(const NodePtr& node);
-  std::multimap<double,std::vector<ConnectionPtr>> getConnectionBetweenNodes(const NodePtr& start_node,const NodePtr& goal_node, bool& is_net_connected, const bool& get_only_net = false);
-  std::multimap<double,std::vector<ConnectionPtr>> getConnectionBetweenNodes(const NodePtr& start_node, const std::vector<NodePtr>& goal_vector, std::vector<bool> &is_net_connected, const bool& get_only_net = false);
-
+  std::multimap<double,std::vector<ConnectionPtr>> getConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node);
+  std::multimap<double,std::vector<ConnectionPtr>> getNetConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node);
 };
 
 }

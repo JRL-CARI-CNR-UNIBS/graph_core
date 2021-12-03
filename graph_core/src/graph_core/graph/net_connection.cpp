@@ -37,7 +37,7 @@ NetConnection::NetConnection(const NodePtr &parent, const NodePtr &child):
 void NetConnection::add()
 {
   valid = true;
-  parent_->addChildConnection(pointer());
+  parent_->addNetChildConnection(pointer());
   child_->addNetParentConnection(pointer());
 }
 void NetConnection::remove()
@@ -48,7 +48,7 @@ void NetConnection::remove()
   valid = false;
   if (parent_)
   {
-    parent_->remoteChildConnection(pointer());
+    parent_->remoteNetChildConnection(pointer());
   }
   else
     ROS_FATAL("parent already destroied");
@@ -59,7 +59,6 @@ void NetConnection::remove()
   }
   else
     ROS_FATAL("child already destroied");
-
 }
 
 ConnectionPtr NetConnection::clone()
