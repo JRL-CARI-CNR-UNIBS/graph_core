@@ -125,11 +125,6 @@ bool RRT::setProblem(const double &max_time)
 
   if(start_tree_->connectToNode(goal_node_, new_node,max_time))  //for direct connection to goal
   {
-
-
-    ROS_ERROR("connected");
-
-
     solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
 

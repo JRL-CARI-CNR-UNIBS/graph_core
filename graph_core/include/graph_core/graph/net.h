@@ -39,10 +39,9 @@ class Net: public std::enable_shared_from_this<Net>
 {
 protected:
   TreePtr linked_tree_;
-  std::vector<NodePtr> visited_nodes_;
   DisplayPtr disp_;
 
-  std::multimap<double,std::vector<ConnectionPtr>> computeConnectionToNode(const NodePtr &node);
+  std::multimap<double,std::vector<ConnectionPtr>> computeConnectionToNode(const NodePtr &node, std::vector<NodePtr>& visited_nodes);
 public:
   Net(const TreePtr& tree): linked_tree_(tree){}
 
@@ -51,8 +50,20 @@ public:
     disp_ = disp;
   }
 
+  void setTree(const TreePtr& tree)
+  {
+    linked_tree_ = tree;
+  }
+
+  TreePtr getTree()
+  {
+    return linked_tree_;
+  }
+
   std::multimap<double,std::vector<ConnectionPtr>> getConnectionToNode(const NodePtr& node);
-  std::multimap<double,std::vector<ConnectionPtr>> getConnectionBetweenNodes(const NodePtr& start_node,const NodePtr& goal_node, bool& is_net_connected);
+  std::multimap<double,std::vector<ConnectionPtr>> getConnectionBetweenNodes(const NodePtr& start_node,const NodePtr& goal_node, bool& is_net_connected, const bool& get_only_net = false);
+  std::multimap<double,std::vector<ConnectionPtr>> getConnectionBetweenNodes(const NodePtr& start_node, const std::vector<NodePtr>& goal_vector, std::vector<bool> &is_net_connected, const bool& get_only_net = false);
+
 };
 
 }
