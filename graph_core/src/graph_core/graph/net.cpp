@@ -117,7 +117,6 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
         pair.second = from_start_to_node;
 
         map.insert(pair);
-        continue;
       }
       else
       {

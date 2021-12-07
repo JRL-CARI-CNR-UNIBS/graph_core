@@ -1096,6 +1096,13 @@ unsigned int Tree::purgeNodes(const SamplerPtr& sampler, const std::vector<NodeP
   return removed_nodes;
 }
 
+bool Tree::purgeFromHere(NodePtr& node)
+{
+  std::vector<NodePtr> white_list;
+  unsigned int removed_nodes;
+
+  return purgeFromHere(node,white_list,removed_nodes);
+}
 
 bool Tree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes)
 {
