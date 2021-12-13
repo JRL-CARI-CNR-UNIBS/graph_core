@@ -182,6 +182,9 @@ void AvoidanceGoalCostFunction::addPoint(const Eigen::Vector3d &point)
 
 void AvoidanceGoalCostFunction::publishPoints()
 {
+  if (!plot)
+    return;
+
   visualization_msgs::Marker marker;
   marker.type = visualization_msgs::Marker::SPHERE_LIST;
   marker.ns = "avoidance";
@@ -210,8 +213,6 @@ void AvoidanceGoalCostFunction::publishPoints()
     marker.points.push_back(p);
     marker.colors.push_back(marker.color);
   }
-
-
 
   marker_pub_.publish(marker);
   ros::Duration(0.15).sleep();

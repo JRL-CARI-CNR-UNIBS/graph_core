@@ -127,6 +127,8 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
   solutions_.push_back(solution);
   tube_samplers_.push_back(tube_sampler);
   status_.push_back(status);
+  were_goals_sampled_.push_back(0);
+  goal_probabilities_.push_back(1.0);
 
   if (isBestSolution(goal_nodes_.size()-1))
     ROS_DEBUG_STREAM("Goal "<<goal_node->getConfiguration().transpose() << " is the best one with a cost = "  << cost);
@@ -182,6 +184,8 @@ void MultigoalSolver::resetProblem()
   goal_trees_.clear();
   path_costs_.clear();
   utopias_.clear();
+  were_goals_sampled_.clear();
+  goal_probabilities_.clear();
   solutions_.clear();
   tube_samplers_.clear();
   status_.clear();
@@ -305,6 +309,13 @@ bool MultigoalSolver::config(const ros::NodeHandle& nh)
   return true;
 }
 
+bool MultigoalSolver::initGoalSelector()
+{
+  goal_manager_ = std::make_shared<multi_goal_selection::GoalSelectionManager>(nh_.getNamespace(), goal_nodes_.size(),sampler_->getDimension());
+  if (goal_manager_->isWarmStartSet())
+    goal_manager_->warmStart(costs_,utopias_,cost_);
+}
+
 
 bool MultigoalSolver::update(PathPtr& solution)
 {
@@ -322,12 +333,36 @@ bool MultigoalSolver::update(PathPtr& solution)
   }
 
 
+//  for (unsigned int igoal=0;igoal<goal_nodes_.size();igoal++)
+//  {
+//    double min_prob=0.2;
+//    if ((costs_.at(igoal)-cost_)>2.0*cost_)
+//    {
+//      goal_probabilities_.at(igoal)=min_prob;
+//    }
+//    else
+//    {
+//      goal_probabilities_.at(igoal)=1.0-(1.0-min_prob)*((costs_.at(igoal)-cost_))/(2.0*cost_);
+//    }
+//  }
+
+
+  goal_probabilities_ = goal_manager_->calculateProbabilities(were_goals_sampled_,costs_,utopias_,cost_);
+  std::fill(were_goals_sampled_.begin(), were_goals_sampled_.end(), 0);
+
   bool global_improvement=false;
   double old_cost=cost_;
 
-
   for (unsigned int igoal=0;igoal<goal_nodes_.size();igoal++)
   {
+    if (goal_probabilities_.at(igoal)<=0.0)
+      continue;
+    else if (goal_probabilities_.at(igoal)>=1.0);
+    else if (ud_(gen_)>goal_probabilities_.at(igoal))
+      continue;
+
+    were_goals_sampled_.at(igoal) = 1;
+
     NodePtr new_start_node, new_goal_node;
     bool add_to_start, add_to_goal;
     Eigen::VectorXd configuration;
@@ -337,18 +372,6 @@ bool MultigoalSolver::update(PathPtr& solution)
       configuration = sampler_->sample();
     bool is_goal_biased=ud_(gen_)<goal_bias_;
 
-    double prob=1.0;
-    double min_prob=0.2;
-    if ((costs_.at(igoal)-cost_)>2.0*cost_)
-    {
-      prob=min_prob;
-    }
-    else
-    {
-      prob=1.0-(1.0-min_prob)*((costs_.at(igoal)-cost_))/(2.0*cost_);
-    }
-    if (ud_(gen_)>prob)
-      continue;
     bool improved=false;
     switch (status_.at(igoal))
     {

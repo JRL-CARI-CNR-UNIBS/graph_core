@@ -87,6 +87,8 @@ public:
   virtual bool update(const Eigen::VectorXd& point, PathPtr& solution){return false;}
   virtual bool update(const NodePtr& n, PathPtr& solution){return false;}
 
+  virtual bool initGoalSelector(){return false;}
+
   virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100, const double &max_time = std::numeric_limits<double>::infinity());
   virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;
   virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;

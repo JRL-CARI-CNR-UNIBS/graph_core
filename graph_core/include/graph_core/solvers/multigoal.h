@@ -30,6 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/solvers/tree_solver.h>
 #include <graph_core/solvers/rrt_star.h>
 #include <graph_core/tube_informed_sampler.h>
+#include <graph_core/multi_goal_selection/goal_selection_manager.h>
+
 namespace pathplan
 {
 
@@ -45,6 +47,8 @@ protected:
   std::vector<double> goal_costs_;
   std::vector<double> costs_;
   std::vector<double> utopias_;
+  std::vector<double> goal_probabilities_;
+  std::vector<int> were_goals_sampled_;
   std::vector<PathPtr> solutions_;
   std::vector<TubeInformedSamplerPtr> tube_samplers_;
   std::vector<GoalStatus> status_;
@@ -75,6 +79,8 @@ protected:
   bool warp_=false;
   bool isBestSolution(const int& index);
 
+  multi_goal_selection::GoalSelectionManagerPtr goal_manager_;
+
   virtual void printMyself(std::ostream& os) const;
 public:
 
@@ -88,6 +94,7 @@ public:
   }
 
   virtual bool config(const ros::NodeHandle& nh);
+  virtual bool initGoalSelector();
   virtual bool update(PathPtr& solution);
 
   virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity());
