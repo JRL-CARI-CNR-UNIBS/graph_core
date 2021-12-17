@@ -73,6 +73,7 @@ protected:
   virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity());
   virtual void clean(){}
   bool warp_=false;
+  bool first_warp_=false;
   bool isBestSolution(const int& index);
 
   virtual void printMyself(std::ostream& os) const;

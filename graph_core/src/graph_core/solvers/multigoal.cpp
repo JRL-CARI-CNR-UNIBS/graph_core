@@ -92,7 +92,7 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
 
     solved_ = true;
 
-    if (cost<=(utopia+1e-8))
+    if (cost<=(utopia*utopia_tolerance_))
     {
       ROS_DEBUG("Goal %u reaches its utopia.", index);
       status=GoalStatus::done;
@@ -245,9 +245,21 @@ bool MultigoalSolver::config(const ros::NodeHandle& nh)
   }
   if (!nh.getParam("warp",warp_))
   {
-    ROS_DEBUG("%s/warp is not set. using false (connect algorithm)",nh.getNamespace().c_str());
+    ROS_DEBUG("%s/warp is not set. using false",nh.getNamespace().c_str());
     warp_=false;
   }
+
+  if (not warp_)
+  {
+    if (!nh.getParam("warp_once",first_warp_))
+    {
+      ROS_DEBUG("%s/warp_once is not set. using false",nh.getNamespace().c_str());
+      first_warp_=false;
+    }
+  }
+  else
+    first_warp_=true;
+
   if (!nh.getParam("k_nearest",knearest_))
   {
     ROS_DEBUG("%s/k_nearest is not set. using false (rewire using nodes in the radius)",nh.getNamespace().c_str());
@@ -449,7 +461,7 @@ bool MultigoalSolver::update(PathPtr& solution)
         solutions_.at(igoal)->setTree(start_tree_);
 
         double cost_1=solutions_.at(igoal)->cost();
-        if (warp_)
+        if (first_warp_)
         {
           ros::WallTime twarp=ros::WallTime::now();
           for (int iwarp=0;iwarp<10;iwarp++)
@@ -469,7 +481,7 @@ bool MultigoalSolver::update(PathPtr& solution)
         costs_.at(igoal) = path_costs_.at(igoal)+goal_costs_.at(igoal);
 
         solved_ = true;
-        if (path_costs_.at(igoal)<=(utopias_.at(igoal)*utopia_tolerance_))
+        if (costs_.at(igoal)<=(utopias_.at(igoal)*utopia_tolerance_))
         {
           ROS_DEBUG("Goal %u reaches its utopia. cost = %f, utopia =%f",igoal,path_costs_.at(igoal),utopias_.at(igoal));
           status_.at(igoal)=GoalStatus::done;
@@ -527,7 +539,7 @@ bool MultigoalSolver::update(PathPtr& solution)
         tube_samplers_.at(igoal)->setRadius(tube_radius_*solutions_.at(igoal)->cost());
         path_costs_.at(igoal) = solutions_.at(igoal)->cost();
         costs_.at(igoal) = path_costs_.at(igoal)+goal_costs_.at(igoal);
-        if (costs_.at(igoal)<=(utopias_.at(igoal)+1e-8))
+        if (costs_.at(igoal)<=(utopias_.at(igoal)*utopia_tolerance_))
         {
           ROS_DEBUG("Goal %u reaches its utopia. cost = %f, utopia =%f",igoal,costs_.at(igoal),utopias_.at(igoal));
           cleanTree();
@@ -572,7 +584,7 @@ bool MultigoalSolver::update(PathPtr& solution)
             tube_samplers_.at(igoal)->setRadius(tube_radius_*solutions_.at(igoal)->cost());
             path_costs_.at(igoal) = solutions_.at(igoal)->cost();
             costs_.at(igoal) = path_costs_.at(igoal)+goal_costs_.at(igoal);
-            if (costs_.at(igoal)<=(utopias_.at(igoal)+1e-8))
+            if (costs_.at(igoal)<=(utopias_.at(igoal)*utopia_tolerance_))
             {
               ROS_DEBUG("Goal %u reaches its utopia. cost = %f, utopia =%f",igoal,costs_.at(igoal),utopias_.at(igoal));
               cleanTree();
