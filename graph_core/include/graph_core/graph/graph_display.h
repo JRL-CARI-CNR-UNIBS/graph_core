@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #pragma once
-#include <graph_core/graph/tree.h>
+#include <graph_core/graph/net.h>
 #include <graph_core/graph/subtree.h>
 #include <graph_core/graph/path.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -62,6 +62,10 @@ protected:
                        const TreePtr& tree,
                        std::vector<geometry_msgs::Point> &points,
                        const bool check_in_tree = false);
+  void displayNetNode(const NodePtr& n,
+                      const NetPtr& net,
+                      std::vector<geometry_msgs::Point> &points,
+                      const bool check_in_tree = false);
 public:
   Display(const planning_scene::PlanningSceneConstPtr planning_scene,
           const std::string& group_name,
@@ -137,13 +141,21 @@ public:
                   const std::string& ns="pathplan",
                   const std::vector<double>& marker_color= {1,0,0,1.0});
 
+  int displayNet(const NetPtr& net,
+                 const std::string& ns="pathplan",
+                 const std::vector<double>& marker_color= {1,0,0,1.0});
+  int displayNet(const NetPtr& net,
+                 const int &static_id,
+                 const std::string& ns="pathplan",
+                 const std::vector<double>& marker_color= {1,0,0,1.0});
+
   int displaySubtree(const SubtreePtr& subtree,
-                  const std::string& ns="pathplan",
-                  const std::vector<double>& marker_color= {1,0,0,1.0});
+                     const std::string& ns="pathplan",
+                     const std::vector<double>& marker_color= {1,0,0,1.0});
   int displaySubtree(const SubtreePtr& subtree,
-                  const int &static_id,
-                  const std::string& ns="pathplan",
-                  const std::vector<double>& marker_color= {1,0,0,1.0});
+                     const int &static_id,
+                     const std::string& ns="pathplan",
+                     const std::vector<double>& marker_color= {1,0,0,1.0});
 
   void nextButton(const std::string& string="Press Next");
 

@@ -442,13 +442,112 @@ void Display::displayTreeNode(const NodePtr &n,
   if (connections.size()==0)
     return;
 
+  NodePtr next_node;
   bool add_points;
   for (const ConnectionPtr& conn: connections)
   {
     add_points = true;
     if(check_in_tree)
     {
-      if(tree->isInTree(conn->getChild())) //CHIEDI SE DEVO DISTINGUERE PER DIRECTIONS
+        if(tree->getDirection()==Direction::Forward) //CHIEDI SE DEVO DISTINGUERE PER DIRECTIONS
+          next_node = conn->getChild();
+        else
+          next_node = conn->getParent();
+
+        if(tree->isInTree(next_node))
+          add_points = true;
+        else
+          add_points = false;
+    }
+
+    if(add_points)
+    {
+      geometry_msgs::Pose pose;
+      state_->setJointGroupPositions(group_name_,conn->getParent()->getConfiguration());
+      tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+      points.push_back(pose.position);
+
+      state_->setJointGroupPositions(group_name_,conn->getChild()->getConfiguration());
+      tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+      points.push_back(pose.position);
+
+      displayTreeNode(next_node,tree,points,check_in_tree);
+    }
+  }
+}
+
+int Display::displayNet(const NetPtr &net,
+                         const std::string &ns,
+                         const std::vector<double> &marker_color)
+{
+  int static_id = marker_id_++;
+
+  return displayNet(net,static_id,ns,marker_color);
+}
+
+int Display::displayNet(const NetPtr &net,
+                         const int &static_id,
+                         const std::string &ns,
+                         const std::vector<double> &marker_color)
+{
+  visualization_msgs::Marker marker;
+  marker.ns = ns;
+  marker.type = visualization_msgs::Marker::LINE_LIST;
+  marker.header.frame_id="world";
+  marker.header.stamp=ros::Time::now();
+  marker.action = visualization_msgs::Marker::ADD;
+  marker.id= static_id;
+
+  marker.scale.x = tree_marker_scale_.at(0);
+  marker.scale.y = tree_marker_scale_.at(1);
+  marker.scale.z = tree_marker_scale_.at(2);
+
+  marker.color.r = marker_color.at(0);
+  marker.color.g = marker_color.at(1);
+  marker.color.b = marker_color.at(2);
+  marker.color.a = marker_color.at(3);
+  displayNetNode(net->getTree()->getRoot(),net,marker.points,false);
+
+  marker_pub_.publish(marker);
+  ros::Duration(DISPLAY_TIME).sleep();
+  return marker.id;
+
+}
+
+void Display::displayNetNode(const NodePtr &n,
+                             const NetPtr& net,
+                             std::vector<geometry_msgs::Point>& points,
+                             const bool check_in_tree)
+{
+  TreePtr tree = net->getTree();
+  std::vector<ConnectionPtr> connections;
+  if (tree->getDirection()==Direction::Forward)
+   {
+    connections=n->child_connections_;
+    connections.insert(connections.end(),n->net_child_connections_.begin(),n->net_child_connections_.end());
+  }
+  else
+  {
+    connections=n->parent_connections_;
+    connections.insert(connections.end(),n->net_parent_connections_.begin(),n->net_parent_connections_.end());
+
+  }
+  if (connections.size()==0)
+    return;
+
+  NodePtr next_node;
+  bool add_points;
+  for (const ConnectionPtr& conn: connections)
+  {
+    add_points = true;
+    if(check_in_tree)
+    {
+      if(tree->getDirection()==Direction::Forward) //CHIEDI SE DEVO DISTINGUERE PER DIRECTIONS
+        next_node = conn->getChild();
+      else
+        next_node = conn->getParent();
+
+      if(tree->isInTree(next_node))
         add_points = true;
       else
         add_points = false;
@@ -465,7 +564,7 @@ void Display::displayTreeNode(const NodePtr &n,
       tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
       points.push_back(pose.position);
 
-      displayTreeNode(conn->getChild(),tree,points,check_in_tree);
+      displayTreeNode(next_node,tree,points,check_in_tree);
     }
   }
 }
