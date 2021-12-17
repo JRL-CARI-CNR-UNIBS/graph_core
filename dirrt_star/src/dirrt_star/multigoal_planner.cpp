@@ -138,7 +138,17 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
     m_centroid_sub=m_nh.subscribe(detector_topic,2,&MultigoalPlanner::centroidCb,this);
   }
 
+  if (!m_nh.getParam("collision_distance",collision_distance_))
+  {
+    ROS_DEBUG("collision_distance is not set, default=0.04");
+    collision_distance_=0.04;
+  }
 
+  if (!m_nh.getParam("collision_thread",collision_thread_))
+  {
+    ROS_DEBUG("collision_thread is not set, default=5");
+    collision_distance_=5;
+  }
 
 
 
