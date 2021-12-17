@@ -147,7 +147,7 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
   if (!m_nh.getParam("collision_thread",collision_thread_))
   {
     ROS_DEBUG("collision_thread is not set, default=5");
-    collision_distance_=5;
+    collision_thread_=5;
   }
 
 
