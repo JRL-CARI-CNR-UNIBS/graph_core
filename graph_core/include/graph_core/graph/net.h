@@ -28,7 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/util.h>
 #include <graph_core/graph/tree.h>
-#include <graph_core/graph/graph_display.h>
 
 namespace pathplan
 {
@@ -39,17 +38,11 @@ class Net: public std::enable_shared_from_this<Net>
 {
 protected:
   TreePtr linked_tree_;
-  DisplayPtr disp_;
 
   std::multimap<double,std::vector<ConnectionPtr>> computeConnectionFromNodeToNode(const NodePtr &start_node, const NodePtr &goal_node, std::vector<NodePtr>& visited_nodes);
 
 public:
   Net(const TreePtr& tree): linked_tree_(tree){}
-
-  void setDisp(const DisplayPtr& disp)
-  {
-    disp_ = disp;
-  }
 
   void setTree(const TreePtr& tree)
   {

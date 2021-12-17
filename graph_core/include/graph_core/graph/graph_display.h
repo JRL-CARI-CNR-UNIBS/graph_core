@@ -64,8 +64,7 @@ protected:
                        const bool check_in_tree = false);
   void displayNetNode(const NodePtr& n,
                       const NetPtr& net,
-                      std::vector<geometry_msgs::Point> &points,
-                      const bool check_in_tree = false);
+                      std::vector<geometry_msgs::Point> &points);
 public:
   Display(const planning_scene::PlanningSceneConstPtr planning_scene,
           const std::string& group_name,
@@ -74,6 +73,11 @@ public:
   DisplayPtr pointer()
   {
     return shared_from_this();
+  }
+
+  int getMarkerCounter()
+  {
+    return marker_id_;
   }
 
   void changeNodeSize(const std::vector<double>& marker_size)

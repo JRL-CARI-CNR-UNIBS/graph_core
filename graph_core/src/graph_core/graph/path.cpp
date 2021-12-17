@@ -878,8 +878,6 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
     NodePtr parent = conn->getParent();
     NodePtr child = conn->getChild();
 
-    ROS_INFO_STREAM("conn per add, parent: "<<parent->getConfiguration().transpose()<<" child: "<<child->getConfiguration().transpose());
-
     if(parent->getConfiguration() == configuration)
     {
       ROS_WARN("Node equal to parent");
@@ -893,8 +891,6 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
     else
     {
       NodePtr actual_node = std::make_shared<Node>(configuration);
-
-      ROS_INFO_STREAM("node added: "<<configuration.transpose());
 
       if(rewire)
       {

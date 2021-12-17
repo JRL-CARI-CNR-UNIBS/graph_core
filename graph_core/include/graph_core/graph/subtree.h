@@ -43,19 +43,36 @@ public:
 
   Subtree(const TreePtr& parent_tree,
           const NodePtr& root);
+
+  Subtree(const TreePtr& parent_tree,
+          const NodePtr& root,
+          const std::vector<NodePtr>& white_list);
+
   Subtree(const TreePtr& parent_tree,
           const NodePtr& root,
           const Eigen::VectorXd& focus1,
           const Eigen::VectorXd& focus2,
           const double& cost);
 
+  Subtree(const TreePtr& parent_tree,
+          const NodePtr& root,
+          const Eigen::VectorXd& focus1,
+          const Eigen::VectorXd& focus2,
+          const double& cost,
+          const std::vector<NodePtr>& white_list);
+
   virtual void addNode(const NodePtr& node, const bool& check_if_present = true);
   virtual void removeNode(const std::vector<NodePtr>::iterator& it);
 
   static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root);
   static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root,
+                                  const std::vector<NodePtr>& white_list);
+  static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root,
                                   const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2,
                                   const double& cost);
+  static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root,
+                                  const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2,
+                                  const double& cost, const std::vector<NodePtr>& white_list);
 
 };
 

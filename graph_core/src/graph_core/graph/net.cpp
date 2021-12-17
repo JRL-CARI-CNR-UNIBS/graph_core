@@ -102,11 +102,6 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
     for(const ConnectionPtr conn_parent_goal:all_parent_connections)
     {
       parent = conn_parent_goal->getParent();
-      if(disp_)
-      {
-        disp_->displayNode(parent,123456);
-        disp_->nextButton();
-      }
 
       if(parent == start_node)
       {

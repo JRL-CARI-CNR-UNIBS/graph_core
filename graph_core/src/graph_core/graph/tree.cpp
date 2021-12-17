@@ -1160,7 +1160,21 @@ void Tree::populateTreeFromNode(const NodePtr& node)
   populateTreeFromNode(node, focus1, focus2, std::numeric_limits<double>::infinity());
 }
 
+void Tree::populateTreeFromNode(const NodePtr& node, const std::vector<NodePtr>& white_list)
+{
+  Eigen::VectorXd focus1 = node->getConfiguration();
+  Eigen::VectorXd focus2 = node->getConfiguration();
+  populateTreeFromNode(node, focus1, focus2, std::numeric_limits<double>::infinity(),white_list);
+}
+
 void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost)
+{
+  std::vector<NodePtr> white_list;
+  populateTreeFromNode(node, focus1, focus2, std::numeric_limits<double>::infinity(), white_list);
+}
+
+
+void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost, const std::vector<NodePtr> &white_list)
 {
   std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
   if (it == nodes_.end())
@@ -1172,10 +1186,17 @@ void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focu
   {
     for (const NodePtr& n: node->getChildren())
     {
-      if(((n->getConfiguration() - focus1).norm() + (n->getConfiguration() - focus2).norm()) < cost)
+      std::vector<NodePtr>::const_iterator it = std::find(white_list.begin(), white_list.end(), n);
+      if(it != white_list.end())
+        continue;
+
+      else
       {
-        nodes_.push_back(n);
-        populateTreeFromNode(n,focus1,focus2,cost);
+        if(((n->getConfiguration() - focus1).norm() + (n->getConfiguration() - focus2).norm()) < cost)
+        {
+          nodes_.push_back(n);
+          populateTreeFromNode(n,focus1,focus2,cost,white_list);
+        }
       }
     }
   }
@@ -1183,10 +1204,17 @@ void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focu
   {
     for (const NodePtr& n: node->getParents())
     {
-      if(((n->getConfiguration() - focus1).norm() + (n->getConfiguration() - focus2).norm()) < cost)
+      std::vector<NodePtr>::const_iterator it = std::find(white_list.begin(), white_list.end(), n);
+      if(it != white_list.end())
+        continue;
+
+      else
       {
-        nodes_.push_back(n);
-        populateTreeFromNode(n,focus1,focus2,cost);
+        if(((n->getConfiguration() - focus1).norm() + (n->getConfiguration() - focus2).norm()) < cost)
+        {
+          nodes_.push_back(n);
+          populateTreeFromNode(n,focus1,focus2,cost,white_list);
+        }
       }
     }
   }

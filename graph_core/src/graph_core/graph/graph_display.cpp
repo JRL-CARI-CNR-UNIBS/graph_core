@@ -233,7 +233,6 @@ int Display::displayPath(const PathPtr &path,
     Eigen::VectorXd conf1 = parent;
     Eigen::VectorXd conf2;
 
-
     for(unsigned int i=1;i<=SUBDIVISION_FACTOR; i++)
     {
       conf2 = parent + i*step*v;
@@ -435,29 +434,24 @@ void Display::displayTreeNode(const NodePtr &n,
                               const bool check_in_tree)
 {
   std::vector<ConnectionPtr> connections;
-  if (tree->getDirection()==Direction::Forward)
+  if(tree->getDirection()==Direction::Forward)
     connections=n->child_connections_;
   else
     connections=n->parent_connections_;
+
   if (connections.size()==0)
     return;
 
-  NodePtr next_node;
   bool add_points;
   for (const ConnectionPtr& conn: connections)
   {
     add_points = true;
     if(check_in_tree)
     {
-        if(tree->getDirection()==Direction::Forward) //CHIEDI SE DEVO DISTINGUERE PER DIRECTIONS
-          next_node = conn->getChild();
-        else
-          next_node = conn->getParent();
-
-        if(tree->isInTree(next_node))
-          add_points = true;
-        else
-          add_points = false;
+      if(tree->isInTree(conn->getChild())) //CHIEDI SE DEVO DISTINGUERE PER DIRECTIONS
+        add_points = true;
+      else
+        add_points = false;
     }
 
     if(add_points)
@@ -471,14 +465,14 @@ void Display::displayTreeNode(const NodePtr &n,
       tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
       points.push_back(pose.position);
 
-      displayTreeNode(next_node,tree,points,check_in_tree);
+      displayTreeNode(conn->getChild(),tree,points,check_in_tree);
     }
   }
 }
 
 int Display::displayNet(const NetPtr &net,
-                         const std::string &ns,
-                         const std::vector<double> &marker_color)
+                        const std::string &ns,
+                        const std::vector<double> &marker_color)
 {
   int static_id = marker_id_++;
 
@@ -486,9 +480,9 @@ int Display::displayNet(const NetPtr &net,
 }
 
 int Display::displayNet(const NetPtr &net,
-                         const int &static_id,
-                         const std::string &ns,
-                         const std::vector<double> &marker_color)
+                        const int &static_id,
+                        const std::string &ns,
+                        const std::vector<double> &marker_color)
 {
   visualization_msgs::Marker marker;
   marker.ns = ns;
@@ -506,7 +500,7 @@ int Display::displayNet(const NetPtr &net,
   marker.color.g = marker_color.at(1);
   marker.color.b = marker_color.at(2);
   marker.color.a = marker_color.at(3);
-  displayNetNode(net->getTree()->getRoot(),net,marker.points,false);
+  displayNetNode(net->getTree()->getRoot(),net,marker.points);
 
   marker_pub_.publish(marker);
   ros::Duration(DISPLAY_TIME).sleep();
@@ -516,69 +510,44 @@ int Display::displayNet(const NetPtr &net,
 
 void Display::displayNetNode(const NodePtr &n,
                              const NetPtr& net,
-                             std::vector<geometry_msgs::Point>& points,
-                             const bool check_in_tree)
+                             std::vector<geometry_msgs::Point>& points)
 {
   TreePtr tree = net->getTree();
-  std::vector<ConnectionPtr> connections;
+  std::vector<ConnectionPtr> connections, net_connections;
   if (tree->getDirection()==Direction::Forward)
-   {
+  {
     connections=n->child_connections_;
-    connections.insert(connections.end(),n->net_child_connections_.begin(),n->net_child_connections_.end());
+    net_connections=n->net_child_connections_;
+    connections.insert(connections.end(),net_connections.begin(),net_connections.end());
   }
   else
   {
     connections=n->parent_connections_;
-    connections.insert(connections.end(),n->net_parent_connections_.begin(),n->net_parent_connections_.end());
-
+    net_connections = n->net_parent_connections_;
+    connections.insert(connections.end(),net_connections.begin(),net_connections.end());
   }
   if (connections.size()==0)
     return;
 
-  NodePtr next_node;
-  bool add_points;
   for (const ConnectionPtr& conn: connections)
   {
-    add_points = true;
-    if(check_in_tree)
-    {
-      if(tree->getDirection()==Direction::Forward) //CHIEDI SE DEVO DISTINGUERE PER DIRECTIONS
-        next_node = conn->getChild();
-      else
-        next_node = conn->getParent();
+    geometry_msgs::Pose pose;
+    state_->setJointGroupPositions(group_name_,conn->getParent()->getConfiguration());
+    tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+    points.push_back(pose.position);
 
-      if(tree->isInTree(next_node))
-        add_points = true;
-      else
-        add_points = false;
-    }
+    state_->setJointGroupPositions(group_name_,conn->getChild()->getConfiguration());
+    tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+    points.push_back(pose.position);
 
-    if(add_points)
-    {
-      geometry_msgs::Pose pose;
-      state_->setJointGroupPositions(group_name_,conn->getParent()->getConfiguration());
-      tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
-      points.push_back(pose.position);
-
-      state_->setJointGroupPositions(group_name_,conn->getChild()->getConfiguration());
-      tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
-      points.push_back(pose.position);
-
-      displayTreeNode(next_node,tree,points,check_in_tree);
-    }
+    displayNetNode(conn->getChild(),net,points);
   }
 }
 
 void Display::nextButton(const std::string& string)
 {
-  //moveit_visual_tools::MoveItVisualToolsPtr visual_tools_ = std::make_shared<moveit_visual_tools::MoveItVisualTools>(base_link_,"/rviz_visual_tools");
-  moveit_visual_tools::MoveItVisualToolsPtr visual_tools_ = std::make_shared<moveit_visual_tools::MoveItVisualTools>("/rviz_visual_tools");
-
-  /* Remote control is an introspection tool that allows users to step through a high level script
-  via buttons and keyboard shortcuts in RViz */
-  visual_tools_->loadRemoteControl();
-
-  /* We can also use visual_tools to wait for user input */
-  visual_tools_->prompt(string);
+  moveit_visual_tools::MoveItVisualToolsPtr visual_tools = std::make_shared<moveit_visual_tools::MoveItVisualTools>("/rviz_visual_tools");
+  visual_tools->loadRemoteControl();
+  visual_tools->prompt(string);
 }
 }
