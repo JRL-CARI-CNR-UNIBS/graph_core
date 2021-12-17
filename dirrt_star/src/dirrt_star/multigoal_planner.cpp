@@ -132,8 +132,8 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
   {
     if (!m_nh.getParam("detector_topic",detector_topic))
     {
-      ROS_DEBUG("detector_topic is not defined, using centroids");
-      detector_topic="/centroids";
+      ROS_DEBUG("detector_topic is not defined, using poses");
+      detector_topic="/poses";
     }
     m_centroid_sub=m_nh.subscribe(detector_topic,2,&MultigoalPlanner::centroidCb,this);
   }
