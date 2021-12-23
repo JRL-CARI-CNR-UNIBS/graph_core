@@ -1108,6 +1108,7 @@ bool Tree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, 
 {
   if (std::find(white_list.begin(), white_list.end(), node) != white_list.end())
   {
+    ROS_INFO_STREAM("Node in white list: "<<*node);
     return false;
   }
   assert(node);
@@ -1117,7 +1118,6 @@ bool Tree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, 
     successors = node->getChildren();
   else
     successors = node->getParents();
-
 
   for (NodePtr& n : successors)
   {
@@ -1153,28 +1153,27 @@ void Tree::cleanTree()
   }
 }
 
-void Tree::populateTreeFromNode(const NodePtr& node)
+void Tree::populateTreeFromNode(const NodePtr& node, const bool node_check)
 {
   Eigen::VectorXd focus1 = node->getConfiguration();
   Eigen::VectorXd focus2 = node->getConfiguration();
-  populateTreeFromNode(node, focus1, focus2, std::numeric_limits<double>::infinity());
+  populateTreeFromNode(node, focus1, focus2, std::numeric_limits<double>::infinity(), node_check);
 }
 
-void Tree::populateTreeFromNode(const NodePtr& node, const std::vector<NodePtr>& white_list)
+void Tree::populateTreeFromNode(const NodePtr& node, const std::vector<NodePtr>& black_list, const bool node_check)
 {
   Eigen::VectorXd focus1 = node->getConfiguration();
   Eigen::VectorXd focus2 = node->getConfiguration();
-  populateTreeFromNode(node, focus1, focus2, std::numeric_limits<double>::infinity(),white_list);
+  populateTreeFromNode(node, focus1, focus2, std::numeric_limits<double>::infinity(),black_list, node_check);
 }
 
-void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost)
+void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost, const bool node_check)
 {
-  std::vector<NodePtr> white_list;
-  populateTreeFromNode(node, focus1, focus2, std::numeric_limits<double>::infinity(), white_list);
+  std::vector<NodePtr> black_list;
+  populateTreeFromNode(node, focus1, focus2, cost, black_list, node_check);
 }
 
-
-void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost, const std::vector<NodePtr> &white_list)
+void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost, const std::vector<NodePtr> &black_list, const bool node_check)
 {
   std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
   if (it == nodes_.end())
@@ -1186,16 +1185,22 @@ void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focu
   {
     for (const NodePtr& n: node->getChildren())
     {
-      std::vector<NodePtr>::const_iterator it = std::find(white_list.begin(), white_list.end(), n);
-      if(it != white_list.end())
+      std::vector<NodePtr>::const_iterator it = std::find(black_list.begin(), black_list.end(), n);
+      if(it != black_list.end())
+      {
         continue;
-
+      }
       else
       {
         if(((n->getConfiguration() - focus1).norm() + (n->getConfiguration() - focus2).norm()) < cost)
         {
-          nodes_.push_back(n);
-          populateTreeFromNode(n,focus1,focus2,cost,white_list);
+          if(!checker_->check(n->getConfiguration()))
+            continue;
+          else
+          {
+            nodes_.push_back(n);
+            populateTreeFromNode(n,focus1,focus2,cost,black_list);
+          }
         }
       }
     }
@@ -1204,16 +1209,21 @@ void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focu
   {
     for (const NodePtr& n: node->getParents())
     {
-      std::vector<NodePtr>::const_iterator it = std::find(white_list.begin(), white_list.end(), n);
-      if(it != white_list.end())
+      std::vector<NodePtr>::const_iterator it = std::find(black_list.begin(), black_list.end(), n);
+      if(it != black_list.end())
         continue;
 
       else
       {
         if(((n->getConfiguration() - focus1).norm() + (n->getConfiguration() - focus2).norm()) < cost)
         {
-          nodes_.push_back(n);
-          populateTreeFromNode(n,focus1,focus2,cost,white_list);
+          if(!checker_->check(n->getConfiguration()))
+            continue;
+          else
+          {
+            nodes_.push_back(n);
+            populateTreeFromNode(n,focus1,focus2,cost,black_list);
+          }
         }
       }
     }

@@ -40,7 +40,7 @@ Subtree::Subtree(const TreePtr& parent_tree,
 
 Subtree::Subtree(const TreePtr& parent_tree,
                  const NodePtr& root,
-                 const std::vector<NodePtr>& white_list):
+                 const std::vector<NodePtr>& black_list):
   parent_tree_(parent_tree),
   Tree(root,parent_tree->getDirection(),parent_tree->getMaximumDistance(),
        parent_tree->getChecker(),parent_tree->getMetrics())
@@ -50,7 +50,7 @@ Subtree::Subtree(const TreePtr& parent_tree,
   focus1 = root->getConfiguration();
   focus2 = root->getConfiguration();
 
-  Subtree(parent_tree,root,focus1,focus2,cost,white_list);
+  populateSubtree(root,focus1,focus2,cost,black_list);
 }
 
 Subtree::Subtree(const TreePtr& parent_tree,
@@ -62,8 +62,8 @@ Subtree::Subtree(const TreePtr& parent_tree,
   Tree(root,parent_tree->getDirection(),parent_tree->getMaximumDistance(),
        parent_tree->getChecker(),parent_tree->getMetrics())
 {
-  std::vector<NodePtr> white_list;
-  Subtree(parent_tree,root,focus1,focus2,cost,white_list);
+  std::vector<NodePtr> black_list;
+  populateSubtree(root,focus1,focus2,cost,black_list);
 }
 
 Subtree::Subtree(const TreePtr& parent_tree,
@@ -71,20 +71,26 @@ Subtree::Subtree(const TreePtr& parent_tree,
                  const Eigen::VectorXd& focus1,
                  const Eigen::VectorXd& focus2,
                  const double& cost,
-                 const std::vector<NodePtr>& white_list):
+                 const std::vector<NodePtr>& black_list,
+                 const bool node_check):
   parent_tree_(parent_tree),
   Tree(root,parent_tree->getDirection(),parent_tree->getMaximumDistance(),
        parent_tree->getChecker(),parent_tree->getMetrics())
 
 {
+  populateSubtree(root,focus1,focus2,cost,black_list,node_check);
+}
+
+void Subtree::populateSubtree(const NodePtr& root, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost, const std::vector<NodePtr> &black_list, const bool node_check)
+{
   if(((root->getConfiguration()-focus1).norm()+(root->getConfiguration()-focus2).norm())<cost)
-    populateTreeFromNode(root,focus1,focus2,cost,white_list);
+    populateTreeFromNode(root,focus1,focus2,cost,black_list, node_check);
   else
   {
     ROS_WARN("Root of subtree is not inside the ellipsoid!");
     ROS_INFO_STREAM("Root:\n "<<*root<<"\nFocus1: "<<focus1.transpose()<<"\nFocus2: "<<focus1.transpose()<<"\nCost: "<<cost);
 
-    populateTreeFromNode(root,white_list);
+    populateTreeFromNode(root,black_list, node_check);
   }
 }
 
@@ -107,9 +113,9 @@ SubtreePtr Subtree::createSubtree(const TreePtr& parent_tree, const NodePtr& roo
 }
 
 SubtreePtr Subtree::createSubtree(const TreePtr& parent_tree, const NodePtr& root,
-                                  const std::vector<NodePtr>& white_list)
+                                  const std::vector<NodePtr>& black_list)
 {
-  return std::make_shared<Subtree>(parent_tree,root, white_list);
+  return std::make_shared<Subtree>(parent_tree,root, black_list);
 }
 
 SubtreePtr Subtree::createSubtree(const TreePtr& parent_tree, const NodePtr& root,
@@ -121,8 +127,9 @@ SubtreePtr Subtree::createSubtree(const TreePtr& parent_tree, const NodePtr& roo
 
 SubtreePtr Subtree::createSubtree(const TreePtr& parent_tree, const NodePtr& root,
                                   const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2,
-                                  const double& cost, const std::vector<NodePtr>& white_list)
+                                  const double& cost, const std::vector<NodePtr>& black_list,
+                                  const bool node_check)
 {
-  return std::make_shared<Subtree>(parent_tree,root,focus1,focus2,cost,white_list);
+  return std::make_shared<Subtree>(parent_tree,root,focus1,focus2,cost,black_list,node_check);
 }
 }

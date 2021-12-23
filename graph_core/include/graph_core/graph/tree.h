@@ -62,12 +62,12 @@ protected:
                                   unsigned int& removed_nodes);
 
   // add children(Forward direction) or parents (Backforward direction) to the tree. node is not added (throw exception if it is not member of the tree)
-  void populateTreeFromNode(const NodePtr& node);
-  void populateTreeFromNode(const NodePtr& node, const std::vector<NodePtr>& white_list);
+  void populateTreeFromNode(const NodePtr& node, const bool node_check = false);
+  void populateTreeFromNode(const NodePtr& node, const std::vector<NodePtr>& black_list, const bool node_check = false);
 
-  //add children(Forward direction) or parents (Backforward direction) to the tree if they are inside the ellipsoid
-  void populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost);
-  void populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost, const std::vector<NodePtr> &white_list);
+  //add children(Forward direction) or parents (Backforward direction) to the tree if they are inside the ellipsoid. node is not added (throw exception if it is not member of the tree)
+  void populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost, const bool node_check = false);
+  void populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost, const std::vector<NodePtr> &black_list, const bool node_check = false);
 
 
 public:

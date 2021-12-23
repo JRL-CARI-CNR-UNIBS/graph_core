@@ -89,9 +89,9 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
       ROS_ERROR("a node of a tree should have only a parent");
       ROS_ERROR_STREAM("node \n" << *goal_node);
 
-      ROS_INFO_STREAM("current root "<<linked_tree_->getRoot());
-      ROS_INFO_STREAM("goal node "<<goal_node);
-      ROS_INFO_STREAM("start node "<<start_node);
+      ROS_INFO_STREAM("current root "<<linked_tree_->getRoot()->getConfiguration().transpose()<< " "<<linked_tree_->getRoot());
+      ROS_INFO_STREAM("goal node "<<goal_node->getConfiguration().transpose()<<" "<<goal_node);
+      ROS_INFO_STREAM("start node "<<start_node->getConfiguration().transpose()<<" "<<start_node);
 
       assert(0);
     }
