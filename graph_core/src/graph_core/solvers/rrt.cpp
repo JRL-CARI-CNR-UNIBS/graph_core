@@ -89,7 +89,7 @@ bool RRT::addStart(const NodePtr &start_node, const double &max_time)
     return false;
   }
   solved_ = false;
-  start_tree_ = std::make_shared<Tree>(start_node, Forward, max_distance_, checker_, metrics_);
+  start_tree_ = std::make_shared<Tree>(start_node, max_distance_, checker_, metrics_);
 
   setProblem(max_time);
 

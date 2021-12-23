@@ -43,7 +43,7 @@ bool MultigoalSolver::addStart(const NodePtr& start_node, const double &max_time
   dimension_=start_node->getConfiguration().size();
 
   solved_ = false;
-  start_tree_ = std::make_shared<Tree>(start_node, Forward, max_distance_, checker_, metrics_);
+  start_tree_ = std::make_shared<Tree>(start_node, max_distance_, checker_, metrics_);
   setProblem(max_time);
   ROS_DEBUG("Add start goal");
   return true;
@@ -108,7 +108,7 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
   else
   {
     path_cost=cost = std::numeric_limits<double>::infinity();
-    goal_tree = std::make_shared<Tree>(goal_node, Backward, max_distance_, checker_, metrics_);
+    goal_tree = std::make_shared<Tree>(goal_node, max_distance_, checker_, metrics_);
     status=GoalStatus::search;
   }
 
@@ -371,7 +371,6 @@ bool MultigoalSolver::update(PathPtr& solution)
       {
         if (is_goal_biased) // if it is goal biased try to connect goal
         {
-          ROS_INFO_THROTTLE(0.1,"GOAL BIAS nodes size =%u",start_tree_->getNumberOfNodes());
           if (extend_)
             add_to_start = start_tree_->extendToNode(goal_nodes_.at(igoal), new_start_node);
           else
@@ -425,31 +424,33 @@ bool MultigoalSolver::update(PathPtr& solution)
         else // not is_goal_bias, add a new random node
         {
           // add node to the start tree
-          if (extend_)
-            add_to_start = start_tree_->extend(configuration, new_start_node);
-          else
-            add_to_start = start_tree_->connect(configuration, new_start_node);
+          add_to_start = extend_? start_tree_->extend(configuration, new_start_node):
+                                  start_tree_->connect(configuration, new_start_node);
 
 
-          if (add_to_start) // if it is added, try to add it to the goal tree
-          {
-            if (extend_)
-              add_to_goal = goal_trees_.at(igoal)->extendToNode(new_start_node, new_goal_node);
-            else
-              add_to_goal = goal_trees_.at(igoal)->connectToNode(new_start_node, new_goal_node);
-          }
-          else  // if it is not added, add a random node to the goal tree
-          {
-            if (extend_)
-              add_to_goal = goal_trees_.at(igoal)->extend(configuration, new_goal_node);
-            else
-              add_to_goal = goal_trees_.at(igoal)->connect(configuration, new_goal_node);
-          }
+          add_to_goal = extend_? goal_trees_.at(igoal)->extend(configuration, new_goal_node):
+                                 goal_trees_.at(igoal)->connect(configuration, new_goal_node);
 
-          if (add_to_start && add_to_goal && new_goal_node == new_start_node) // a solution is found
+
+          if (add_to_start && add_to_goal) // a solution is found
           {
-            goal_trees_.at(igoal)->keepOnlyThisBranch(goal_trees_.at(igoal)->getConnectionToNode(new_goal_node));
-            start_tree_->addBranch(goal_trees_.at(igoal)->getConnectionToNode(new_goal_node));
+
+            NodePtr parent=new_goal_node->getParents().at(0);
+            double cost_to_parent=new_goal_node->parent_connections_.at(0)->getCost();
+            new_goal_node->disconnect();
+
+            //goal_trees_.at(igoal)->keepOnlyThisBranch(goal_trees_.at(igoal)->getConnectionToNode(parent));
+
+            std::vector<ConnectionPtr> connections=goal_trees_.at(igoal)->getConnectionToNode(parent);
+            for (ConnectionPtr& conn: connections)
+              conn->flip();
+
+            ConnectionPtr conn_to_goal_parent=std::make_shared<Connection>(new_start_node,parent);
+            conn_to_goal_parent->add();
+            conn_to_goal_parent->setCost(cost_to_parent);
+            start_tree_->addNode(parent,false);
+            for (ConnectionPtr& conn: connections)
+              start_tree_->addNode(conn->getChild(),false);
             improved=true;
           }
         }

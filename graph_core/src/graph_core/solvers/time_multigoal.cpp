@@ -41,7 +41,7 @@ bool TimeMultigoalSolver::addStart(const NodePtr& start_node, const double &max_
     return false;
   }
   solved_ = false;
-  start_tree_ = std::make_shared<Tree>(start_node, Forward, max_distance_, checker_, metrics_);
+  start_tree_ = std::make_shared<Tree>(start_node, max_distance_, checker_, metrics_);
   setProblem(max_time);
   ROS_DEBUG("Add start goal");
   return true;
@@ -110,7 +110,7 @@ bool TimeMultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_ti
   else
   {
     path_cost=cost = std::numeric_limits<double>::infinity();
-    goal_tree = std::make_shared<Tree>(goal_node, Backward, max_distance_, checker_, metrics_);
+    goal_tree = std::make_shared<Tree>(goal_node, max_distance_, checker_, metrics_);
     status=GoalStatus::search;
   }
 

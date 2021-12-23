@@ -32,7 +32,7 @@ namespace pathplan
 Subtree::Subtree(const TreePtr& parent_tree,
                  const NodePtr& root):
   parent_tree_(parent_tree),
-  Tree(root,parent_tree->getDirection(),parent_tree->getMaximumDistance(),
+  Tree(root,parent_tree->getMaximumDistance(),
        parent_tree->getChecker(),parent_tree->getMetrics())
 {
   populateTreeFromNode(root);
@@ -42,7 +42,7 @@ Subtree::Subtree(const TreePtr& parent_tree,
                  const NodePtr& root,
                  const std::vector<NodePtr>& white_list):
   parent_tree_(parent_tree),
-  Tree(root,parent_tree->getDirection(),parent_tree->getMaximumDistance(),
+  Tree(root,parent_tree->getMaximumDistance(),
        parent_tree->getChecker(),parent_tree->getMetrics())
 {
   double cost = std::numeric_limits<double>::infinity();
@@ -59,7 +59,7 @@ Subtree::Subtree(const TreePtr& parent_tree,
                  const Eigen::VectorXd& focus2,
                  const double& cost):
   parent_tree_(parent_tree),
-  Tree(root,parent_tree->getDirection(),parent_tree->getMaximumDistance(),
+  Tree(root,parent_tree->getMaximumDistance(),
        parent_tree->getChecker(),parent_tree->getMetrics())
 {
   std::vector<NodePtr> white_list;
@@ -73,7 +73,7 @@ Subtree::Subtree(const TreePtr& parent_tree,
                  const double& cost,
                  const std::vector<NodePtr>& white_list):
   parent_tree_(parent_tree),
-  Tree(root,parent_tree->getDirection(),parent_tree->getMaximumDistance(),
+  Tree(root,parent_tree->getMaximumDistance(),
        parent_tree->getChecker(),parent_tree->getMetrics())
 
 {

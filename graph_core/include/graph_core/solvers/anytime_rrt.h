@@ -44,6 +44,7 @@ protected:
   SamplerPtr improve_sampler_;
   TreePtr new_tree_;
   NodePtr tmp_goal_node_;
+  double utopia_tolerance_=1.003;
 
   bool solveWithRRT(PathPtr& solution,
                     const unsigned int& max_iter = 100,

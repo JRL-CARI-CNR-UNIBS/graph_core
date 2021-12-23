@@ -41,7 +41,6 @@ class Tree: public std::enable_shared_from_this<Tree>
 {
 protected:
   NodePtr root_;
-  Direction direction_;
   double max_distance_=1;
   double tolerance_ = 1e-6;
   double k_rrt_;
@@ -61,11 +60,11 @@ protected:
                                   const std::vector<NodePtr>& white_list,
                                   unsigned int& removed_nodes);
 
-  // add children(Forward direction) or parents (Backforward direction) to the tree. node is not added (throw exception if it is not member of the tree)
+  // add children to the tree. node is not added (throw exception if it is not member of the tree)
   void populateTreeFromNode(const NodePtr& node);
   void populateTreeFromNode(const NodePtr& node, const std::vector<NodePtr>& white_list);
 
-  //add children(Forward direction) or parents (Backforward direction) to the tree if they are inside the ellipsoid
+  //add children to the tree if they are inside the ellipsoid
   void populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost);
   void populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost, const std::vector<NodePtr> &white_list);
 
@@ -73,7 +72,6 @@ protected:
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Tree(const NodePtr& root,
-       const Direction& direction,
        const double& max_distance,
        const CollisionCheckerPtr& checker,
        const MetricsPtr& metrics);
@@ -196,7 +194,6 @@ public:
   bool recheckCollisionFromNode(NodePtr &n); //return true if there are no collisions
 
   const double& getMaximumDistance() const {return max_distance_;}
-  const Direction& getDirection() const {return direction_;}
   MetricsPtr& getMetrics() {return metrics_;}
   CollisionCheckerPtr& getChecker() {return checker_;}
 
@@ -204,7 +201,6 @@ public:
   friend std::ostream& operator<<(std::ostream& os, const Tree& tree);
 
   static TreePtr fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
-                                 const Direction& direction,
                                  const double& max_distance,
                                  const CollisionCheckerPtr& checker,
                                  const MetricsPtr& metrics,

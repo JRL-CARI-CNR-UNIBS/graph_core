@@ -45,11 +45,13 @@ void AnytimeRRT::importFromSolver(const AnytimeRRTPtr& solver)
 void AnytimeRRT::importFromSolver(const TreeSolverPtr& solver)
 {
   if(std::dynamic_pointer_cast<pathplan::AnytimeRRT>(solver) != NULL)
+  {
     AnytimeRRT::importFromSolver(std::static_pointer_cast<AnytimeRRT>(solver));
-
+  }
   else if(std::dynamic_pointer_cast<pathplan::RRT>(solver) != NULL)
+  {
     RRT::importFromSolver(std::static_pointer_cast<RRT>(solver));
-
+  }
   else
   {
     TreeSolver::importFromSolver(solver);
@@ -64,7 +66,8 @@ bool AnytimeRRT::solveWithRRT(PathPtr& solution,
 {
   ros::WallTime tic = ros::WallTime::now();
 
-  if(max_time <=0.0) return false;
+  if(max_time <=0.0)
+    return false;
 
   for (unsigned int iter = 0; iter < max_iter; iter++)
   {
@@ -72,11 +75,11 @@ bool AnytimeRRT::solveWithRRT(PathPtr& solution,
     {
       solved_= true;
       solution_ = solution;
-
       return true;
     }
 
-    if((ros::WallTime::now()-tic).toSec()>=0.98*max_time) break;
+    if((ros::WallTime::now()-tic).toSec()>=0.98*max_time)
+      break;
   }
   return false;
 }
@@ -90,7 +93,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   {
     solution = solution_;
 
-    if (path_cost_ <= 1.03 * utopia_)
+    if (path_cost_ <= utopia_tolerance_ * utopia_)
     {
       ROS_INFO("Utopia reached!");
       completed_=true;
@@ -98,7 +101,8 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     }
   }
 
-  if(max_time <=0.0) return false;
+  if(max_time <=0.0)
+    return false;
 
   // RRT to find quickly a first sub-optimal solution
   bool success;
@@ -120,7 +124,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
 
   ROS_INFO_STREAM("Path cost: "<<path_cost_);
 
-  if (path_cost_ <= 1.03 * utopia_)
+  if (path_cost_ <= utopia_tolerance_ * utopia_)
   {
     ROS_INFO("Utopia reached!");
     completed_=true;
@@ -142,14 +146,14 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     improved = AnytimeRRT::improve(tmp_start_node,tmp_goal_node,solution,max_iter,(max_time-time));
 
     if(!improved)
-      n_failed_iter += 1;
+      n_failed_iter++;
     else
       n_failed_iter = 0;
 
     if(improved && start_tree_!=new_tree_)
       assert(0);
 
-    if(path_cost_ <= 1.03 * utopia_)
+    if(path_cost_ <= utopia_tolerance_ * utopia_)
     {
       ROS_INFO("Utopia reached!");
       completed_=true;
@@ -227,7 +231,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
 
 bool AnytimeRRT::improve(NodePtr& start_node, PathPtr& solution, const unsigned int& max_iter, const double &max_time)
 {
-  double cost2beat = (1-cost_impr_)*path_cost_;
+  double cost2beat = (1.0-cost_impr_)*path_cost_;
   return improve(start_node, solution, cost2beat, max_iter, max_time);
 }
 
@@ -239,7 +243,7 @@ bool AnytimeRRT::improve(NodePtr& start_node, PathPtr& solution, const double& c
 
 bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solution, const unsigned int& max_iter, const double &max_time)
 {
-  double cost2beat = (1-cost_impr_)*path_cost_;
+  double cost2beat = (1.0-cost_impr_)*path_cost_;
   return improve(start_node, goal_node, solution, cost2beat, max_iter, max_time);
 }
 
@@ -266,7 +270,7 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
     return false;
   }
 
-  new_tree_ = std::make_shared<Tree>(start_node, Forward, max_distance_, checker_, metrics_);
+  new_tree_ = std::make_shared<Tree>(start_node, max_distance_, checker_, metrics_);
 
   tmp_goal_node_ = goal_node;
   cost2beat_ = cost2beat;
@@ -301,6 +305,17 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
 bool AnytimeRRT::config(const ros::NodeHandle& nh)
 {
   setParameters();
+  if (!nh.getParam("utopia_tolerance",utopia_tolerance_))
+  {
+    ROS_WARN("%s/utopia_tolerance is not set. using 0.03",nh.getNamespace().c_str());
+    utopia_tolerance_=0.03;
+  }
+  if (utopia_tolerance_<=0.0)
+  {
+    ROS_WARN("%s/utopia_tolerance cannot be negative, set equal to 0.0",nh.getNamespace().c_str());
+    utopia_tolerance_=0.0;
+  }
+  utopia_tolerance_+=1.0;
   return RRT::config(nh);
 }
 

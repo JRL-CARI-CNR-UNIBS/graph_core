@@ -28,7 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #include <graph_core/solvers/tree_solver.h>
-#include <graph_core/solvers/rrt_star.h>
 #include <graph_core/tube_informed_sampler.h>
 namespace pathplan
 {
