@@ -44,18 +44,8 @@ Path::Path(std::vector<ConnectionPtr> connections,
   {
     cost_ += conn->getCost();
     change_warp_.push_back(true);
-    change_slip_child_.push_back(true);
-    change_slip_parent_.push_back(true);
-#ifdef NO_SPIRAL
-    change_spiral_.push_back(true);
-#endif
   }
   change_warp_.at(0) = false;
-  change_slip_child_.at(0) = false;
-  change_slip_parent_.at(0) = false;
-#ifdef NO_SPIRAL
-  change_spiral_.at(0) = false;
-#endif
 }
 
 Path::Path(std::vector<NodePtr> nodes,
@@ -82,20 +72,9 @@ Path::Path(std::vector<NodePtr> nodes,
 
     cost_ += cost;
     change_warp_.push_back(true);
-    change_slip_child_.push_back(true);
-    change_slip_parent_.push_back(true);
-#ifdef NO_SPIRAL
-    change_spiral_.push_back(true);
-#endif
   }
 
   change_warp_.at(0) = false;
-  change_slip_child_.at(0) = false;
-  change_slip_parent_.at(0) = false;
-#ifdef NO_SPIRAL
-  change_spiral_.at(0) = false;
-#endif
-
 }
 
 PathPtr Path::clone()
@@ -286,12 +265,7 @@ void Path::computeCost()
 
 void Path::setChanged(const unsigned int &connection_idx)
 {
-  change_slip_child_.at(connection_idx) = 1;
-  change_slip_parent_.at(connection_idx) = 1;
   change_warp_.at(connection_idx) = 1;
-#ifdef NO_SPIRAL
-  change_spiral_.at(connection_idx) = 1;
-#endif
 }
 
 bool Path::bisection(const unsigned int &connection_idx,
@@ -401,102 +375,6 @@ bool Path::warp(const double &min_dist, const double &max_time)
   });
 }
 
-bool Path::slipChild()
-{
-  for (unsigned int idx = 1; idx < connections_.size(); idx++)
-  {
-    if (change_slip_child_.at(idx - 1) || change_slip_child_.at(idx))
-    {
-      Eigen::VectorXd center = connections_.at(idx)->getChild()->getConfiguration();
-      Eigen::VectorXd direction = connections_.at(idx - 1)->getChild()->getConfiguration() - center;
-      double max_distance = direction.norm();
-      double min_distance = 0;
-
-      direction.normalize();
-
-      if (!bisection(idx, center, direction, max_distance, min_distance))
-      {
-        change_slip_child_.at(idx) = 0;
-      }
-      else
-        setChanged(idx);
-    }
-  }
-  return std::any_of(change_slip_child_.cbegin(), change_slip_child_.cend(), [](bool i)
-  {
-    return i;
-  });
-}
-
-bool Path::slipParent()
-{
-  for (unsigned int idx = 1; idx < connections_.size(); idx++)
-  {
-    if (change_slip_parent_.at(idx - 1) || change_slip_parent_.at(idx))
-    {
-      Eigen::VectorXd center = connections_.at(idx - 1)->getParent()->getConfiguration();
-      Eigen::VectorXd direction = connections_.at(idx - 1)->getChild()->getConfiguration() - center;
-      double max_distance = direction.norm();
-      double min_distance = 0;
-
-      direction.normalize();
-
-      if (!bisection(idx, center, direction, max_distance, min_distance))
-      {
-        change_slip_parent_.at(idx) = 0;
-      }
-      else
-        setChanged(idx);
-    }
-  }
-  return std::any_of(change_slip_parent_.cbegin(), change_slip_parent_.cend(), [](bool i)
-  {
-    return i;
-  });
-
-}
-
-#ifdef NO_SPIRAL
-bool Path::spiral()
-{
-  for (unsigned int idx = 1; idx < connections_.size(); idx++)
-  {
-    if (change_spiral_.at(idx - 1) || change_spiral_.at(idx))
-    {
-      Eigen::VectorXd center = 0.5 * (connections_.at(idx - 1)->getParent()->getConfiguration() +
-                                      connections_.at(idx)->getChild()->getConfiguration());
-      Eigen::VectorXd direction1 = connections_.at(idx - 1)->getChild()->getConfiguration() - center;
-      double max_distance = direction1.norm();
-      double min_distance = 0;
-
-      direction1.normalize();
-
-      Eigen::VectorXd direction2 = connections_.at(idx)->getChild()->getConfiguration() -
-          connections_.at(idx - 1)->getParent()->getConfiguration();
-      direction2.normalize();
-      Eigen::VectorXd direction3(direction1.size());
-      direction3.setRandom();
-      direction3 = direction3 - direction3.dot(direction1) * direction1;
-      direction3 = direction3 - direction3.dot(direction2) * direction2;
-      direction3.normalize();
-
-      Eigen::VectorXd direction = direction1 * 0.5 + direction3 * 0.5;
-
-      if (!bisection(idx, center, direction1, max_distance, min_distance))
-      {
-        change_spiral_.at(idx) = 0;
-      }
-      else
-        setChanged(idx);
-    }
-  }
-  return std::any_of(change_spiral_.cbegin(), change_spiral_.cend(), [](bool i)
-  {
-    return !i;
-  });
-
-}
-#endif
 bool Path::resample(const double &distance)
 {
   bool resampled = false;
@@ -1275,25 +1153,10 @@ bool Path::simplify(const double& distance)
       connections_.insert(connections_.begin() + (ic - 1), conn);
 
       change_warp_.erase(change_warp_.begin() + ic);
-      change_slip_parent_.erase(change_slip_parent_.begin() + ic);
-      change_slip_child_.erase(change_slip_child_.begin() + ic);
       if (ic>1)
       {
-        change_slip_child_.at(ic - 1) = 1;
         change_warp_.at(ic - 1) = 1;
-        change_slip_parent_.at(ic - 1) = 1;
       }
-      /*change_warp_.erase(change_warp_.begin() + ic-1);   //se da ancora problemi prova a usare questi anziche quelli sopra
-      change_warp_.at(ic - 1) = 1;
-      change_slip_parent_.erase(change_slip_parent_.begin() + ic-1);
-      change_slip_parent_.at(ic - 1) = 1;
-      change_slip_child_.erase(change_slip_child_.begin() + ic-1);
-      change_slip_child_.at(ic - 1) = 1;*/
-
-#ifndef NO_SPIRAL
-      change_spiral_.erase(change_spiral_.begin() + ic);
-      change_spiral_.begin() + (ic - 1) = 1;
-#endif
     }
     else
       ic++;
