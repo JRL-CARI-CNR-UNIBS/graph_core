@@ -26,55 +26,37 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <graph_core/util.h>
 #include <graph_core/graph/tree.h>
 
 namespace pathplan
 {
+class Net;
+typedef std::shared_ptr<Net> NetPtr;
 
-class Subtree;
-typedef std::shared_ptr<Subtree> SubtreePtr;
-
-class Subtree: public Tree
+class Net: public std::enable_shared_from_this<Net>
 {
 protected:
-  TreePtr parent_tree_;
+  TreePtr linked_tree_;
+
+  std::multimap<double,std::vector<ConnectionPtr>> computeConnectionFromNodeToNode(const NodePtr &start_node, const NodePtr &goal_node, std::vector<NodePtr>& visited_nodes);
 
 public:
+  Net(const TreePtr& tree): linked_tree_(tree){}
 
-  Subtree(const TreePtr& parent_tree,
-          const NodePtr& root);
+  void setTree(const TreePtr& tree)
+  {
+    linked_tree_ = tree;
+  }
 
-  Subtree(const TreePtr& parent_tree,
-          const NodePtr& root,
-          const std::vector<NodePtr>& white_list);
+  TreePtr getTree()
+  {
+    return linked_tree_;
+  }
 
-  Subtree(const TreePtr& parent_tree,
-          const NodePtr& root,
-          const Eigen::VectorXd& focus1,
-          const Eigen::VectorXd& focus2,
-          const double& cost);
-
-  Subtree(const TreePtr& parent_tree,
-          const NodePtr& root,
-          const Eigen::VectorXd& focus1,
-          const Eigen::VectorXd& focus2,
-          const double& cost,
-          const std::vector<NodePtr>& white_list);
-
-  virtual void addNode(const NodePtr& node, const bool& check_if_present = true);
-  virtual void removeNode(const std::vector<NodePtr>::iterator& it);
-
-  static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root);
-  static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root,
-                                  const std::vector<NodePtr>& white_list);
-  static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root,
-                                  const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2,
-                                  const double& cost);
-  static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root,
-                                  const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2,
-                                  const double& cost, const std::vector<NodePtr>& white_list);
-
+  std::multimap<double,std::vector<ConnectionPtr>> getConnectionToNode(const NodePtr& node);
+  std::multimap<double,std::vector<ConnectionPtr>> getConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node);
+  std::multimap<double,std::vector<ConnectionPtr>> getNetConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node);
 };
-
 
 }

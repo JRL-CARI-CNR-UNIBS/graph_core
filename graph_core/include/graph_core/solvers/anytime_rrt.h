@@ -40,8 +40,10 @@ protected:
   double bias_;
   double delta_; //dist_bias and cost_bias update factor
   double cost_impr_;  //cost improvement factor (new cost < (1-cost_impr_)*path_cost_)
-  bool new_tree_solved_;
+  double cost2beat_;
+  SamplerPtr improve_sampler_;
   TreePtr new_tree_;
+  NodePtr tmp_goal_node_;
 
   bool solveWithRRT(PathPtr& solution,
                     const unsigned int& max_iter = 100,
@@ -53,13 +55,17 @@ public:
              const CollisionCheckerPtr& checker,
              const SamplerPtr& sampler): RRT(metrics, checker, sampler)
   {
-    bias_ = 0.9;
     setParameters();
   }
 
   double getBias()
   {
     return bias_;
+  }
+
+  double getCost2Beat()
+  {
+    return cost2beat_;
   }
 
   double getDelta()
@@ -70,11 +76,6 @@ public:
   double getCostImpr()
   {
     return cost_impr_;
-  }
-
-  bool getNewTreeSolved()
-  {
-    return new_tree_solved_;
   }
 
   TreePtr getNewTree()
@@ -94,12 +95,26 @@ public:
 
   void setParameters(const double& delta = 0.1, const double& impr = 0.1)
   {
+    bias_ = 0.9;
     setDelta(delta);
     setCostImprovementFactor(impr);
   }
 
   bool improve(NodePtr &start_node,
                PathPtr& solution,
+               const double &cost2beat,
+               const unsigned int& max_iter = 100,
+               const double &max_time = std::numeric_limits<double>::infinity());
+
+  bool improve(NodePtr &start_node,
+               PathPtr& solution,
+               const unsigned int& max_iter = 100,
+               const double &max_time = std::numeric_limits<double>::infinity());
+
+  bool improve(NodePtr &start_node,
+               NodePtr &goal_node,
+               PathPtr& solution,
+               const double &cost2beat,
                const unsigned int& max_iter = 100,
                const double &max_time = std::numeric_limits<double>::infinity());
 
@@ -110,6 +125,7 @@ public:
                const double &max_time = std::numeric_limits<double>::infinity());
 
   void importFromSolver(const AnytimeRRTPtr& solver);
+  void importFromSolver(const TreeSolverPtr& solver);
 
   virtual bool solve(PathPtr& solution,
                      const unsigned int& max_iter = 100,

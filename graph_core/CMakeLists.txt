@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(graph_core)
-add_compile_options(-std=c++11 -funroll-loops -Wall -Ofast)
-#sset(CMAKE_BUILD_TYPE Release)
+#add_compile_options(-std=c++11 -funroll-loops -Wall -Ofast)
+add_compile_options(-std=c++11)
+#set(CMAKE_BUILD_TYPE Release)
 #add_compile_options(-std=c++14)
 set(CMAKE_BUILD_TYPE Debug)
 
@@ -52,6 +53,8 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/collision_checker.cpp
   src/${PROJECT_NAME}/graph/node.cpp
   src/${PROJECT_NAME}/graph/connection.cpp
+  src/${PROJECT_NAME}/graph/net_connection.cpp
+  src/${PROJECT_NAME}/graph/net.cpp
   src/${PROJECT_NAME}/graph/tree.cpp
   src/${PROJECT_NAME}/graph/subtree.cpp
   src/${PROJECT_NAME}/graph/path.cpp

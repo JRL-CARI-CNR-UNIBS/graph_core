@@ -1,4 +1,3 @@
-#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -26,24 +25,52 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#include <eigen3/Eigen/Core>
-#include <ros/ros.h>
-#define PATH_COMMENT(...) ROS_LOG(::ros::console::levels::Debug, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
-#define PATH_COMMENT_STREAM(...) ROS_LOG_STREAM(::ros::console::levels::Debug, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
+#include <graph_core/graph/net_connection.h>
 
 namespace pathplan
 {
+NetConnection::NetConnection(const NodePtr &parent, const NodePtr &child):
+  Connection(parent,child)
+{
+}
 
-enum Direction {Forward, Backward};
+void NetConnection::add()
+{
+  valid = true;
+  parent_->addNetChildConnection(pointer());
+  child_->addNetParentConnection(pointer());
+}
+void NetConnection::remove()
+{
+  if (!valid)
+    return;
 
-class Connection;
-class NetConnection;
-class Node;
-typedef std::shared_ptr<Connection> ConnectionPtr;
-typedef std::shared_ptr<NetConnection> NetConnectionPtr;
-typedef std::shared_ptr<Node> NodePtr;
+  valid = false;
+  if (parent_)
+  {
+    parent_->remoteNetChildConnection(pointer());
+  }
+  else
+    ROS_FATAL("parent already destroied");
 
-Eigen::MatrixXd computeRotationMatrix(const Eigen::VectorXd& x1, const Eigen::VectorXd&  x2);
+  if (child_)
+  {
+    child_->remoteNetParentConnection(pointer());
+  }
+  else
+    ROS_FATAL("child already destroied");
+}
+
+ConnectionPtr NetConnection::clone()
+{
+  NodePtr new_parent = std::make_shared<Node>(parent_->getConfiguration());
+  NodePtr new_child = std::make_shared<Node>(child_->getConfiguration());
+
+  NetConnectionPtr new_connection = std::make_shared<NetConnection>(new_parent,new_child);
+  new_connection->setCost(cost_);
+  new_connection->add();
+
+  return new_connection;
+}
 
 }

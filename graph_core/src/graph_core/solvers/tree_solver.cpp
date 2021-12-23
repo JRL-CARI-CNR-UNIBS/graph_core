@@ -79,10 +79,10 @@ bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node
 bool TreeSolver::setSolution(const PathPtr &solution, const bool& solved)
 {
   solution_ = solution;
-  solution_->setTree(start_tree_);
+  solution_->setTree(start_tree_);   //SE SOLUTION HA IL SUO TREE ED E' DIVERSO?
 
   path_cost_ = solution->cost();
-  cost_ = path_cost_+goal_cost_; //CHIEDI
+  cost_ = path_cost_+goal_cost_;
 
   solved_=solved;
   if (solved_)
@@ -94,11 +94,11 @@ bool TreeSolver::importFromSolver(const TreeSolverPtr& solver)
 {
   ROS_INFO_STREAM("Import from Tree solver");
 
-  solved_        = solver->solved();             //copy the value   CHIEDI
-  completed_     = solver->completed();          //copy the value
-  init_          = solver->init();               //copy the value
-  configured_    = solver->configured();         //copy the value
-  dof_           = solver->dof();                //copy the value
+  solved_        = solver->solved();
+  completed_     = solver->completed();
+  init_          = solver->init();
+  configured_    = solver->configured();
+  dof_           = solver->dof();
   nh_            = solver->getNodeHandle();
   goal_cost_fcn_ = solver->getGoalCostFunction();
   path_cost_     = solver->getPathCost();

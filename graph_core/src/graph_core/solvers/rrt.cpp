@@ -33,12 +33,15 @@ namespace pathplan
 bool RRT::config(const ros::NodeHandle& nh)
 {
   nh_ = nh;
-  max_distance_ = 1.0;
+
+  if(max_distance_ < 1e-06)
+    max_distance_ = 1.0;
+
   configured_=true;
   return true;
 }
 
-void RRT::importFromSolver(const RRTPtr& solver)
+void RRT::importFromSolver(const RRTPtr &solver)
 {
   ROS_INFO_STREAM("Import from RRT solver");
 
@@ -47,6 +50,18 @@ void RRT::importFromSolver(const RRTPtr& solver)
   goal_node_    = solver->getGoal();
   max_distance_ = solver->getMaxDistance();
   utopia_       = solver->getUtopia();
+}
+void RRT::importFromSolver(const TreeSolverPtr& solver)
+{
+  if(std::dynamic_pointer_cast<pathplan::RRT>(solver) != NULL)
+    RRT::importFromSolver(std::static_pointer_cast<RRT>(solver));
+
+  else
+  {
+    TreeSolver::importFromSolver(solver);
+    if(max_distance_ <1e-06)
+      max_distance_ = 1.0;
+  }
 }
 
 bool RRT::addGoal(const NodePtr &goal_node, const double &max_time)
@@ -60,6 +75,7 @@ bool RRT::addGoal(const NodePtr &goal_node, const double &max_time)
   goal_node_ = goal_node;
 
   goal_cost_=goal_cost_fcn_->cost(goal_node);
+
   setProblem(max_time);
 
   return true;

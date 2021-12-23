@@ -34,7 +34,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
-
 class Node: public std::enable_shared_from_this<Node>
 {
 protected:
@@ -45,6 +44,8 @@ protected:
 public:
   std::vector<ConnectionPtr> parent_connections_;
   std::vector<ConnectionPtr> child_connections_;
+  std::vector<ConnectionPtr> net_parent_connections_;   //CHIEDI COME USARE NETCONNECTIONPTR
+  std::vector<ConnectionPtr> net_child_connections_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -59,14 +60,23 @@ public:
   bool getNonOptimal();
   void addParentConnection(const ConnectionPtr& connection);
   void addChildConnection(const ConnectionPtr& connection);
+  void addNetParentConnection(const ConnectionPtr& connection);
+  void addNetChildConnection(const ConnectionPtr& connection);
   std::vector<NodePtr> getChildren() const;
   std::vector<NodePtr> getParents() const;
+  std::vector<NodePtr> getNetParents() const;
+  std::vector<NodePtr> getNetChildren() const;
 
   void disconnect();
-  void disconnectParentConnections();
   void disconnectChildConnections();
+  void disconnectParentConnections();
+  void disconnectNetParentConnections();
+  void disconnectNetChildConnections();
   void remoteParentConnection(const ConnectionPtr& connection);
   void remoteChildConnection(const ConnectionPtr& connection);
+  void remoteNetParentConnection(const ConnectionPtr& connection);
+  void remoteNetChildConnection(const ConnectionPtr& connection);
+
   const Eigen::VectorXd& getConfiguration()
   {
     return configuration_;

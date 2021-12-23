@@ -26,24 +26,28 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#include <eigen3/Eigen/Core>
-#include <ros/ros.h>
-#define PATH_COMMENT(...) ROS_LOG(::ros::console::levels::Debug, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
-#define PATH_COMMENT_STREAM(...) ROS_LOG_STREAM(::ros::console::levels::Debug, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
-
+#include <graph_core/graph/connection.h>
 namespace pathplan
 {
+class NetConnection: public Connection
+{
+protected:
 
-enum Direction {Forward, Backward};
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-class Connection;
-class NetConnection;
-class Node;
-typedef std::shared_ptr<Connection> ConnectionPtr;
-typedef std::shared_ptr<NetConnection> NetConnectionPtr;
-typedef std::shared_ptr<Node> NodePtr;
+  NetConnection(const NodePtr& parent, const NodePtr& child);
 
-Eigen::MatrixXd computeRotationMatrix(const Eigen::VectorXd& x1, const Eigen::VectorXd&  x2);
+  virtual void add();
+  virtual void remove();
+
+  virtual bool isNet()
+  {
+    return true;
+  }
+
+  virtual ConnectionPtr clone();
+
+};
 
 }

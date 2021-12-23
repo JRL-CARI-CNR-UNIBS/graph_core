@@ -20,7 +20,7 @@ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
 DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
 DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS //GoalCostFunctionPtr getGoalCostFunction() constINTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -113,11 +113,6 @@ public:
     goal_cost_fcn_=goal_cost_fcn;
   }
 
-  GoalCostFunctionPtr getGoalCostFunction()
-  {
-    return goal_cost_fcn_;
-  }
-
   const bool completed()const
   {
     return completed_;
@@ -143,6 +138,11 @@ public:
     return dof_;
   }
 
+  GoalCostFunctionPtr getGoalCostFunction() const
+  {
+    return goal_cost_fcn_;
+  }
+
   TreePtr getStartTree() const
   {
     return start_tree_;
@@ -153,7 +153,7 @@ public:
     return solution_;
   }
 
-  ros::NodeHandle getNodeHandle()
+  ros::NodeHandle getNodeHandle() const
   {
     return nh_;
   }
@@ -168,17 +168,17 @@ public:
     return sampler_;
   }
 
-  double getPathCost()
+  double getPathCost() const
   {
     return path_cost_;
   }
 
-  double getGoalCost()
+  double getGoalCost() const
   {
     return goal_cost_;
   }
 
-  double getCost()
+  double getCost() const
   {
     return cost_;
   }

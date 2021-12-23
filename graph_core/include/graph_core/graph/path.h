@@ -6,7 +6,7 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
     * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
+      notice, this list of conditions aprotectednd the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
       documentation and/or other materials provided with the distribution.
@@ -80,6 +80,12 @@ public:
 
   //It creates a node corresponding to the configuration and creates the correct connections inside the current_path_
   NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr &conn, const bool &rewire);
+  NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, const bool& rewire);
+
+  //Remove unnecessary nodes
+  bool removeNodes(const std::vector<NodePtr>& white_list, std::vector<NodePtr>& deleted_nodes);
+  bool removeNodes(const std::vector<NodePtr> &white_list);
+  bool removeNodes();
 
   //It gives the connection to which the configuration belongs
   ConnectionPtr findConnection(const Eigen::VectorXd& configuration, int& idx);
@@ -90,6 +96,8 @@ public:
   NodePtr findCloserNode(const Eigen::VectorXd& configuration);
   NodePtr findCloserNode(const NodePtr& node);
   NodePtr findCloserNode(const NodePtr& node, double &dist);
+  PathPtr getSubpathFromConf(const Eigen::VectorXd& conf, const bool get_copy);
+  PathPtr getSubpathToConf(const Eigen::VectorXd& conf, const bool get_copy);
   PathPtr getSubpathFromNode(const NodePtr& node);
   PathPtr getSubpathToNode(const NodePtr& node);
   PathPtr getSubpathFromNode(const Eigen::VectorXd& conf);
@@ -104,6 +112,7 @@ public:
   double getNormFromConf(const Eigen::VectorXd& conf);
 
 
+  std::vector<NodePtr> getNodes();
   std::vector<Eigen::VectorXd> getWaypoints();
 
   /*std::vector<bool> change_warp_;

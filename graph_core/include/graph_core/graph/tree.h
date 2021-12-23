@@ -63,6 +63,13 @@ protected:
 
   // add children(Forward direction) or parents (Backforward direction) to the tree. node is not added (throw exception if it is not member of the tree)
   void populateTreeFromNode(const NodePtr& node);
+  void populateTreeFromNode(const NodePtr& node, const std::vector<NodePtr>& white_list);
+
+  //add children(Forward direction) or parents (Backforward direction) to the tree if they are inside the ellipsoid
+  void populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost);
+  void populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost, const std::vector<NodePtr> &white_list);
+
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Tree(const NodePtr& root,
@@ -121,7 +128,7 @@ public:
 
   bool informedExtend(const Eigen::VectorXd& configuration,   //Used in AnytimeRRT
                         NodePtr& new_node,
-                        Eigen::VectorXd &goal, const double &cost2beat, const double &bias);
+                        const Eigen::VectorXd &goal, const double &cost2beat, const double &bias);
 
   bool connectToNode(const NodePtr& node,
                      NodePtr& new_node,
@@ -160,7 +167,7 @@ public:
 
   double costToNode(NodePtr node);
 
-  std::vector<ConnectionPtr> getConnectionToNode(NodePtr node);
+  std::vector<ConnectionPtr> getConnectionToNode(NodePtr node);  //la &?
 
   bool keepOnlyThisBranch(const std::vector<ConnectionPtr>& connections);
 
@@ -181,6 +188,7 @@ public:
   unsigned int purgeNodesOutsideEllipsoid(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list);
   unsigned int purgeNodesOutsideEllipsoids(const std::vector<SamplerPtr>& samplers, const std::vector<NodePtr>& white_list);
   unsigned int purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds = true);
+  bool purgeFromHere(NodePtr& node);
   bool purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
   bool needCleaning(){return nodes_.size()>maximum_nodes_;}
 

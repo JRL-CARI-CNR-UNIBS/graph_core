@@ -44,8 +44,8 @@ protected:
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   RRT(const MetricsPtr& metrics,
-             const CollisionCheckerPtr& checker,
-             const SamplerPtr& sampler):
+      const CollisionCheckerPtr& checker,
+      const SamplerPtr& sampler):
     TreeSolver(metrics, checker, sampler) {}
 
   virtual void setUtopia(const double& utopia)
@@ -56,6 +56,11 @@ public:
   void setGoal(const NodePtr& goal)
   {
     goal_node_ = goal;
+  }
+
+  void setMaxDistance(const double& distance)
+  {
+    max_distance_ = distance;
   }
 
   NodePtr getGoal()
@@ -73,7 +78,8 @@ public:
     return max_distance_;
   }
 
-  void importFromSolver(const RRTPtr& solver);
+  void importFromSolver(const RRTPtr &solver);
+  void importFromSolver(const TreeSolverPtr& solver); //CHIEDI
 
   virtual bool config(const ros::NodeHandle& nh);
   virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity());

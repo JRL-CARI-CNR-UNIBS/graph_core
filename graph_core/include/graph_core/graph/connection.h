@@ -26,7 +26,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #include <graph_core/util.h>
 #include <graph_core/graph/node.h>
 namespace pathplan
@@ -46,8 +45,14 @@ public:
   {
     return shared_from_this();
   }
-  void add();
-  void remove();
+
+  virtual void add();
+  virtual void remove();
+
+  virtual bool isNet()
+  {
+    return false;
+  }
 
   void setCost(const double& cost)
   {
@@ -69,9 +74,12 @@ public:
   {
     return child_;
   }
-  ConnectionPtr clone();
+
+  virtual ConnectionPtr clone();
 
   void flip();
+
+  bool isParallel(const ConnectionPtr& conn, const double& toll = 1e-06);
 
   friend std::ostream& operator<<(std::ostream& os, const Connection& connection);
   ~Connection();

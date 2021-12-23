@@ -219,7 +219,7 @@ bool Tree::connect(const Eigen::VectorXd &configuration, NodePtr &new_node)
   return false;
 }
 
-bool Tree::informedExtend(const Eigen::VectorXd &configuration, NodePtr &new_node, Eigen::VectorXd &goal, const double& cost2beat, const double& bias)
+bool Tree::informedExtend(const Eigen::VectorXd &configuration, NodePtr &new_node,const Eigen::VectorXd &goal, const double& cost2beat, const double& bias)
 {
   struct extension
   {
@@ -533,7 +533,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
       conn->add();
       checked_connections.push_back(conn);
 
-      //nearest_node = n; PER ME NON CI VA
+      //      nearest_node = n; //PER ME NON CI VA
       cost_to_node = cost_to_near + cost_near_to_node;
       improved = true;
     }
@@ -836,6 +836,10 @@ std::vector<ConnectionPtr> Tree::getConnectionToNode(NodePtr node)
       {
         ROS_ERROR("a node of forward-direction tree should have only a parent");
         ROS_ERROR_STREAM("node \n" << *node);
+
+        ROS_INFO_STREAM("current root "<<root_);
+        ROS_INFO_STREAM("node "<<node);
+
         assert(0);
       }
       connections.push_back(node->parent_connections_.at(0));
@@ -1092,12 +1096,18 @@ unsigned int Tree::purgeNodes(const SamplerPtr& sampler, const std::vector<NodeP
   return removed_nodes;
 }
 
+bool Tree::purgeFromHere(NodePtr& node)
+{
+  std::vector<NodePtr> white_list;
+  unsigned int removed_nodes;
+
+  return purgeFromHere(node,white_list,removed_nodes);
+}
 
 bool Tree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes)
 {
   if (std::find(white_list.begin(), white_list.end(), node) != white_list.end())
   {
-    ROS_INFO("QUA");
     return false;
   }
   assert(node);
@@ -1145,6 +1155,27 @@ void Tree::cleanTree()
 
 void Tree::populateTreeFromNode(const NodePtr& node)
 {
+  Eigen::VectorXd focus1 = node->getConfiguration();
+  Eigen::VectorXd focus2 = node->getConfiguration();
+  populateTreeFromNode(node, focus1, focus2, std::numeric_limits<double>::infinity());
+}
+
+void Tree::populateTreeFromNode(const NodePtr& node, const std::vector<NodePtr>& white_list)
+{
+  Eigen::VectorXd focus1 = node->getConfiguration();
+  Eigen::VectorXd focus2 = node->getConfiguration();
+  populateTreeFromNode(node, focus1, focus2, std::numeric_limits<double>::infinity(),white_list);
+}
+
+void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost)
+{
+  std::vector<NodePtr> white_list;
+  populateTreeFromNode(node, focus1, focus2, std::numeric_limits<double>::infinity(), white_list);
+}
+
+
+void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost, const std::vector<NodePtr> &white_list)
+{
   std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
   if (it == nodes_.end())
   {
@@ -1155,20 +1186,40 @@ void Tree::populateTreeFromNode(const NodePtr& node)
   {
     for (const NodePtr& n: node->getChildren())
     {
-      nodes_.push_back(n);
-      populateTreeFromNode(n);
+      std::vector<NodePtr>::const_iterator it = std::find(white_list.begin(), white_list.end(), n);
+      if(it != white_list.end())
+        continue;
+
+      else
+      {
+        if(((n->getConfiguration() - focus1).norm() + (n->getConfiguration() - focus2).norm()) < cost)
+        {
+          nodes_.push_back(n);
+          populateTreeFromNode(n,focus1,focus2,cost,white_list);
+        }
+      }
     }
   }
   else
   {
     for (const NodePtr& n: node->getParents())
     {
-      nodes_.push_back(n);
-      populateTreeFromNode(n);
+      std::vector<NodePtr>::const_iterator it = std::find(white_list.begin(), white_list.end(), n);
+      if(it != white_list.end())
+        continue;
+
+      else
+      {
+        if(((n->getConfiguration() - focus1).norm() + (n->getConfiguration() - focus2).norm()) < cost)
+        {
+          nodes_.push_back(n);
+          populateTreeFromNode(n,focus1,focus2,cost,white_list);
+        }
+      }
     }
   }
-}
 
+}
 
 XmlRpc::XmlRpcValue Tree::toXmlRpcValue() const
 {
