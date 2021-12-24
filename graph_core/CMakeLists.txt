@@ -62,9 +62,8 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/solvers/multigoal.cpp
   #src/${PROJECT_NAME}/solvers/time_multigoal.cpp
   src/${PROJECT_NAME}/solvers/tree_solver.cpp
-  src/${PROJECT_NAME}/solvers/rrt_connect.cpp
   src/${PROJECT_NAME}/solvers/birrt.cpp
-  #src/${PROJECT_NAME}/solvers/rrt_star.cpp
+  src/${PROJECT_NAME}/solvers/rrt_star.cpp
   src/${PROJECT_NAME}/solvers/rrt.cpp
   src/${PROJECT_NAME}/solvers/anytime_rrt.cpp
   src/${PROJECT_NAME}/solvers/path_solver.cpp

@@ -32,36 +32,7 @@ namespace pathplan
 
 bool RRT::config(const ros::NodeHandle& nh)
 {
-  nh_ = nh;
-
-  if(max_distance_ < 1e-06)
-    max_distance_ = 1.0;
-
-  configured_=true;
-  return true;
-}
-
-void RRT::importFromSolver(const RRTPtr &solver)
-{
-  ROS_INFO_STREAM("Import from RRT solver");
-
-  TreeSolver::importFromSolver(solver);
-
-  goal_node_    = solver->getGoal();
-  max_distance_ = solver->getMaxDistance();
-  utopia_       = solver->getUtopia();
-}
-void RRT::importFromSolver(const TreeSolverPtr& solver)
-{
-  if(std::dynamic_pointer_cast<pathplan::RRT>(solver) != NULL)
-    RRT::importFromSolver(std::static_pointer_cast<RRT>(solver));
-
-  else
-  {
-    TreeSolver::importFromSolver(solver);
-    if(max_distance_ <1e-06)
-      max_distance_ = 1.0;
-  }
+  return TreeSolver::config(nh);
 }
 
 bool RRT::addGoal(const NodePtr &goal_node, const double &max_time)
@@ -114,12 +85,14 @@ void RRT::resetProblem()
 
 bool RRT::setProblem(const double &max_time)
 {
+  init_ = false;
   if (!start_tree_)
     return false;
   if (!goal_node_)
     return false;
+  goal_cost_ = goal_cost_fcn_->cost(goal_node_);
 
-  utopia_ = (goal_node_->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
+  best_utopia_ = goal_cost_+(goal_node_->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
   init_ = true;
   NodePtr new_node;
 
@@ -129,7 +102,6 @@ bool RRT::setProblem(const double &max_time)
     solution_->setTree(start_tree_);
 
     path_cost_ = solution_->cost();
-
     sampler_->setCost(path_cost_);
     start_tree_->addNode(goal_node_);
 
@@ -161,7 +133,7 @@ bool RRT::update(PathPtr &solution)
   return RRT::update(sampler_->sample(), solution);
 }
 
-bool RRT::update(const Eigen::VectorXd& point, PathPtr &solution)
+bool RRT::update(const Eigen::VectorXd& configuration, PathPtr &solution)
 {
   PATH_COMMENT("RRT::update");
 
@@ -172,15 +144,19 @@ bool RRT::update(const Eigen::VectorXd& point, PathPtr &solution)
     return true;
   }
 
-  NodePtr new_node;
-  if (start_tree_->extend(point, new_node))
+  NodePtr new_start_node;
+  bool add_to_start;
+  add_to_start = extend_? start_tree_->extend(configuration, new_start_node):
+                          start_tree_->connect(configuration, new_start_node);
+
+  if (add_to_start)
   {
-    if ((new_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
+    if ((new_start_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
     {
-      if (checker_->checkPath(new_node->getConfiguration(), goal_node_->getConfiguration()))
+      if (checker_->checkPath(new_start_node->getConfiguration(), goal_node_->getConfiguration()))
       {
-        ConnectionPtr conn = std::make_shared<Connection>(new_node, goal_node_);
-        conn->setCost(metrics_->cost(new_node, goal_node_));
+        ConnectionPtr conn = std::make_shared<Connection>(new_start_node, goal_node_);
+        conn->setCost(metrics_->cost(new_start_node, goal_node_));
         conn->add();
         solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
         solution_->setTree(start_tree_);
@@ -209,15 +185,18 @@ bool RRT::update(const NodePtr& n, PathPtr &solution)
     return true;
   }
 
-  NodePtr new_node;
-  if (start_tree_->extendToNode(n, new_node))
+  NodePtr new_start_node;
+  bool add_to_start = extend_? start_tree_->extendToNode(n, new_start_node):
+                               start_tree_->connectToNode(n, new_start_node);
+
+  if (add_to_start)
   {
-    if ((new_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
+    if ((new_start_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
     {
-      if (checker_->checkPath(new_node->getConfiguration(), goal_node_->getConfiguration()))
+      if (checker_->checkPath(new_start_node->getConfiguration(), goal_node_->getConfiguration()))
       {
-        ConnectionPtr conn = std::make_shared<Connection>(new_node, goal_node_);
-        conn->setCost(metrics_->cost(new_node, goal_node_));
+        ConnectionPtr conn = std::make_shared<Connection>(new_start_node, goal_node_);
+        conn->setCost(metrics_->cost(new_start_node, goal_node_));
         conn->add();
         solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
         solution_->setTree(start_tree_);
@@ -237,7 +216,9 @@ bool RRT::update(const NodePtr& n, PathPtr &solution)
 
 TreeSolverPtr RRT::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler)
 {
-  return std::make_shared<RRT>(metrics,checker,sampler);
+  RRTPtr new_solver = std::make_shared<RRT>(metrics,checker,sampler);
+  new_solver->config(nh_);
+  return new_solver;
 }
 
 

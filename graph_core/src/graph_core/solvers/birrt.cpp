@@ -34,15 +34,14 @@ namespace pathplan
 bool BiRRT::config(const ros::NodeHandle &nh)
 {
   nh_ = nh;
-  extend_ = false;
-  return RRTConnect::config(nh);
-
+  return RRT::config(nh);
 }
+
 bool BiRRT::addGoal(const NodePtr &goal_node, const double &max_time)
 {
   goal_tree_ = std::make_shared<Tree>(goal_node, max_distance_, checker_, metrics_);
 
-  return RRTConnect::addGoal(goal_node, max_time);
+  return RRT::addGoal(goal_node, max_time);
 }
 
 bool BiRRT::update(PathPtr &solution)
@@ -67,7 +66,7 @@ bool BiRRT::update(PathPtr &solution)
   return update(configuration, solution);
 }
 
-bool BiRRT::update(const Eigen::VectorXd& point, PathPtr& solution)
+bool BiRRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 {
   PATH_COMMENT("RRTConnect::update");
   if (solved_)
@@ -81,7 +80,6 @@ bool BiRRT::update(const Eigen::VectorXd& point, PathPtr& solution)
   NodePtr new_start_node, new_goal_node;
   bool add_to_start, add_to_goal;
 
-  Eigen::VectorXd configuration = point;
   add_to_start = extend_? start_tree_->extend(configuration, new_start_node):
                           start_tree_->connect(configuration, new_start_node);
 
@@ -137,32 +135,30 @@ bool BiRRT::update(const NodePtr& n, PathPtr& solution)
 
   NodePtr new_start_node, new_goal_node;
   bool add_to_start, add_to_goal;
-  if (extend_)
-    add_to_start = start_tree_->extendToNode(n, new_start_node);
-  else
-    add_to_start = start_tree_->connectToNode(n, new_start_node);
 
+  add_to_start = extend_? start_tree_->extendToNode(n, new_start_node):
+                          start_tree_->connectToNode(n, new_start_node);
 
-  if (add_to_start)
-  {
-    if (extend_)
-      add_to_goal = goal_tree_->extendToNode(new_start_node, new_goal_node);
-    else
-      add_to_goal = goal_tree_->connectToNode(new_start_node, new_goal_node);
-  }
-  else
-  {
-    if (extend_)
-      add_to_goal = goal_tree_->extendToNode(n, new_goal_node);
-    else
-      add_to_goal = goal_tree_->connectToNode(n, new_goal_node);
-  }
+  add_to_goal = extend_? goal_tree_->extend(n->getConfiguration(), new_goal_node):
+                         goal_tree_->connect(n->getConfiguration(), new_goal_node);
 
-  if (add_to_start && add_to_goal && new_goal_node == new_start_node)
+  if (add_to_start && add_to_goal) // a solution is found
   {
-    std::vector<ConnectionPtr> goal_subpath = goal_tree_->getConnectionToNode(new_goal_node);
-    goal_tree_->keepOnlyThisBranch(goal_subpath);
-    start_tree_->addBranch(goal_subpath);
+
+    NodePtr parent=new_goal_node->getParents().at(0);
+    double cost_to_parent=new_goal_node->parent_connections_.at(0)->getCost();
+    new_goal_node->disconnect();
+
+    std::vector<ConnectionPtr> connections=goal_tree_->getConnectionToNode(parent);
+    for (ConnectionPtr& conn: connections)
+      conn->flip();
+
+    ConnectionPtr conn_to_goal_parent=std::make_shared<Connection>(new_start_node,parent);
+    conn_to_goal_parent->add();
+    conn_to_goal_parent->setCost(cost_to_parent);
+    start_tree_->addNode(parent,false);
+    for (ConnectionPtr& conn: connections)
+      start_tree_->addNode(conn->getChild(),false);
 
     solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution_->setTree(start_tree_);
@@ -172,14 +168,15 @@ bool BiRRT::update(const NodePtr& n, PathPtr& solution)
     solution = solution_;
     solved_ = true;
     return true;
-
   }
   return false;
 }
 
 TreeSolverPtr BiRRT::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler)
 {
-  return std::make_shared<BiRRT>(metrics,checker,sampler);
+  BiRRTPtr new_solver = std::make_shared<BiRRT>(metrics,checker,sampler);
+  new_solver->config(nh_);
+  return new_solver;
 }
 
 }

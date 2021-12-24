@@ -27,32 +27,34 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include <graph_core/solvers/rrt_connect.h>
+#include <graph_core/solvers/rrt.h>
 
 namespace pathplan
 {
 class RRTStar;
 typedef std::shared_ptr<RRTStar> RRTStarPtr;
 
-class RRTStar: public RRTConnect
+class RRTStar: public RRT
 {
 protected:
-  double r_rewire_factor_;
+  double r_rewire_;
+  virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity()); //max_time not used
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   RRTStar(const MetricsPtr& metrics,
           const CollisionCheckerPtr& checker,
           const SamplerPtr& sampler):
-    RRTConnect(metrics, checker, sampler) {}
+    RRT(metrics, checker, sampler) {}
 
-  virtual bool config(const ros::NodeHandle& nh);
-  virtual bool addGoal(const NodePtr &goal_node);
-  virtual bool addStartTree(const TreePtr& start_tree);
-  virtual bool update(PathPtr& solution);
-  virtual bool solve(PathPtr &solution, const unsigned int& max_iter=100);
-  virtual bool update(const Eigen::VectorXd& point, PathPtr& solution);
-  virtual bool update(const NodePtr& n, PathPtr& solution);
-  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler);
+  virtual bool config(const ros::NodeHandle& nh) override;
+  virtual bool addGoal(const NodePtr &goal_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
+  virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity()) override;
+  virtual bool update(PathPtr& solution) override;
+  virtual bool solve(PathPtr &solution, const unsigned int& max_iter=100, const double &max_time = std::numeric_limits<double>::infinity()) override;
+  virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution) override;
+  virtual bool update(const NodePtr& n, PathPtr& solution) override;
+  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler) override;
 
 
 };

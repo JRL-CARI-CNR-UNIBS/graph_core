@@ -40,12 +40,20 @@ bool MultigoalSolver::addStart(const NodePtr& start_node, const double &max_time
     ROS_ERROR("Solver is not configured.");
     return false;
   }
-  dimension_=start_node->getConfiguration().size();
-
-  solved_ = false;
   start_tree_ = std::make_shared<Tree>(start_node, max_distance_, checker_, metrics_);
+  solved_ = false;
+
   setProblem(max_time);
   ROS_DEBUG("Add start goal");
+  return true;
+}
+
+bool MultigoalSolver::addStartTree(const TreePtr &start_tree, const double &max_time)
+{
+  assert(start_tree);
+  start_tree_ = start_tree;
+  solved_ = false;
+  setProblem(max_time);
   return true;
 }
 
@@ -201,25 +209,13 @@ bool MultigoalSolver::setProblem(const double &max_time)   //CHIEDI A MNAUEL->de
 
 bool MultigoalSolver::config(const ros::NodeHandle& nh)
 {
-  nh_ = nh;
-  max_distance_ = 1;
-  if (!nh.getParam("max_distance",max_distance_))
-  {
-    ROS_WARN("%s/max_distance is not set. using 1.0",nh.getNamespace().c_str());
-    max_distance_=1.0;
-  }
-  r_rewire_ = 2.0*max_distance_;
+  if (not TreeSolver::config(nh))
+    return false;
+
   if (!nh.getParam("rewire_radius",max_distance_))
   {
     ROS_DEBUG("%s/rewire_radius is not set. using 2.0*max_distance",nh.getNamespace().c_str());
     r_rewire_=2.0*max_distance_;
-  }
-
-
-  if (!nh.getParam("informed",informed_))
-  {
-    ROS_DEBUG("%s/informed is not set. using true (informed set enble)",nh.getNamespace().c_str());
-    informed_=true;
   }
 
   if (!nh.getParam("mixed_strategy",mixed_strategy_))
@@ -237,28 +233,6 @@ bool MultigoalSolver::config(const ros::NodeHandle& nh)
     ROS_DEBUG("%s/bidirectional is not set. using true",nh.getNamespace().c_str());
     bidirectional_=true;
   }
-
-  if (!nh.getParam("extend",extend_))
-  {
-    ROS_WARN("%s/extend is not set. using false (connect algorithm)",nh.getNamespace().c_str());
-    extend_=false;
-  }
-  if (!nh.getParam("warp",warp_))
-  {
-    ROS_DEBUG("%s/warp is not set. using false",nh.getNamespace().c_str());
-    warp_=false;
-  }
-
-  if (not warp_)
-  {
-    if (!nh.getParam("warp_once",first_warp_))
-    {
-      ROS_DEBUG("%s/warp_once is not set. using false",nh.getNamespace().c_str());
-      first_warp_=false;
-    }
-  }
-  else
-    first_warp_=true;
 
   if (!nh.getParam("k_nearest",knearest_))
   {
@@ -301,17 +275,6 @@ bool MultigoalSolver::config(const ros::NodeHandle& nh)
     ROS_WARN("%s/forgetting_factor cannot be negative, set equal to 0.0",nh.getNamespace().c_str());
     forgetting_factor_=0.0;
   }
-  if (!nh.getParam("utopia_tolerance",utopia_tolerance_))
-  {
-    ROS_WARN("%s/utopia_tolerance is not set. using 0.01",nh.getNamespace().c_str());
-    utopia_tolerance_=0.01;
-  }
-  if (utopia_tolerance_<=0.0)
-  {
-    ROS_WARN("%s/utopia_tolerance cannot be negative, set equal to 0.0",nh.getNamespace().c_str());
-    utopia_tolerance_=0.0;
-  }
-  utopia_tolerance_+=1.0;
 
   configured_=true;
   return true;
@@ -676,7 +639,10 @@ void MultigoalSolver::cleanTree()
 
 TreeSolverPtr MultigoalSolver::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler)
 {
-  return std::make_shared<MultigoalSolver>(metrics,checker,sampler);
+  MultigoalSolverPtr new_solver = std::make_shared<MultigoalSolver>(metrics,checker,sampler);
+  new_solver->config(nh_);
+  return new_solver;
+
 }
 
 }  // namespace pathplan

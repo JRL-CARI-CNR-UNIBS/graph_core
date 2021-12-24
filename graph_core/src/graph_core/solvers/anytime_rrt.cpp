@@ -48,15 +48,9 @@ void AnytimeRRT::importFromSolver(const TreeSolverPtr& solver)
   {
     AnytimeRRT::importFromSolver(std::static_pointer_cast<AnytimeRRT>(solver));
   }
-  else if(std::dynamic_pointer_cast<pathplan::RRT>(solver) != NULL)
-  {
-    RRT::importFromSolver(std::static_pointer_cast<RRT>(solver));
-  }
   else
   {
     TreeSolver::importFromSolver(solver);
-    if(max_distance_ <1e-06)
-      max_distance_ = 1.0;
   }
 }
 
@@ -64,24 +58,7 @@ bool AnytimeRRT::solveWithRRT(PathPtr& solution,
                               const unsigned int& max_iter,
                               const double &max_time)
 {
-  ros::WallTime tic = ros::WallTime::now();
-
-  if(max_time <=0.0)
-    return false;
-
-  for (unsigned int iter = 0; iter < max_iter; iter++)
-  {
-    if (RRT::update(solution))
-    {
-      solved_= true;
-      solution_ = solution;
-      return true;
-    }
-
-    if((ros::WallTime::now()-tic).toSec()>=0.98*max_time)
-      break;
-  }
-  return false;
+  return RRT::solve(solution,max_iter,max_time);
 }
 
 bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const double& max_time)
@@ -93,7 +70,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   {
     solution = solution_;
 
-    if (path_cost_ <= utopia_tolerance_ * utopia_)
+    if (cost_ <= utopia_tolerance_ * best_utopia_)
     {
       ROS_INFO("Utopia reached!");
       completed_=true;
@@ -109,22 +86,22 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   unsigned int n_failed_iter = 0;
 
   time = (ros::WallTime::now()-tic).toSec();
-  while(time<0.98*max_time && solved_ == false && n_failed_iter<FAILED_ITER)
+  while(time<0.98*max_time && (not solved_) && n_failed_iter<FAILED_ITER)
   {
     success = AnytimeRRT::solveWithRRT(solution,max_iter,(max_time-time));
 
     if(!success)
-      n_failed_iter += 1;
+      n_failed_iter++;
 
     time = (ros::WallTime::now()-tic).toSec();
   }
 
-  if(solved_ == false)
+  if(not solved_)
     return false;
 
   ROS_INFO_STREAM("Path cost: "<<path_cost_);
 
-  if (path_cost_ <= utopia_tolerance_ * utopia_)
+  if (cost_ <= utopia_tolerance_ * best_utopia_)
   {
     ROS_INFO("Utopia reached!");
     completed_=true;
@@ -150,10 +127,9 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     else
       n_failed_iter = 0;
 
-    if(improved && start_tree_!=new_tree_)
-      assert(0);
+    assert(not (improved) or start_tree_==new_tree_);
 
-    if(path_cost_ <= utopia_tolerance_ * utopia_)
+    if(cost_ <= utopia_tolerance_ * best_utopia_)
     {
       ROS_INFO("Utopia reached!");
       completed_=true;
@@ -163,7 +139,6 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     time = (ros::WallTime::now()-tic).toSec();
   }
 
-  //  if(start_node != start_tree_->getRoot() || goal_node != goal_node_)
   if(goal_node != goal_node_)
   {
     //Rewire the tree goal
@@ -257,7 +232,7 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
   double utopia = (goal_node->getConfiguration() - start_node->getConfiguration()).norm(); //start and goal may be different from the previous ones
   completed_ = false;
 
-  if (path_cost_ <= 1.03 * utopia) //also if start and/or goal are changed, the old path is better to follow
+  if (cost_ <= utopia_tolerance_ * utopia) //also if start and/or goal are changed, the old path is better to follow
   {
     ROS_INFO_STREAM("Utopia reached! Utopia: "<<utopia<<" path cost: "<<path_cost_);
     completed_=true;
@@ -305,17 +280,7 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
 bool AnytimeRRT::config(const ros::NodeHandle& nh)
 {
   setParameters();
-  if (!nh.getParam("utopia_tolerance",utopia_tolerance_))
-  {
-    ROS_WARN("%s/utopia_tolerance is not set. using 0.03",nh.getNamespace().c_str());
-    utopia_tolerance_=0.03;
-  }
-  if (utopia_tolerance_<=0.0)
-  {
-    ROS_WARN("%s/utopia_tolerance cannot be negative, set equal to 0.0",nh.getNamespace().c_str());
-    utopia_tolerance_=0.0;
-  }
-  utopia_tolerance_+=1.0;
+
   return RRT::config(nh);
 }
 
@@ -387,7 +352,8 @@ bool AnytimeRRT::update(const Eigen::VectorXd& point, PathPtr &solution)
           solution->setTree(start_tree_);
           solution_ = solution;
 
-          utopia_ = (goal_node_->getConfiguration()-start_tree_->getRoot()->getConfiguration()).norm();
+          // PERCHE' E' QUI???
+          best_utopia_ = goal_cost_+(goal_node_->getConfiguration()-start_tree_->getRoot()->getConfiguration()).norm();
 
           path_cost_ = solution_->cost();
           cost_ = path_cost_+goal_cost_;
@@ -410,7 +376,9 @@ bool AnytimeRRT::update(const NodePtr& n, PathPtr &solution)
 
 TreeSolverPtr AnytimeRRT::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler)
 {
-  return std::make_shared<AnytimeRRT>(metrics,checker,sampler);
+  AnytimeRRTPtr new_solver = std::make_shared<AnytimeRRT>(metrics,checker,sampler);
+  new_solver->config(nh_);
+  return new_solver;
 }
 
 }

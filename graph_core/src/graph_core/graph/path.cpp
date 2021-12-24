@@ -88,10 +88,7 @@ PathPtr Path::clone()
 
   PathPtr new_path = std::make_shared<Path>(new_conn_vector,metrics_,checker_);
 
-  new_path->setChangeSpiral(change_spiral_);
   new_path->setChangeWarp(change_warp_);
-  new_path->setgChangeSlipChild(change_slip_child_);
-  new_path->setgChangeSlipParent(change_slip_parent_);
   new_path->setTree(tree_);
 
   return new_path;
