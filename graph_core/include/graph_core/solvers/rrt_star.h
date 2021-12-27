@@ -38,7 +38,7 @@ class RRTStar: public RRT
 {
 protected:
   double r_rewire_;
-  virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity()); //max_time not used
+  //virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity()); //max_time not used
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
