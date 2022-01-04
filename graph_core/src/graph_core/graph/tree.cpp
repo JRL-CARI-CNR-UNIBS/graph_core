@@ -1164,7 +1164,7 @@ void Tree::populateTreeFromNode(const NodePtr& node, const std::vector<NodePtr>&
 {
   Eigen::VectorXd focus1 = node->getConfiguration();
   Eigen::VectorXd focus2 = node->getConfiguration();
-  populateTreeFromNode(node, focus1, focus2, std::numeric_limits<double>::infinity(),black_list, node_check);
+  populateTreeFromNode(node, focus1, focus2, std::numeric_limits<double>::infinity(), black_list, node_check);
 }
 
 void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost, const bool node_check)
@@ -1194,13 +1194,13 @@ void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focu
       {
         if(((n->getConfiguration() - focus1).norm() + (n->getConfiguration() - focus2).norm()) < cost)
         {
-          if(!checker_->check(n->getConfiguration()))
-            continue;
-          else
+          if(node_check)
           {
-            nodes_.push_back(n);
-            populateTreeFromNode(n,focus1,focus2,cost,black_list);
+            if(!checker_->check(n->getConfiguration()))
+              continue;
           }
+          nodes_.push_back(n);
+          populateTreeFromNode(n,focus1,focus2,cost,black_list,node_check);
         }
       }
     }
