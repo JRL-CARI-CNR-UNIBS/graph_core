@@ -35,8 +35,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
-enum Direction {Forward, Backward};
-
 class Connection;
 class NetConnection;
 class Node;

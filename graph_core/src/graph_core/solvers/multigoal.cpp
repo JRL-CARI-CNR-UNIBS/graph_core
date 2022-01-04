@@ -40,12 +40,20 @@ bool MultigoalSolver::addStart(const NodePtr& start_node, const double &max_time
     ROS_ERROR("Solver is not configured.");
     return false;
   }
-  dimension_=start_node->getConfiguration().size();
-
+  start_tree_ = std::make_shared<Tree>(start_node, max_distance_, checker_, metrics_);
   solved_ = false;
-  start_tree_ = std::make_shared<Tree>(start_node, Forward, max_distance_, checker_, metrics_);
+
   setProblem(max_time);
   ROS_DEBUG("Add start goal");
+  return true;
+}
+
+bool MultigoalSolver::addStartTree(const TreePtr &start_tree, const double &max_time)
+{
+  assert(start_tree);
+  start_tree_ = start_tree;
+  solved_ = false;
+  setProblem(max_time);
   return true;
 }
 
@@ -92,7 +100,7 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
 
     solved_ = true;
 
-    if (cost<=(utopia+1e-8))
+    if (cost<=(utopia*utopia_tolerance_))
     {
       ROS_DEBUG("Goal %u reaches its utopia.", index);
       status=GoalStatus::done;
@@ -108,7 +116,7 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
   else
   {
     path_cost=cost = std::numeric_limits<double>::infinity();
-    goal_tree = std::make_shared<Tree>(goal_node, Backward, max_distance_, checker_, metrics_);
+    goal_tree = std::make_shared<Tree>(goal_node, max_distance_, checker_, metrics_);
     status=GoalStatus::search;
   }
 
@@ -201,25 +209,13 @@ bool MultigoalSolver::setProblem(const double &max_time)   //CHIEDI A MNAUEL->de
 
 bool MultigoalSolver::config(const ros::NodeHandle& nh)
 {
-  nh_ = nh;
-  max_distance_ = 1;
-  if (!nh.getParam("max_distance",max_distance_))
-  {
-    ROS_WARN("%s/max_distance is not set. using 1.0",nh.getNamespace().c_str());
-    max_distance_=1.0;
-  }
-  r_rewire_ = 2.0*max_distance_;
+  if (not TreeSolver::config(nh))
+    return false;
+
   if (!nh.getParam("rewire_radius",max_distance_))
   {
     ROS_DEBUG("%s/rewire_radius is not set. using 2.0*max_distance",nh.getNamespace().c_str());
     r_rewire_=2.0*max_distance_;
-  }
-
-
-  if (!nh.getParam("informed",informed_))
-  {
-    ROS_DEBUG("%s/informed is not set. using true (informed set enble)",nh.getNamespace().c_str());
-    informed_=true;
   }
 
   if (!nh.getParam("mixed_strategy",mixed_strategy_))
@@ -238,16 +234,6 @@ bool MultigoalSolver::config(const ros::NodeHandle& nh)
     bidirectional_=true;
   }
 
-  if (!nh.getParam("extend",extend_))
-  {
-    ROS_WARN("%s/extend is not set. using false (connect algorithm)",nh.getNamespace().c_str());
-    extend_=false;
-  }
-  if (!nh.getParam("warp",warp_))
-  {
-    ROS_DEBUG("%s/warp is not set. using false (connect algorithm)",nh.getNamespace().c_str());
-    warp_=false;
-  }
   if (!nh.getParam("k_nearest",knearest_))
   {
     ROS_DEBUG("%s/k_nearest is not set. using false (rewire using nodes in the radius)",nh.getNamespace().c_str());
@@ -289,17 +275,6 @@ bool MultigoalSolver::config(const ros::NodeHandle& nh)
     ROS_WARN("%s/forgetting_factor cannot be negative, set equal to 0.0",nh.getNamespace().c_str());
     forgetting_factor_=0.0;
   }
-  if (!nh.getParam("utopia_tolerance",utopia_tolerance_))
-  {
-    ROS_WARN("%s/utopia_tolerance is not set. using 0.01",nh.getNamespace().c_str());
-    utopia_tolerance_=0.01;
-  }
-  if (utopia_tolerance_<=0.0)
-  {
-    ROS_WARN("%s/utopia_tolerance cannot be negative, set equal to 0.0",nh.getNamespace().c_str());
-    utopia_tolerance_=0.0;
-  }
-  utopia_tolerance_+=1.0;
 
   configured_=true;
   return true;
@@ -359,7 +334,6 @@ bool MultigoalSolver::update(PathPtr& solution)
       {
         if (is_goal_biased) // if it is goal biased try to connect goal
         {
-          ROS_INFO_THROTTLE(0.1,"GOAL BIAS nodes size =%u",start_tree_->getNumberOfNodes());
           if (extend_)
             add_to_start = start_tree_->extendToNode(goal_nodes_.at(igoal), new_start_node);
           else
@@ -413,31 +387,33 @@ bool MultigoalSolver::update(PathPtr& solution)
         else // not is_goal_bias, add a new random node
         {
           // add node to the start tree
-          if (extend_)
-            add_to_start = start_tree_->extend(configuration, new_start_node);
-          else
-            add_to_start = start_tree_->connect(configuration, new_start_node);
+          add_to_start = extend_? start_tree_->extend(configuration, new_start_node):
+                                  start_tree_->connect(configuration, new_start_node);
 
 
-          if (add_to_start) // if it is added, try to add it to the goal tree
-          {
-            if (extend_)
-              add_to_goal = goal_trees_.at(igoal)->extendToNode(new_start_node, new_goal_node);
-            else
-              add_to_goal = goal_trees_.at(igoal)->connectToNode(new_start_node, new_goal_node);
-          }
-          else  // if it is not added, add a random node to the goal tree
-          {
-            if (extend_)
-              add_to_goal = goal_trees_.at(igoal)->extend(configuration, new_goal_node);
-            else
-              add_to_goal = goal_trees_.at(igoal)->connect(configuration, new_goal_node);
-          }
+          add_to_goal = extend_? goal_trees_.at(igoal)->extend(configuration, new_goal_node):
+                                 goal_trees_.at(igoal)->connect(configuration, new_goal_node);
 
-          if (add_to_start && add_to_goal && new_goal_node == new_start_node) // a solution is found
+
+          if (add_to_start && add_to_goal) // a solution is found
           {
-            goal_trees_.at(igoal)->keepOnlyThisBranch(goal_trees_.at(igoal)->getConnectionToNode(new_goal_node));
-            start_tree_->addBranch(goal_trees_.at(igoal)->getConnectionToNode(new_goal_node));
+
+            NodePtr parent=new_goal_node->getParents().at(0);
+            double cost_to_parent=new_goal_node->parent_connections_.at(0)->getCost();
+            new_goal_node->disconnect();
+
+            //goal_trees_.at(igoal)->keepOnlyThisBranch(goal_trees_.at(igoal)->getConnectionToNode(parent));
+
+            std::vector<ConnectionPtr> connections=goal_trees_.at(igoal)->getConnectionToNode(parent);
+            for (ConnectionPtr& conn: connections)
+              conn->flip();
+
+            ConnectionPtr conn_to_goal_parent=std::make_shared<Connection>(new_start_node,parent);
+            conn_to_goal_parent->add();
+            conn_to_goal_parent->setCost(cost_to_parent);
+            start_tree_->addNode(parent,false);
+            for (ConnectionPtr& conn: connections)
+              start_tree_->addNode(conn->getChild(),false);
             improved=true;
           }
         }
@@ -449,7 +425,7 @@ bool MultigoalSolver::update(PathPtr& solution)
         solutions_.at(igoal)->setTree(start_tree_);
 
         double cost_1=solutions_.at(igoal)->cost();
-        if (warp_)
+        if (first_warp_)
         {
           ros::WallTime twarp=ros::WallTime::now();
           for (int iwarp=0;iwarp<10;iwarp++)
@@ -469,7 +445,7 @@ bool MultigoalSolver::update(PathPtr& solution)
         costs_.at(igoal) = path_costs_.at(igoal)+goal_costs_.at(igoal);
 
         solved_ = true;
-        if (path_costs_.at(igoal)<=(utopias_.at(igoal)*utopia_tolerance_))
+        if (costs_.at(igoal)<=(utopias_.at(igoal)*utopia_tolerance_))
         {
           ROS_DEBUG("Goal %u reaches its utopia. cost = %f, utopia =%f",igoal,path_costs_.at(igoal),utopias_.at(igoal));
           status_.at(igoal)=GoalStatus::done;
@@ -527,7 +503,7 @@ bool MultigoalSolver::update(PathPtr& solution)
         tube_samplers_.at(igoal)->setRadius(tube_radius_*solutions_.at(igoal)->cost());
         path_costs_.at(igoal) = solutions_.at(igoal)->cost();
         costs_.at(igoal) = path_costs_.at(igoal)+goal_costs_.at(igoal);
-        if (costs_.at(igoal)<=(utopias_.at(igoal)+1e-8))
+        if (costs_.at(igoal)<=(utopias_.at(igoal)*utopia_tolerance_))
         {
           ROS_DEBUG("Goal %u reaches its utopia. cost = %f, utopia =%f",igoal,costs_.at(igoal),utopias_.at(igoal));
           cleanTree();
@@ -572,7 +548,7 @@ bool MultigoalSolver::update(PathPtr& solution)
             tube_samplers_.at(igoal)->setRadius(tube_radius_*solutions_.at(igoal)->cost());
             path_costs_.at(igoal) = solutions_.at(igoal)->cost();
             costs_.at(igoal) = path_costs_.at(igoal)+goal_costs_.at(igoal);
-            if (costs_.at(igoal)<=(utopias_.at(igoal)+1e-8))
+            if (costs_.at(igoal)<=(utopias_.at(igoal)*utopia_tolerance_))
             {
               ROS_DEBUG("Goal %u reaches its utopia. cost = %f, utopia =%f",igoal,costs_.at(igoal),utopias_.at(igoal));
               cleanTree();
@@ -663,7 +639,10 @@ void MultigoalSolver::cleanTree()
 
 TreeSolverPtr MultigoalSolver::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler)
 {
-  return std::make_shared<MultigoalSolver>(metrics,checker,sampler);
+  MultigoalSolverPtr new_solver = std::make_shared<MultigoalSolver>(metrics,checker,sampler);
+  new_solver->config(nh_);
+  return new_solver;
+
 }
 
 }  // namespace pathplan

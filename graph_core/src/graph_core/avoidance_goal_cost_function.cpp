@@ -55,14 +55,14 @@ AvoidanceGoalCostFunction::AvoidanceGoalCostFunction(const ros::NodeHandle &nh):
     ROS_ERROR("%s/max_penalty not defined, use 1.0", nh_.getNamespace().c_str());
     max_penalty_=1.0;
   }
-  if (!nh_.getParam("max_distance", max_distance_))
+  if (!nh_.getParam("max_avoidance_distance", max_distance_))
   {
-    ROS_ERROR("%s/max_distance not defined, use 1.5 meter", nh_.getNamespace().c_str());
+    ROS_ERROR("%s/max_avoidance_distance not defined, use 1.5 meter", nh_.getNamespace().c_str());
     max_distance_=1.5;
   }
-  if (!nh_.getParam("min_distance", min_distance_))
+  if (!nh_.getParam("min_avoidance_distance", min_distance_))
   {
-    ROS_ERROR("%s/min_distance not defined, use 0.5 meter", nh_.getNamespace().c_str());
+    ROS_ERROR("%s/min_avoidance_distance not defined, use 0.5 meter", nh_.getNamespace().c_str());
     min_distance_=0.5;
   }
   if (!nh_.getParam("display_bubbles", plot))
@@ -182,6 +182,9 @@ void AvoidanceGoalCostFunction::addPoint(const Eigen::Vector3d &point)
 
 void AvoidanceGoalCostFunction::publishPoints()
 {
+  if (!plot)
+    return;
+
   visualization_msgs::Marker marker;
   marker.type = visualization_msgs::Marker::SPHERE_LIST;
   marker.ns = "avoidance";

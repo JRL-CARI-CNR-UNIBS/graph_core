@@ -26,7 +26,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/solvers/rrt_connect.h>
+#include <graph_core/solvers/rrt.h>
 
 namespace pathplan
 {
@@ -35,10 +35,9 @@ class BiRRT;
 typedef std::shared_ptr<BiRRT> BiRRTPtr;
 
 
-class BiRRT: public RRTConnect
+class BiRRT: public RRT
 {
 protected:
-  bool extend_ = false;
   TreePtr goal_tree_;
   virtual void clean();
 public:
@@ -46,13 +45,13 @@ public:
   BiRRT(const MetricsPtr& metrics,
         const CollisionCheckerPtr& checker,
         const SamplerPtr& sampler):
-    RRTConnect(metrics, checker, sampler) {}
+    RRT(metrics, checker, sampler) {}
 
   virtual bool config(const ros::NodeHandle& nh);
 
   virtual bool addGoal(const NodePtr &goal_node, const double &max_time = std::numeric_limits<double>::infinity());
   virtual bool update(PathPtr& solution);
-  virtual bool update(const Eigen::VectorXd& point, PathPtr& solution);
+  virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution);
   virtual bool update(const NodePtr& n, PathPtr& solution);
   virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler);
 

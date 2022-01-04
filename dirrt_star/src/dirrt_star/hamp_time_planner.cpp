@@ -48,15 +48,15 @@ HAMPTimeBasedMultiGoalPlanner::HAMPTimeBasedMultiGoalPlanner ( const std::string
 
 void HAMPTimeBasedMultiGoalPlanner::subscribeTopic()
 {
-  std::string poses_topic;
-  if (!nh_.getParam("poses_topic",poses_topic))
+  std::string detector_topic;
+  if (!nh_.getParam("detector_topic",detector_topic))
   {
-    ROS_DEBUG("poses_topic is not defined, using /poses");
-    poses_topic="/poses";
+    ROS_DEBUG("detector_topic is not defined, using /poses");
+    detector_topic="/poses";
   }
-  ROS_FATAL("subscribe topic %s",poses_topic.c_str());
+  ROS_FATAL("subscribe topic %s",detector_topic.c_str());
 
-  poses_sub=nh_.subscribe<geometry_msgs::PoseArray>(poses_topic,2,&HAMPTimeBasedMultiGoalPlanner::posesCallback,this);
+  poses_sub=nh_.subscribe<geometry_msgs::PoseArray>(detector_topic,2,&HAMPTimeBasedMultiGoalPlanner::posesCallback,this);
 
 }
 

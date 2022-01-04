@@ -132,13 +132,23 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
   {
     if (!m_nh.getParam("detector_topic",detector_topic))
     {
-      ROS_DEBUG("detector_topic is not defined, using centroids");
-      detector_topic="/centroids";
+      ROS_DEBUG("detector_topic is not defined, using poses");
+      detector_topic="/poses";
     }
     m_centroid_sub=m_nh.subscribe(detector_topic,2,&MultigoalPlanner::centroidCb,this);
   }
 
+  if (!m_nh.getParam("collision_distance",collision_distance_))
+  {
+    ROS_DEBUG("collision_distance is not set, default=0.04");
+    collision_distance_=0.04;
+  }
 
+  if (!m_nh.getParam("collision_thread",collision_thread_))
+  {
+    ROS_DEBUG("collision_thread is not set, default=5");
+    collision_thread_=5;
+  }
 
 
 

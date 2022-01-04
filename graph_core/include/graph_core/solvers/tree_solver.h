@@ -53,12 +53,22 @@ protected:
   bool completed_=false;
   bool init_ = false;
   bool configured_=false;
-  double path_cost_;
-  double goal_cost_=0;
-  double cost_=0;
   TreePtr start_tree_;
-  PathPtr solution_;
   unsigned int dof_;
+
+  double max_distance_=1.0;
+  bool extend_ = false;
+  double utopia_tolerance_=1.003;
+  bool informed_=true;
+  bool warp_=false;
+  bool first_warp_=false;
+
+  NodePtr goal_node_;                                          // if multigoal, it is related the best goal
+  double path_cost_;                                           // if multigoal, it is related the best goal
+  double goal_cost_=0;                                         // if multigoal, it is related the best goal
+  double cost_=0;                                              // if multigoal, it is related the best goal
+  PathPtr solution_;                                           // if multigoal, it is related the best goal
+  double best_utopia_=std::numeric_limits<double>::infinity(); // if multigoal, it is related the best goal
 
 protected:
   virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity())
@@ -84,12 +94,14 @@ public:
   }
 
   virtual bool update(PathPtr& solution) = 0;
-  virtual bool update(const Eigen::VectorXd& point, PathPtr& solution){return false;}
+  virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution){return false;}
   virtual bool update(const NodePtr& n, PathPtr& solution){return false;}
 
   virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100, const double &max_time = std::numeric_limits<double>::infinity());
   virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;
   virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;
+  virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity())=0;
+
   virtual bool computePath(const NodePtr &start_node, const NodePtr &goal_node, const ros::NodeHandle& nh, PathPtr &solution, const double &max_time = std::numeric_limits<double>::infinity(), const unsigned int max_iter = 10000);
   virtual void resetProblem()=0;
   virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler) = 0;
@@ -103,37 +115,34 @@ public:
     return cost_;
   }
 
-  virtual bool config(const ros::NodeHandle& nh)
-  {
-    return false;
-  }
+  virtual bool config(const ros::NodeHandle& nh);
 
   void setGoalCostFunction(const GoalCostFunctionPtr& goal_cost_fcn)
   {
     goal_cost_fcn_=goal_cost_fcn;
   }
 
-  const bool completed()const
+  const bool& completed()const
   {
     return completed_;
   }
 
-  const bool solved()const
+  const bool& solved()const
   {
     return solved_;
   }
 
-  const bool init()const
+  const bool& init()const
   {
     return init_;
   }
 
-  const bool configured()const
+  const bool& configured()const
   {
     return configured_;
   }
 
-  const unsigned int dof()const
+  const unsigned int& dof()const
   {
     return dof_;
   }
@@ -227,6 +236,36 @@ public:
   {
     return metrics_;
   }
+
+  virtual void setUtopia(const double& utopia)
+  {
+    best_utopia_ = utopia;
+  }
+  double getUtopia()
+  {
+    return best_utopia_;
+  }
+
+  virtual void setGoal(const NodePtr& goal)
+  {
+    goal_node_=goal;
+  }
+
+  virtual NodePtr getGoal()
+  {
+    return goal_node_;
+  }
+
+  void setMaxDistance(const double& distance)
+  {
+    max_distance_ = distance;
+  }
+
+  double getMaxDistance()
+  {
+    return max_distance_;
+  }
+
 
   double updateCost()
   {

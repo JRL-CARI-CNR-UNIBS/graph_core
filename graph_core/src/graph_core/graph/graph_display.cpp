@@ -434,10 +434,7 @@ void Display::displayTreeNode(const NodePtr &n,
                               const bool check_in_tree)
 {
   std::vector<ConnectionPtr> connections;
-  if(tree->getDirection()==Direction::Forward)
     connections=n->child_connections_;
-  else
-    connections=n->parent_connections_;
 
   if (connections.size()==0)
     return;
@@ -514,18 +511,9 @@ void Display::displayNetNode(const NodePtr &n,
 {
   TreePtr tree = net->getTree();
   std::vector<ConnectionPtr> connections, net_connections;
-  if (tree->getDirection()==Direction::Forward)
-  {
     connections=n->child_connections_;
     net_connections=n->net_child_connections_;
     connections.insert(connections.end(),net_connections.begin(),net_connections.end());
-  }
-  else
-  {
-    connections=n->parent_connections_;
-    net_connections = n->net_parent_connections_;
-    connections.insert(connections.end(),net_connections.begin(),net_connections.end());
-  }
   if (connections.size()==0)
     return;
 

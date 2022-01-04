@@ -66,12 +66,6 @@ bool PathLocalOptimizer::step(PathPtr& solution)
   ros::Time t1 = ros::Time::now();
   bool solved = !path_->warp();
   PATH_COMMENT("warp needs %f seconds", (ros::Time::now() - t1).toSec());
-  //  t1=ros::Time::now();
-  //  solved=!path_->slipParent() && solved;
-  //  PATH_COMMENT("slipParent needs %f seconds",(ros::Time::now()-t1).toSec());
-  //  t1=ros::Time::now();
-  //  solved=!path_->slipChild() && solved;
-  //  PATH_COMMENT("slipChild needs %f seconds",(ros::Time::now()-t1).toSec());
 
   if (cost <= (1.001 * path_->cost()))
   {
@@ -104,11 +98,6 @@ bool PathLocalOptimizer::step(PathPtr& solution)
 bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iteration, const double& max_time)
 {
   ros::WallTime tic = ros::WallTime::now();
-  //  ros::WallTime toc, tic_cycle, toc_cycle;
-  //  double time = max_time;
-  //  double mean = 0.0;
-  //  std::vector<double> time_vector;
-  //  if(time<=0.0) return false;
 
   if(max_time<=0.0) return false;
 

@@ -36,9 +36,6 @@ typedef std::shared_ptr<RRT> RRTPtr;
 class RRT: public TreeSolver
 {
 protected:
-  NodePtr goal_node_;
-  double max_distance_;
-  double utopia_;
   virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity()); //max_time not used
 
 public:
@@ -48,47 +45,14 @@ public:
       const SamplerPtr& sampler):
     TreeSolver(metrics, checker, sampler) {}
 
-  virtual void setUtopia(const double& utopia)
-  {
-    utopia_ = utopia;
-  }
-
-  void setGoal(const NodePtr& goal)
-  {
-    goal_node_ = goal;
-  }
-
-  void setMaxDistance(const double& distance)
-  {
-    max_distance_ = distance;
-  }
-
-  NodePtr getGoal()
-  {
-    return goal_node_;
-  }
-
-  double getUtopia()
-  {
-    return utopia_;
-  }
-
-  double getMaxDistance()
-  {
-    return max_distance_;
-  }
-
-  void importFromSolver(const RRTPtr &solver);
-  void importFromSolver(const TreeSolverPtr& solver); //CHIEDI
-
-  virtual bool config(const ros::NodeHandle& nh);
-  virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity());
+  virtual bool config(const ros::NodeHandle& nh) override;
+  virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
   virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity());
-  virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity());
-  virtual void resetProblem();
-  virtual bool update(const Eigen::VectorXd& point, PathPtr& solution);
-  virtual bool update(const NodePtr& n, PathPtr& solution);
-  virtual bool update(PathPtr& solution);
+  virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
+  virtual void resetProblem() override;
+  virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution) override;
+  virtual bool update(const NodePtr& n, PathPtr& solution) override;
+  virtual bool update(PathPtr& solution) override;
 
   virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler) override;
 };
