@@ -221,7 +221,6 @@ TreeSolverPtr RRT::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& c
   return new_solver;
 }
 
-
 }
 
 

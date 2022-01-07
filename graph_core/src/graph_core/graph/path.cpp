@@ -425,13 +425,13 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration)
 
 ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& idx)
 {
-  ConnectionPtr conn = NULL;
+  ConnectionPtr conn = nullptr;
   idx = -1;
 
   Eigen::VectorXd parent;
   Eigen::VectorXd child;
 
-  double dist, dist1, dist2;
+  double dist, distP, distC;
 
   for(unsigned int i=0; i<connections_.size(); i++)
   {
@@ -439,10 +439,10 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
     child =  connections_.at(i)->getChild()->getConfiguration();
 
     dist = (parent-child).norm();
-    dist1 = (parent - configuration).norm();
-    dist2 = (configuration-child).norm();
+    distP = (parent - configuration).norm();
+    distC = (configuration-child).norm();
 
-    if(std::abs(dist-dist1-dist2)<1.0e-05)
+    if(std::abs(dist-distP-distC)<1.0e-05)
     {
       conn = connections_.at(i);
       idx = i;
