@@ -29,6 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/graph/connection.h>
 namespace pathplan
 {
+
+
 class NetConnection: public Connection
 {
 protected:
@@ -49,5 +51,6 @@ public:
   virtual ConnectionPtr clone();
 
 };
+typedef std::shared_ptr<NetConnection> NetConnectionPtr;
 
 }

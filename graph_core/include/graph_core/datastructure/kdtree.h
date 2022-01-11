@@ -29,6 +29,7 @@ PSEUDO CODE :
 - https://www.cs.cmu.edu/~ckingsf/bioinfo-lectures/kdtrees.pdf
 - http://andrewd.ces.clemson.edu/courses/cpsc805/references/nearest_search.pdf
 */
+#pragma once
 
 #include <graph_core/datastructure/nearest_neighbors.h>
 namespace pathplan
