@@ -155,7 +155,7 @@ void KdNode::nearestNeighbor(const Eigen::VectorXd& configuration,
 
 void KdNode::near(const Eigen::VectorXd& configuration,
                   const double& radius,
-                  std::map<double, NodePtr> &nodes)
+                  std::multimap<double, NodePtr> &nodes)
 {
   double distance=(configuration-node_->getConfiguration()).norm();
 
@@ -178,7 +178,7 @@ void KdNode::near(const Eigen::VectorXd& configuration,
 
 void KdNode::kNearestNeighbors(const Eigen::VectorXd& configuration,
                    const size_t& k,
-                   std::map<double, NodePtr> &nodes)
+                   std::multimap<double, NodePtr> &nodes)
 {
   double last_distance;
   if (nodes.empty())
@@ -277,6 +277,16 @@ void KdNode::getNodes(std::vector<NodePtr>& nodes)
     right_->getNodes(nodes);
 }
 
+void KdNode::disconnectNodes(const std::vector<NodePtr>& white_list)
+{
+  if (std::find(white_list.begin(),white_list.end(),node_)==white_list.end())
+    node_->disconnect();
+  if (left_)
+    left_->disconnectNodes(white_list);
+  if (right_)
+    right_->disconnectNodes(white_list);
+}
+
 KdTree::KdTree():
   NearestNeighbors()
 {
@@ -313,10 +323,10 @@ void KdTree::nearestNeighbor(const Eigen::VectorXd& configuration,
 }
 
 
-std::map<double, pathplan::NodePtr> KdTree::near(const Eigen::VectorXd& configuration,
+std::multimap<double, pathplan::NodePtr> KdTree::near(const Eigen::VectorXd& configuration,
                                   const double& radius)
 {
-  std::map<double, pathplan::NodePtr> nodes;
+  std::multimap<double, pathplan::NodePtr> nodes;
   if (not root_)
     return nodes;
 
@@ -324,10 +334,10 @@ std::map<double, pathplan::NodePtr> KdTree::near(const Eigen::VectorXd& configur
   return nodes;
 }
 
-std::map<double, NodePtr> KdTree::kNearestNeighbors(const Eigen::VectorXd& configuration,
+std::multimap<double, NodePtr> KdTree::kNearestNeighbors(const Eigen::VectorXd& configuration,
                                         const size_t& k)
 {
-  std::map<double, NodePtr> nodes;
+  std::multimap<double, NodePtr> nodes;
   if (not root_)
     return nodes;
 
@@ -383,6 +393,11 @@ std::vector<NodePtr> KdTree::getNodes()
 
   root_->getNodes(nodes);
   return nodes;
+}
+
+void KdTree::disconnectNodes(const std::vector<NodePtr>& white_list)
+{
+  root_->disconnectNodes(white_list);
 }
 
 }  // namespace pathplan

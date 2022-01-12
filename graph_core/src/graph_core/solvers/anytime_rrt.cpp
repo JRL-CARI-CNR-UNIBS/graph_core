@@ -245,7 +245,7 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
     return false;
   }
 
-  new_tree_ = std::make_shared<Tree>(start_node, max_distance_, checker_, metrics_);
+  new_tree_ = std::make_shared<Tree>(start_node, max_distance_, checker_, metrics_,use_kdtree_);
 
   tmp_goal_node_ = goal_node;
   cost2beat_ = cost2beat;
@@ -340,6 +340,7 @@ bool AnytimeRRT::update(const Eigen::VectorXd& point, PathPtr &solution)
 
           start_tree_->removeNode(goal_node_);
           goal_node_ = tmp_goal_node_;
+          goal_cost_=goal_cost_fcn_->cost(goal_node_);
 
           ConnectionPtr conn_node2goal = std::make_shared<Connection>(new_node, goal_node_);
           conn_node2goal->setCost(cost_node2goal);
@@ -352,8 +353,7 @@ bool AnytimeRRT::update(const Eigen::VectorXd& point, PathPtr &solution)
           solution->setTree(start_tree_);
           solution_ = solution;
 
-          // PERCHE' E' QUI???
-          best_utopia_ = goal_cost_+(goal_node_->getConfiguration()-start_tree_->getRoot()->getConfiguration()).norm();
+          best_utopia_ = goal_cost_+metrics_->utopia(start_tree_->getRoot(),goal_node_);;
 
           path_cost_ = solution_->cost();
           cost_ = path_cost_+goal_cost_;

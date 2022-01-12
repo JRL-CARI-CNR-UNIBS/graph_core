@@ -45,10 +45,10 @@ public:
                           NodePtr &best,
                           double &best_distance) override;
 
-  virtual std::map<double, NodePtr> near(const Eigen::VectorXd& configuration,
+  virtual std::multimap<double, NodePtr> near(const Eigen::VectorXd& configuration,
                             const double& radius) override;
 
-  virtual std::map<double,NodePtr> kNearestNeighbors(const Eigen::VectorXd& configuration,
+  virtual std::multimap<double,NodePtr> kNearestNeighbors(const Eigen::VectorXd& configuration,
                                  const size_t& k) override;
 
   virtual bool findNode(const NodePtr& node) override;
@@ -59,6 +59,8 @@ public:
   virtual bool restoreNode(const NodePtr& node) override;
 
   virtual std::vector<NodePtr> getNodes() override;
+
+  virtual void disconnectNodes(const std::vector<NodePtr>& white_list) override;
 protected:
   std::vector<NodePtr> nodes_;
 };

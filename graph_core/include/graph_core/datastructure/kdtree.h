@@ -79,17 +79,19 @@ public:
 
   void near(const Eigen::VectorXd& configuration,
             const double& radius,
-            std::map<double, pathplan::NodePtr>& nodes);
+            std::multimap<double, NodePtr> &nodes);
 
   void kNearestNeighbors(const Eigen::VectorXd& configuration,
              const size_t& k,
-             std::map<double,NodePtr>& nodes);
+             std::multimap<double,NodePtr>& nodes);
 
   // return false if the node is not found
   bool findNode(const NodePtr& node,
                 KdNodePtr& kdnode);
 
   void getNodes(std::vector<NodePtr>& nodes);
+
+  void disconnectNodes(const std::vector<NodePtr>& white_list);
 protected:
   NodePtr node_;
   KdNodePtr left_;
@@ -112,10 +114,10 @@ public:
                           double &best_distance) override;
 
 
-  virtual std::map<double, NodePtr> near(const Eigen::VectorXd& configuration,
+  virtual std::multimap<double, NodePtr> near(const Eigen::VectorXd& configuration,
                             const double& radius) override;
 
-  virtual std::map<double,NodePtr> kNearestNeighbors(const Eigen::VectorXd& configuration,
+  virtual std::multimap<double,NodePtr> kNearestNeighbors(const Eigen::VectorXd& configuration,
                                  const size_t& k) override;
 
   // return false if the node is not found
@@ -130,6 +132,8 @@ public:
   virtual bool restoreNode(const NodePtr& node) override;
 
   virtual std::vector<NodePtr> getNodes() override;
+
+  virtual void disconnectNodes(const std::vector<NodePtr>& white_list) override;
 protected:
   KdNodePtr root_;
 };

@@ -40,7 +40,7 @@ bool MultigoalSolver::addStart(const NodePtr& start_node, const double &max_time
     ROS_ERROR("Solver is not configured.");
     return false;
   }
-  start_tree_ = std::make_shared<Tree>(start_node, max_distance_, checker_, metrics_);
+  start_tree_ = std::make_shared<Tree>(start_node, max_distance_, checker_, metrics_,use_kdtree_);
   solved_ = false;
 
   setProblem(max_time);
@@ -116,7 +116,7 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
   else
   {
     path_cost=cost = std::numeric_limits<double>::infinity();
-    goal_tree = std::make_shared<Tree>(goal_node, max_distance_, checker_, metrics_);
+    goal_tree = std::make_shared<Tree>(goal_node, max_distance_, checker_, metrics_,use_kdtree_);
     status=GoalStatus::search;
   }
 

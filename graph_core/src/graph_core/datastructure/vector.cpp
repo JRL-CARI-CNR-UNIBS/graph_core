@@ -41,6 +41,7 @@ Vector::Vector():
 void Vector::insert(const NodePtr& node)
 {
   nodes_.push_back(node);
+  size_++;
   return;
 }
 
@@ -61,10 +62,10 @@ void Vector::nearestNeighbor(const Eigen::VectorXd& configuration,
   }
 }
 
-std::map<double, pathplan::NodePtr> Vector::near(const Eigen::VectorXd& configuration,
+std::multimap<double, pathplan::NodePtr> Vector::near(const Eigen::VectorXd& configuration,
                                   const double& radius)
 {
-  std::map<double, pathplan::NodePtr> nodes;
+  std::multimap<double, pathplan::NodePtr> nodes;
   for (const NodePtr& n: nodes_)
   {
     double dist=(n->getConfiguration()-configuration).norm();
@@ -76,10 +77,10 @@ std::map<double, pathplan::NodePtr> Vector::near(const Eigen::VectorXd& configur
   return nodes;
 }
 
-std::map<double, NodePtr> Vector::kNearestNeighbors(const Eigen::VectorXd& configuration,
+std::multimap<double, NodePtr> Vector::kNearestNeighbors(const Eigen::VectorXd& configuration,
                                         const size_t& k)
 {
-  std::map<double, NodePtr> nodes;
+  std::multimap<double, NodePtr> nodes;
   for (const NodePtr& n: nodes_)
   {
     double dist=(n->getConfiguration()-configuration).norm();
@@ -88,7 +89,7 @@ std::map<double, NodePtr> Vector::kNearestNeighbors(const Eigen::VectorXd& confi
   if (nodes.size()<k)
     return nodes;
 
-  std::map<double, NodePtr> m2(nodes.begin(), std::next(nodes.begin(), k));
+  std::multimap<double, NodePtr> m2(nodes.begin(), std::next(nodes.begin(), k));
   return m2;
 }
 
@@ -102,12 +103,14 @@ bool Vector::findNode(const NodePtr& node)
 bool Vector::deleteNode(const NodePtr& node,
                         const bool& disconnect_node)
 {
-  size_--;
-  delete_nodes_++;
   std::vector<NodePtr>::iterator it;
   it=std::find(nodes_.begin(),nodes_.end(),node);
   if (it==nodes_.end())
     return false;
+
+  size_--;
+  delete_nodes_++;
+
   nodes_.erase(it);
   return true;
 }
@@ -119,6 +122,16 @@ bool Vector::restoreNode(const NodePtr& node)
 
 std::vector<NodePtr> Vector::getNodes()
 {
-  return nodes_;}
+  return nodes_;
+}
+
+void Vector::disconnectNodes(const std::vector<NodePtr>& white_list)
+{
+  for (NodePtr& n: nodes_)
+  {
+    if (std::find(white_list.begin(),white_list.end(),n)==white_list.end())
+      n->disconnect();
+  }
+}
 
 }  // namespace pathplan

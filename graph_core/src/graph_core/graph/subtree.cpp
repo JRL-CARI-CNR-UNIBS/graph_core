@@ -31,19 +31,20 @@ namespace pathplan
 {
 Subtree::Subtree(const TreePtr& parent_tree,
                  const NodePtr& root):
-  parent_tree_(parent_tree),
   Tree(root,parent_tree->getMaximumDistance(),
-       parent_tree->getChecker(),parent_tree->getMetrics())
+       parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getUseKdTree()),
+  parent_tree_(parent_tree)
 {
+  ROS_FATAL("QUI");
   populateTreeFromNode(root);
 }
 
 Subtree::Subtree(const TreePtr& parent_tree,
                  const NodePtr& root,
                  const std::vector<NodePtr>& white_list):
-  parent_tree_(parent_tree),
   Tree(root,parent_tree->getMaximumDistance(),
-       parent_tree->getChecker(),parent_tree->getMetrics())
+       parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getUseKdTree()),
+  parent_tree_(parent_tree)
 {
   double cost = std::numeric_limits<double>::infinity();
   Eigen::VectorXd focus1,focus2;
@@ -58,9 +59,9 @@ Subtree::Subtree(const TreePtr& parent_tree,
                  const Eigen::VectorXd& focus1,
                  const Eigen::VectorXd& focus2,
                  const double& cost):
-  parent_tree_(parent_tree),
   Tree(root,parent_tree->getMaximumDistance(),
-       parent_tree->getChecker(),parent_tree->getMetrics())
+       parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getUseKdTree()),
+  parent_tree_(parent_tree)
 {
   std::vector<NodePtr> white_list;
   Subtree(parent_tree,root,focus1,focus2,cost,white_list);
@@ -72,10 +73,9 @@ Subtree::Subtree(const TreePtr& parent_tree,
                  const Eigen::VectorXd& focus2,
                  const double& cost,
                  const std::vector<NodePtr>& white_list):
-  parent_tree_(parent_tree),
   Tree(root,parent_tree->getMaximumDistance(),
-       parent_tree->getChecker(),parent_tree->getMetrics())
-
+       parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getUseKdTree()),
+  parent_tree_(parent_tree)
 {
   if(((root->getConfiguration()-focus1).norm()+(root->getConfiguration()-focus2).norm())<cost)
     populateTreeFromNode(root,focus1,focus2,cost,white_list);
@@ -93,13 +93,6 @@ void Subtree::addNode(const NodePtr& node, const bool& check_if_present)
   Tree::addNode(node,check_if_present);
   parent_tree_->addNode(node,check_if_present);
 }
-
-void Subtree::removeNode(const std::vector<NodePtr>::iterator& it)
-{
-  Tree::removeNode(it);
-  parent_tree_->removeNode(*it);
-}
-
 
 SubtreePtr Subtree::createSubtree(const TreePtr& parent_tree, const NodePtr& root)
 {

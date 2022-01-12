@@ -40,6 +40,12 @@ bool TreeSolver::config(const ros::NodeHandle& nh)
     max_distance_=1.0;
   }
 
+  if (!nh.getParam("use_kdtree",use_kdtree_))
+  {
+    ROS_DEBUG("%s/use_kdtree is not set. set true",nh.getNamespace().c_str());
+    use_kdtree_=true;
+  }
+
   if (!nh.getParam("informed",informed_))
   {
     ROS_DEBUG("%s/informed is not set. using true (informed set enble)",nh.getNamespace().c_str());

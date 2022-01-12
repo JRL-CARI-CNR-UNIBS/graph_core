@@ -59,10 +59,10 @@ public:
     }
   }
 
-  virtual std::map<double, NodePtr> near(const Eigen::VectorXd& configuration,
+  virtual std::multimap<double, NodePtr> near(const Eigen::VectorXd& configuration,
                             const double& radius)=0;
 
-  virtual std::map<double,NodePtr> kNearestNeighbors(const Eigen::VectorXd& configuration,
+  virtual std::multimap<double,NodePtr> kNearestNeighbors(const Eigen::VectorXd& configuration,
                                  const size_t& k)=0;
 
   virtual bool findNode(const NodePtr& node)=0;
@@ -75,6 +75,8 @@ public:
   virtual unsigned int size(){return size_;}
 
   virtual std::vector<NodePtr> getNodes()=0;
+
+  virtual void disconnectNodes(const std::vector<NodePtr>& white_list)=0;
 
 protected:
   unsigned int size_;

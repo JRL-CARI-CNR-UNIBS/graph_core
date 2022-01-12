@@ -62,6 +62,7 @@ protected:
   bool informed_=true;
   bool warp_=false;
   bool first_warp_=false;
+  bool use_kdtree_=true;
 
   NodePtr goal_node_;                                          // if multigoal, it is related the best goal
   double path_cost_;                                           // if multigoal, it is related the best goal
