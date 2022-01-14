@@ -71,6 +71,8 @@ public:
 
   virtual void addNode(const NodePtr& node, const bool& check_if_present = true);
   virtual void removeNode(const std::vector<NodePtr>::iterator& it);
+  virtual bool purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
+  virtual bool purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes, unsigned int& subtree_removed_nodes);
 
   static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root);
   static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root,

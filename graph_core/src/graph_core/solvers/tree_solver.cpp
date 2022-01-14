@@ -104,6 +104,7 @@ bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const do
     if((ros::WallTime::now()-tic).toSec()>=0.98*max_time)
       break;
   }
+
   return false;
 }
 
@@ -122,13 +123,13 @@ bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node
     ros::WallTime toc = ros::WallTime::now();
     ROS_INFO_STREAM("time: "<<(toc-tic).toSec()<<" max_t: "<<max_time);
 
-    assert(0);
+    //assert(0);
 
     return false;
   }
 
   ros::WallTime toc = ros::WallTime::now();
-  ROS_INFO_STREAM("time: "<<(toc-tic).toSec()<<" max_t: "<<max_time);
+  //ROS_INFO_STREAM("time: "<<(toc-tic).toSec()<<" max_t: "<<max_time);
 
   return true;
 }
@@ -149,7 +150,7 @@ bool TreeSolver::setSolution(const PathPtr &solution, const bool& solved)
 
 bool TreeSolver::importFromSolver(const TreeSolverPtr& solver)
 {
-  ROS_INFO_STREAM("Import from Tree solver");
+  //ROS_INFO_STREAM("Import from Tree solver");
 
   config(getNodeHandle());
 

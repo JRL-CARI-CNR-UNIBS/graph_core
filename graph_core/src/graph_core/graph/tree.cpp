@@ -1007,6 +1007,28 @@ bool Tree::purgeFromHere(NodePtr& node)
 
 bool Tree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes)
 {
+  struct node_struct //elimina
+  {
+    NodePtr node;
+    std::vector<ConnectionPtr> parent_connections;
+    int child_size;
+  };
+
+  std::vector<node_struct> struct_nodes;
+  for(const NodePtr& n:nodes_) //elimina
+  {
+    node_struct ns;
+    ns.node = n;
+    ns.parent_connections = n->parent_connections_;
+    ns.child_size = n->child_connections_.size();
+
+    struct_nodes.push_back(ns);
+
+    if(n->parent_connections_.size() == 0 && n->child_connections_.size() == 0)
+      assert(0);
+  }
+
+
   if (std::find(white_list.begin(), white_list.end(), node) != white_list.end())
   {
     ROS_INFO_STREAM("Node in white list: "<<*node);
@@ -1032,6 +1054,25 @@ bool Tree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, 
     removeNode(it);
     removed_nodes++;
   }
+
+  bool rompi = false;
+  for(const NodePtr& n:nodes_) //elimina
+  {
+    if(n->parent_connections_.size() == 0 && n->child_connections_.size() == 0)
+    {
+      for(const node_struct ns:struct_nodes)
+      {
+        if(n == ns.node)
+        {
+          ROS_INFO_STREAM("node: "<<*ns.node);
+          ROS_INFO_STREAM("old parent: "<<ns.parent_connections.front()->getParent()->getConfiguration().transpose()<<" old n children: "<<ns.child_size);
+        }
+      }
+      rompi = true;
+    }
+  }
+  assert(!rompi);
+
   return true;
 }
 

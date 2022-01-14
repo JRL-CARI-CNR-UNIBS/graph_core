@@ -43,7 +43,10 @@ void NetConnection::add()
 void NetConnection::remove()
 {
   if (!valid)
+  {
+    ROS_ERROR("not valid");
     return;
+  }
 
   valid = false;
   if (parent_)

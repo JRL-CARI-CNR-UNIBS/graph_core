@@ -68,7 +68,7 @@ bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
     return false;
   if (cost_ <= utopia_tolerance_ * best_utopia_)
   {
-    ROS_INFO("Already optimal");
+    //ROS_INFO("Already optimal");
     solution=solution_;
     completed_=true;
     return true;

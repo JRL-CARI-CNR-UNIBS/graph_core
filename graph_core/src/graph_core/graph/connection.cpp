@@ -58,7 +58,10 @@ void Connection::add()
 void Connection::remove()
 {
   if (!valid)
+  {
+    ROS_ERROR("not valid");
     return;
+  }
 
   valid = false;
   if (parent_)

@@ -186,8 +186,8 @@ public:
   unsigned int purgeNodesOutsideEllipsoid(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list);
   unsigned int purgeNodesOutsideEllipsoids(const std::vector<SamplerPtr>& samplers, const std::vector<NodePtr>& white_list);
   unsigned int purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds = true);
-  bool purgeFromHere(NodePtr& node);
-  bool purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
+  virtual bool purgeFromHere(NodePtr& node);
+  virtual bool purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
   bool needCleaning(){return nodes_.size()>maximum_nodes_;}
 
   bool recheckCollision(); //return true if there are no collisions

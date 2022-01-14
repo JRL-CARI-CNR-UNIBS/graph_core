@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/collision_checker.h>
 #include <graph_core/graph/tree.h>
 #include <math.h>
-
+#include <graph_core/graph/net_connection.h>
 
 namespace pathplan
 {

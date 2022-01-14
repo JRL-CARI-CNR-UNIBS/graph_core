@@ -80,7 +80,7 @@ public:
     return marker_id_;
   }
 
-  void changeNodeSize(const std::vector<double>& marker_size)
+  void changeNodeSize(const std::vector<double>& marker_size = {0.03,0.03,0.03})
   {
     node_marker_scale_ = marker_size;
   }
@@ -89,7 +89,7 @@ public:
     node_marker_scale_ = {DEFAULT_NODE_SIZE, DEFAULT_NODE_SIZE, DEFAULT_NODE_SIZE};
   }
 
-  void changeConnectionSize(const std::vector<double>& marker_size)
+  void changeConnectionSize(const std::vector<double>& marker_size = {0.01,0.01,0.01})
   {
     connection_marker_scale_ = marker_size;
   }

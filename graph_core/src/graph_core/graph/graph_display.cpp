@@ -445,7 +445,7 @@ void Display::displayTreeNode(const NodePtr &n,
     add_points = true;
     if(check_in_tree)
     {
-      if(tree->isInTree(conn->getChild())) //CHIEDI SE DEVO DISTINGUERE PER DIRECTIONS
+      if(tree->isInTree(conn->getChild()))
         add_points = true;
       else
         add_points = false;
