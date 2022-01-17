@@ -35,12 +35,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
-enum Direction {Forward, Backward};
-
 class Connection;
 class Node;
-typedef std::shared_ptr<Node> NodePtr;
 typedef std::shared_ptr<Connection> ConnectionPtr;
+typedef std::shared_ptr<Node> NodePtr;
 
 Eigen::MatrixXd computeRotationMatrix(const Eigen::VectorXd& x1, const Eigen::VectorXd&  x2);
 

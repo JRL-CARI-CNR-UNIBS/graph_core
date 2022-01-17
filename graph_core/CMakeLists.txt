@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(graph_core)
-add_compile_options(-std=c++11 -funroll-loops -Wall -Ofast)
-#sset(CMAKE_BUILD_TYPE Release)
+#add_compile_options(-std=c++11 -funroll-loops -Wall -Ofast)
+add_compile_options(-std=c++11)
+set(CMAKE_BUILD_TYPE Release)
 #add_compile_options(-std=c++14)
-set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_BUILD_TYPE Debug)
 
 
 find_package(catkin REQUIRED COMPONENTS
@@ -52,19 +53,24 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/collision_checker.cpp
   src/${PROJECT_NAME}/graph/node.cpp
   src/${PROJECT_NAME}/graph/connection.cpp
+  src/${PROJECT_NAME}/graph/net_connection.cpp
+  src/${PROJECT_NAME}/graph/net.cpp
   src/${PROJECT_NAME}/graph/tree.cpp
   src/${PROJECT_NAME}/graph/subtree.cpp
   src/${PROJECT_NAME}/graph/path.cpp
   src/${PROJECT_NAME}/graph/graph_display.cpp
   src/${PROJECT_NAME}/solvers/multigoal.cpp
-  src/${PROJECT_NAME}/solvers/time_multigoal.cpp
+  #src/${PROJECT_NAME}/solvers/time_multigoal.cpp
   src/${PROJECT_NAME}/solvers/tree_solver.cpp
-  src/${PROJECT_NAME}/solvers/rrt_connect.cpp
   src/${PROJECT_NAME}/solvers/birrt.cpp
   src/${PROJECT_NAME}/solvers/rrt_star.cpp
   src/${PROJECT_NAME}/solvers/rrt.cpp
   src/${PROJECT_NAME}/solvers/anytime_rrt.cpp
   src/${PROJECT_NAME}/solvers/path_solver.cpp
+
+  src/${PROJECT_NAME}/datastructure/kdtree.cpp
+  src/${PROJECT_NAME}/datastructure/vector.cpp
+
   )
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 

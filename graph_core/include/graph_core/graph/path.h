@@ -6,7 +6,7 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
     * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
+      notice, this list of conditions aprotectednd the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
       documentation and/or other materials provided with the distribution.
@@ -32,7 +32,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/graph/tree.h>
 #include <math.h>
 
-#define NO_SPIRAL
 
 namespace pathplan
 {
@@ -50,11 +49,7 @@ protected:
   TreePtr tree_;
 
   std::vector<bool> change_warp_;
-  std::vector<bool> change_slip_parent_;
-  std::vector<bool> change_slip_child_;
-#ifdef NO_SPIRAL
-  std::vector<bool> change_spiral_;
-#endif
+
   void computeCost();
   void setChanged(const unsigned int& connection_idx);
   bool bisection(const unsigned int& connection_idx,
@@ -80,6 +75,12 @@ public:
 
   //It creates a node corresponding to the configuration and creates the correct connections inside the current_path_
   NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr &conn, const bool &rewire);
+  NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, const bool& rewire);
+
+  //Remove unnecessary nodes
+  bool removeNodes(const std::vector<NodePtr>& white_list, std::vector<NodePtr>& deleted_nodes);
+  bool removeNodes(const std::vector<NodePtr> &white_list);
+  bool removeNodes();
 
   //It gives the connection to which the configuration belongs
   ConnectionPtr findConnection(const Eigen::VectorXd& configuration, int& idx);
@@ -90,6 +91,8 @@ public:
   NodePtr findCloserNode(const Eigen::VectorXd& configuration);
   NodePtr findCloserNode(const NodePtr& node);
   NodePtr findCloserNode(const NodePtr& node, double &dist);
+  PathPtr getSubpathFromConf(const Eigen::VectorXd& conf, const bool get_copy);
+  PathPtr getSubpathToConf(const Eigen::VectorXd& conf, const bool get_copy);
   PathPtr getSubpathFromNode(const NodePtr& node);
   PathPtr getSubpathToNode(const NodePtr& node);
   PathPtr getSubpathFromNode(const Eigen::VectorXd& conf);
@@ -104,32 +107,13 @@ public:
   double getNormFromConf(const Eigen::VectorXd& conf);
 
 
+  std::vector<NodePtr> getNodes();
   std::vector<Eigen::VectorXd> getWaypoints();
 
-  /*std::vector<bool> change_warp_;
-  std::vector<bool> change_slip_parent_;
-  std::vector<bool> change_slip_child_;
-#ifdef NO_SPIRAL
-  std::vector<bool> change_spiral_;*/
 
   std::vector<bool> getChangeWarp()
   {
     return change_warp_;
-  }
-
-  std::vector<bool> getChangeSlipParent()
-  {
-    return change_slip_parent_;
-  }
-
-  std::vector<bool> getChangeSlipChild()
-  {
-    return change_slip_child_;
-  }
-
-  std::vector<bool> getChangeSpiral()
-  {
-    return change_spiral_;
   }
 
   TreePtr getTree()
@@ -145,21 +129,6 @@ public:
   void setChangeWarp(const std::vector<bool>& change_warp)
   {
     change_warp_ = change_warp;
-  }
-
-  void setgChangeSlipParent(const std::vector<bool>& change_slip_parent)
-  {
-    change_slip_parent_ = change_slip_parent;
-  }
-
-  void setgChangeSlipChild(const std::vector<bool>& change_slip_child)
-  {
-    change_slip_parent_ = change_slip_child;
-  }
-
-  void setChangeSpiral(const std::vector<bool>& change_spiral)
-  {
-    change_spiral_ = change_spiral;
   }
 
   void setTree(const TreePtr& tree)
@@ -180,28 +149,14 @@ public:
   void setConnections(const std::vector<ConnectionPtr>& conn)
   {
     change_warp_.clear();
-    change_slip_child_.clear();
-    change_slip_parent_.clear();
-    change_spiral_.clear();
-
     cost_ = 0;
 
     for(const ConnectionPtr& connection : conn)
     {
       cost_ += connection->getCost();
       change_warp_.push_back(true);
-      change_slip_child_.push_back(true);
-      change_slip_parent_.push_back(true);
-#ifdef NO_SPIRAL
-      change_spiral_.push_back(true);
-#endif
     }
     change_warp_.at(0) = false;
-    change_slip_child_.at(0) = false;
-    change_slip_parent_.at(0) = false;
-#ifdef NO_SPIRAL
-    change_spiral_.at(0) = false;
-#endif
 
     connections_ = conn;
   }
@@ -220,15 +175,10 @@ public:
 
   // return true if improve
   bool warp(const double& min_dist = 0.1, const double& max_time = std::numeric_limits<double>::infinity());
-  bool slipChild();
-  bool slipParent();
 
   void flip();
 
   XmlRpc::XmlRpcValue toXmlRpcValue(bool reverse=false) const;
-#ifdef NO_SPIRAL
-  bool spiral();
-#endif
   friend std::ostream& operator<<(std::ostream& os, const Path& path);
 };
 

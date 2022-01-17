@@ -26,31 +26,37 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/solvers/rrt.h>
+#include <graph_core/util.h>
+#include <graph_core/graph/tree.h>
 
 namespace pathplan
 {
-class RRTConnect;
-typedef std::shared_ptr<RRTConnect> RRTConnectPtr;
+class Net;
+typedef std::shared_ptr<Net> NetPtr;
 
-class RRTConnect: public RRT
+class Net: public std::enable_shared_from_this<Net>
 {
 protected:
-  virtual void clean(){}
+  TreePtr linked_tree_;
+
+  std::multimap<double,std::vector<ConnectionPtr>> computeConnectionFromNodeToNode(const NodePtr &start_node, const NodePtr &goal_node, std::vector<NodePtr>& visited_nodes);
 
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  RRTConnect(const MetricsPtr& metrics,
-             const CollisionCheckerPtr& checker,
-             const SamplerPtr& sampler):
-    RRT(metrics, checker, sampler) {}
+  Net(const TreePtr& tree): linked_tree_(tree){}
 
-  virtual bool update(const Eigen::VectorXd& point, PathPtr& solution) override;
-  virtual bool update(const NodePtr& n, PathPtr& solution) override;
-  virtual bool update(PathPtr& solution) override;
+  void setTree(const TreePtr& tree)
+  {
+    linked_tree_ = tree;
+  }
 
-  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler);
+  TreePtr getTree()
+  {
+    return linked_tree_;
+  }
 
+  std::multimap<double,std::vector<ConnectionPtr>> getConnectionToNode(const NodePtr& node);
+  std::multimap<double,std::vector<ConnectionPtr>> getConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node);
+  std::multimap<double,std::vector<ConnectionPtr>> getNetConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node);
 };
 
 }

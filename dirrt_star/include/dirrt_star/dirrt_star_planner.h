@@ -30,7 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <moveit/planning_interface/planning_interface.h>
 #include <moveit/robot_state/conversions.h>
 #include <moveit/planning_scene/planning_scene.h>
-#include <graph_core/solvers/rrt_star.h>
 #include <graph_core/solvers/birrt.h>
 #include <graph_core/solvers/path_solver.h>
 #include <graph_core/metrics.h>

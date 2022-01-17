@@ -30,6 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/collision_checker.h>
 #include <graph_core/sampler.h>
 #include <graph_core/metrics.h>
+#include <graph_core/datastructure/nearest_neighbors.h>
+#include <graph_core/datastructure/kdtree.h>
+#include <graph_core/datastructure/vector.h>
 
 namespace pathplan
 {
@@ -41,7 +44,7 @@ class Tree: public std::enable_shared_from_this<Tree>
 {
 protected:
   NodePtr root_;
-  Direction direction_;
+  bool use_kdtree_;
   double max_distance_=1;
   double tolerance_ = 1e-6;
   double k_rrt_;
@@ -49,7 +52,7 @@ protected:
   CollisionCheckerPtr checker_;
   MetricsPtr metrics_;
 
-  std::vector<NodePtr> nodes_;
+  NearestNeighborsPtr nodes_;
 
   void purgeNodeOutsideEllipsoid(NodePtr& node,
                                  const SamplerPtr& sampler,
@@ -61,15 +64,22 @@ protected:
                                   const std::vector<NodePtr>& white_list,
                                   unsigned int& removed_nodes);
 
-  // add children(Forward direction) or parents (Backforward direction) to the tree. node is not added (throw exception if it is not member of the tree)
+  // add children to the tree. node is not added (throw exception if it is not member of the tree)
   void populateTreeFromNode(const NodePtr& node);
+  void populateTreeFromNode(const NodePtr& node, const std::vector<NodePtr>& white_list);
+
+  //add children to the tree if they are inside the ellipsoid
+  void populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost);
+  void populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost, const std::vector<NodePtr> &white_list);
+
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Tree(const NodePtr& root,
-       const Direction& direction,
        const double& max_distance,
        const CollisionCheckerPtr& checker,
-       const MetricsPtr& metrics);
+       const MetricsPtr& metrics,
+       const bool& use_kdtree=true);
 
   const NodePtr& getRoot()
   {
@@ -77,13 +87,12 @@ public:
   }
   std::vector<NodePtr> getNodes()
   {
-    return nodes_;
+    return nodes_->getNodes();
   }
 
   bool changeRoot(const NodePtr& node);
 
   virtual void addNode(const NodePtr& node, const bool& check_if_present = true);
-  virtual void removeNode(const std::vector<NodePtr>::iterator& it);
   virtual void removeNode(const NodePtr& node);
 
   bool tryExtend(const Eigen::VectorXd& configuration,
@@ -121,7 +130,7 @@ public:
 
   bool informedExtend(const Eigen::VectorXd& configuration,   //Used in AnytimeRRT
                         NodePtr& new_node,
-                        Eigen::VectorXd &goal, const double &cost2beat, const double &bias);
+                        const Eigen::VectorXd &goal, const double &cost2beat, const double &bias);
 
   bool connectToNode(const NodePtr& node,
                      NodePtr& new_node,
@@ -160,43 +169,42 @@ public:
 
   double costToNode(NodePtr node);
 
-  std::vector<ConnectionPtr> getConnectionToNode(NodePtr node);
+  std::vector<ConnectionPtr> getConnectionToNode(NodePtr node);  //la &?
 
   bool keepOnlyThisBranch(const std::vector<ConnectionPtr>& connections);
 
   bool addBranch(const std::vector<ConnectionPtr>& connections);
   bool addTree(TreePtr& additional_tree, const double &max_time = std::numeric_limits<double>::infinity());
   void cleanTree();
-  std::vector<NodePtr> near(const NodePtr& node, const double& r_rewire);
-  std::map<double, NodePtr> nearK(const NodePtr& node);
-  std::map<double, NodePtr> nearK(const Eigen::VectorXd& conf);
+  std::multimap<double, NodePtr> near(const NodePtr& node, const double& r_rewire);
+  std::multimap<double, NodePtr> nearK(const NodePtr& node);
+  std::multimap<double, NodePtr> nearK(const Eigen::VectorXd& conf);
 
   bool isInTree(const NodePtr& node);
-  bool isInTree(const NodePtr& node, std::vector<NodePtr>::iterator& it);
   unsigned int getNumberOfNodes()const
   {
-    return nodes_.size();
+    return nodes_->size();
   }
 
   unsigned int purgeNodesOutsideEllipsoid(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list);
   unsigned int purgeNodesOutsideEllipsoids(const std::vector<SamplerPtr>& samplers, const std::vector<NodePtr>& white_list);
-  unsigned int purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds = true);
+
+  bool purgeFromHere(NodePtr& node);
   bool purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
-  bool needCleaning(){return nodes_.size()>maximum_nodes_;}
+  bool needCleaning(){return nodes_->size()>maximum_nodes_;}
 
   bool recheckCollision(); //return true if there are no collisions
   bool recheckCollisionFromNode(NodePtr &n); //return true if there are no collisions
 
   const double& getMaximumDistance() const {return max_distance_;}
-  const Direction& getDirection() const {return direction_;}
   MetricsPtr& getMetrics() {return metrics_;}
   CollisionCheckerPtr& getChecker() {return checker_;}
+  bool getUseKdTree(){return use_kdtree_;}
 
   XmlRpc::XmlRpcValue toXmlRpcValue() const;
   friend std::ostream& operator<<(std::ostream& os, const Tree& tree);
 
   static TreePtr fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
-                                 const Direction& direction,
                                  const double& max_distance,
                                  const CollisionCheckerPtr& checker,
                                  const MetricsPtr& metrics,

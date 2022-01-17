@@ -31,35 +31,31 @@ namespace pathplan
 {
 
 Tree::Tree(const NodePtr& root,
-           const Direction &direction,
            const double &max_distance,
            const CollisionCheckerPtr &checker,
-           const MetricsPtr &metrics):
+           const MetricsPtr &metrics, const bool &use_kdtree):
   root_(root),
-  direction_(direction),
+  use_kdtree_(use_kdtree),
   max_distance_(max_distance),
   checker_(checker),
   metrics_(metrics)
 {
-  nodes_.push_back(root);
+  if (use_kdtree)
+  {
+    nodes_=std::make_shared<KdTree>();
+  }
+  else
+  {
+    nodes_=std::make_shared<Vector>();
+  }
+  nodes_->insert(root);
   double dimension=root->getConfiguration().size();
   k_rrt_=1.1*std::pow(2.0,dimension+1)*std::exp(1)*(1.0+1.0/dimension);
 }
 
 NodePtr Tree::findClosestNode(const Eigen::VectorXd &configuration)
 {
-  NodePtr closest_node;
-  double min_square_distance = std::numeric_limits<double>::infinity();
-  for (const NodePtr& n : nodes_)
-  {
-    double squared_dist = (n->getConfiguration() - configuration).squaredNorm();
-    if (squared_dist < min_square_distance)
-    {
-      min_square_distance = squared_dist;
-      closest_node = n;
-    }
-  }
-  return closest_node;
+  return nodes_->nearestNeighbor(configuration);
 }
 
 bool Tree::tryExtend(const Eigen::VectorXd &configuration,
@@ -115,20 +111,10 @@ double Tree::selectNextConfiguration(const Eigen::VectorXd& configuration,
 bool Tree::extendOnly(NodePtr& closest_node, NodePtr &new_node, ConnectionPtr &connection)
 {
   ConnectionPtr conn;
-  if (direction_ == Forward)
-  {
-    double cost = metrics_->cost(closest_node, new_node);
-    conn = std::make_shared<Connection>(closest_node, new_node);
-    conn->add();
-    conn->setCost(cost);
-  }
-  else
-  {
-    double cost = metrics_->cost(new_node, closest_node);
-    conn = std::make_shared<Connection>(new_node, closest_node);
-    conn->add();
-    conn->setCost(cost);
-  }
+  double cost = metrics_->cost(closest_node, new_node);
+  conn = std::make_shared<Connection>(closest_node, new_node);
+  conn->add();
+  conn->setCost(cost);
 
   connection = conn;
   addNode(new_node,false);
@@ -180,25 +166,14 @@ bool Tree::extendToNode(const NodePtr& node,
   else
   {
     new_node = std::make_shared<Node>(next_configuration);
-    assert(std::find(nodes_.begin(),nodes_.end(),new_node)==nodes_.end());
     addNode(new_node,false);
   }
 
-  if (direction_ == Forward)
-  {
     double cost = metrics_->cost(closest_node, new_node);
     ConnectionPtr conn = std::make_shared<Connection>(closest_node, new_node);
     conn->add();
     conn->setCost(cost);
 
-  }
-  else
-  {
-    double cost = metrics_->cost(new_node, closest_node);
-    ConnectionPtr conn = std::make_shared<Connection>(new_node, closest_node);
-    conn->add();
-    conn->setCost(cost);
-  }
   return true;
 }
 
@@ -219,7 +194,7 @@ bool Tree::connect(const Eigen::VectorXd &configuration, NodePtr &new_node)
   return false;
 }
 
-bool Tree::informedExtend(const Eigen::VectorXd &configuration, NodePtr &new_node, Eigen::VectorXd &goal, const double& cost2beat, const double& bias)
+bool Tree::informedExtend(const Eigen::VectorXd &configuration, NodePtr &new_node,const Eigen::VectorXd &goal, const double& cost2beat, const double& bias)
 {
   struct extension
   {
@@ -228,8 +203,8 @@ bool Tree::informedExtend(const Eigen::VectorXd &configuration, NodePtr &new_nod
     double distance;
   };
 
-  std::map<double,NodePtr> closest_nodes_map = nearK(configuration);
-  if(closest_nodes_map.size() == 0) assert(0);
+  std::multimap<double,NodePtr> closest_nodes_map = nearK(configuration);
+  assert(closest_nodes_map.size()>0);
 
   double heuristic, distance, cost2node;
   Eigen::VectorXd new_configuration;
@@ -348,12 +323,6 @@ bool Tree::checkPathToNode(const NodePtr& node, std::vector<ConnectionPtr>& chec
 
 bool Tree::rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire)
 {
-  if (direction_ == Backward)
-  {
-    ROS_ERROR("rewiring is available only on forward tree");
-    return false;
-  }
-
   if(what_rewire >2 || what_rewire <0)
   {
     ROS_ERROR("what_rewire parameter should be 0,1 or 2");
@@ -382,7 +351,7 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire)
 
   if(node == root_) rewire_parent = false;
 
-  std::vector<NodePtr> near_nodes = near(node, r_rewire);
+  std::multimap<double,NodePtr> near_nodes = near(node, r_rewire);
   double cost_to_node = costToNode(node);
   bool improved = false;
 
@@ -390,8 +359,9 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire)
   {
     //ROS_DEBUG("try to find a better parent between %zu nodes", near_nodes.size());
     NodePtr nearest_node = node->getParents().at(0);
-    for (const NodePtr& n : near_nodes)
+    for (const std::pair<double,NodePtr>& p : near_nodes)
     {
+      const NodePtr& n = p.second;
       if (n == nearest_node)
         continue;
       if (n == node)
@@ -425,8 +395,9 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire)
   if(rewire_children)
   {
     //ROS_DEBUG("try to find a better child between %zu nodes", near_nodes.size());
-    for (NodePtr& n : near_nodes)
+    for (const std::pair<double,NodePtr>& p : near_nodes)
     {
+      const NodePtr& n = p.second;
       if (n == node)
         continue;
 
@@ -455,11 +426,6 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire)
 
 bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& checked_connections, double r_rewire, const int& what_rewire)
 {
-  if (direction_ == Backward)
-  {
-    ROS_ERROR("rewiring is available only on forward tree");
-    return false;
-  }
 
   if(what_rewire >2 || what_rewire <0)
   {
@@ -488,7 +454,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
   }
 
   if(node->getParents().size() == 0) rewire_parent = false;
-  std::vector<NodePtr> near_nodes = near(node, r_rewire);
+  std::multimap<double,NodePtr> near_nodes = near(node, r_rewire);
 
   //validate connections to node
   double cost_to_node;
@@ -503,8 +469,9 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
   {
     //ROS_DEBUG("try to find a better parent between %zu nodes", near_nodes.size());
     NodePtr nearest_node = node->getParents().at(0);
-    for (const NodePtr& n : near_nodes)
+    for (const std::pair<double,NodePtr>& p : near_nodes)
     {
+      const NodePtr& n = p.second;
       if (n == nearest_node)
         continue;
       if (n == node)
@@ -533,7 +500,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
       conn->add();
       checked_connections.push_back(conn);
 
-      //nearest_node = n; PER ME NON CI VA
+      //      nearest_node = n; //PER ME NON CI VA
       cost_to_node = cost_to_near + cost_near_to_node;
       improved = true;
     }
@@ -544,8 +511,9 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
   if(rewire_children)
   {
     //ROS_DEBUG("try to find a better child between %zu nodes", near_nodes.size());
-    for (NodePtr& n : near_nodes)
+    for (const std::pair<double,NodePtr>& p : near_nodes)
     {
+      const NodePtr& n = p.second;
       if (n == node)
         continue;
       if(n->getParents().size() == 0)
@@ -596,17 +564,12 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
 
 bool Tree::rewireK(const Eigen::VectorXd &configuration)
 {
-  if (direction_ == Backward)
-  {
-    ROS_ERROR("rewiring is available only on forward tree");
-    return false;
-  }
   NodePtr new_node;
   if (!extend(configuration, new_node))
   {
     return false;
   }
-  std::map<double,NodePtr> near_nodes = nearK(new_node);
+  std::multimap<double,NodePtr> near_nodes = nearK(new_node);
   NodePtr nearest_node = new_node->getParents().at(0);
   double cost_to_new = costToNode(new_node);
 
@@ -677,12 +640,6 @@ bool Tree::rewireK(const Eigen::VectorXd &configuration)
 
 bool Tree::rewireWithPathCheck(const Eigen::VectorXd &configuration, std::vector<ConnectionPtr> &checked_connections, double r_rewire, NodePtr& new_node)
 {
-  if (direction_ == Backward)
-  {
-    ROS_ERROR("rewiring is available only on forward tree");
-    return false;
-  }
-
   ConnectionPtr new_conn;
   if (!extend(configuration,new_node,new_conn))
   {
@@ -696,12 +653,6 @@ bool Tree::rewireWithPathCheck(const Eigen::VectorXd &configuration, std::vector
 
 bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire, NodePtr& new_node)
 {
-  if (direction_ == Backward)
-  {
-    ROS_ERROR("rewiring is available only on forward tree");
-    return false;
-  }
-
   if (!extend(configuration, new_node))
   {
     return false;
@@ -720,12 +671,6 @@ bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire)
 
 bool Tree::rewireToNode(const NodePtr& n, double r_rewire, NodePtr& new_node)
 {
-  if (direction_ == Backward)
-  {
-    ROS_ERROR("rewiring is available only on forward tree");
-    return false;
-  }
-
   if (!extendToNode(n, new_node))
   {
     return false;
@@ -742,58 +687,30 @@ bool Tree::rewireToNode(const NodePtr& n, double r_rewire)
 }
 
 
-std::vector<NodePtr> Tree::near(const NodePtr &node, const double &r_rewire)
+std::multimap<double,NodePtr> Tree::near(const NodePtr &node, const double &r_rewire)
 {
-  std::vector<NodePtr> nodes;
-  for (const NodePtr& n : nodes_)
-  {
-
-    double dist = (n->getConfiguration() - node->getConfiguration()).norm();
-    if (dist < r_rewire)
-    {
-      nodes.push_back(n);
-    }
-  }
-  return nodes;
+  return nodes_->near(node->getConfiguration(),r_rewire);
 }
 
-std::map<double,NodePtr> Tree::nearK(const NodePtr &node)
+std::multimap<double,NodePtr> Tree::nearK(const NodePtr &node)
 {
   return nearK(node->getConfiguration());
 }
 
-std::map<double,NodePtr> Tree::nearK(const Eigen::VectorXd &conf)
+std::multimap<double,NodePtr> Tree::nearK(const Eigen::VectorXd &conf)
 {
-  size_t k=std::ceil(k_rrt_*std::log(nodes_.size()+1));
-  std::map<double,NodePtr> nodes;
-  for (const NodePtr& n : nodes_)
-  {
-
-    double dist = (n->getConfiguration() - conf).norm();
-    if (nodes.size()<k)
-    {
-      nodes.insert(std::pair<double,NodePtr>(dist,n));
-    }
-    else if (std::prev(nodes.end())->first > dist)
-    {
-      nodes.erase(prev(nodes.end()));
-      nodes.insert(std::pair<double,NodePtr>(dist,n));
-    }
-  }
-  return nodes;
+  size_t k=std::ceil(k_rrt_*std::log(nodes_->size()+1));
+  return nodes_->kNearestNeighbors(conf,k);
 }
 
 double Tree::costToNode(NodePtr node)
 {
   double cost = 0;
-  if (direction_ == Forward)
-  {
     while (node != root_)
     {
       if (node->parent_connections_.size() != 1)
       {
-        ROS_ERROR("a node of forward-direction tree should have exactly a parent. node %u has 0",node.get());
-        ROS_FATAL_STREAM("node=\n" << *node);
+        ROS_ERROR_STREAM("a tree node should have exactly a parent. this node has 0: "<<*node);
         return std::numeric_limits<double>::infinity();
       }
 
@@ -808,34 +725,23 @@ double Tree::costToNode(NodePtr node)
       node = node->parent_connections_.at(0)->getParent();
 
     }
-  }
-  else
-  {
-    while (node != root_)
-    {
-      if (node->child_connections_.size() != 1)
-      {
-        ROS_ERROR("a node of backward-direction tree should have only a child. node %u has 0",node.get());
-        assert(0);
-      }
-      cost += node->child_connections_.at(0)->getCost();
-      node = node->child_connections_.at(0)->getChild();
-    }
-  }
   return cost;
 }
 
 std::vector<ConnectionPtr> Tree::getConnectionToNode(NodePtr node)
 {
   std::vector<ConnectionPtr> connections;
-  if (direction_ == Forward)
-  {
+
     while (node != root_)
     {
       if (node->parent_connections_.size() != 1)
       {
-        ROS_ERROR("a node of forward-direction tree should have only a parent");
+        ROS_ERROR("a tree node should have only a parent");
         ROS_ERROR_STREAM("node \n" << *node);
+
+        ROS_INFO_STREAM("current root "<<root_);
+        ROS_INFO_STREAM("node "<<node);
+
         assert(0);
       }
       connections.push_back(node->parent_connections_.at(0));
@@ -843,40 +749,20 @@ std::vector<ConnectionPtr> Tree::getConnectionToNode(NodePtr node)
 
     }
     std::reverse(connections.begin(), connections.end());
-  }
-  else
-  {
-    while (node != root_)
-    {
-      if (node->child_connections_.size() != 1)
-      {
-        ROS_ERROR("a node of backward-direction tree should have only a child");
-        assert(0);
-      }
 
-      connections.push_back(node->child_connections_.at(0));
-      node = node->child_connections_.at(0)->getChild();
-    }
-  }
   return connections;
 }
 
 void Tree::addNode(const NodePtr& node, const bool& check_if_present)
 {
   if (!check_if_present || !isInTree(node))
-    nodes_.push_back(node);
-}
-
-void Tree::removeNode(const std::vector<NodePtr>::iterator& it)
-{
-  nodes_.erase(it);
+    nodes_->insert(node);
 }
 
 void Tree::removeNode(const NodePtr& node)
 {
   node->disconnect();
-  std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
-  removeNode(it);
+  nodes_->deleteNode(node);
 }
 
 bool Tree::keepOnlyThisBranch(const std::vector<ConnectionPtr>& connections)
@@ -889,16 +775,11 @@ bool Tree::keepOnlyThisBranch(const std::vector<ConnectionPtr>& connections)
   for (const ConnectionPtr& conn : connections)
     branch_nodes.push_back(conn->getChild());
 
-  for (NodePtr& n : nodes_)
-  {
-    std::vector<NodePtr>::iterator it = std::find(branch_nodes.begin(), branch_nodes.end(), n);
-    if (it == branch_nodes.end())
-    {
-      n->disconnect();
-      n.reset();
-    }
-  }
-  nodes_ = branch_nodes;
+  nodes_->disconnectNodes(branch_nodes);
+  NearestNeighborsPtr nodes;
+  for (NodePtr& n : branch_nodes)
+    nodes->insert(n);
+  nodes_=nodes;
 
   return true;
 }
@@ -921,9 +802,8 @@ bool Tree::addBranch(const std::vector<ConnectionPtr> &connections)
 
   for (NodePtr& n : branch_nodes)
   {
-    std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), n);
-    if (it == nodes_.end())
-      addNode(n,false);
+    if (not nodes_->findNode(n))
+      nodes_->insert(n);
   }
   return true;
 }
@@ -937,10 +817,6 @@ bool Tree::addTree(TreePtr &additional_tree, const double &max_time)
       return false;
   }
 
-  if (additional_tree->getDirection()!=direction_)
-  {
-    return false;
-  }
 
   std::vector<NodePtr> additional_nodes=additional_tree->getNodes();
   for (size_t inode=1;inode<additional_nodes.size();inode++)
@@ -950,21 +826,15 @@ bool Tree::addTree(TreePtr &additional_tree, const double &max_time)
   return true;
 }
 
+
 bool Tree::isInTree(const NodePtr &node)
 {
-  std::vector<NodePtr>::iterator it;
-  return isInTree(node, it);
-}
-
-bool Tree::isInTree(const NodePtr &node, std::vector<NodePtr>::iterator& it)
-{
-  it = std::find(nodes_.begin(), nodes_.end(), node);
-  return it != nodes_.end();
+  return nodes_->findNode(node);
 }
 
 unsigned int Tree::purgeNodesOutsideEllipsoid(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list)
 {
-  if (nodes_.size() < maximum_nodes_)
+  if (nodes_->size() < maximum_nodes_)
     return 0;
   unsigned int removed_nodes = 0;
 
@@ -974,7 +844,7 @@ unsigned int Tree::purgeNodesOutsideEllipsoid(const SamplerPtr& sampler, const s
 
 unsigned int Tree::purgeNodesOutsideEllipsoids(const std::vector<SamplerPtr>& samplers, const std::vector<NodePtr>& white_list)
 {
-  if (nodes_.size() < maximum_nodes_)
+  if (nodes_->size() < maximum_nodes_)
     return 0;
   unsigned int removed_nodes = 0;
 
@@ -994,10 +864,7 @@ void Tree::purgeNodeOutsideEllipsoid(NodePtr& node,
   {
     // if node is inside the admissible set, check its successors
     std::vector<NodePtr> successors;
-    if (direction_ == Forward)
-      successors = node->getChildren();
-    else
-      successors = node->getParents();
+    successors = node->getChildren();
 
     for (NodePtr& n : successors)
     {
@@ -1022,7 +889,7 @@ void Tree::purgeNodeOutsideEllipsoids(NodePtr& node,
                                       unsigned int& removed_nodes)
 {
 
-  if (nodes_.size() < 0.5*maximum_nodes_)
+  if (nodes_->size() < 0.5*maximum_nodes_)
     return;
   assert(node);
 
@@ -1035,10 +902,7 @@ void Tree::purgeNodeOutsideEllipsoids(NodePtr& node,
   {
     // if node is inside the admissible set, check its successors
     std::vector<NodePtr> successors;
-    if (direction_ == Forward)
-      successors = node->getChildren();
-    else
-      successors = node->getParents();
+    successors = node->getChildren();
 
     for (NodePtr& n : successors)
     {
@@ -1053,60 +917,24 @@ void Tree::purgeNodeOutsideEllipsoids(NodePtr& node,
   return;
 }
 
-
-unsigned int Tree::purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds)
+bool Tree::purgeFromHere(NodePtr& node)
 {
-  if (nodes_.size() < maximum_nodes_)
-    return 0;
-  unsigned int nodes_to_remove = nodes_.size() - maximum_nodes_;
+  std::vector<NodePtr> white_list;
+  unsigned int removed_nodes;
 
-  unsigned int removed_nodes = 0;
-  unsigned int idx = 0;
-  while (idx < nodes_.size())
-  {
-    if (std::find(white_list.begin(), white_list.end(), nodes_.at(idx)) != white_list.end())
-    {
-      idx++;
-      continue;
-    }
-    if (check_bounds && !sampler->inBounds(nodes_.at(idx)->getConfiguration()))
-    {
-      purgeFromHere(nodes_.at(idx), white_list, removed_nodes);
-      continue;
-    }
-
-
-    if (nodes_to_remove < removed_nodes)
-      break;
-    if ((direction_ == Forward  && nodes_.at(idx)->child_connections_.size() == 0) ||
-        (direction_ == Backward && nodes_.at(idx)->parent_connections_.size() == 0))
-    {
-      removed_nodes++;
-      nodes_.at(idx)->disconnect();
-      removeNode(nodes_.begin() + idx);
-      continue;
-    }
-
-    idx++;
-  }
-  return removed_nodes;
+  return purgeFromHere(node,white_list,removed_nodes);
 }
-
 
 bool Tree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes)
 {
   if (std::find(white_list.begin(), white_list.end(), node) != white_list.end())
   {
-    ROS_INFO("QUA");
     return false;
   }
   assert(node);
   std::vector<NodePtr> successors;
 
-  if (direction_ == Forward)
-    successors = node->getChildren();
-  else
-    successors = node->getParents();
+  successors = node->getChildren();
 
 
   for (NodePtr& n : successors)
@@ -1117,11 +945,9 @@ bool Tree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, 
   }
 
   assert(node);
-  std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
   node->disconnect();
-  if (it < nodes_.end())
+  if (nodes_->deleteNode(node))
   {
-    removeNode(it);
     removed_nodes++;
   }
   return true;
@@ -1132,10 +958,7 @@ void Tree::cleanTree()
   std::vector<NodePtr> successors;
   std::vector<NodePtr> white_list;
   unsigned int removed_nodes;
-  if (direction_==Direction::Forward)
-    successors=root_->getChildren();
-  else
-    successors=root_->getParents();
+  successors=root_->getChildren();
   for (NodePtr& n: successors)
   {
     if (isInTree(n))
@@ -1145,30 +968,49 @@ void Tree::cleanTree()
 
 void Tree::populateTreeFromNode(const NodePtr& node)
 {
-  std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
-  if (it == nodes_.end())
+  Eigen::VectorXd focus1 = node->getConfiguration();
+  Eigen::VectorXd focus2 = node->getConfiguration();
+  populateTreeFromNode(node, focus1, focus2, std::numeric_limits<double>::infinity());
+}
+
+void Tree::populateTreeFromNode(const NodePtr& node, const std::vector<NodePtr>& white_list)
+{
+  Eigen::VectorXd focus1 = node->getConfiguration();
+  Eigen::VectorXd focus2 = node->getConfiguration();
+  populateTreeFromNode(node, focus1, focus2, std::numeric_limits<double>::infinity(),white_list);
+}
+
+void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost)
+{
+  std::vector<NodePtr> white_list;
+  populateTreeFromNode(node, focus1, focus2, std::numeric_limits<double>::infinity(), white_list);
+}
+
+
+void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost, const std::vector<NodePtr> &white_list)
+{
+  if (not nodes_->findNode(node))
   {
     throw std::invalid_argument("node is not member of tree");
   }
 
-  if (direction_==Direction::Forward)
-  {
     for (const NodePtr& n: node->getChildren())
     {
-      nodes_.push_back(n);
-      populateTreeFromNode(n);
-    }
-  }
-  else
-  {
-    for (const NodePtr& n: node->getParents())
-    {
-      nodes_.push_back(n);
-      populateTreeFromNode(n);
-    }
-  }
-}
+      std::vector<NodePtr>::const_iterator it = std::find(white_list.begin(), white_list.end(), n);
+      if(it != white_list.end())
+        continue;
 
+      else
+      {
+        if(((n->getConfiguration() - focus1).norm() + (n->getConfiguration() - focus2).norm()) < cost)
+        {
+          nodes_->insert(n);
+          populateTreeFromNode(n,focus1,focus2,cost,white_list);
+        }
+      }
+    }
+
+}
 
 XmlRpc::XmlRpcValue Tree::toXmlRpcValue() const
 {
@@ -1177,21 +1019,19 @@ XmlRpc::XmlRpcValue Tree::toXmlRpcValue() const
   XmlRpc::XmlRpcValue connections;
   int iconn=0;
 
-  for (size_t inode=0;inode<nodes_.size();inode++)
+  std::vector<NodePtr> nodes_vector=nodes_->getNodes();
+  for (size_t inode=0;inode<nodes_vector.size();inode++)
   {
-    const NodePtr& n=nodes_.at(inode);
+    const NodePtr& n=nodes_vector.at(inode);
     nodes[inode]=n->toXmlRpcValue();
     std::vector<NodePtr> dest;
-    if (direction_==Forward)
       dest=n->getChildren();
-    else
-      dest=n->getParents();
 
     for (size_t idest=0;idest<dest.size();idest++)
     {
-      for (size_t in2=0;in2<nodes_.size();in2++)
+      for (size_t in2=0;in2<nodes_vector.size();in2++)
       {
-        if (nodes_.at(in2)==dest.at(idest))
+        if (nodes_vector.at(in2)==dest.at(idest))
         {
           XmlRpc::XmlRpcValue connection;
           connection[0]=(int)inode;
@@ -1209,13 +1049,12 @@ XmlRpc::XmlRpcValue Tree::toXmlRpcValue() const
 
 std::ostream& operator<<(std::ostream& os, const Tree& tree)
 {
-  os << "number of nodes = " << tree.nodes_.size() << std::endl;
+  os << "number of nodes = " << tree.nodes_->size() << std::endl;
   os << "root = " << *tree.root_;
   return os;
 }
 
 TreePtr Tree::fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
-                              const Direction& direction,
                               const double& max_distance,
                               const CollisionCheckerPtr& checker,
                               const MetricsPtr& metrics,
@@ -1271,19 +1110,12 @@ TreePtr Tree::fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
     NodePtr& n1=nodes_vector.at(in1);
     NodePtr& n2=nodes_vector.at(in2);
     ConnectionPtr conn;
-    if (direction==Forward)
-    {
-      conn=std::make_shared<Connection>(n1,n2);
-      conn->setCost(metrics->cost(n1,n2));
-    }
-    else
-    {
-      conn=std::make_shared<Connection>(n2,n1);
-      conn->setCost(metrics->cost(n2,n1));
-    }
+    conn=std::make_shared<Connection>(n1,n2);
+    conn->setCost(metrics->cost(n1,n2));
+
     conn->add();
   }
-  pathplan::TreePtr tree=std::make_shared<Tree>(root,direction,max_distance,checker,metrics);
+  pathplan::TreePtr tree=std::make_shared<Tree>(root,max_distance,checker,metrics);
   for (int inode=1;inode<nodes.size();inode++)
   {
     tree->addNode(nodes_vector.at(inode),false);
@@ -1299,8 +1131,7 @@ TreePtr Tree::fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
 
 bool Tree::changeRoot(const NodePtr& node)
 {
-  std::vector<NodePtr>::iterator it;
-  if (not isInTree(node,it))
+  if (not isInTree(node))
     return false;
 
   std::vector<ConnectionPtr> connections = getConnectionToNode(node);
@@ -1309,9 +1140,6 @@ bool Tree::changeRoot(const NodePtr& node)
     conn->flip();
   }
 
-  // root should be the first node;
-  *it=root_;
-  nodes_.at(0)=node;
   root_=node;
 
   return true;
@@ -1325,33 +1153,16 @@ bool Tree::recheckCollisionFromNode(NodePtr& n)
 {
   std::vector<NodePtr> white_list;
   unsigned int removed_nodes;
-  if (direction_==Forward)
+  for (ConnectionPtr conn: n->child_connections_)
   {
-    for (ConnectionPtr conn: n->child_connections_)
+    NodePtr n=conn->getChild();
+    if (not checker_->checkConnection(conn))
     {
-      NodePtr n=conn->getChild();
-      if (not checker_->checkConnection(conn))
-      {
-        purgeFromHere(n,white_list,removed_nodes);
-        return false;
-      }
-      if (not recheckCollisionFromNode(n))
-        return false;
+      purgeFromHere(n,white_list,removed_nodes);
+      return false;
     }
-  }
-  else
-  {
-    for (ConnectionPtr conn: n->parent_connections_)
-    {
-      NodePtr n=conn->getParent();
-      if (not checker_->checkConnection(conn))
-      {
-        purgeFromHere(n,white_list,removed_nodes);
-        return false;
-      }
-      if (not recheckCollisionFromNode(n))
-        return false;
-    }
+    if (not recheckCollisionFromNode(n))
+      return false;
   }
   return true;
 }

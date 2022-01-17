@@ -1,4 +1,3 @@
-#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -26,35 +25,52 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/solvers/tree_solver.h>
+#include <graph_core/graph/net_connection.h>
 
 namespace pathplan
 {
-class RRT;
-typedef std::shared_ptr<RRT> RRTPtr;
-
-class RRT: public TreeSolver
+NetConnection::NetConnection(const NodePtr &parent, const NodePtr &child):
+  Connection(parent,child)
 {
-protected:
-  virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity()); //max_time not used
+}
 
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  RRT(const MetricsPtr& metrics,
-      const CollisionCheckerPtr& checker,
-      const SamplerPtr& sampler):
-    TreeSolver(metrics, checker, sampler) {}
+void NetConnection::add()
+{
+  valid = true;
+  parent_->addNetChildConnection(pointer());
+  child_->addNetParentConnection(pointer());
+}
+void NetConnection::remove()
+{
+  if (!valid)
+    return;
 
-  virtual bool config(const ros::NodeHandle& nh) override;
-  virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
-  virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity());
-  virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
-  virtual void resetProblem() override;
-  virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution) override;
-  virtual bool update(const NodePtr& n, PathPtr& solution) override;
-  virtual bool update(PathPtr& solution) override;
+  valid = false;
+  if (parent_)
+  {
+    parent_->remoteNetChildConnection(pointer());
+  }
+  else
+    ROS_FATAL("parent already destroied");
 
-  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler) override;
-};
+  if (child_)
+  {
+    child_->remoteNetParentConnection(pointer());
+  }
+  else
+    ROS_FATAL("child already destroied");
+}
+
+ConnectionPtr NetConnection::clone()
+{
+  NodePtr new_parent = std::make_shared<Node>(parent_->getConfiguration());
+  NodePtr new_child = std::make_shared<Node>(child_->getConfiguration());
+
+  NetConnectionPtr new_connection = std::make_shared<NetConnection>(new_parent,new_child);
+  new_connection->setCost(cost_);
+  new_connection->add();
+
+  return new_connection;
+}
 
 }

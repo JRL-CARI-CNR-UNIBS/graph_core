@@ -233,7 +233,6 @@ int Display::displayPath(const PathPtr &path,
     Eigen::VectorXd conf1 = parent;
     Eigen::VectorXd conf2;
 
-
     for(unsigned int i=1;i<=SUBDIVISION_FACTOR; i++)
     {
       conf2 = parent + i*step*v;
@@ -353,6 +352,43 @@ std::vector<int> Display::displayPathAndWaypoints(const PathPtr &path,
   ros::Duration(DISPLAY_TIME).sleep();
   return ids;
 }
+int Display::displaySubtree(const SubtreePtr &subtree,
+                            const std::string &ns,
+                            const std::vector<double> &marker_color)
+{
+  int static_id = marker_id_++;
+
+  return displaySubtree(subtree,static_id,ns,marker_color);
+}
+
+int Display::displaySubtree(const SubtreePtr &subtree,
+                            const int &static_id,
+                            const std::string &ns,
+                            const std::vector<double> &marker_color)
+{
+  visualization_msgs::Marker marker;
+  marker.ns = ns;
+  marker.type = visualization_msgs::Marker::LINE_LIST;
+  marker.header.frame_id="world";
+  marker.header.stamp=ros::Time::now();
+  marker.action = visualization_msgs::Marker::ADD;
+  marker.id= static_id;
+
+  marker.scale.x = tree_marker_scale_.at(0);
+  marker.scale.y = tree_marker_scale_.at(1);
+  marker.scale.z = tree_marker_scale_.at(2);
+
+  marker.color.r = marker_color.at(0);
+  marker.color.g = marker_color.at(1);
+  marker.color.b = marker_color.at(2);
+  marker.color.a = marker_color.at(3);
+  displayTreeNode(subtree->getRoot(),subtree,marker.points,true);
+
+  marker_pub_.publish(marker);
+  ros::Duration(DISPLAY_TIME).sleep();
+  return marker.id;
+
+}
 
 int Display::displayTree(const TreePtr &tree,
                          const std::string &ns,
@@ -384,7 +420,7 @@ int Display::displayTree(const TreePtr &tree,
   marker.color.g = marker_color.at(1);
   marker.color.b = marker_color.at(2);
   marker.color.a = marker_color.at(3);
-  displayTreeNode(tree->getRoot(),tree->getDirection(),marker.points);
+  displayTreeNode(tree->getRoot(),tree,marker.points,false);
 
   marker_pub_.publish(marker);
   ros::Duration(DISPLAY_TIME).sleep();
@@ -393,16 +429,94 @@ int Display::displayTree(const TreePtr &tree,
 }
 
 void Display::displayTreeNode(const NodePtr &n,
-                              const Direction& direction,
-                              std::vector<geometry_msgs::Point>& points)
+                              const TreePtr& tree,
+                              std::vector<geometry_msgs::Point>& points,
+                              const bool check_in_tree)
 {
   std::vector<ConnectionPtr> connections;
-  if (direction==Direction::Forward)
     connections=n->child_connections_;
-  else
-    connections=n->parent_connections_;
+
   if (connections.size()==0)
     return;
+
+  bool add_points;
+  for (const ConnectionPtr& conn: connections)
+  {
+    add_points = true;
+    if(check_in_tree)
+    {
+      if(tree->isInTree(conn->getChild())) //CHIEDI SE DEVO DISTINGUERE PER DIRECTIONS
+        add_points = true;
+      else
+        add_points = false;
+    }
+
+    if(add_points)
+    {
+      geometry_msgs::Pose pose;
+      state_->setJointGroupPositions(group_name_,conn->getParent()->getConfiguration());
+      tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+      points.push_back(pose.position);
+
+      state_->setJointGroupPositions(group_name_,conn->getChild()->getConfiguration());
+      tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+      points.push_back(pose.position);
+
+      displayTreeNode(conn->getChild(),tree,points,check_in_tree);
+    }
+  }
+}
+
+int Display::displayNet(const NetPtr &net,
+                        const std::string &ns,
+                        const std::vector<double> &marker_color)
+{
+  int static_id = marker_id_++;
+
+  return displayNet(net,static_id,ns,marker_color);
+}
+
+int Display::displayNet(const NetPtr &net,
+                        const int &static_id,
+                        const std::string &ns,
+                        const std::vector<double> &marker_color)
+{
+  visualization_msgs::Marker marker;
+  marker.ns = ns;
+  marker.type = visualization_msgs::Marker::LINE_LIST;
+  marker.header.frame_id="world";
+  marker.header.stamp=ros::Time::now();
+  marker.action = visualization_msgs::Marker::ADD;
+  marker.id= static_id;
+
+  marker.scale.x = tree_marker_scale_.at(0);
+  marker.scale.y = tree_marker_scale_.at(1);
+  marker.scale.z = tree_marker_scale_.at(2);
+
+  marker.color.r = marker_color.at(0);
+  marker.color.g = marker_color.at(1);
+  marker.color.b = marker_color.at(2);
+  marker.color.a = marker_color.at(3);
+  displayNetNode(net->getTree()->getRoot(),net,marker.points);
+
+  marker_pub_.publish(marker);
+  ros::Duration(DISPLAY_TIME).sleep();
+  return marker.id;
+
+}
+
+void Display::displayNetNode(const NodePtr &n,
+                             const NetPtr& net,
+                             std::vector<geometry_msgs::Point>& points)
+{
+  TreePtr tree = net->getTree();
+  std::vector<ConnectionPtr> connections, net_connections;
+    connections=n->child_connections_;
+    net_connections=n->net_child_connections_;
+    connections.insert(connections.end(),net_connections.begin(),net_connections.end());
+  if (connections.size()==0)
+    return;
+
   for (const ConnectionPtr& conn: connections)
   {
     geometry_msgs::Pose pose;
@@ -414,20 +528,14 @@ void Display::displayTreeNode(const NodePtr &n,
     tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
     points.push_back(pose.position);
 
-    displayTreeNode(conn->getChild(),direction,points);
+    displayNetNode(conn->getChild(),net,points);
   }
 }
 
 void Display::nextButton(const std::string& string)
 {
-  //moveit_visual_tools::MoveItVisualToolsPtr visual_tools_ = std::make_shared<moveit_visual_tools::MoveItVisualTools>(base_link_,"/rviz_visual_tools");
-  moveit_visual_tools::MoveItVisualToolsPtr visual_tools_ = std::make_shared<moveit_visual_tools::MoveItVisualTools>("/rviz_visual_tools");
-
-  /* Remote control is an introspection tool that allows users to step through a high level script
-  via buttons and keyboard shortcuts in RViz */
-  visual_tools_->loadRemoteControl();
-
-  /* We can also use visual_tools to wait for user input */
-  visual_tools_->prompt(string);
+  moveit_visual_tools::MoveItVisualToolsPtr visual_tools = std::make_shared<moveit_visual_tools::MoveItVisualTools>("/rviz_visual_tools");
+  visual_tools->loadRemoteControl();
+  visual_tools->prompt(string);
 }
 }

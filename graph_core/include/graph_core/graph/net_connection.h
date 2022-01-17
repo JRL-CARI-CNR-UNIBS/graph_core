@@ -26,35 +26,31 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/solvers/tree_solver.h>
-
+#include <graph_core/graph/connection.h>
 namespace pathplan
 {
-class RRT;
-typedef std::shared_ptr<RRT> RRTPtr;
 
-class RRT: public TreeSolver
+
+class NetConnection: public Connection
 {
 protected:
-  virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity()); //max_time not used
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  RRT(const MetricsPtr& metrics,
-      const CollisionCheckerPtr& checker,
-      const SamplerPtr& sampler):
-    TreeSolver(metrics, checker, sampler) {}
 
-  virtual bool config(const ros::NodeHandle& nh) override;
-  virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
-  virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity());
-  virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
-  virtual void resetProblem() override;
-  virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution) override;
-  virtual bool update(const NodePtr& n, PathPtr& solution) override;
-  virtual bool update(PathPtr& solution) override;
+  NetConnection(const NodePtr& parent, const NodePtr& child);
 
-  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler) override;
+  virtual void add();
+  virtual void remove();
+
+  virtual bool isNet()
+  {
+    return true;
+  }
+
+  virtual ConnectionPtr clone();
+
 };
+typedef std::shared_ptr<NetConnection> NetConnectionPtr;
 
 }

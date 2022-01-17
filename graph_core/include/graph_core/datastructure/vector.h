@@ -1,6 +1,6 @@
-#pragma once
 /*
-Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
+Copyright (c) 2020, JRL-CARI CNR-STIIMA/UNIBS
+Manuel Beschi manuel.beschi@unibs.it
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -24,37 +24,45 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+PSEUDO CODE :
+- https://www.cs.cmu.edu/~ckingsf/bioinfo-lectures/kdtrees.pdf
+- http://andrewd.ces.clemson.edu/courses/cpsc805/references/nearest_search.pdf
 */
 
-#include <graph_core/solvers/tree_solver.h>
-
+#include <graph_core/datastructure/nearest_neighbors.h>
 namespace pathplan
 {
-class RRT;
-typedef std::shared_ptr<RRT> RRTPtr;
 
-class RRT: public TreeSolver
+class Vector: public NearestNeighbors
 {
-protected:
-  virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity()); //max_time not used
-
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  RRT(const MetricsPtr& metrics,
-      const CollisionCheckerPtr& checker,
-      const SamplerPtr& sampler):
-    TreeSolver(metrics, checker, sampler) {}
+  Vector();
 
-  virtual bool config(const ros::NodeHandle& nh) override;
-  virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
-  virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity());
-  virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
-  virtual void resetProblem() override;
-  virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution) override;
-  virtual bool update(const NodePtr& n, PathPtr& solution) override;
-  virtual bool update(PathPtr& solution) override;
+  virtual void insert(const NodePtr& node) override;
 
-  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler) override;
+  virtual void nearestNeighbor(const Eigen::VectorXd& configuration,
+                          NodePtr &best,
+                          double &best_distance) override;
+
+  virtual std::multimap<double, NodePtr> near(const Eigen::VectorXd& configuration,
+                            const double& radius) override;
+
+  virtual std::multimap<double,NodePtr> kNearestNeighbors(const Eigen::VectorXd& configuration,
+                                 const size_t& k) override;
+
+  virtual bool findNode(const NodePtr& node) override;
+
+  virtual bool deleteNode(const NodePtr& node,
+                  const bool& disconnect_node=false) override;
+
+  virtual bool restoreNode(const NodePtr& node) override;
+
+  virtual std::vector<NodePtr> getNodes() override;
+
+  virtual void disconnectNodes(const std::vector<NodePtr>& white_list) override;
+protected:
+  std::vector<NodePtr> nodes_;
 };
 
-}
+}  // namespace pathplan
