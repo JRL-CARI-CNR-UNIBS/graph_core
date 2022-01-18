@@ -33,7 +33,8 @@ namespace pathplan
 Tree::Tree(const NodePtr& root,
            const double &max_distance,
            const CollisionCheckerPtr &checker,
-           const MetricsPtr &metrics, const bool &use_kdtree):
+           const MetricsPtr &metrics,
+           const bool &use_kdtree):
   root_(root),
   use_kdtree_(use_kdtree),
   max_distance_(max_distance),

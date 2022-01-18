@@ -36,11 +36,14 @@ protected:
   NodePtr parent_;
   NodePtr child_;
   double cost_;
-  bool valid = false;
+  bool added_ = false;
   double euclidean_norm_;
+  double time_;
+  double likelihood_;
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Connection(const NodePtr& parent, const NodePtr& child);
+  Connection(const NodePtr& parent, const NodePtr& child, const double& time);
   ConnectionPtr pointer()
   {
     return shared_from_this();
@@ -74,6 +77,8 @@ public:
   {
     return child_;
   }
+
+  void setLikelihood(const double& likelihood){likelihood_=likelihood;}
 
   virtual ConnectionPtr clone();
 

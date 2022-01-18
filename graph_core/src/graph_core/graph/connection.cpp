@@ -31,11 +31,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
-Connection::Connection(const NodePtr &parent, const NodePtr &child):
+Connection::Connection(const NodePtr &parent, const NodePtr &child, const double &time):
   parent_(parent),
-  child_(child)
+  child_(child),
+  time_(time)
 {
   euclidean_norm_ = (child->getConfiguration() - parent->getConfiguration()).norm();
+  likelihood_=1.0;
 }
 
 ConnectionPtr Connection::clone()
@@ -51,16 +53,16 @@ ConnectionPtr Connection::clone()
 
 void Connection::add()
 {
-  valid = true;
+  added_ = true;
   parent_->addChildConnection(pointer());
   child_->addParentConnection(pointer());
 }
 void Connection::remove()
 {
-  if (!valid)
+  if (!added_)
     return;
 
-  valid = false;
+  added_ = false;
   if (parent_)
   {
     parent_->remoteChildConnection(pointer());
