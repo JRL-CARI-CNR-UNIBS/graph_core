@@ -1,6 +1,6 @@
 #pragma once
 /*
-Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
+Copyright (c) 2021, Marco Faroni CNR-STIIMA marco.faroni@stiima.cnr.it
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,72 +26,36 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/util.h>
-#include <graph_core/graph/node.h>
-namespace pathplan
-{
-class Connection : public std::enable_shared_from_this<Connection>
-{
-protected:
-  NodePtr parent_;
-  NodePtr child_;
-  double cost_;
-  bool added_ = false;
-  double euclidean_norm_;
-  double time_;
-  double likelihood_;
+#include <ros/ros.h>
+#include <graph_core/multi_goal_selection/policies/policy_base.h>
 
+namespace multi_goal_selection
+{
+
+class PolicyCustomExample : public PolicyBase
+{
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Connection(const NodePtr& parent, const NodePtr& child, const double& time=0.0);
-  ConnectionPtr pointer()
+  PolicyCustomExample(const std::string& name, const int& n_goals) : PolicyBase(name, n_goals){}
+
+  std::vector<double> getProbabilities()
   {
-    return shared_from_this();
+    std::fill(goals_probabilities_.begin(), goals_probabilities_.end(), 0.0);
+    goals_probabilities_.back() = 1.0;
+    return goals_probabilities_;
   }
 
-  virtual void add();
-  virtual void remove();
-
-  virtual bool isNet()
+  void updateState(const int& i_goal, const double& reward)
   {
-    return false;
+//    ROS_INFO("update state custom example");
   }
 
-  void setCost(const double& cost)
+  std::string toString()
   {
-    cost_ = cost;
-  }
-  const double& getCost()
-  {
-    return cost_;
-  }
-  double norm()
-  {
-    return euclidean_norm_;
-  }
-  const NodePtr& getParent() const
-  {
-    return parent_;
-  }
-  const NodePtr& getChild() const
-  {
-    return child_;
+    std::string str = "example custom";
+    return str;
   }
 
-  void setLikelihood(const double& likelihood){likelihood_=likelihood;}
-
-  virtual ConnectionPtr clone();
-
-  void flip();
-
-  bool isParallel(const ConnectionPtr& conn, const double& toll = 1e-06);
-
-  friend std::ostream& operator<<(std::ostream& os, const Connection& connection);
-  ~Connection();
 };
-
-
-
-std::ostream& operator<<(std::ostream& os, const Connection& connection);
+typedef std::shared_ptr<PolicyCustomExample> PolicyCustomExamplePtr;
 
 }

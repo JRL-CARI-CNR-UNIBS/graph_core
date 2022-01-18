@@ -350,6 +350,8 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
     return false;
   }
 
+  solver->initGoalSelector(); // init multi-goal selection policy
+
   // ===============================
   // BEGINNING OF THE IMPORTANT PART
   // ===============================
@@ -373,14 +375,14 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
     if (!found_a_solution && solver->solved())
     {
       assert(solution);
-      ROS_DEBUG("Find a first solution (cost=%f) in %f seconds",solver->cost(),(ros::WallTime::now()-start_time).toSec());
+      ROS_INFO("Find a first solution (cost=%f) in %f seconds",solver->cost(),(ros::WallTime::now()-start_time).toSec());
       ROS_DEBUG_STREAM(*solver);
       found_a_solution=true;
       refine_time = ros::WallTime::now();
     }
     if (solver->completed())
     {
-      ROS_DEBUG("Optimization completed (cost=%f) in %f seconds (%u iterations)",solver->cost(),(ros::WallTime::now()-start_time).toSec(),iteration);
+      ROS_INFO("Optimization completed (cost=%f) in %f seconds (%u iterations)",solver->cost(),(ros::WallTime::now()-start_time).toSec(),iteration);
       break;
     }
 
@@ -391,7 +393,7 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
     }
   }
 
-  ROS_DEBUG_STREAM(*solver);
+  ROS_INFO_STREAM(*solver);
 
 
   if (!found_a_solution)

@@ -1,6 +1,6 @@
 #pragma once
 /*
-Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
+Copyright (c) 2021, Marco Faroni CNR-STIIMA marco.faroni@stiima.cnr.it
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,72 +26,37 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/util.h>
-#include <graph_core/graph/node.h>
-namespace pathplan
-{
-class Connection : public std::enable_shared_from_this<Connection>
-{
-protected:
-  NodePtr parent_;
-  NodePtr child_;
-  double cost_;
-  bool added_ = false;
-  double euclidean_norm_;
-  double time_;
-  double likelihood_;
+#include <ros/ros.h>
+#include <graph_core/multi_goal_selection/policies/policy_base.h>
+#include <graph_core/multi_goal_selection/rewards/reward_base.h>
 
+namespace multi_goal_selection
+{
+class GoalSelectionManager;
+typedef std::shared_ptr<GoalSelectionManager> GoalSelectionManagerPtr;
+
+class GoalSelectionManager
+{
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Connection(const NodePtr& parent, const NodePtr& child, const double& time=0.0);
-  ConnectionPtr pointer()
-  {
-    return shared_from_this();
-  }
+//  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  GoalSelectionManager(const std::string& name,const unsigned int& n_goals,const unsigned int& n_dof);
+  std::vector<double> calculateProbabilities(const std::vector<int>& were_goals_selected, const std::vector<double>& costs, const std::vector<double>& utopias, const double& best_cost);
+  void warmStart(const std::vector<double>& costs, const std::vector<double>& utopias, const double& best_cost);
+  bool isWarmStartSet(){return do_warm_start_;};
 
-  virtual void add();
-  virtual void remove();
+protected:
+  ros::NodeHandle nh_;
+  int goal_number_;
+  std::vector<double> goal_probabilities_;
+  std::string policy_type_;
+  std::string policy_name_;
+  std::string reward_fcn_name_;
+  bool do_warm_start_;
 
-  virtual bool isNet()
-  {
-    return false;
-  }
+  std::shared_ptr<multi_goal_selection::PolicyBase> policy_;
+  std::shared_ptr<multi_goal_selection::RewardBase> reward_fcn_;
 
-  void setCost(const double& cost)
-  {
-    cost_ = cost;
-  }
-  const double& getCost()
-  {
-    return cost_;
-  }
-  double norm()
-  {
-    return euclidean_norm_;
-  }
-  const NodePtr& getParent() const
-  {
-    return parent_;
-  }
-  const NodePtr& getChild() const
-  {
-    return child_;
-  }
 
-  void setLikelihood(const double& likelihood){likelihood_=likelihood;}
-
-  virtual ConnectionPtr clone();
-
-  void flip();
-
-  bool isParallel(const ConnectionPtr& conn, const double& toll = 1e-06);
-
-  friend std::ostream& operator<<(std::ostream& os, const Connection& connection);
-  ~Connection();
 };
-
-
-
-std::ostream& operator<<(std::ostream& os, const Connection& connection);
 
 }

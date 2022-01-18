@@ -214,8 +214,6 @@ void AvoidanceGoalCostFunction::publishPoints()
     marker.colors.push_back(marker.color);
   }
 
-
-
   marker_pub_.publish(marker);
   ros::Duration(0.15).sleep();
 

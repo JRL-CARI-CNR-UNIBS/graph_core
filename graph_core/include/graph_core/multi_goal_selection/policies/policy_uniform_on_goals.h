@@ -1,6 +1,6 @@
 #pragma once
 /*
-Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
+Copyright (c) 2021, Marco Faroni CNR-STIIMA marco.faroni@stiima.cnr.it
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,72 +26,32 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/util.h>
-#include <graph_core/graph/node.h>
-namespace pathplan
-{
-class Connection : public std::enable_shared_from_this<Connection>
-{
-protected:
-  NodePtr parent_;
-  NodePtr child_;
-  double cost_;
-  bool added_ = false;
-  double euclidean_norm_;
-  double time_;
-  double likelihood_;
+#include <ros/ros.h>
+#include <graph_core/multi_goal_selection/policies/policy_mab.h>
 
+namespace multi_goal_selection
+{
+
+class PolicyUniformOnGoals: public PolicyMAB
+{
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Connection(const NodePtr& parent, const NodePtr& child, const double& time=0.0);
-  ConnectionPtr pointer()
+  PolicyUniformOnGoals(const std::string& name, const int& n_goals) : PolicyMAB(name, n_goals){}
+
+  int selectNextArm()
   {
-    return shared_from_this();
-  }
-
-  virtual void add();
-  virtual void remove();
-
-  virtual bool isNet()
+    return std::uniform_int_distribution<int>(0,n_goals_-1)(gen_);
+  };
+  void updateState(const int& i_goal, const double& reward)
   {
-    return false;
-  }
-
-  void setCost(const double& cost)
+  // nothing to do here
+  };
+  std::string toString()
   {
-    cost_ = cost;
-  }
-  const double& getCost()
-  {
-    return cost_;
-  }
-  double norm()
-  {
-    return euclidean_norm_;
-  }
-  const NodePtr& getParent() const
-  {
-    return parent_;
-  }
-  const NodePtr& getChild() const
-  {
-    return child_;
-  }
+    std::string str = "uniform on goals";
+    return str;
+  };
 
-  void setLikelihood(const double& likelihood){likelihood_=likelihood;}
-
-  virtual ConnectionPtr clone();
-
-  void flip();
-
-  bool isParallel(const ConnectionPtr& conn, const double& toll = 1e-06);
-
-  friend std::ostream& operator<<(std::ostream& os, const Connection& connection);
-  ~Connection();
 };
-
-
-
-std::ostream& operator<<(std::ostream& os, const Connection& connection);
+typedef std::shared_ptr<PolicyUniformOnGoals> PolicyUniformOnGoalsPtr;
 
 }
