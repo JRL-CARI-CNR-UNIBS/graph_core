@@ -29,6 +29,40 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
+
+bool Net::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes)
+{
+  if (std::find(white_list.begin(), white_list.end(), node) != white_list.end())
+  {
+    ROS_INFO_STREAM("Node in white list: "<<*node);
+    return false;
+  }
+  assert(node);
+  std::vector<NodePtr> successors;
+  std::vector<NodePtr> net_children = node->getNetChildren();
+
+  successors = node->getChildren();
+  successors.insert(successors.end(),net_children.begin(),net_children.end());
+
+  for (NodePtr& n : successors)
+  {
+    assert(n.get()!=node.get());
+    if(!purgeFromHere(n,white_list,removed_nodes))
+      return false;
+  }
+
+  assert(node);
+  std::vector<NodePtr>::iterator it;
+  node->disconnect();
+  if (linked_tree_->isInTree(node,it))
+  {
+    linked_tree_->removeNode(it);
+    removed_nodes++;
+  }
+
+  return true;
+}
+
 std::multimap<double,std::vector<ConnectionPtr>> Net::getNetConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node)
 {
   NodePtr net_parent;

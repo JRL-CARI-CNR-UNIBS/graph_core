@@ -785,13 +785,19 @@ void Tree::addNode(const NodePtr& node, const bool& check_if_present)
 
 void Tree::removeNode(const std::vector<NodePtr>::iterator& it)
 {
+  assert(it<nodes_.end()); //elimina
+
+  NodePtr node = *it;
   nodes_.erase(it);
+
+  assert(not isInTree(node)); //elimina
 }
 
 void Tree::removeNode(const NodePtr& node)
 {
   node->disconnect();
   std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
+  assert(it<nodes_.end()); //elimina
   removeNode(it);
 }
 

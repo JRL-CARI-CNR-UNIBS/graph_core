@@ -33,7 +33,6 @@ namespace pathplan
 bool TreeSolver::config(const ros::NodeHandle& nh)
 {
   nh_ = nh;
-  max_distance_ = 1;
   if (!nh.getParam("max_distance",max_distance_))
   {
     ROS_WARN("%s/max_distance is not set. using 1.0",nh.getNamespace().c_str());

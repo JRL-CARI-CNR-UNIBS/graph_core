@@ -102,20 +102,8 @@ void Subtree::addNode(const NodePtr& node, const bool& check_if_present)
 
 void Subtree::removeNode(const std::vector<NodePtr>::iterator& it)
 {
-  // elimina ////////
-  NodePtr node = *it;
-  //Tree::removeNode(it);
-  nodes_.erase(it);
-
-  if(Subtree::isInTree(node))
-    assert(0);
-
-
-  parent_tree_->removeNode(*it);
-  // //////
-
-  //  Tree::removeNode(it);
-  //  parent_tree_->removeNode(*it);
+  parent_tree_->removeNode(*it);  //do not switch
+  Tree::removeNode(it);
 }
 
 bool Subtree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes)
@@ -169,11 +157,11 @@ bool Subtree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_lis
 
     if (!purgeFromHere(n,white_list,removed_nodes,subtree_removed_nodes))
     {
-       // elimina
+      // elimina
       ROS_INFO_STREAM("not purged node "<<*n);
       for(const NodePtr& nn:white_list)
         if(n==nn)
-          ROS_INFO("it is a whitelist member");
+          ROS_INFO_STREAM("it is a whitelist member: "<<n->getConfiguration().transpose());
       return false;
       // //
     }
@@ -190,29 +178,29 @@ bool Subtree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_lis
   */
   std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);  //search in the subtree
   NodePtr pare = node->getParents().front(); // elimina
+  ROS_INFO_STREAM("nodo da sconnettere: \n"<<*node);
   node->disconnect();
+
   if(it < nodes_.end())
   {
     ROS_INFO_STREAM("nodo disconnesso dal subtree: "<<node->getConfiguration().transpose());
     ROS_INFO_STREAM("parent: "<<pare->getConfiguration().transpose());
 
-    removeNode(it);
+    Subtree::removeNode(it);
     removed_nodes++;
     subtree_removed_nodes++;
   }
   else
   {
-    std::vector<NodePtr> parent_tree_nodes = parent_tree_->getNodes();
-    it = std::find(parent_tree_nodes.begin(), parent_tree_nodes.end(), node);
+    ROS_INFO_STREAM("nodo disconnesso dal parent tree: "<<node->getConfiguration().transpose());
+    ROS_INFO_STREAM("parent: "<<pare->getConfiguration().transpose());
 
-    if(it < parent_tree_nodes.end())
-    {
-      ROS_INFO_STREAM("nodo disconnesso dal parent tree: "<<node->getConfiguration().transpose());
-      ROS_INFO_STREAM("parent: "<<pare->getConfiguration().transpose());
+    assert(parent_tree_->isInTree(node));
 
-      parent_tree_->removeNode(it);
-      removed_nodes++;
-    }
+    parent_tree_->removeNode(node);
+    removed_nodes++;
+
+    assert(not parent_tree_->isInTree(node)); //elimina
   }
 
   // ////////////////elimina////////////////////////////////////////
@@ -227,7 +215,7 @@ bool Subtree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_lis
         {
           bool inSTree = isInTree(n);
           bool inTree = parent_tree_->isInTree(n);
-          ROS_INFO_STREAM("node: "<<*ns.node);
+          ROS_INFO_STREAM("detached node: \n"<<*ns.node);
           ROS_INFO_STREAM("in sub tree: "<<inSTree);
           ROS_INFO_STREAM("in parent tree: "<<inTree);
           ROS_INFO_STREAM("old parent: "<<ns.parent_connections.front()->getParent()->getConfiguration().transpose()<<" old n children: "<<ns.child_size<<" old n net parent: "<<ns.net_parent_size);
