@@ -69,10 +69,19 @@ public:
           const std::vector<NodePtr>& black_list,
           const bool node_check = false);
 
+  TreePtr getParentTree()
+  {
+    return parent_tree_;
+  }
+
+  virtual bool isSubtree() override
+  {
+    return true;
+  }
+
+  virtual void purgeThisNode(NodePtr& node, unsigned int& removed_nodes) override;
   virtual void addNode(const NodePtr& node, const bool& check_if_present = true);
   virtual void removeNode(const std::vector<NodePtr>::iterator& it);
-  virtual bool purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
-  virtual bool purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes, unsigned int& subtree_removed_nodes);
 
   static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root);
   static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root,

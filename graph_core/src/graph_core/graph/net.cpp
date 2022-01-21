@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
-bool Net::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes)
+bool Net::purgeSuccessors(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes)
 {
   if (std::find(white_list.begin(), white_list.end(), node) != white_list.end())
   {
@@ -38,29 +38,63 @@ bool Net::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, u
     return false;
   }
   assert(node);
-  std::vector<NodePtr> successors;
-  std::vector<NodePtr> net_children = node->getNetChildren();
 
+  std::vector<NodePtr> successors, net_children;
   successors = node->getChildren();
   successors.insert(successors.end(),net_children.begin(),net_children.end());
+
+  bool disconnect = true;
 
   for (NodePtr& n : successors)
   {
     assert(n.get()!=node.get());
-    if(!purgeFromHere(n,white_list,removed_nodes))
-      return false;
+
+    if((n->net_parent_connections_.size())>0 || n == linked_tree_->getRoot())
+      continue;
+    else
+      if (!purgeSuccessors(n,white_list,removed_nodes))
+        disconnect = false;
   }
 
-  assert(node);
-  std::vector<NodePtr>::iterator it;
-  node->disconnect();
-  if (linked_tree_->isInTree(node,it))
+  if(disconnect)
   {
-    linked_tree_->removeNode(it);
-    removed_nodes++;
+    ConnectionPtr conn2convert;
+    std::vector<NodePtr> children = node->getChildren();
+    for(NodePtr& successor2save: children)
+    {
+      assert(successor2save->net_parent_connections_.size()>0);
+      assert(successor2save->parent_connections_.size() == 1);
+      assert(successor2save->parent_connections_.front()->getParent() == node);
+
+      conn2convert = successor2save->net_parent_connections_.front(); //the successor2save must be still part of the tree, so you convert one of its net parent connection into a parent connection
+      //conn2convert->convert2Connection(); DA IMPLEMENTARE
+
+      assert(successor2save->parent_connections_.size() == 1);
+    }
+
+    linked_tree_->purgeThisNode(node,removed_nodes);
   }
 
-  return true;
+  return disconnect;
+}
+
+bool Net::purgeFromHere(ConnectionPtr& conn2node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes)
+{
+  NodePtr node = conn2node->getChild();
+
+  if((node->net_parent_connections_.size())>0 || node == linked_tree_->getRoot())
+  {
+    if(not conn2node->isNet())
+    {
+      //node->net_parent_connections_.front()->convert2Connection() DA IMPLEMENTARE
+      removed_nodes = 0;
+    }
+
+    conn2node->remove();
+    return false;
+  }
+  else
+    return purgeSuccessors(node,white_list,removed_nodes);
 }
 
 std::multimap<double,std::vector<ConnectionPtr>> Net::getNetConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node)
@@ -90,7 +124,6 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::getNetConnectionBetweenNod
 
   return map;
 }
-
 
 std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionBetweenNodes(const NodePtr &start_node, const NodePtr& goal_node)
 {

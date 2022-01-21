@@ -68,13 +68,17 @@ protected:
   void populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost, const bool node_check = false);
   void populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost, const std::vector<NodePtr> &black_list, const bool node_check = false);
 
-
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Tree(const NodePtr& root,
        const double& max_distance,
        const CollisionCheckerPtr& checker,
        const MetricsPtr& metrics);
+
+  virtual bool isSubtree()
+  {
+    return false;
+  }
 
   const NodePtr& getRoot()
   {
@@ -186,6 +190,7 @@ public:
   unsigned int purgeNodesOutsideEllipsoid(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list);
   unsigned int purgeNodesOutsideEllipsoids(const std::vector<SamplerPtr>& samplers, const std::vector<NodePtr>& white_list);
   unsigned int purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds = true);
+  virtual void purgeThisNode(NodePtr& node, unsigned int& removed_nodes);
   virtual bool purgeFromHere(NodePtr& node);
   virtual bool purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
   bool needCleaning(){return nodes_.size()>maximum_nodes_;}

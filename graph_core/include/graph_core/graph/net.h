@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <graph_core/util.h>
-#include <graph_core/graph/tree.h>
+#include <graph_core/graph/subtree.h>
 
 namespace pathplan
 {
@@ -40,13 +40,23 @@ protected:
   TreePtr linked_tree_;
 
   std::multimap<double,std::vector<ConnectionPtr>> computeConnectionFromNodeToNode(const NodePtr &start_node, const NodePtr &goal_node, std::vector<NodePtr>& visited_nodes);
+  bool purgeSuccessors(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
 
 public:
-  Net(const TreePtr& tree): linked_tree_(tree){}
+  Net(const TreePtr& tree)
+  {
+    setTree(tree);
+  }
 
   void setTree(const TreePtr& tree)
   {
-    linked_tree_ = tree;
+    if(tree->isSubtree())
+    {
+      SubtreePtr subtree = std::static_pointer_cast<Subtree>(tree);
+      linked_tree_ = subtree->getParentTree();
+    }
+    else
+      linked_tree_ = tree;
   }
 
   TreePtr getTree()
@@ -54,6 +64,7 @@ public:
     return linked_tree_;
   }
 
+  bool purgeFromHere(ConnectionPtr& conn2node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
   std::multimap<double,std::vector<ConnectionPtr>> getConnectionToNode(const NodePtr& node);
   std::multimap<double,std::vector<ConnectionPtr>> getConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node);
   std::multimap<double,std::vector<ConnectionPtr>> getNetConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node);
