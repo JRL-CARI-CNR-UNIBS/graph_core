@@ -53,7 +53,6 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/collision_checker.cpp
   src/${PROJECT_NAME}/graph/node.cpp
   src/${PROJECT_NAME}/graph/connection.cpp
-  src/${PROJECT_NAME}/graph/net_connection.cpp
   src/${PROJECT_NAME}/graph/net.cpp
   src/${PROJECT_NAME}/graph/tree.cpp
   src/${PROJECT_NAME}/graph/subtree.cpp

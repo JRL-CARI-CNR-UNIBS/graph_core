@@ -33,7 +33,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
-
 class Node: public std::enable_shared_from_this<Node>
 {
 protected:
@@ -66,6 +65,10 @@ public:
   std::vector<NodePtr> getParents() const;
   std::vector<NodePtr> getNetParents() const;
   std::vector<NodePtr> getNetChildren() const;
+  const std::vector<NodePtr> getChildrenConst() const;
+  const std::vector<NodePtr> getParentsConst() const;
+  const std::vector<NodePtr> getNetParentsConst() const;
+  const std::vector<NodePtr> getNetChildrenConst() const;
 
   void disconnect();
   void disconnectChildConnections();

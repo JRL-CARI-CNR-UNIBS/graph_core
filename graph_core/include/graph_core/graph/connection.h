@@ -38,20 +38,20 @@ protected:
   double cost_;
   bool valid = false;
   double euclidean_norm_;
+  bool is_net_;
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Connection(const NodePtr& parent, const NodePtr& child);
+  Connection(const NodePtr& parent, const NodePtr& child, const bool is_net = false);
+
   ConnectionPtr pointer()
   {
     return shared_from_this();
   }
 
-  virtual void add();
-  virtual void remove();
-
-  virtual bool isNet()
+  bool isNet()
   {
-    return false;
+    return is_net_;
   }
 
   void setCost(const double& cost)
@@ -75,10 +75,13 @@ public:
     return child_;
   }
 
-  virtual ConnectionPtr clone();
-
+  void add();
+  void remove();
   void flip();
-
+  ConnectionPtr clone();
+  bool convertToConnection();
+  bool convertToNetConnection();
+  void changeConnectionType();
   bool isParallel(const ConnectionPtr& conn, const double& toll = 1e-06);
 
   friend std::ostream& operator<<(std::ostream& os, const Connection& connection);

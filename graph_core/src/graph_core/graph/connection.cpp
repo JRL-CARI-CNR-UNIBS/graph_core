@@ -1,4 +1,3 @@
-#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -31,9 +30,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
-Connection::Connection(const NodePtr &parent, const NodePtr &child):
+Connection::Connection(const NodePtr& parent, const NodePtr& child, const bool is_net):
   parent_(parent),
-  child_(child)
+  child_(child),
+  is_net_(is_net)
 {
   euclidean_norm_ = (child->getConfiguration() - parent->getConfiguration()).norm();
 }
@@ -43,7 +43,7 @@ ConnectionPtr Connection::clone()
   NodePtr new_parent = std::make_shared<Node>(parent_->getConfiguration());
   NodePtr new_child = std::make_shared<Node>(child_->getConfiguration());
 
-  ConnectionPtr new_connection = std::make_shared<Connection>(new_parent,new_child);
+  ConnectionPtr new_connection = std::make_shared<Connection>(new_parent,new_child,is_net_);
   new_connection->setCost(cost_);
   new_connection->add();
   return new_connection;
@@ -52,8 +52,18 @@ ConnectionPtr Connection::clone()
 void Connection::add()
 {
   valid = true;
-  parent_->addChildConnection(pointer());
-  child_->addParentConnection(pointer());
+
+  if(is_net_)
+  {
+    parent_->addNetChildConnection(pointer());
+    child_->addNetParentConnection(pointer());
+  }
+  else
+  {
+    parent_->addChildConnection(pointer());
+    child_->addParentConnection(pointer());
+  }
+
 }
 void Connection::remove()
 {
@@ -66,18 +76,23 @@ void Connection::remove()
   valid = false;
   if (parent_)
   {
-    parent_->remoteChildConnection(pointer());
+    if(is_net_)
+      parent_->remoteNetChildConnection(pointer());
+    else
+      parent_->remoteChildConnection(pointer());
   }
   else
     ROS_FATAL("parent already destroied");
 
   if (child_)
   {
-    child_->remoteParentConnection(pointer());
+    if(is_net_)
+      child_->remoteNetParentConnection(pointer());
+    else
+      child_->remoteParentConnection(pointer());
   }
   else
     ROS_FATAL("child already destroied");
-
 }
 
 void Connection::flip()
@@ -99,6 +114,36 @@ bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)
   // v1 dot v2 = norm(v1)*norm(v2) if v1 // v2
 
   return (scalar>(euclidean_norm_*conn->norm())-toll);
+}
+
+bool Connection::convertToConnection()
+{
+  if(is_net_)
+  {
+    remove();
+    is_net_ = false;
+    add();
+    return true;
+  }
+  return false;
+}
+
+bool Connection::convertToNetConnection()
+{
+  if(not is_net_)
+  {
+    remove();
+    is_net_ = true;
+    add();
+    return true;
+  }
+  return false;
+}
+
+void Connection::changeConnectionType()
+{
+  if(not convertToConnection())
+    convertToNetConnection();
 }
 
 std::ostream& operator<<(std::ostream& os, const Connection& connection)

@@ -39,22 +39,30 @@ bool Net::purgeSuccessors(NodePtr& node, const std::vector<NodePtr>& white_list,
   }
   assert(node);
 
-  std::vector<NodePtr> successors, net_children;
-  successors = node->getChildren();
-  successors.insert(successors.end(),net_children.begin(),net_children.end());
-
+  bool purged;
   bool disconnect = true;
-
-  for (NodePtr& n : successors)
+  do
   {
-    assert(n.get()!=node.get());
+    purged = false;
 
-    if((n->net_parent_connections_.size())>0 || n == linked_tree_->getRoot())
-      continue;
-    else
-      if (!purgeSuccessors(n,white_list,removed_nodes))
-        disconnect = false;
-  }
+    std::vector<NodePtr> successors = node->getChildren();
+    successors.insert(successors.end(),node->getNetChildrenConst().begin(),node->getNetChildrenConst().end());
+
+    for (NodePtr& n : successors)
+    {
+      assert(n.get()!=node.get());
+
+      if((n->net_parent_connections_.size())>0 || n == linked_tree_->getRoot())
+        continue;
+      else
+      {
+        if(not purgeSuccessors(n,white_list,removed_nodes))
+          disconnect = false;
+        else
+          purged = true;
+      }
+    }
+  }while(purged);
 
   if(disconnect)
   {
@@ -67,7 +75,8 @@ bool Net::purgeSuccessors(NodePtr& node, const std::vector<NodePtr>& white_list,
       assert(successor2save->parent_connections_.front()->getParent() == node);
 
       conn2convert = successor2save->net_parent_connections_.front(); //the successor2save must be still part of the tree, so you convert one of its net parent connection into a parent connection
-      //conn2convert->convert2Connection(); DA IMPLEMENTARE
+      assert(conn2convert->isNet());
+      conn2convert->convertToConnection();
 
       assert(successor2save->parent_connections_.size() == 1);
     }
@@ -86,7 +95,9 @@ bool Net::purgeFromHere(ConnectionPtr& conn2node, const std::vector<NodePtr>& wh
   {
     if(not conn2node->isNet())
     {
-      //node->net_parent_connections_.front()->convert2Connection() DA IMPLEMENTARE
+      ConnectionPtr conn2convert = node->net_parent_connections_.front();
+      assert(conn2convert->isNet());
+      conn2convert->convertToConnection();
       removed_nodes = 0;
     }
 

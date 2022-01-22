@@ -64,8 +64,8 @@ Path::Path(std::vector<NodePtr> nodes,
     NodePtr child  = nodes.at(i+1);
 
     ConnectionPtr conn;
-    (child->parent_connections_.size() == 0)? (conn = std::make_shared<Connection>(parent,child)):
-                                              (conn = std::make_shared<NetConnection>(parent,child));
+    (child->parent_connections_.size() == 0)? (conn = std::make_shared<Connection>(parent,child,false)):
+                                              (conn = std::make_shared<Connection>(parent,child,true));
     double cost = metrics->cost(parent,child);
     conn->setCost(cost);
     conn->add();
@@ -320,8 +320,8 @@ bool Path::bisection(const unsigned int &connection_idx,
     NodePtr n = std::make_shared<Node>(p);
     conn12 = std::make_shared<Connection>(parent, n);
 
-    is_net? (conn23 = std::make_shared<NetConnection>(n, child)):
-            (conn23 = std::make_shared<Connection>(n, child));
+    is_net? (conn23 = std::make_shared<Connection>(n, child, true)):
+            (conn23 = std::make_shared<Connection>(n, child, false));
 
     conn12->setCost(cost_pn);
     conn23->setCost(cost_nc);
@@ -821,8 +821,8 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
         conn_parent->add();
 
         ConnectionPtr conn_child;
-        is_net? (conn_child = std::make_shared<NetConnection>(actual_node,child)):
-                (conn_child = std::make_shared<Connection>(actual_node,child));
+        is_net? (conn_child = std::make_shared<Connection>(actual_node,child,true)):
+                (conn_child = std::make_shared<Connection>(actual_node,child,false));
         conn_child->setCost(cost_child);
         conn_child->add();
 
@@ -1028,8 +1028,8 @@ PathPtr Path::getSubpathFromConf(const Eigen::VectorXd& conf, const bool get_cop
       cost  = metrics_->cost(node->getConfiguration(),conn->getChild()->getConfiguration());
 
     ConnectionPtr conn_child;
-    is_net? (conn_child = std::make_shared<NetConnection>(node, child)):
-            (conn_child = std::make_shared<Connection>(node, child));
+    is_net? (conn_child = std::make_shared<Connection>(node, child, true)):
+            (conn_child = std::make_shared<Connection>(node, child, false));
     conn_child->setCost(cost);
     conn_child->add();
 
@@ -1159,8 +1159,8 @@ bool Path::simplify(const double& distance)
 
       bool is_net = connections_.at(ic)->isNet();
       ConnectionPtr conn;
-      is_net? (conn = std::make_shared<NetConnection>(connections_.at(ic - 1)->getParent(),connections_.at(ic)->getChild())):
-              ((conn = std::make_shared<Connection>(connections_.at(ic - 1)->getParent(),connections_.at(ic)->getChild())));
+      is_net? (conn = std::make_shared<Connection>(connections_.at(ic - 1)->getParent(),connections_.at(ic)->getChild(),true)):
+              (conn = std::make_shared<Connection>(connections_.at(ic - 1)->getParent(),connections_.at(ic)->getChild(),false));
       conn->setCost(cost);
       conn->add();
 

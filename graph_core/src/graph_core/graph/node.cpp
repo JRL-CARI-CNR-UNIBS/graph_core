@@ -206,6 +206,11 @@ std::vector<NodePtr> Node::getChildren() const
   return children;
 }
 
+const std::vector<NodePtr> Node::getChildrenConst() const
+{
+  return getChildren();
+}
+
 std::vector<NodePtr> Node::getNetChildren() const
 {
   std::vector<NodePtr> children;
@@ -220,6 +225,11 @@ std::vector<NodePtr> Node::getNetChildren() const
   return children;
 }
 
+const std::vector<NodePtr> Node::getNetChildrenConst() const
+{
+  return getNetChildren();
+}
+
 std::vector<NodePtr> Node::getParents() const
 {
   std::vector<NodePtr> parents;
@@ -230,6 +240,11 @@ std::vector<NodePtr> Node::getParents() const
   return parents;
 }
 
+const std::vector<NodePtr> Node::getParentsConst() const
+{
+  return getParents();
+}
+
 std::vector<NodePtr> Node::getNetParents() const
 {
   std::vector<NodePtr> parents;
@@ -238,6 +253,11 @@ std::vector<NodePtr> Node::getNetParents() const
     parents.push_back(conn->getParent());
   }
   return parents;
+}
+
+const std::vector<NodePtr> Node::getNetParentsConst() const
+{
+  return getNetParents();
 }
 
 XmlRpc::XmlRpcValue Node::toXmlRpcValue() const
