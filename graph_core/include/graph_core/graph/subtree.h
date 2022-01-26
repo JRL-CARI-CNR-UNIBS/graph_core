@@ -39,12 +39,13 @@ class Subtree: public Tree
 protected:
   TreePtr parent_tree_;
 
-  void populateSubtree(const NodePtr& root,
-                       const Eigen::VectorXd& focus1,
-                       const Eigen::VectorXd& focus2,
-                       const double& cost,
-                       const std::vector<NodePtr> &black_list,
-                       const bool node_check = false);
+  //Populate subtree with only those node that are inside the ellipsoid defined by focus1, focus2 and cost
+  void populateSubtreeInsideEllipsoid(const NodePtr& root,
+                                      const Eigen::VectorXd& focus1,
+                                      const Eigen::VectorXd& focus2,
+                                      const double& cost,
+                                      const std::vector<NodePtr> &black_list,
+                                      const bool node_check = false);
 
 public:
 
@@ -69,6 +70,13 @@ public:
           const std::vector<NodePtr>& black_list,
           const bool node_check = false);
 
+  Subtree(const TreePtr& parent_tree,
+          const NodePtr& root,
+          const Eigen::VectorXd& goal,
+          const double& cost,
+          const std::vector<NodePtr>& black_list,
+          const bool node_check = false);
+
   TreePtr getParentTree()
   {
     return parent_tree_;
@@ -86,12 +94,23 @@ public:
   static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root);
   static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root,
                                   const std::vector<NodePtr>& black_list);
-  static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root,
-                                  const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2,
+  static SubtreePtr createSubtree(const TreePtr& parent_tree,
+                                  const NodePtr& root,
+                                  const Eigen::VectorXd& focus1,
+                                  const Eigen::VectorXd& focus2,
                                   const double& cost);
-  static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root,
-                                  const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2,
-                                  const double& cost, const std::vector<NodePtr>& black_list,
+  static SubtreePtr createSubtree(const TreePtr& parent_tree,
+                                  const NodePtr& root,
+                                  const Eigen::VectorXd& focus1,
+                                  const Eigen::VectorXd& focus2,
+                                  const double& cost,
+                                  const std::vector<NodePtr>& black_list,
+                                  const bool node_check = false);
+  static SubtreePtr createSubtree(const TreePtr& parent_tree,
+                                  const NodePtr& root,
+                                  const Eigen::VectorXd& goal,
+                                  const double& cost,
+                                  const std::vector<NodePtr>& black_list,
                                   const bool node_check = false);
 
 };

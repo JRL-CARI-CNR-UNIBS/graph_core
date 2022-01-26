@@ -1101,14 +1101,57 @@ void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focu
         if(node_check)
         {
           if(!checker_->check(n->getConfiguration()))
+          {
+            //set the cost of the connetion to infinity?? CHIEDI A MANUEL
             continue;
+          }
         }
         nodes_.push_back(n);
         populateTreeFromNode(n,focus1,focus2,cost,black_list,node_check);
       }
     }
   }
+}
 
+void Tree::populateTreeFromNodeConsideringCost(const NodePtr& node, const Eigen::VectorXd& goal, const double& cost, const std::vector<NodePtr> &black_list, const bool node_check)
+{
+  std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
+  if (it == nodes_.end())
+  {
+    throw std::invalid_argument("node is not member of tree");
+  }
+
+  double cost_to_node = 0;
+  for(const ConnectionPtr& conn:getConnectionToNode(node))
+    cost_to_node += conn->getCost();
+
+  NodePtr child;
+  double cost_to_child;
+  for(const ConnectionPtr& conn:node->child_connections_)
+  {
+    child = conn->getChild();
+
+    std::vector<NodePtr>::const_iterator it = std::find(black_list.begin(), black_list.end(), child);
+    if(it != black_list.end())
+    {
+      continue;
+    }
+    else
+    {
+      cost_to_child = cost_to_node+conn->getCost();
+
+      if((cost_to_child + (child->getConfiguration() - goal).norm()) < cost)
+      {
+        if(node_check)
+        {
+          if(!checker_->check(child->getConfiguration()))
+            continue;
+        }
+        nodes_.push_back(child);
+        populateTreeFromNodeConsideringCost(child,goal,cost,black_list,node_check);
+      }
+    }
+  }
 }
 
 XmlRpc::XmlRpcValue Tree::toXmlRpcValue() const
