@@ -87,9 +87,10 @@ public:
     return true;
   }
 
-  virtual void purgeThisNode(NodePtr& node, unsigned int& removed_nodes) override;
-  virtual void addNode(const NodePtr& node, const bool& check_if_present = true);
-  virtual void removeNode(const std::vector<NodePtr>::iterator& it);
+  void purgeThisNode(NodePtr& node, unsigned int& removed_nodes) override;
+  void addNode(const NodePtr& node, const bool& check_if_present = true);
+  void removeNode(const std::vector<NodePtr>::iterator& it) override;
+  void removeNode(const NodePtr& node);
 
   static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root);
   static SubtreePtr createSubtree(const TreePtr& parent_tree, const NodePtr& root,

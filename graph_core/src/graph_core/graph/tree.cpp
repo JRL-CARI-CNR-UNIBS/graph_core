@@ -1140,11 +1140,11 @@ void Tree::populateTreeFromNodeConsideringCost(const NodePtr& node, const Eigen:
     {
       cost_to_child = cost_to_node+conn->getCost();
 
-      if((cost_to_child + (child->getConfiguration() - goal).norm()) < cost)
+      if((cost_to_child + metrics_->utopia(child->getConfiguration(),goal)) < cost)
       {
         if(node_check)
         {
-          if(!checker_->check(child->getConfiguration()))
+          if(not checker_->check(child->getConfiguration()))
             continue;
         }
         nodes_.push_back(child);

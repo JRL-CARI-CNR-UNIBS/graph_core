@@ -121,6 +121,15 @@ void Subtree::removeNode(const std::vector<NodePtr>::iterator& it)
   Tree::removeNode(it);
 }
 
+void Subtree::removeNode(const NodePtr& node)
+{
+  node->disconnect();
+  std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
+
+  if(it<nodes_.end())
+    Subtree::removeNode(it);
+}
+
 void Subtree::purgeThisNode(NodePtr& node, unsigned int& removed_nodes)
 {
   /*NB: if the subtree is defined inside an ellipsoid, the node could be part of the parent tree but not of the subtree

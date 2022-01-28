@@ -434,7 +434,7 @@ void Display::displayTreeNode(const NodePtr &n,
                               const bool check_in_tree)
 {
   std::vector<ConnectionPtr> connections;
-    connections=n->child_connections_;
+  connections=n->child_connections_;
 
   if (connections.size()==0)
     return;
@@ -511,9 +511,9 @@ void Display::displayNetNode(const NodePtr &n,
 {
   TreePtr tree = net->getTree();
   std::vector<ConnectionPtr> connections, net_connections;
-    connections=n->child_connections_;
-    net_connections=n->net_child_connections_;
-    connections.insert(connections.end(),net_connections.begin(),net_connections.end());
+  connections=n->child_connections_;
+  net_connections=n->net_child_connections_;
+  connections.insert(connections.end(),net_connections.begin(),net_connections.end());
   if (connections.size()==0)
     return;
 

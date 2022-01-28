@@ -50,14 +50,14 @@ double Metrics::cost(const Eigen::VectorXd& configuration1,
 }
 
 double Metrics::utopia(const NodePtr& node1,
-                     const NodePtr& node2)
+                       const NodePtr& node2)
 {
   return utopia(node1->getConfiguration(), node2->getConfiguration());
 }
 
 
 double Metrics::utopia(const Eigen::VectorXd& configuration1,
-                     const Eigen::VectorXd& configuration2)
+                       const Eigen::VectorXd& configuration2)
 {
   return (configuration1 - configuration2).norm();
 }
