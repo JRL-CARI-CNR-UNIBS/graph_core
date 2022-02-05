@@ -41,7 +41,7 @@ bool TreeSolver::config(const ros::NodeHandle& nh)
 
   if (!nh.getParam("informed",informed_))
   {
-    ROS_DEBUG("%s/informed is not set. using true (informed set enble)",nh.getNamespace().c_str());
+    ROS_DEBUG("%s/informed is not set. using true (informed set enable)",nh.getNamespace().c_str());
     informed_=true;
   }
 

@@ -31,9 +31,9 @@ namespace pathplan
 {
 Subtree::Subtree(const TreePtr& parent_tree,
                  const NodePtr& root):
-  parent_tree_(parent_tree),
   Tree(root,parent_tree->getMaximumDistance(),
-       parent_tree->getChecker(),parent_tree->getMetrics())
+       parent_tree->getChecker(),parent_tree->getMetrics()),
+  parent_tree_(parent_tree)
 {
   populateTreeFromNode(root);
 }
@@ -41,9 +41,9 @@ Subtree::Subtree(const TreePtr& parent_tree,
 Subtree::Subtree(const TreePtr& parent_tree,
                  const NodePtr& root,
                  const std::vector<NodePtr>& black_list):
-  parent_tree_(parent_tree),
   Tree(root,parent_tree->getMaximumDistance(),
-       parent_tree->getChecker(),parent_tree->getMetrics())
+       parent_tree->getChecker(),parent_tree->getMetrics()),
+  parent_tree_(parent_tree)
 {
   double cost = std::numeric_limits<double>::infinity();
   Eigen::VectorXd focus1,focus2;
@@ -58,9 +58,9 @@ Subtree::Subtree(const TreePtr& parent_tree,
                  const Eigen::VectorXd& focus1,
                  const Eigen::VectorXd& focus2,
                  const double& cost):
-  parent_tree_(parent_tree),
   Tree(root,parent_tree->getMaximumDistance(),
-       parent_tree->getChecker(),parent_tree->getMetrics())
+       parent_tree->getChecker(),parent_tree->getMetrics()),
+  parent_tree_(parent_tree)
 {
   std::vector<NodePtr> black_list;
   populateSubtreeInsideEllipsoid(root,focus1,focus2,cost,black_list);
@@ -168,7 +168,7 @@ SubtreePtr Subtree::createSubtree(const TreePtr& parent_tree,
                                   const NodePtr& root,
                                   const std::vector<NodePtr>& black_list)
 {
-  return std::make_shared<Subtree>(parent_tree,root, black_list);
+  return std::make_shared<Subtree>(parent_tree,root,black_list);
 }
 
 SubtreePtr Subtree::createSubtree(const TreePtr& parent_tree,

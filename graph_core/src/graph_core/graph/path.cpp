@@ -676,8 +676,7 @@ bool Path::removeNodes(const std::vector<NodePtr> &white_list, std::vector<NodeP
 
       NodePtr node = conn_parent_node->getChild();
 
-      if(node != conn_node_child->getParent())
-        assert(0);
+      assert(node == conn_node_child->getParent());
 
       skip = false;
       for(const NodePtr& white_node:white_list)
@@ -697,9 +696,7 @@ bool Path::removeNodes(const std::vector<NodePtr> &white_list, std::vector<NodeP
            node->getParents().size() == 1 &&
            node->getChildren().size() == 1)
         {
-          if(tree_)
-            if(node == tree_->getRoot())
-              assert(0);  //node must have 1 parent (root must have zero) and 1 child (root may have many)
+          assert(not tree_ || node != tree_->getRoot()); //node must have 1 parent (root must have zero) and 1 child (root may have many)
 
           ConnectionPtr new_conn = std::make_shared<pathplan::Connection>(conn_parent_node->getParent(),conn_node_child->getChild());
           double cost = conn_parent_node->getCost()+conn_node_child->getCost();

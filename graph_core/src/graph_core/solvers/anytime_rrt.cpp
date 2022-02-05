@@ -32,7 +32,7 @@ namespace pathplan
 
 void AnytimeRRT::importFromSolver(const AnytimeRRTPtr& solver)
 {
-  ROS_INFO_STREAM("Import from AnytimeRRT solver");
+  //ROS_INFO_STREAM("Import from AnytimeRRT solver");
 
   RRT::importFromSolver(std::static_pointer_cast<RRT>(solver));
 
@@ -72,7 +72,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
 
     if (cost_ <= utopia_tolerance_ * best_utopia_)
     {
-      ROS_INFO("Utopia reached!");
+      //ROS_INFO("Utopia reached!");
       completed_=true;
       return true;
     }
@@ -99,11 +99,11 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   if(not solved_)
     return false;
 
-  ROS_INFO_STREAM("Path cost: "<<path_cost_);
+  //ROS_INFO_STREAM("Path cost: "<<path_cost_);
 
   if (cost_ <= utopia_tolerance_ * best_utopia_)
   {
-    ROS_INFO("Utopia reached!");
+    //ROS_INFO("Utopia reached!");
     completed_=true;
     return true;
   }
@@ -131,7 +131,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
 
     if(cost_ <= utopia_tolerance_ * best_utopia_)
     {
-      ROS_INFO("Utopia reached!");
+      //ROS_INFO("Utopia reached!");
       completed_=true;
       break;
     }
@@ -234,14 +234,14 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
 
   if (cost_ <= utopia_tolerance_ * utopia) //also if start and/or goal are changed, the old path is better to follow
   {
-    ROS_INFO_STREAM("Utopia reached! Utopia: "<<utopia<<" path cost: "<<path_cost_);
+    //ROS_INFO_STREAM("Utopia reached! Utopia: "<<utopia<<" path cost: "<<path_cost_);
     completed_=true;
     return false;
   }
 
   if(cost2beat <= utopia)
   {
-    ROS_INFO_STREAM("The cost to beat is less than utopia, impossible to reach! Utopia: "<<utopia<<" cost to beat: "<<cost2beat);
+    //ROS_INFO_STREAM("The cost to beat is less than utopia, impossible to reach! Utopia: "<<utopia<<" cost to beat: "<<cost2beat);
     return false;
   }
 
@@ -260,7 +260,7 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
   {
     if(AnytimeRRT::update(solution))
     {
-      ROS_INFO_STREAM("Improved path cost: "<<path_cost_);
+      //ROS_INFO_STREAM("Improved path cost: "<<path_cost_);
 
       if(solution->getTree() != solution_->getTree())
         assert(0);

@@ -288,26 +288,22 @@ bool Tree::checkPathToNode(const NodePtr& node, std::vector<ConnectionPtr>& chec
   std::vector<ConnectionPtr> connections_to_check;
   std::vector<ConnectionPtr> path_connections = getConnectionToNode(node);
 
-  for(const ConnectionPtr conn: path_connections)
+  for(const ConnectionPtr& conn: path_connections)
   {
-    bool already_checked = false;
-    for(const ConnectionPtr checked_conn: checked_connections) //check if the connection considered has not already been verified
+    std::vector<ConnectionPtr>::iterator it = std::find(checked_connections.begin(),checked_connections.end(),conn);
+
+    if(it<checked_connections.end())
     {
-      if(checked_conn == conn)
-      {
-        already_checked = true;
-        if(checked_conn->getCost() == std::numeric_limits<double>::infinity()) return false;
-
-        break;
-      }
+      if((*it)->getCost() == std::numeric_limits<double>::infinity())
+        return false;
     }
-
-    if(!already_checked) connections_to_check.push_back(conn);
+    else
+      connections_to_check.push_back(conn);
   }
 
-  for(const ConnectionPtr conn: connections_to_check)
+  for(const ConnectionPtr& conn: connections_to_check)
   {
-    if(!checker_->checkConnection(conn))
+    if(not checker_->checkConnection(conn))
     {
       conn->setCost(std::numeric_limits<double>::infinity());
       checked_connections.push_back(conn);
@@ -454,12 +450,16 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
     break;
   }
 
-  if(node->getParents().size() == 0) rewire_parent = false;
+  if(node->getParents().empty() || node == root_)
+  {
+    rewire_parent = false;
+  }
+
   std::vector<NodePtr> near_nodes = near(node, r_rewire);
 
   //validate connections to node
   double cost_to_node;
-  if(!checkPathToNode(node,checked_connections))
+  if(not checkPathToNode(node,checked_connections))
     cost_to_node = std::numeric_limits<double>::infinity();
   else
     cost_to_node= costToNode(node);
@@ -487,10 +487,10 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
       if ((cost_to_near + cost_near_to_node) >= cost_to_node)
         continue;
 
-      if(!checkPathToNode(n,checked_connections)) //validate connections to n
+      if (not checker_->checkPath(n->getConfiguration(), node->getConfiguration()))
         continue;
 
-      if (!checker_->checkPath(n->getConfiguration(), node->getConfiguration()))
+      if(not checkPathToNode(n,checked_connections)) //validate connections to n
         continue;
 
       node->parent_connections_.at(0)->remove();
@@ -506,7 +506,8 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
     }
   }
 
-  if(cost_to_node == std::numeric_limits<double>::infinity()) rewire_children = false;
+  if(cost_to_node == std::numeric_limits<double>::infinity())
+    rewire_children = false;
 
   if(rewire_children)
   {
@@ -515,9 +516,9 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
     {
       if (n == node)
         continue;
-      if(n->getParents().size() == 0)
+      if(n->getParents().empty())
       {
-
+        ROS_FATAL_STREAM("Node has no parents "<<*n);
         continue;
       }
 
@@ -535,7 +536,8 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
       double cost_node_to_near = metrics_->cost(node, n);
       if ((cost_to_node + cost_node_to_near) >= cost_to_near)
       {
-        if(checked) continue;
+        if(checked)
+          continue;
         else
         {
           if(checkPathToNode(n,checked_connections)) //if path to n is free, cost_to_node +cost_node_to_near >= cost_to_near is really true
@@ -543,7 +545,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
         }
       }
 
-      if (!checker_->checkPath(node->getConfiguration(), n->getConfiguration()))
+      if(not checker_->checkPath(node->getConfiguration(), n->getConfiguration()))
         continue;
 
       n->parent_connections_.at(0)->remove();
@@ -557,6 +559,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
       improved = true;
     }
   }
+
   return improved;
 }
 

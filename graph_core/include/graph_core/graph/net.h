@@ -40,7 +40,7 @@ protected:
   TreePtr linked_tree_;
 
   std::multimap<double,std::vector<ConnectionPtr>> computeConnectionFromNodeToNode(const NodePtr &start_node, const NodePtr &goal_node, std::vector<NodePtr>& visited_nodes);
-  bool purgeSuccessors(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
+  bool purgeSuccessors(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);  //VEDI CON MANUEL
 
 public:
   Net(const TreePtr& tree)
@@ -64,7 +64,7 @@ public:
     return linked_tree_;
   }
 
-  bool purgeFromHere(ConnectionPtr& conn2node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
+  bool purgeFromHere(ConnectionPtr& conn2node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes); //VEDI CON MANUEL
   std::multimap<double,std::vector<ConnectionPtr>> getConnectionToNode(const NodePtr& node);
   std::multimap<double,std::vector<ConnectionPtr>> getConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node);
   std::multimap<double,std::vector<ConnectionPtr>> getNetConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node);
