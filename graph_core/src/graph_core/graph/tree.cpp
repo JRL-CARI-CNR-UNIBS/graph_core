@@ -159,10 +159,8 @@ bool Tree::extendToNode(const NodePtr& node,
     return false;
   }
 
-  bool attached = false;
   if ((next_configuration - node->getConfiguration()).norm() < tolerance_)
   {
-    attached = true;
     new_node = node;
   }
   else
@@ -322,6 +320,16 @@ bool Tree::checkPathToNode(const NodePtr& node, std::vector<ConnectionPtr>& chec
 
 bool Tree::rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire)
 {
+  std::vector<NodePtr> white_list;
+  return rewireOnly(node,r_rewire,white_list,what_rewire);
+}
+
+bool Tree::rewireOnly(NodePtr& node, double r_rewire, const std::vector<NodePtr>& white_list, const int& what_rewire)
+{
+  std::vector<NodePtr>::const_iterator it = std::find(white_list.begin(),white_list.end(),node);
+  if(it<white_list.end())
+    return false;
+
   if(what_rewire >2 || what_rewire <0)
   {
     ROS_ERROR("what_rewire parameter should be 0,1 or 2");
@@ -348,7 +356,8 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire)
     break;
   }
 
-  if(node == root_) rewire_parent = false;
+  if(node == root_)
+    rewire_parent = false;
 
   std::vector<NodePtr> near_nodes = near(node, r_rewire);
   double cost_to_node = costToNode(node);
@@ -395,7 +404,11 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire)
     //ROS_DEBUG("try to find a better child between %zu nodes", near_nodes.size());
     for (NodePtr& n : near_nodes)
     {
-      if (n == node)
+      if(n == node)
+        continue;
+
+      it = std::find(white_list.begin(),white_list.end(),n); //if the near node is a white node its parent should not be changed
+      if(it<white_list.end())
         continue;
 
       double cost_to_near = costToNode(n);
@@ -421,8 +434,17 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire)
   return improved;
 }
 
-bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& checked_connections, double r_rewire, const int& what_rewire)
+bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr> &checked_connections, double r_rewire, const int& what_rewire)
 {
+  std::vector<NodePtr> white_list;
+  return rewireOnlyWithPathCheck(node,checked_connections,r_rewire,white_list,what_rewire);
+}
+
+bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& checked_connections, double r_rewire, const std::vector<NodePtr>& white_list, const int& what_rewire)
+{
+  std::vector<NodePtr>::const_iterator it = std::find(white_list.begin(),white_list.end(),node);
+  if(it<white_list.end())
+    return false;
 
   if(what_rewire >2 || what_rewire <0)
   {
@@ -450,10 +472,8 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
     break;
   }
 
-  if(node->getParents().empty() || node == root_)
-  {
+  if(node == root_)
     rewire_parent = false;
-  }
 
   std::vector<NodePtr> near_nodes = near(node, r_rewire);
 
@@ -514,13 +534,17 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
     //ROS_DEBUG("try to find a better child between %zu nodes", near_nodes.size());
     for (NodePtr& n : near_nodes)
     {
-      if (n == node)
+      if(n == node)
         continue;
-      if(n->getParents().empty())
+
+      if(n == root_)
       {
-        ROS_FATAL_STREAM("Node has no parents "<<*n);
         continue;
       }
+
+      it = std::find(white_list.begin(),white_list.end(),n); //if the near node is a white node its parent should not be changed
+      if(it<white_list.end())
+        continue;
 
       double cost_to_near = costToNode(n);
       bool checked = false;
@@ -640,7 +664,7 @@ bool Tree::rewireK(const Eigen::VectorXd &configuration)
   return improved;
 }
 
-bool Tree::rewireWithPathCheck(const Eigen::VectorXd &configuration, std::vector<ConnectionPtr> &checked_connections, double r_rewire, NodePtr& new_node)
+bool Tree::rewireWithPathCheck(const Eigen::VectorXd &configuration, std::vector<ConnectionPtr> &checked_connections, double r_rewire, const std::vector<NodePtr> &white_list, NodePtr& new_node)
 {
   ConnectionPtr new_conn;
   if (!extend(configuration,new_node,new_conn))
@@ -650,7 +674,13 @@ bool Tree::rewireWithPathCheck(const Eigen::VectorXd &configuration, std::vector
 
   checked_connections.push_back(new_conn);
 
-  return rewireOnlyWithPathCheck(new_node,checked_connections,r_rewire);
+  return rewireOnlyWithPathCheck(new_node,checked_connections,r_rewire,white_list);
+}
+
+bool Tree::rewireWithPathCheck(const Eigen::VectorXd &configuration, std::vector<ConnectionPtr> &checked_connections, double r_rewire, NodePtr& new_node)
+{
+  std::vector<NodePtr> white_list;
+  return rewireWithPathCheck(configuration,checked_connections,r_rewire,white_list,new_node);
 }
 
 bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire, NodePtr& new_node)

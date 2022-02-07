@@ -103,8 +103,8 @@ public:
                  NodePtr& closest_node);
 
   bool tryExtendFromNode(const Eigen::VectorXd& configuration,
-                       Eigen::VectorXd& next_configuration,
-                       NodePtr& node);
+                         Eigen::VectorXd& next_configuration,
+                         NodePtr& node);
 
   /* selectNextConfiguration: compute next_configuration as
    * next_configuration = configurarion if configuration is close to the node (less than max_distance_)
@@ -132,8 +132,8 @@ public:
                NodePtr& new_node);
 
   bool informedExtend(const Eigen::VectorXd& configuration,   //Used in AnytimeRRT
-                        NodePtr& new_node,
-                        const Eigen::VectorXd &goal, const double &cost2beat, const double &bias);
+                      NodePtr& new_node,
+                      const Eigen::VectorXd &goal, const double &cost2beat, const double &bias);
 
   bool connectToNode(const NodePtr& node,
                      NodePtr& new_node,
@@ -149,6 +149,11 @@ public:
                            std::vector<ConnectionPtr> &checked_connections,
                            double r_rewire,
                            NodePtr& new_node);
+  bool rewireWithPathCheck(const Eigen::VectorXd& configuration,
+                           std::vector<ConnectionPtr> &checked_connections,
+                           double r_rewire,
+                           const std::vector<NodePtr> &white_list,
+                           NodePtr& new_node);
 
   bool rewire(const Eigen::VectorXd& configuration,
               double r_rewire,
@@ -163,8 +168,10 @@ public:
 
   //if what_rewire is 1 it searches for the best parent for node inside the radius r_rewire, if 2 it verifies if node is a better parent for the other nodes inside r_rewire, if 0 it does both
   bool rewireOnly(NodePtr& node, double r_rewire, const int &what_rewire = 0);
+  bool rewireOnly(NodePtr& node, double r_rewire, const std::vector<NodePtr> &white_list, const int &what_rewire = 0);
   //Useful for replanning: rewireOnly considering those nodes that have a free path from the root to them
-  bool rewireOnlyWithPathCheck(NodePtr& node,std::vector<ConnectionPtr> &checked_connections, double r_rewire, const int& what_rewire = 0);
+  bool rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr> &checked_connections, double r_rewire, const int& what_rewire = 0);
+  bool rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr> &checked_connections, double r_rewire, const std::vector<NodePtr> &white_list, const int& what_rewire = 0);
 
   bool checkPathToNode(const NodePtr &node, std::vector<ConnectionPtr>& checked_connections);
 
