@@ -56,10 +56,11 @@
   <exec_depend>roscpp</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
 
+
 <depend>subscription_notifier</depend>
 <depend>rosdyn_core</depend>
 <depend>name_sorting</depend>
-
+<depend>rosparam_utilities</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

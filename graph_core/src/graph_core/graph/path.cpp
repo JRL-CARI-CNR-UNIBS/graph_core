@@ -81,14 +81,27 @@ Path::Path(std::vector<NodePtr> nodes,
 
 PathPtr Path::clone()
 {
+  std::vector<NodePtr> nodes;
   std::vector<ConnectionPtr> new_conn_vector;
-  for(ConnectionPtr &conn: connections_)
-    new_conn_vector.push_back(conn->clone());
+  std::vector<Eigen::VectorXd> wp = getWaypoints();
+
+  nodes.push_back(std::make_shared<Node>(wp.at(0)));
+
+  for(unsigned int i = 1;i<wp.size();i++)
+  {
+    nodes.push_back(std::make_shared<Node>(wp.at(i)));
+
+    ConnectionPtr conn = std::make_shared<Connection>(nodes.at(i-1),nodes.at(i));
+    conn->setCost(connections_.at(i-1)->getCost());
+    conn->add();
+
+    new_conn_vector.push_back(conn);
+  }
 
   PathPtr new_path = std::make_shared<Path>(new_conn_vector,metrics_,checker_);
 
   new_path->setChangeWarp(change_warp_);
-  new_path->setTree(tree_);
+  //new_path->setTree(tree_);  the nodes are cloned, the path does not match the path of the tree but is superimposed on it
 
   return new_path;
 }
@@ -470,7 +483,14 @@ Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const Co
   Eigen::VectorXd point_vector = point-parent;
 
   double conn_length = (conn_vector).norm();
-  assert(conn_length>0);
+
+  if(conn_length == 0.0) //ELIMINA
+  {
+    ROS_INFO_STREAM("parent: "<<*conn->getParent());
+    ROS_INFO_STREAM("child: "<<*conn->getChild());
+    assert(0);
+  }
+  //assert(conn_length>0.0);
 
   double point_length = (point_vector).norm();
   double s = point_vector.dot(conn_vector/conn_length);
@@ -658,12 +678,89 @@ bool Path::removeNodes(const std::vector<NodePtr> &white_list)
   return removeNodes(white_list, deleted_nodes);
 }
 
+bool Path::removeNode(NodePtr& node, const std::vector<NodePtr> &white_list)
+{
+  if(node == connections_.front()->getParent() || node == connections_.back()->getChild())
+    return false;
+
+  ConnectionPtr conn_parent_node,conn_node_child;
+  int idx = -1;
+
+  for(unsigned int i=0;i<connections_.size()-1;i++)
+  {
+    if(node == connections_.at(i)->getChild())
+    {
+      conn_parent_node = connections_.at(i);
+      conn_node_child = connections_.at(i+1);
+      idx = i;
+    }
+  }
+
+  if(idx<0)
+  {
+    ROS_ERROR("Node does not belong to the path");
+    return false;
+  }
+
+  return removeNode(node,idx,white_list);
+}
+
+bool Path::removeNode(NodePtr& node, const int& idx_conn, const std::vector<NodePtr> &white_list)
+{
+  if(node == connections_.front()->getParent() || node == connections_.back()->getChild())
+    return false;
+
+  if(std::find(white_list.begin(),white_list.end(),node)<white_list.end())
+    return false;
+
+  if(idx_conn<0 || idx_conn > (connections_.size()-1))
+  {
+    ROS_ERROR("Node does not belong to the path");
+    return false;
+  }
+
+  ConnectionPtr conn_parent_node = connections_.at(idx_conn);
+  ConnectionPtr conn_node_child  = connections_.at(idx_conn+1);
+
+  if(conn_parent_node->isParallel(conn_node_child) &&
+     node->getParents().size() == 1 &&
+     node->getChildren().size() == 1)
+  {
+    assert(not tree_ || node != tree_->getRoot()); //node must have 1 parent (root must have zero) and 1 child (root may have many)
+
+    ConnectionPtr new_conn = std::make_shared<pathplan::Connection>(conn_parent_node->getParent(),conn_node_child->getChild());
+    double cost = conn_parent_node->getCost()+conn_node_child->getCost();
+    new_conn->setCost(cost);
+    new_conn->add();
+
+    node->disconnect();
+
+    if(tree_)
+      tree_->removeNode(node);
+
+    std::vector<ConnectionPtr> new_connections;
+
+    if(idx_conn>0)
+      new_connections.insert(new_connections.begin(),connections_.begin(),connections_.begin()+idx_conn);
+
+    new_connections.push_back(new_conn);
+
+    if(idx_conn+2<connections_.size())
+      new_connections.insert(new_connections.end(),connections_.begin()+(idx_conn+2),connections_.end());
+
+    setConnections(new_connections);
+
+    return true;
+  }
+  else
+    return false;
+}
 
 bool Path::removeNodes(const std::vector<NodePtr> &white_list, std::vector<NodePtr> &deleted_nodes)
 {
   bool removed;
+  std::vector<NodePtr> void_list;
   bool at_least_one_removed = false;
-  bool skip = false;
 
   do
   {
@@ -675,59 +772,21 @@ bool Path::removeNodes(const std::vector<NodePtr> &white_list, std::vector<NodeP
       ConnectionPtr conn_node_child  = connections_.at(i+1);
 
       NodePtr node = conn_parent_node->getChild();
-
       assert(node == conn_node_child->getParent());
 
-      skip = false;
-      for(const NodePtr& white_node:white_list)
-      {
-        if(white_node == node)
-        {
-          skip = true;
-          break;
-        }
-      }
-
-      if(skip)
+      if(std::find(white_list.begin(),white_list.end(),node)<white_list.end())
         continue;
-      else
+
+      if(removeNode(node,i,void_list))
       {
-        if(conn_parent_node->isParallel(conn_node_child) &&
-           node->getParents().size() == 1 &&
-           node->getChildren().size() == 1)
-        {
-          assert(not tree_ || node != tree_->getRoot()); //node must have 1 parent (root must have zero) and 1 child (root may have many)
+        removed = true;
+        at_least_one_removed = true;
+        deleted_nodes.push_back(node);
 
-          ConnectionPtr new_conn = std::make_shared<pathplan::Connection>(conn_parent_node->getParent(),conn_node_child->getChild());
-          double cost = conn_parent_node->getCost()+conn_node_child->getCost();
-          new_conn->setCost(cost);
-          new_conn->add();
-
-          node->disconnect();
-          deleted_nodes.push_back(node);
-
-          if(tree_)
-            tree_->removeNode(node);
-
-          std::vector<ConnectionPtr> new_connections;
-
-          if(i>0)
-            new_connections.insert(new_connections.begin(),connections_.begin(),connections_.begin()+i);
-
-          new_connections.push_back(new_conn);
-
-          if(i+2<connections_.size())
-            new_connections.insert(new_connections.end(),connections_.begin()+(i+2),connections_.end());
-
-          setConnections(new_connections);
-
-          at_least_one_removed = true;
-          removed = true;
-          break;
-        }
+        break; //because connections_ is changed
       }
     }
-  } while(removed);
+  }while(removed);
 
   return at_least_one_removed;
 }
@@ -811,7 +870,8 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
         bool is_net = conn->isNet();
         conn->remove();
 
-        tree_->addNode(actual_node);
+        if(tree_)
+          tree_->addNode(actual_node);
 
         ConnectionPtr conn_parent = std::make_shared<Connection>(parent, actual_node);
         conn_parent->setCost(cost_parent);
@@ -892,9 +952,9 @@ PathPtr Path::getSubpathToConf(const Eigen::VectorXd& conf, const bool get_copy)
   //Conf is a path waypoint
   for(const Eigen::VectorXd& wp: getWaypoints())
   {
-    if((conf-wp).norm()<1e-06)
+    if(conf == wp)
     {
-      if(!get_copy)
+      if(not get_copy)
         return getSubpathToNode(conf);
       else
         return getSubpathToNode(conf)->clone();
@@ -906,14 +966,15 @@ PathPtr Path::getSubpathToConf(const Eigen::VectorXd& conf, const bool get_copy)
   NodePtr node;
   int idx_conn;
   ConnectionPtr conn = findConnection(conf,idx_conn);
+  bool is_net = conn->isNet();
 
-  if(!conn)
+  if(not conn)
   {
     ROS_ERROR("Conf does not belong to the path, subpath to conf can not be computed");
     assert(0);
   }
 
-  if(!get_copy)
+  if(not get_copy)
   {
     node = addNodeAtCurrentConfig(conf,conn,true);
     subpath = getSubpathToNode(node);
@@ -923,11 +984,11 @@ PathPtr Path::getSubpathToConf(const Eigen::VectorXd& conf, const bool get_copy)
     node = addNodeAtCurrentConfig(conf,conn,false);
 
     NodePtr parent;
-    std::vector<ConnectionPtr> conn_to_parent;
+    std::vector<ConnectionPtr> connections_to_parent;
     if(idx_conn > 0)
     {
-      conn_to_parent = (getSubpathToNode(conn->getParent())->clone())->getConnections();
-      parent = conn_to_parent.back()->getChild();
+      connections_to_parent = ((getSubpathToNode(conn->getParent()))->clone())->getConnections();
+      parent = connections_to_parent.back()->getChild();
     }
     else
       parent = std::make_shared<Node>(conn->getParent()->getConfiguration());
@@ -935,22 +996,21 @@ PathPtr Path::getSubpathToConf(const Eigen::VectorXd& conf, const bool get_copy)
     double cost;
     if(conn->getCost() == std::numeric_limits<double>::infinity())
     {
-      if(!checker_->checkPath(conn->getParent()->getConfiguration(),node->getConfiguration()))
-        cost = std::numeric_limits<double>::infinity();
-      else
-        cost  = metrics_->cost(conn->getParent()->getConfiguration(),node->getConfiguration());
+      checker_->checkPath(conn->getParent()->getConfiguration(),node->getConfiguration())?
+            (cost  = metrics_->cost(conn->getParent()->getConfiguration(),node->getConfiguration())):
+            (cost = std::numeric_limits<double>::infinity());
     }
     else
       cost  = metrics_->cost(conn->getParent()->getConfiguration(),node->getConfiguration());
 
     ConnectionPtr conn_parent;
-    conn_parent = std::make_shared<Connection>(parent,node);
+    conn_parent = std::make_shared<Connection>(parent,node,is_net);
     conn_parent->setCost(cost);
     conn_parent->add();
 
     std::vector<ConnectionPtr> connections_vector;
-    if(!conn_to_parent.empty())
-      connections_vector = conn_to_parent;
+    if(not connections_to_parent.empty())
+      connections_vector = connections_to_parent;
 
     connections_vector.push_back(conn_parent);
 
@@ -968,9 +1028,9 @@ PathPtr Path::getSubpathFromConf(const Eigen::VectorXd& conf, const bool get_cop
   //Conf is a path waypoint
   for(const Eigen::VectorXd& wp: getWaypoints())
   {
-    if((conf-wp).norm()<1e-06)
+    if(conf == wp)
     {
-      if(!get_copy)
+      if(not get_copy)
         return getSubpathFromNode(conf);
       else
         return getSubpathFromNode(conf)->clone();
@@ -982,14 +1042,15 @@ PathPtr Path::getSubpathFromConf(const Eigen::VectorXd& conf, const bool get_cop
   NodePtr node;
   int idx_conn;
   ConnectionPtr conn = findConnection(conf,idx_conn);
+  bool is_net = conn->isNet();
 
-  if(!conn)
+  if(not conn)
   {
     ROS_ERROR("Conf does not belong to the path, subpath from conf can not be computed");
     assert(0);
   }
 
-  if(!get_copy)
+  if(not get_copy)
   {
     node = addNodeAtCurrentConfig(conf,conn,true);
     subpath = getSubpathFromNode(node);
@@ -999,18 +1060,15 @@ PathPtr Path::getSubpathFromConf(const Eigen::VectorXd& conf, const bool get_cop
     node = addNodeAtCurrentConfig(conf,conn,false);
 
     NodePtr child;
-    std::vector<ConnectionPtr> conn_from_child;
-    bool is_net;
+    std::vector<ConnectionPtr> connections_from_child;
     if(idx_conn < connections_.size()-1)
     {
-      conn_from_child = (getSubpathFromNode(conn->getChild())->clone())->getConnections();
-      child = conn_from_child.front()->getParent();
-      is_net = conn_from_child.front()->isNet();
+      connections_from_child = (getSubpathFromNode(conn->getChild())->clone())->getConnections();
+      child = connections_from_child.front()->getParent();
     }
     else
     {
       child = std::make_shared<Node>(conn->getChild()->getConfiguration());
-      is_net = false;
     }
 
     double cost;
@@ -1024,17 +1082,15 @@ PathPtr Path::getSubpathFromConf(const Eigen::VectorXd& conf, const bool get_cop
     else
       cost  = metrics_->cost(node->getConfiguration(),conn->getChild()->getConfiguration());
 
-    ConnectionPtr conn_child;
-    is_net? (conn_child = std::make_shared<Connection>(node, child, true)):
-            (conn_child = std::make_shared<Connection>(node, child, false));
+    ConnectionPtr conn_child = std::make_shared<Connection>(node, child, is_net);
     conn_child->setCost(cost);
     conn_child->add();
 
     std::vector<ConnectionPtr> connections_vector;
     connections_vector.push_back(conn_child);
 
-    if(!conn_from_child.empty())
-      connections_vector.insert(connections_vector.end(),conn_from_child.begin(),conn_from_child.end());
+    if(not connections_from_child.empty())
+      connections_vector.insert(connections_vector.end(),connections_from_child.begin(),connections_from_child.end());
 
     subpath = std::make_shared<Path>(connections_vector,metrics_,checker_);
   }
@@ -1276,7 +1332,7 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_fro
     }
     else
     {
-      ROS_INFO("conf is equal to goal, no connection to validate from here");
+      ROS_INFO_STREAM("Conf is equal to goal, no connection to validate from here. Conf: "<<conf.transpose()<<" goal: "<<connections_.back()->getChild()->getConfiguration().transpose());
       validity = true;
       assert(0);
     }

@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(graph_core)
-#add_compile_options(-std=c++11)
 add_compile_options(-std=c++11 -funroll-loops -Wall -Ofast)
 #set(CMAKE_BUILD_TYPE Release)
 #add_compile_options(-std=c++14)

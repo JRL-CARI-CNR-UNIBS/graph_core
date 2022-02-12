@@ -232,16 +232,16 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
   double utopia = (goal_node->getConfiguration() - start_node->getConfiguration()).norm(); //start and goal may be different from the previous ones
   completed_ = false;
 
-  if (cost_ <= utopia_tolerance_ * utopia) //also if start and/or goal are changed, the old path is better to follow
+  if(cost_ <= utopia_tolerance_ * utopia) //also if start and/or goal are changed, the old path is better to follow
   {
-    //ROS_INFO_STREAM("Utopia reached! Utopia: "<<utopia<<" path cost: "<<path_cost_);
+    ROS_INFO_STREAM("Utopia reached! Utopia: "<<utopia<<" path cost: "<<path_cost_);
     completed_=true;
     return false;
   }
 
   if(cost2beat <= utopia)
   {
-    //ROS_INFO_STREAM("The cost to beat is less than utopia, impossible to reach! Utopia: "<<utopia<<" cost to beat: "<<cost2beat);
+    ROS_INFO_STREAM("The cost to beat is less than utopia, impossible to reach! Utopia: "<<utopia<<" cost to beat: "<<cost2beat);
     return false;
   }
 
@@ -352,7 +352,6 @@ bool AnytimeRRT::update(const Eigen::VectorXd& point, PathPtr &solution)
           solution->setTree(start_tree_);
           solution_ = solution;
 
-          // PERCHE' E' QUI???
           best_utopia_ = goal_cost_+(goal_node_->getConfiguration()-start_tree_->getRoot()->getConfiguration()).norm();
 
           path_cost_ = solution_->cost();

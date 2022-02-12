@@ -442,10 +442,6 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr> &ch
 
 bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& checked_connections, double r_rewire, const std::vector<NodePtr>& white_list, const int& what_rewire)
 {
-  std::vector<NodePtr>::const_iterator it = std::find(white_list.begin(),white_list.end(),node);
-  if(it<white_list.end())
-    return false;
-
   if(what_rewire >2 || what_rewire <0)
   {
     ROS_ERROR("what_rewire parameter should be 0,1 or 2");
@@ -475,6 +471,14 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
   if(node == root_)
     rewire_parent = false;
 
+  std::vector<NodePtr>::const_iterator it;
+  if(rewire_parent)
+  {
+    it = std::find(white_list.begin(),white_list.end(),node);
+    if(it<white_list.end())
+      rewire_parent = false;
+  }
+
   std::vector<NodePtr> near_nodes = near(node, r_rewire);
 
   //validate connections to node
@@ -489,6 +493,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
   if(rewire_parent)
   {
     //ROS_DEBUG("try to find a better parent between %zu nodes", near_nodes.size());
+
     NodePtr nearest_node = node->getParents().at(0);
     for (const NodePtr& n : near_nodes)
     {
@@ -788,22 +793,35 @@ double Tree::costToNode(NodePtr node)
 std::vector<ConnectionPtr> Tree::getConnectionToNode(NodePtr node)
 {
   std::vector<ConnectionPtr> connections;
+  NodePtr tmp_node = node;
 
-  while (node != root_)
+  while (tmp_node != root_)
   {
-    if (node->parent_connections_.size() != 1)
+    if (tmp_node->parent_connections_.size() != 1)
     {
       ROS_ERROR("a tree node should have only a parent");
-      ROS_ERROR_STREAM("node \n" << *node);
+      ROS_ERROR_STREAM("node \n" << *tmp_node);
+      ROS_INFO_STREAM("parent conns size: "<<tmp_node->parent_connections_.size()); //ELIMINA
 
-      ROS_INFO_STREAM("current root "<<root_);
-      ROS_INFO_STREAM("node "<<node);
+      ROS_INFO_STREAM("root "<<*root_);
+
+      ROS_INFO_STREAM("root ptr"<<root_);
+      ROS_INFO_STREAM("node ptr"<<tmp_node);
+
+      for(const NodePtr& n:nodes_) //ELIMINA
+      {
+        if(n->getConfiguration() == tmp_node->getConfiguration())
+        {
+          ROS_INFO_STREAM("Node in tree: "<<n<<"\n"<<*n);
+          ROS_INFO_STREAM("Tmp node: "<<tmp_node<<"\n"<<*tmp_node);
+          assert(isInTree(tmp_node));
+        }
+      }
 
       assert(0);
     }
-    connections.push_back(node->parent_connections_.at(0));
-    node = node->parent_connections_.at(0)->getParent();
-
+    connections.push_back(tmp_node->parent_connections_.at(0));
+    tmp_node = tmp_node->parent_connections_.at(0)->getParent();
   }
   std::reverse(connections.begin(), connections.end());
 

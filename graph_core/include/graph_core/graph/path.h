@@ -77,6 +77,8 @@ public:
   NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, const bool& rewire);
 
   //Remove unnecessary nodes
+  bool removeNode(NodePtr& node, const std::vector<NodePtr> &white_list);
+  bool removeNode(NodePtr& node, const int& idx_conn, const std::vector<NodePtr> &white_list);
   bool removeNodes(const std::vector<NodePtr>& white_list, std::vector<NodePtr>& deleted_nodes);
   bool removeNodes(const std::vector<NodePtr> &white_list);
   bool removeNodes();

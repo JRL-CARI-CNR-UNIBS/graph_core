@@ -38,17 +38,6 @@ Connection::Connection(const NodePtr& parent, const NodePtr& child, const bool i
   euclidean_norm_ = (child->getConfiguration() - parent->getConfiguration()).norm();
 }
 
-ConnectionPtr Connection::clone()
-{
-  NodePtr new_parent = std::make_shared<Node>(parent_->getConfiguration());
-  NodePtr new_child = std::make_shared<Node>(child_->getConfiguration());
-
-  ConnectionPtr new_connection = std::make_shared<Connection>(new_parent,new_child,is_net_);
-  new_connection->setCost(cost_);
-  new_connection->add();
-  return new_connection;
-}
-
 void Connection::add()
 {
   valid = true;
@@ -107,6 +96,12 @@ Connection::~Connection()
 
 bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)
 {
+  if(euclidean_norm_ == 0.0 || conn->norm() == 0.0)
+  {
+    ROS_INFO_STREAM("A connection has norm zero");
+    assert(0);
+    return false;
+  }
   // v1 dot v2 = norm(v1)*norm(v2)*cos(angle)
   double scalar= (child_->getConfiguration()-parent_->getConfiguration()).dot(
         conn->getChild()->getConfiguration()-conn->getParent()->getConfiguration());

@@ -78,7 +78,6 @@ public:
   void add();
   void remove();
   void flip();
-  ConnectionPtr clone();
   bool convertToConnection();
   bool convertToNetConnection();
   void changeConnectionType();
