@@ -899,6 +899,7 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
   }
 
   ROS_ERROR("Connection not found, the node can't be created");
+  assert(0);
 
   return nullptr;
 }
@@ -1109,6 +1110,8 @@ PathPtr Path::getSubpathToNode(const Eigen::VectorXd& conf)
   {
     ROS_ERROR("No subpath available, the node is equal to the first node of the path");
     ROS_INFO_STREAM("configuration: "<<conf.transpose());
+    for(const Eigen::VectorXd& wp:getWaypoints())
+      ROS_INFO_STREAM("path wp: "<<wp.transpose());
     throw std::invalid_argument("No subpath available, the node is equal to the first node of the path");
   }
 

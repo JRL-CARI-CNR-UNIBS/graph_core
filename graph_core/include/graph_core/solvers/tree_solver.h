@@ -215,6 +215,7 @@ public:
   void setPathCost(const double& path_cost)
   {
     path_cost_ = path_cost;
+    cost_ = path_cost_+goal_cost_;
   }
 
   void setChecker(const CollisionCheckerPtr& checker)

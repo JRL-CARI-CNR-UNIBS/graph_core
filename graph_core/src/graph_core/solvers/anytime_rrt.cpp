@@ -44,7 +44,7 @@ void AnytimeRRT::importFromSolver(const AnytimeRRTPtr& solver)
 
 void AnytimeRRT::importFromSolver(const TreeSolverPtr& solver)
 {
-  if(std::dynamic_pointer_cast<pathplan::AnytimeRRT>(solver) != NULL)
+  if(std::dynamic_pointer_cast<pathplan::AnytimeRRT>(solver) != nullptr)
   {
     AnytimeRRT::importFromSolver(std::static_pointer_cast<AnytimeRRT>(solver));
   }
@@ -122,10 +122,9 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     NodePtr tmp_goal_node  = std::make_shared<Node>(goal_node->getConfiguration());
     improved = AnytimeRRT::improve(tmp_start_node,tmp_goal_node,solution,max_iter,(max_time-time));
 
-    if(!improved)
-      n_failed_iter++;
-    else
-      n_failed_iter = 0;
+    improved?
+          (n_failed_iter = 0):
+          (n_failed_iter++);
 
     assert(not (improved) or start_tree_==new_tree_);
 
@@ -139,11 +138,11 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     time = (ros::WallTime::now()-tic).toSec();
   }
 
-  if(goal_node != goal_node_)
+  if(goal_node_ != goal_node)
   {
-    //Rewire the tree goal
+    //Rewire the tree goal (set goal_node)
     NodePtr last_node = solution_->getConnections().back()->getParent();
-    double last_cost = solution_->getConnections().back()->getCost();
+    double  last_cost = solution_->getConnections().back()->getCost();
 
     goal_node->disconnect();
 
@@ -154,24 +153,27 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     start_tree_->removeNode(goal_node_);
     goal_node_ = goal_node;
     start_tree_->addNode(goal_node_);
+
+    solution_ = solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
+    solution->setTree(start_tree_);
   }
 
-  if(start_node != start_tree_->getRoot())
+  if(start_tree_->getRoot() != start_node)
   {
-    //Rewire the tree root
+    //Rewire the tree root (set start_node)
     start_node->disconnect();
     NodePtr root = start_tree_->getRoot();  //tmp_start_node
 
     std::vector<NodePtr> root_children;
     std::vector<double> root2children_cost;
 
-    NodePtr root_child_on_path = start_tree_->getConnectionToNode(goal_node_).front()->getChild();
-    double cost_first_conn_on_path = start_tree_->getConnectionToNode(goal_node_).front()->getCost();
+    ConnectionPtr conn_root_child_on_path = start_tree_->getConnectionToNode(goal_node_).front();
+    NodePtr root_child_on_path = conn_root_child_on_path->getChild();
+    double cost_first_conn_on_path = conn_root_child_on_path->getCost();
 
     for(const ConnectionPtr& conn2child : root->child_connections_)
     {
-      if(conn2child->getParent() != start_tree_->getRoot())
-        assert(0);
+      assert(conn2child->getParent() == start_tree_->getRoot());
 
       if(conn2child->getChild() != root_child_on_path)
       {
@@ -234,14 +236,14 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
 
   if(cost_ <= utopia_tolerance_ * utopia) //also if start and/or goal are changed, the old path is better to follow
   {
-    ROS_INFO_STREAM("Utopia reached! Utopia: "<<utopia<<" path cost: "<<path_cost_);
+    PATH_COMMENT_STREAM("Utopia reached! Utopia: "<<utopia_tolerance_*utopia<<" path cost: "<<path_cost_);
     completed_=true;
     return false;
   }
 
   if(cost2beat <= utopia)
   {
-    ROS_INFO_STREAM("The cost to beat is less than utopia, impossible to reach! Utopia: "<<utopia<<" cost to beat: "<<cost2beat);
+    PATH_COMMENT_STREAM("The cost to beat is less than utopia, impossible to reach! Utopia: "<<utopia<<" cost to beat: "<<cost2beat);
     return false;
   }
 
@@ -260,7 +262,7 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
   {
     if(AnytimeRRT::update(solution))
     {
-      //ROS_INFO_STREAM("Improved path cost: "<<path_cost_);
+      PATH_COMMENT_STREAM("Improved path cost: "<<path_cost_);
 
       if(solution->getTree() != solution_->getTree())
         assert(0);
@@ -321,22 +323,21 @@ bool AnytimeRRT::update(const Eigen::VectorXd& point, PathPtr &solution)
   }
 
   NodePtr new_node;
-  if(new_tree_->informedExtend(point, new_node, tmp_goal_node_->getConfiguration(), cost2beat_, bias_))
+  if(new_tree_->informedExtend(point,new_node,tmp_goal_node_->getConfiguration(),cost2beat_,bias_))
   {
     if((new_node->getConfiguration() - tmp_goal_node_->getConfiguration()).norm() < max_distance_)
     {
-      if(checker_->checkPath(new_node->getConfiguration(), tmp_goal_node_->getConfiguration()))
-      {
-        std::vector<ConnectionPtr> conn2node = new_tree_->getConnectionToNode(new_node);
-        double cost_node2goal = metrics_->cost(new_node, tmp_goal_node_);
-        double new_solution_cost = cost_node2goal;
-        for(const ConnectionPtr& conn: conn2node)
-          new_solution_cost += conn->getCost();
+      std::vector<ConnectionPtr> conn2node = new_tree_->getConnectionToNode(new_node);
+      double cost_node2goal = metrics_->cost(new_node, tmp_goal_node_);
+      double new_solution_cost = cost_node2goal;
+      for(const ConnectionPtr& conn: conn2node)
+        new_solution_cost += conn->getCost();
 
-        if(new_solution_cost<solution_->cost())
+      if(new_solution_cost<solution_->cost())
+      {
+        if(checker_->checkPath(new_node->getConfiguration(), tmp_goal_node_->getConfiguration()))
         {
-          if(tmp_goal_node_->getParents().size() != 0)
-            assert(0);
+          assert(tmp_goal_node_->parent_connections_.empty());
 
           start_tree_->removeNode(goal_node_);
           goal_node_ = tmp_goal_node_;
@@ -369,7 +370,7 @@ bool AnytimeRRT::update(const Eigen::VectorXd& point, PathPtr &solution)
 
 bool AnytimeRRT::update(const NodePtr& n, PathPtr &solution)
 {
-  ROS_ERROR("Update to node not yet available");
+  PATH_COMMENT("Update to node not yet available");
   return false;
 }
 

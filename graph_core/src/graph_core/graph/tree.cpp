@@ -543,9 +543,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
         continue;
 
       if(n == root_)
-      {
         continue;
-      }
 
       it = std::find(white_list.begin(),white_list.end(),n); //if the near node is a white node its parent should not be changed
       if(it<white_list.end())
