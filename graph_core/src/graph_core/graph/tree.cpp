@@ -86,6 +86,38 @@ bool Tree::tryExtendFromNode(const Eigen::VectorXd &configuration,
   return false;
 }
 
+bool Tree::tryExtendWithPathCheck(const Eigen::VectorXd &configuration,
+                                  Eigen::VectorXd &next_configuration,
+                                  NodePtr &closest_node,
+                                  std::vector<ConnectionPtr> &checked_connections)
+{
+  closest_node = findClosestNode(configuration);
+  assert(closest_node);
+
+  return tryExtendFromNodeWithPathCheck(configuration,next_configuration,closest_node,checked_connections);
+}
+
+bool Tree::tryExtendFromNodeWithPathCheck(const Eigen::VectorXd &configuration,
+                                          Eigen::VectorXd &next_configuration,
+                                          NodePtr& node,
+                                          std::vector<ConnectionPtr> &checked_connections)
+{
+  assert(node);
+
+  if(checkPathToNode(node,checked_connections))
+  {
+    double distance = selectNextConfiguration(configuration,next_configuration,node);
+
+    if (distance < tolerance_)
+      return true;
+    else
+      if (checker_->checkPath(node->getConfiguration(), next_configuration))
+        return true;
+  }
+
+  return false;
+}
+
 double Tree::selectNextConfiguration(const Eigen::VectorXd& configuration,
                                      Eigen::VectorXd& next_configuration,
                                      const NodePtr& node)
@@ -139,12 +171,39 @@ bool Tree::extend(const Eigen::VectorXd &configuration, NodePtr &new_node, Conne
                  next_configuration,
                  closest_node))
   {
-    connection = NULL;
+    connection = nullptr;
     return false;
   }
 
   new_node = std::make_shared<Node>(next_configuration);
   return extendOnly(closest_node,new_node,connection);
+}
+
+bool Tree::extendWithPathCheck(const Eigen::VectorXd &configuration, NodePtr &new_node, std::vector<ConnectionPtr> &checked_connections)
+{
+  ConnectionPtr conn;
+  return extendWithPathCheck(configuration,new_node,conn,checked_connections);
+}
+
+bool Tree::extendWithPathCheck(const Eigen::VectorXd &configuration, NodePtr &new_node, ConnectionPtr &connection, std::vector<ConnectionPtr> &checked_connections)
+{
+  NodePtr closest_node;
+  Eigen::VectorXd next_configuration;
+  if (!tryExtendWithPathCheck(configuration,
+                              next_configuration,
+                              closest_node,
+                              checked_connections))
+  {
+    connection = nullptr;
+    return false;
+  }
+
+  new_node = std::make_shared<Node>(next_configuration);
+  if(not extendOnly(closest_node,new_node,connection))
+    return false;
+
+  checked_connections.push_back(connection);
+  return true;
 }
 
 bool Tree::extendToNode(const NodePtr& node,
@@ -283,8 +342,16 @@ bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node, const double &m
 
 bool Tree::checkPathToNode(const NodePtr& node, std::vector<ConnectionPtr>& checked_connections)
 {
+  std::vector<ConnectionPtr> path_connections;
+  return checkPathToNode(node,checked_connections,path_connections);
+}
+
+bool Tree::checkPathToNode(const NodePtr& node, std::vector<ConnectionPtr>& checked_connections, std::vector<ConnectionPtr>& path_connections)
+{
   std::vector<ConnectionPtr> connections_to_check;
-  std::vector<ConnectionPtr> path_connections = getConnectionToNode(node);
+
+  path_connections.clear();
+  path_connections = getConnectionToNode(node);
 
   for(const ConnectionPtr& conn: path_connections)
   {
@@ -499,16 +566,17 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
     {
       if (n == nearest_node)
         continue;
+
       if (n == node)
         continue;
 
+      assert(isInTree(n));
       double cost_to_near = costToNode(n);
 
       if (cost_to_near >= cost_to_node)
         continue;
 
       double cost_near_to_node = metrics_->cost(n, node);
-
       if ((cost_to_near + cost_near_to_node) >= cost_to_node)
         continue;
 
@@ -525,7 +593,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
       conn->add();
       checked_connections.push_back(conn);
 
-      //      nearest_node = n; //PER ME NON CI VA
+      nearest_node = n;
       cost_to_node = cost_to_near + cost_near_to_node;
       improved = true;
     }
@@ -550,20 +618,20 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
         continue;
 
       double cost_to_near = costToNode(n);
-      bool checked = false;
+      bool path_to_near_checked = false;
 
       if (cost_to_node >= cost_to_near)
       {
         if(checkPathToNode(n,checked_connections)) //if path to n is free, cost_to_node >= cost_to_near is really true
           continue;
 
-        checked = true;
+        path_to_near_checked = true;
       }
 
       double cost_node_to_near = metrics_->cost(node, n);
       if ((cost_to_node + cost_node_to_near) >= cost_to_near)
       {
-        if(checked)
+        if(path_to_near_checked)
           continue;
         else
         {
@@ -670,12 +738,10 @@ bool Tree::rewireK(const Eigen::VectorXd &configuration)
 bool Tree::rewireWithPathCheck(const Eigen::VectorXd &configuration, std::vector<ConnectionPtr> &checked_connections, double r_rewire, const std::vector<NodePtr> &white_list, NodePtr& new_node)
 {
   ConnectionPtr new_conn;
-  if (!extend(configuration,new_node,new_conn))
+  if (!extendWithPathCheck(configuration,new_node,new_conn,checked_connections))
   {
     return false;
   }
-
-  checked_connections.push_back(new_conn);
 
   return rewireOnlyWithPathCheck(new_node,checked_connections,r_rewire,white_list);
 }
@@ -783,7 +849,6 @@ double Tree::costToNode(NodePtr node)
     }
     cost += node->parent_connections_.at(0)->getCost();
     node = node->parent_connections_.at(0)->getParent();
-
   }
   return cost;
 }
@@ -793,6 +858,7 @@ std::vector<ConnectionPtr> Tree::getConnectionToNode(NodePtr node)
   std::vector<ConnectionPtr> connections;
   NodePtr tmp_node = node;
 
+  int iter = 0;
   while (tmp_node != root_)
   {
     if (tmp_node->parent_connections_.size() != 1)
@@ -800,6 +866,9 @@ std::vector<ConnectionPtr> Tree::getConnectionToNode(NodePtr node)
       ROS_ERROR("a tree node should have only a parent");
       ROS_ERROR_STREAM("node \n" << *tmp_node);
       ROS_INFO_STREAM("parent conns size: "<<tmp_node->parent_connections_.size()); //ELIMINA
+
+      for(const NodePtr& p:tmp_node->getParents())
+        ROS_INFO_STREAM("parent:\n"<<*p);
 
       ROS_INFO_STREAM("root "<<*root_);
 
@@ -818,6 +887,7 @@ std::vector<ConnectionPtr> Tree::getConnectionToNode(NodePtr node)
 
       assert(0);
     }
+
     connections.push_back(tmp_node->parent_connections_.at(0));
     tmp_node = tmp_node->parent_connections_.at(0)->getParent();
   }

@@ -554,7 +554,7 @@ const Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& po
   if(min_distance == std::numeric_limits<double>::infinity())
   {
     projection = findCloserNode(point)->getConfiguration();
-    ROS_ERROR("projection on path not found");
+    PATH_COMMENT("projection on path not found");
   }
   return projection;
 }
@@ -595,7 +595,7 @@ const Eigen::VectorXd Path::projectOnClosestConnectionKeepingPastPrj(const Eigen
   if(min_distance == std::numeric_limits<double>::infinity())
   {
     projection = past_prj;
-    ROS_ERROR("projection on path not found");
+    PATH_COMMENT("projection on path not found");
   }
   else  n_conn = idx;
 
@@ -1043,13 +1043,13 @@ PathPtr Path::getSubpathFromConf(const Eigen::VectorXd& conf, const bool get_cop
   NodePtr node;
   int idx_conn;
   ConnectionPtr conn = findConnection(conf,idx_conn);
-  bool is_net = conn->isNet();
-
   if(not conn)
   {
     ROS_ERROR("Conf does not belong to the path, subpath from conf can not be computed");
     assert(0);
   }
+
+  bool is_net = conn->isNet();
 
   if(not get_copy)
   {

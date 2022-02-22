@@ -5,7 +5,6 @@ add_compile_options(-std=c++11 -funroll-loops -Wall -Ofast)
 #add_compile_options(-std=c++14)
 set(CMAKE_BUILD_TYPE Debug)
 
-
 find_package(catkin REQUIRED COMPONENTS
   actionlib
   moveit_core

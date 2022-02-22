@@ -106,6 +106,17 @@ public:
                          Eigen::VectorXd& next_configuration,
                          NodePtr& node);
 
+
+  bool tryExtendWithPathCheck(const Eigen::VectorXd& configuration,
+                              Eigen::VectorXd& next_configuration,
+                              NodePtr& closest_node,
+                              std::vector<ConnectionPtr> &checked_connections);
+
+  bool tryExtendFromNodeWithPathCheck(const Eigen::VectorXd& configuration,
+                                      Eigen::VectorXd& next_configuration,
+                                      NodePtr& node,
+                                      std::vector<ConnectionPtr> &checked_connections);
+
   /* selectNextConfiguration: compute next_configuration as
    * next_configuration = configurarion if configuration is close to the node (less than max_distance_)
    * next_configuration distance is limited to max_distance_ if configuration is far from node
@@ -120,6 +131,16 @@ public:
   bool extend(const Eigen::VectorXd& configuration,
               NodePtr& new_node,
               ConnectionPtr& connection);
+
+
+  bool extendWithPathCheck(const Eigen::VectorXd& configuration,
+                           NodePtr& new_node,
+                           std::vector<ConnectionPtr> &checked_connections);
+
+  bool extendWithPathCheck(const Eigen::VectorXd& configuration,
+                           NodePtr& new_node,
+                           ConnectionPtr& connection,
+                           std::vector<ConnectionPtr> &checked_connections);
 
   bool extendOnly(NodePtr &closest_node,
                   NodePtr& new_node,
@@ -174,6 +195,7 @@ public:
   bool rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr> &checked_connections, double r_rewire, const std::vector<NodePtr> &white_list, const int& what_rewire = 0);
 
   bool checkPathToNode(const NodePtr &node, std::vector<ConnectionPtr>& checked_connections);
+  bool checkPathToNode(const NodePtr &node, std::vector<ConnectionPtr>& checked_connections, std::vector<ConnectionPtr>& path_connections);
 
   NodePtr findClosestNode(const Eigen::VectorXd& configuration);
 

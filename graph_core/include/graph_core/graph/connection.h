@@ -36,7 +36,7 @@ protected:
   NodePtr parent_;
   NodePtr child_;
   double cost_;
-  bool valid = false;
+  bool valid_ = false;
   double euclidean_norm_;
   bool is_net_;
 
@@ -52,6 +52,11 @@ public:
   bool isNet()
   {
     return is_net_;
+  }
+
+  bool isValid()
+  {
+    return valid_;
   }
 
   void setCost(const double& cost)

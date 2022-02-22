@@ -45,11 +45,11 @@ protected:
   std::string group_name_;
   double min_distance_;
 
+  std::mutex stop_mutex_;
   std::vector<std::vector<std::vector<double>>> queues_;
-  std::vector<std::thread> threads;
+  std::vector<std::thread> threads_;
   std::vector<planning_scene::PlanningScenePtr> planning_scenes_;
 
-  std::mutex stop_mutex;
   void resetQueue();
   void queueUp(const Eigen::VectorXd &q);
   bool checkAllQueues();

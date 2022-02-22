@@ -40,7 +40,7 @@ Connection::Connection(const NodePtr& parent, const NodePtr& child, const bool i
 
 void Connection::add()
 {
-  valid = true;
+  valid_ = true;
 
   if(is_net_)
   {
@@ -56,13 +56,13 @@ void Connection::add()
 }
 void Connection::remove()
 {
-  if (!valid)
+  if (!valid_)
   {
     ROS_ERROR("not valid");
     return;
   }
 
-  valid = false;
+  valid_ = false;
   if (parent_)
   {
     if(is_net_)

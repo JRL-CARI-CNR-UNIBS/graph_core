@@ -49,7 +49,7 @@ ParallelMoveitCollisionChecker::ParallelMoveitCollisionChecker(const planning_sc
   stop_check_=true;
   thread_iter_=0;
 
-  threads.resize(threads_num_);
+  threads_.resize(threads_num_);
   for (int idx=0;idx<threads_num_;idx++)
   {
     planning_scenes_.push_back(planning_scene::PlanningScene::clone(planning_scene_));
@@ -67,12 +67,14 @@ ParallelMoveitCollisionChecker::ParallelMoveitCollisionChecker(const planning_sc
 void ParallelMoveitCollisionChecker::resetQueue()
 {
   at_least_a_collision_=false;
+  stop_mutex_.lock();
   stop_check_=true;
+  stop_mutex_.unlock();
   thread_iter_=0;
   for (int idx=0;idx<threads_num_;idx++)
   {
-    if (threads.at(idx).joinable())
-      threads.at(idx).join();
+    if (threads_.at(idx).joinable())
+      threads_.at(idx).join();
     queues_.at(idx).clear();
   }
 }
@@ -97,16 +99,23 @@ void ParallelMoveitCollisionChecker::queueUp(const Eigen::VectorXd &q)
 
 bool ParallelMoveitCollisionChecker::checkAllQueues()
 {
+  assert(queues_.size() == threads_.size());
+  assert(threads_num_ == threads_.size());
+
+  stop_mutex_.lock();
   stop_check_=false;
+  stop_mutex_.unlock();
   for (int idx=0;idx<threads_num_;idx++)
   {
     if (queues_.at(idx).size()>0)
-      threads.at(idx)=std::thread(&ParallelMoveitCollisionChecker::collisionThread,this,idx);
+    {
+      threads_.at(idx)=std::thread(&ParallelMoveitCollisionChecker::collisionThread,this,idx);
+    }
   }
   for (int idx=0;idx<threads_num_;idx++)
   {
-    if (threads.at(idx).joinable())
-      threads.at(idx).join();
+    if (threads_.at(idx).joinable())
+      threads_.at(idx).join();
   }
   return  !at_least_a_collision_;
 }
@@ -115,19 +124,24 @@ void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
 {
   robot_state::RobotStatePtr state=std::make_shared<robot_state::RobotState>(planning_scenes_.at(thread_idx)->getCurrentState());
   const std::vector<std::vector<double>>& queue=queues_.at(thread_idx);
+  bool stop_check;
   for (const std::vector<double>& configuration: queue)
   {
-    if (stop_check_)
-    {
+    stop_mutex_.lock();
+    stop_check = stop_check_;
+    stop_mutex_.unlock();
+    if(stop_check)
       break;
-    }
+
     assert(configuration.size()>0);
     state->setJointGroupPositions(group_name_, configuration);
     state->update();
     if (!state->satisfiesBounds())
     {
       at_least_a_collision_=true;
+      stop_mutex_.lock();
       stop_check_=true;
+      stop_mutex_.unlock();
       break;
     }
     //    state->updateCollisionBodyTransforms();
@@ -135,7 +149,9 @@ void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
     if (!planning_scenes_.at(thread_idx)->isStateValid(*state,group_name_))
     {
       at_least_a_collision_=true;
+      stop_mutex_.lock();
       stop_check_=true;
+      stop_mutex_.unlock();
       break;
     }
 
@@ -159,22 +175,28 @@ void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
 ParallelMoveitCollisionChecker::~ParallelMoveitCollisionChecker()
 {
   ROS_DEBUG("closing collision threads");
+  stop_mutex_.lock();
   stop_check_=true;
+  stop_mutex_.unlock();
+
   for (int idx=0;idx<threads_num_;idx++)
   {
-    if (threads.at(idx).joinable())
-      threads.at(idx).join();
+    if (threads_.at(idx).joinable())
+      threads_.at(idx).join();
   }
   ROS_DEBUG("collision threads closed");
 }
 
 void ParallelMoveitCollisionChecker::setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg)
 {
+  stop_mutex_.lock();
   stop_check_=true;
+  stop_mutex_.unlock();
+
   for (int idx=0;idx<threads_num_;idx++)
   {
-    if (threads.at(idx).joinable())
-      threads.at(idx).join();
+    if (threads_.at(idx).joinable())
+      threads_.at(idx).join();
   }
   if (!planning_scene_->setPlanningSceneMsg(msg))
   {
@@ -191,11 +213,14 @@ void ParallelMoveitCollisionChecker::setPlanningSceneMsg(const moveit_msgs::Plan
 
 void ParallelMoveitCollisionChecker::setPlanningScene(planning_scene::PlanningScenePtr &planning_scene)
 {
+  stop_mutex_.lock();
   stop_check_=true;
+  stop_mutex_.unlock();
+
   for (int idx=0;idx<threads_num_;idx++)
   {
-    if (threads.at(idx).joinable())
-      threads.at(idx).join();
+    if (threads_.at(idx).joinable())
+      threads_.at(idx).join();
   }
   planning_scene_ = planning_scene;
   for (int idx=0;idx<threads_num_;idx++)
