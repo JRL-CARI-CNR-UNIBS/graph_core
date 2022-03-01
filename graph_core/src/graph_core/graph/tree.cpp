@@ -189,10 +189,10 @@ bool Tree::extendWithPathCheck(const Eigen::VectorXd &configuration, NodePtr &ne
 {
   NodePtr closest_node;
   Eigen::VectorXd next_configuration;
-  if (!tryExtendWithPathCheck(configuration,
-                              next_configuration,
-                              closest_node,
-                              checked_connections))
+  if (not tryExtendWithPathCheck(configuration,
+                                 next_configuration,
+                                 closest_node,
+                                 checked_connections))
   {
     connection = nullptr;
     return false;
@@ -511,7 +511,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
 {
   if(what_rewire >2 || what_rewire <0)
   {
-    ROS_ERROR("what_rewire parameter should be 0,1 or 2");
+    ROS_ERROR("what_rewire parameter should be 0, 1 or 2");
     assert(0);
     return false;
   }
@@ -550,10 +550,9 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
 
   //validate connections to node
   double cost_to_node;
-  if(not checkPathToNode(node,checked_connections))
-    cost_to_node = std::numeric_limits<double>::infinity();
-  else
-    cost_to_node= costToNode(node);
+  (checkPathToNode(node,checked_connections))?
+        (cost_to_node = costToNode(node)):
+        (cost_to_node = std::numeric_limits<double>::infinity());
 
   bool improved = false;
 
@@ -738,7 +737,7 @@ bool Tree::rewireK(const Eigen::VectorXd &configuration)
 bool Tree::rewireWithPathCheck(const Eigen::VectorXd &configuration, std::vector<ConnectionPtr> &checked_connections, double r_rewire, const std::vector<NodePtr> &white_list, NodePtr& new_node)
 {
   ConnectionPtr new_conn;
-  if (!extendWithPathCheck(configuration,new_node,new_conn,checked_connections))
+  if (not extendWithPathCheck(configuration,new_node,new_conn,checked_connections))
   {
     return false;
   }

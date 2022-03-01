@@ -233,6 +233,10 @@ public:
   const double& getMaximumDistance() const {return max_distance_;}
   MetricsPtr& getMetrics() {return metrics_;}
   CollisionCheckerPtr& getChecker() {return checker_;}
+  void setChecker(const CollisionCheckerPtr& checker)
+  {
+    checker_ = checker;
+  }
 
   XmlRpc::XmlRpcValue toXmlRpcValue() const;
   friend std::ostream& operator<<(std::ostream& os, const Tree& tree);

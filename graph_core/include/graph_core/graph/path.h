@@ -125,6 +125,8 @@ public:
   void setChecker(const CollisionCheckerPtr &checker)
   {
     checker_ = checker;
+    if(tree_)
+      tree_->setChecker(checker);
   }
 
   void setChangeWarp(const std::vector<bool>& change_warp)
@@ -164,14 +166,14 @@ public:
 
   PathPtr clone();
   bool simplify(const double& distance = 0.02);
-  bool isValid(const CollisionCheckerPtr &this_checker = NULL);
-  bool isValidFromConf(const Eigen::VectorXd &conf, const CollisionCheckerPtr &this_checker = NULL);
-  bool isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker = NULL);
-  bool isValidFromConn(const ConnectionPtr &this_conn, const CollisionCheckerPtr &this_checker = NULL);
-  Eigen::VectorXd projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool &in_conn);
-  const Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point);
-  const Eigen::VectorXd projectOnClosestConnectionKeepingPastPrj(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, int &n_conn);
-  const Eigen::VectorXd projectOnClosestConnectionKeepingCurvilinearAbscissa(const Eigen::VectorXd& point, Eigen::VectorXd& past_prj, double &new_abscissa,  double &past_abscissa, int &n_conn, const bool &verbose = false);
+  bool isValid(const CollisionCheckerPtr &this_checker = nullptr);
+  bool isValidFromConf(const Eigen::VectorXd &conf, const CollisionCheckerPtr &this_checker = nullptr);
+  bool isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker = nullptr);
+  bool isValidFromConn(const ConnectionPtr &this_conn, const CollisionCheckerPtr &this_checker = nullptr);
+  Eigen::VectorXd projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool &in_conn, bool verbose = false);
+  Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point);
+  Eigen::VectorXd projectOnClosestConnectionKeepingPastPrj(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, int &n_conn, int delta_n_conn = 1);
+  Eigen::VectorXd projectOnClosestConnectionKeepingCurvilinearAbscissa(const Eigen::VectorXd& point, Eigen::VectorXd& past_prj, double &new_abscissa,  double &past_abscissa, int &n_conn, int delta_n_conn = 1);
 
 
   // return true if improve
