@@ -36,16 +36,16 @@ NetConnection::NetConnection(const NodePtr &parent, const NodePtr &child):
 
 void NetConnection::add()
 {
-  valid = true;
+  added_ = true;
   parent_->addNetChildConnection(pointer());
   child_->addNetParentConnection(pointer());
 }
 void NetConnection::remove()
 {
-  if (!valid)
+  if (!added_)
     return;
 
-  valid = false;
+  added_ = false;
   if (parent_)
   {
     parent_->remoteNetChildConnection(pointer());

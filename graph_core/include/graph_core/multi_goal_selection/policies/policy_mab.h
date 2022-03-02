@@ -1,6 +1,6 @@
 #pragma once
 /*
-Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
+Copyright (c) 2021, Marco Faroni CNR-STIIMA marco.faroni@stiima.cnr.it
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,72 +26,47 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/util.h>
-#include <graph_core/graph/node.h>
-namespace pathplan
-{
-class Connection : public std::enable_shared_from_this<Connection>
-{
-protected:
-  NodePtr parent_;
-  NodePtr child_;
-  double cost_;
-  bool added_ = false;
-  double euclidean_norm_;
-  double time_;
-  double likelihood_;
+#include <ros/ros.h>
+#include <graph_core/multi_goal_selection/policies/policy_base.h>
+#include <graph_core/multi_goal_selection/goal_selection_util.h>
 
+namespace multi_goal_selection
+{
+
+class PolicyMAB: public PolicyBase
+{
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Connection(const NodePtr& parent, const NodePtr& child, const double& time=0.0);
-  ConnectionPtr pointer()
+  PolicyMAB(const std::string& name, const int& n_goals) : PolicyBase(name, n_goals)
   {
-    return shared_from_this();
+    pull_counter_.resize(n_goals);
+    std::fill(pull_counter_.begin(), pull_counter_.end(), 0);
+    expected_reward_.resize(n_goals);
+    std::fill(expected_reward_.begin(), expected_reward_.end(), 0.0);
   }
 
-  virtual void add();
-  virtual void remove();
-
-  virtual bool isNet()
+  std::vector<double> getProbabilities()
   {
-    return false;
+    std::fill(goals_probabilities_.begin(), goals_probabilities_.end(), 0.0);
+    int arm = selectNextArm();
+    goals_probabilities_.at(arm) = 1.0;
+    return goals_probabilities_;
   }
 
-  void setCost(const double& cost)
+  virtual int selectNextArm() = 0;
+
+  virtual void updateState(const int& i_goal, const double& reward)
   {
-    cost_ = cost;
-  }
-  const double& getCost()
-  {
-    return cost_;
-  }
-  double norm()
-  {
-    return euclidean_norm_;
-  }
-  const NodePtr& getParent() const
-  {
-    return parent_;
-  }
-  const NodePtr& getChild() const
-  {
-    return child_;
+    pull_counter_[i_goal]+=1;
+    expected_reward_[i_goal]+=reward;
   }
 
-  void setLikelihood(const double& likelihood){likelihood_=likelihood;}
+  virtual std::string toString() = 0;
 
-  virtual ConnectionPtr clone();
+protected:
+  std::vector<int> pull_counter_;
+  std::vector<double> expected_reward_;
 
-  void flip();
-
-  bool isParallel(const ConnectionPtr& conn, const double& toll = 1e-06);
-
-  friend std::ostream& operator<<(std::ostream& os, const Connection& connection);
-  ~Connection();
 };
-
-
-
-std::ostream& operator<<(std::ostream& os, const Connection& connection);
+typedef std::shared_ptr<PolicyMAB> PolicyMABPtr;
 
 }

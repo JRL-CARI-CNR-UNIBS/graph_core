@@ -29,6 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 #include <graph_core/solvers/tree_solver.h>
 #include <graph_core/tube_informed_sampler.h>
+#include <graph_core/multi_goal_selection/goal_selection_manager.h>
+
 namespace pathplan
 {
 
@@ -42,6 +44,8 @@ protected:
   std::vector<NodePtr> goal_nodes_;
   std::vector<double> costs_;
   std::vector<double> utopias_;
+  std::vector<double> goal_probabilities_;
+  std::vector<int> were_goals_sampled_;
   std::vector<PathPtr> solutions_;
   std::vector<double> goal_costs_;
   std::vector<double> path_costs_;
@@ -68,6 +72,8 @@ protected:
   virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity()) override;
   bool isBestSolution(const int& index);
 
+  multi_goal_selection::GoalSelectionManagerPtr goal_manager_;
+
   virtual void printMyself(std::ostream& os) const override;
 public:
 
@@ -81,6 +87,7 @@ public:
   }
 
   virtual bool config(const ros::NodeHandle& nh) override;
+  virtual bool initGoalSelector() ;
   virtual bool update(PathPtr& solution) override;
 
   virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) override;

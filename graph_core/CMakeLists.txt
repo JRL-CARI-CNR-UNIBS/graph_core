@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 2.8.3)
 project(graph_core)
 #add_compile_options(-std=c++11 -funroll-loops -Wall -Ofast)
 add_compile_options(-std=c++11)
-set(CMAKE_BUILD_TYPE Release)
+#set(CMAKE_BUILD_TYPE Release)
 #add_compile_options(-std=c++14)
-#set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Debug)
 
 
 find_package(catkin REQUIRED COMPONENTS
@@ -51,6 +51,7 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/narrow_pass_checker.cpp
   src/${PROJECT_NAME}/boxes_checker.cpp
   src/${PROJECT_NAME}/collision_checker.cpp
+  src/${PROJECT_NAME}/multi_goal_selection/goal_selection_manager.cpp
   src/${PROJECT_NAME}/graph/node.cpp
   src/${PROJECT_NAME}/graph/connection.cpp
   src/${PROJECT_NAME}/graph/net_connection.cpp
@@ -76,6 +77,13 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
+)
+
+add_executable(goal_selection_test_node tests/goal_selection_test_node.cpp)
+add_dependencies(goal_selection_test_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(goal_selection_test_node
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
 )
 
 

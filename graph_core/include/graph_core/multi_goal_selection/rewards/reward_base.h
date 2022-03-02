@@ -1,6 +1,6 @@
 #pragma once
 /*
-Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
+Copyright (c) 2021, Marco Faroni CNR-STIIMA marco.faroni@stiima.cnr.it
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,72 +26,23 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/util.h>
-#include <graph_core/graph/node.h>
-namespace pathplan
-{
-class Connection : public std::enable_shared_from_this<Connection>
-{
-protected:
-  NodePtr parent_;
-  NodePtr child_;
-  double cost_;
-  bool added_ = false;
-  double euclidean_norm_;
-  double time_;
-  double likelihood_;
+#include <ros/ros.h>
 
+namespace multi_goal_selection
+{
+
+class RewardBase
+{
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Connection(const NodePtr& parent, const NodePtr& child, const double& time=0.0);
-  ConnectionPtr pointer()
-  {
-    return shared_from_this();
-  }
+  RewardBase(){};
 
-  virtual void add();
-  virtual void remove();
+  virtual double getReward(const std::vector<double>& costs, const std::vector<double>& utopias, const double& best_cost) = 0;
 
-  virtual bool isNet()
-  {
-    return false;
-  }
+protected:
+  double last_best_cost_ = std::numeric_limits<double>::infinity();
 
-  void setCost(const double& cost)
-  {
-    cost_ = cost;
-  }
-  const double& getCost()
-  {
-    return cost_;
-  }
-  double norm()
-  {
-    return euclidean_norm_;
-  }
-  const NodePtr& getParent() const
-  {
-    return parent_;
-  }
-  const NodePtr& getChild() const
-  {
-    return child_;
-  }
-
-  void setLikelihood(const double& likelihood){likelihood_=likelihood;}
-
-  virtual ConnectionPtr clone();
-
-  void flip();
-
-  bool isParallel(const ConnectionPtr& conn, const double& toll = 1e-06);
-
-  friend std::ostream& operator<<(std::ostream& os, const Connection& connection);
-  ~Connection();
 };
+typedef std::shared_ptr<RewardBase> RewardBasePtr;
 
-
-
-std::ostream& operator<<(std::ostream& os, const Connection& connection);
 
 }
