@@ -7,14 +7,14 @@ set(CMAKE_BUILD_TYPE Release)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
-  subscription_notifier rosdyn_core name_sorting
+  subscription_notifier rosdyn_core name_sorting rosparam_utilities
 )
 find_package( Eigen3 REQUIRED )
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES human_probablistic_occupancy
-  CATKIN_DEPENDS roscpp sensor_msgs rosdyn_core subscription_notifier name_sorting
+  CATKIN_DEPENDS roscpp sensor_msgs rosdyn_core subscription_notifier name_sorting rosparam_utilities
   DEPENDS EIGEN3
 )
 include_directories(
