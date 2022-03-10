@@ -83,7 +83,6 @@ public:
     state_->update();
     state_->updateCollisionBodyTransforms();
     return planning_scene_->isStateValid(*state_,group_name_);
-
   }
 
   virtual void setPlanningScene(planning_scene::PlanningScenePtr &planning_scene)

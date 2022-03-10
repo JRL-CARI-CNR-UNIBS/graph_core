@@ -509,15 +509,14 @@ void Display::displayNetNode(const NodePtr &n,
                              const NetPtr& net,
                              std::vector<geometry_msgs::Point>& points)
 {
-  TreePtr tree = net->getTree();
-  std::vector<ConnectionPtr> connections, net_connections;
-  connections=n->child_connections_;
-  net_connections=n->net_child_connections_;
+  std::vector<ConnectionPtr> connections=n->child_connections_;
+  std::vector<ConnectionPtr> net_connections=n->net_child_connections_;
+
   connections.insert(connections.end(),net_connections.begin(),net_connections.end());
-  if (connections.size()==0)
+  if(connections.empty())
     return;
 
-  for (const ConnectionPtr& conn: connections)
+  for(const ConnectionPtr& conn: connections)
   {
     geometry_msgs::Pose pose;
     state_->setJointGroupPositions(group_name_,conn->getParent()->getConfiguration());

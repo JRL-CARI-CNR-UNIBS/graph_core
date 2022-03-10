@@ -73,6 +73,7 @@ public:
   }
 
   //It creates a node corresponding to the configuration and creates the correct connections inside the current_path_
+  NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr &conn, const bool &rewire, bool& is_a_new_node);
   NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr &conn, const bool &rewire);
   NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, const bool& rewire);
 
@@ -120,6 +121,16 @@ public:
   TreePtr getTree()
   {
     return tree_;
+  }
+
+  CollisionCheckerPtr getChecker()
+  {
+    return checker_;
+  }
+
+  unsigned int getConnectionsSize()
+  {
+    return connections_.size();
   }
 
   void setChecker(const CollisionCheckerPtr &checker)

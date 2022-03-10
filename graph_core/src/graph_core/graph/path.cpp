@@ -510,11 +510,9 @@ Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const Co
 
     Eigen::VectorXd projection = parent + s*conn_versor;
 
-    double squared_distance = std::pow(point_length,2)-std::pow(s,2);
-    (std::abs(squared_distance)<1e-06)? (distance = 0.0):
-                                        (distance = std::sqrt(squared_distance));
-
+    distance = (point-projection).norm();
     assert(not std::isnan(distance));
+    assert((point-projection).dot(conn_vector)<1e-06);
 
     ((s>=0.0) && (s<=conn_length))? (in_conn = true):
                                     (in_conn = false);
@@ -546,8 +544,6 @@ Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const Co
 
 Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& point)
 {
-  //The point is projected on the connection on which its projection is between the parent and the child and from which the distance is the smallest one.
-
   Eigen::VectorXd pr;
   Eigen::VectorXd projection;
   double min_distance = std::numeric_limits<double>::infinity();
@@ -579,13 +575,11 @@ Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& point)
 
 Eigen::VectorXd Path::projectOnClosestConnectionKeepingPastPrj(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, int& n_conn, int delta_n_conn)
 {
-  //The point is projected on the connection on which its projection is between the parent and the child and from which the distance is the smallest one.
-  //The point can stay on the same connection or can move the next one. If a projection is not found, the past one is used.
-
   int idx;
-  Eigen::VectorXd pr;
+  Eigen::VectorXd prj;
   Eigen::VectorXd projection;
-  double min_distance = std::numeric_limits<double>::infinity();
+  double distance_from_past_prj;
+  double min_distance_from_past_prj = std::numeric_limits<double>::infinity();
 
   ConnectionPtr conn;
   for(unsigned int i=0;i<connections_.size();i++)
@@ -594,23 +588,24 @@ Eigen::VectorXd Path::projectOnClosestConnectionKeepingPastPrj(const Eigen::Vect
 
     double distance;
     bool in_connection;
-    pr = projectOnConnection(point,conn,distance,in_connection);
+    prj = projectOnConnection(point,conn,distance,in_connection);
 
     if(in_connection)
     {
-      if(distance<min_distance)
+      distance_from_past_prj = (prj-past_prj).norm();
+      if(distance_from_past_prj<min_distance_from_past_prj)
       {
         if(i>=unsigned(n_conn) && i<=unsigned(n_conn+delta_n_conn))
         {
-          min_distance = distance;
-          projection = pr;
+          min_distance_from_past_prj = distance_from_past_prj;
+          projection = prj;
           idx = i;
         }
       }
     }
   }
 
-  if(min_distance == std::numeric_limits<double>::infinity())
+  if(min_distance_from_past_prj == std::numeric_limits<double>::infinity())
   {
     projection = past_prj;
     PATH_COMMENT("projection on path not found");
@@ -623,13 +618,11 @@ Eigen::VectorXd Path::projectOnClosestConnectionKeepingPastPrj(const Eigen::Vect
 
 Eigen::VectorXd Path::projectOnClosestConnectionKeepingCurvilinearAbscissa(const Eigen::VectorXd& point, Eigen::VectorXd &past_prj, double &new_abscissa, double &past_abscissa, int &n_conn, int delta_n_conn)
 {
-  //The point is projected on the connection on which its projection is between the parent and the child and from which the distance is the smallest one.
-  //The curvilinear abscissa of the point can't decrease. If it happens, the past projection is considered.
-
   int idx;
-  Eigen::VectorXd pr;
+  Eigen::VectorXd prj;
   Eigen::VectorXd projection;
-  double min_distance = std::numeric_limits<double>::infinity();
+  double distance_from_past_abs;
+  double min_distance_from_past_abs = std::numeric_limits<double>::infinity();
 
   ConnectionPtr conn;
   for(unsigned int i=0;i<connections_.size();i++)
@@ -638,40 +631,34 @@ Eigen::VectorXd Path::projectOnClosestConnectionKeepingCurvilinearAbscissa(const
 
     double distance;
     bool in_connection;
-    pr = projectOnConnection(point,conn,distance,in_connection);
+    prj = projectOnConnection(point,conn,distance,in_connection);
 
     if(in_connection)
     {
       if(i>=unsigned(n_conn) && i<=unsigned(n_conn+delta_n_conn))
       {
-        if(distance<min_distance)
-        {
-          double abscissa = curvilinearAbscissaOfPointGivenConnection(pr,i);
+        double abscissa = curvilinearAbscissaOfPointGivenConnection(prj,i);
+        distance_from_past_abs = abscissa-past_abscissa;
 
-          if(abscissa>=past_abscissa)
+          if(abscissa>=past_abscissa && distance_from_past_abs<min_distance_from_past_abs)
           {
-            if(delta_n_conn)
-              ROS_INFO("New candidate");
-
             new_abscissa = abscissa;
-            min_distance = distance;
-            projection = pr;
+            min_distance_from_past_abs = distance_from_past_abs;
+            projection = prj;
             idx = i;
           }
-          else if(delta_n_conn)
-            ROS_WARN("Not a candidate");
-        }
       }
     }
   }
 
-  if(min_distance == std::numeric_limits<double>::infinity())
+  if(min_distance_from_past_abs == std::numeric_limits<double>::infinity())
   {
     new_abscissa = past_abscissa;
     projection = past_prj;
-    ROS_ERROR("projection on path not found");
+    PATH_COMMENT("projection on path not found");
   }
-  else  n_conn = idx;
+  else
+    n_conn = idx;
 
   return projection;
 }
@@ -732,13 +719,15 @@ bool Path::removeNode(NodePtr& node, const int& idx_conn, const std::vector<Node
   ConnectionPtr conn_parent_node = connections_.at(idx_conn);
   ConnectionPtr conn_node_child  = connections_.at(idx_conn+1);
 
-  if(conn_parent_node->isParallel(conn_node_child) &&
-     node->getParents().size() == 1 &&
-     node->getChildren().size() == 1)
+  if(conn_parent_node->isParallel(conn_node_child)
+     && ((node->parent_connections_.size()+node->net_parent_connections_.size()) <= 1)
+     && ((node->child_connections_ .size()+node->net_child_connections_ .size()) <= 1)
+     )
   {
     assert(not tree_ || node != tree_->getRoot()); //node must have 1 parent (root must have zero) and 1 child (root may have many)
 
-    ConnectionPtr new_conn = std::make_shared<pathplan::Connection>(conn_parent_node->getParent(),conn_node_child->getChild());
+    bool net = conn_node_child->isNet();
+    ConnectionPtr new_conn = std::make_shared<pathplan::Connection>(conn_parent_node->getParent(),conn_node_child->getChild(),net);
     double cost = conn_parent_node->getCost()+conn_node_child->getCost();
     new_conn->setCost(cost);
     new_conn->add();
@@ -801,6 +790,10 @@ bool Path::removeNodes(const std::vector<NodePtr> &white_list, std::vector<NodeP
   return at_least_one_removed;
 }
 
+NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr &conn, const bool &rewire)
+{
+}
+
 NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, const bool& rewire)
 {
   ConnectionPtr conn = findConnection(configuration);
@@ -808,8 +801,10 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, const
 
 }
 
-NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr& conn, const bool& rewire)
+NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr& conn, const bool& rewire, bool& is_a_new_node)
 {
+  is_a_new_node = false;
+
   if(rewire && !tree_)
   {
     ROS_ERROR("Tree not set, the new node can't be added to the path");
@@ -819,7 +814,6 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
 
   if(conn)
   {
-
     std::vector<ConnectionPtr>::iterator it = find(connections_.begin(),connections_.end(),conn);
     if(it == connections_.end())
     {
@@ -832,18 +826,19 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
 
     if(parent->getConfiguration() == configuration)
     {
-      //ROS_WARN("Node equal to parent");
+      is_a_new_node = false;
       return parent;
     }
     else if(child ->getConfiguration() == configuration)
     {
-      //ROS_WARN("Node equal to child");
+      is_a_new_node = false;
       return child;
     }
     else
     {
       //controlla se devi mettere connessione se rewire==false
       NodePtr actual_node = std::make_shared<Node>(configuration);
+      is_a_new_node = true;
 
       if(rewire)
       {
@@ -878,19 +873,17 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
           cost_child  = conn->getCost() - cost_parent;
         }
 
-        bool is_net = conn->isNet();
+        bool net = conn->isNet();
         conn->remove();
 
         if(tree_)
           tree_->addNode(actual_node);
 
-        ConnectionPtr conn_parent = std::make_shared<Connection>(parent, actual_node);
+        ConnectionPtr conn_parent = std::make_shared<Connection>(parent, actual_node,false);
         conn_parent->setCost(cost_parent);
         conn_parent->add();
 
-        ConnectionPtr conn_child;
-        is_net? (conn_child = std::make_shared<Connection>(actual_node,child,true)):
-                (conn_child = std::make_shared<Connection>(actual_node,child,false));
+        ConnectionPtr conn_child = std::make_shared<Connection>(actual_node,child,net);
         conn_child->setCost(cost_child);
         conn_child->add();
 
