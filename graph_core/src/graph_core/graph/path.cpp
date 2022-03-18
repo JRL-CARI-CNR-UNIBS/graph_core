@@ -463,10 +463,24 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
     }
   }
 
+  // -->ERROR MSG<--
   ROS_ERROR("Connection not found");
   ROS_INFO_STREAM("conf: "<<configuration.transpose());
-  ROS_INFO_STREAM("parent0: "<<connections_.at(0)->getParent()->getConfiguration().transpose());
-  ROS_INFO_STREAM("child0: "<<connections_.at(0)->getChild()->getConfiguration().transpose());
+
+  for(unsigned int i=0; i<connections_.size(); i++)
+  {
+    parent = connections_.at(i)->getParent()->getConfiguration();
+    child =  connections_.at(i)->getChild()->getConfiguration();
+
+    dist = (parent-child).norm();
+    distP = (parent - configuration).norm();
+    distC = (configuration-child).norm();
+
+    double err = std::abs(dist-distP-distC);
+
+    ROS_INFO("conn n %d, length %f, dist from parent %f, dist from child %f, error %f",i,dist,distP,distC,err);
+  }
+  // -->         <--
 
   return nullptr;
 }
@@ -678,7 +692,10 @@ bool Path::removeNodes(const std::vector<NodePtr> &white_list)
 bool Path::removeNode(NodePtr& node, const std::vector<NodePtr> &white_list)
 {
   if(node == connections_.front()->getParent() || node == connections_.back()->getChild())
+  {
+    ROS_ERROR_STREAM("FIRST OR LAST NODE "<<*node); //ELIMINA
     return false;
+  }
 
   ConnectionPtr conn_parent_node,conn_node_child;
   int idx = -1;
@@ -705,10 +722,16 @@ bool Path::removeNode(NodePtr& node, const std::vector<NodePtr> &white_list)
 bool Path::removeNode(NodePtr& node, const int& idx_conn, const std::vector<NodePtr> &white_list)
 {
   if(node == connections_.front()->getParent() || node == connections_.back()->getChild())
+  {
+    ROS_ERROR_STREAM("FIRST OR LAST NODE "<<*node); //ELIMINA
     return false;
+  }
 
   if(std::find(white_list.begin(),white_list.end(),node)<white_list.end())
+  {
+    ROS_ERROR("WHITE LIST"); //elimina
     return false;
+  }
 
   if(idx_conn<0 || idx_conn > (connections_.size()-1))
   {
@@ -752,7 +775,17 @@ bool Path::removeNode(NodePtr& node, const int& idx_conn, const std::vector<Node
     return true;
   }
   else
+  {
+    if(not conn_parent_node->isParallel(conn_node_child))
+      ROS_ERROR("NOT PARALLEL");
+    if(not ((node->parent_connections_.size()+node->net_parent_connections_.size()) <= 1))
+      ROS_ERROR("PARENT >1");
+
+    if(not ((node->child_connections_ .size()+node->net_child_connections_ .size()) <= 1))
+      ROS_ERROR_STREAM("CHILD >1 "<<*node);
+
     return false;
+  }
 }
 
 bool Path::removeNodes(const std::vector<NodePtr> &white_list, std::vector<NodePtr> &deleted_nodes)
@@ -792,12 +825,14 @@ bool Path::removeNodes(const std::vector<NodePtr> &white_list, std::vector<NodeP
 
 NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr &conn, const bool &rewire)
 {
+  bool is_a_new_node;
+  return addNodeAtCurrentConfig(configuration,conn,rewire,is_a_new_node);
 }
 
 NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, const bool& rewire)
 {
   ConnectionPtr conn = findConnection(configuration);
-  return addNodeAtCurrentConfig(configuration, conn, rewire);
+  return addNodeAtCurrentConfig(configuration,conn,rewire);
 
 }
 
@@ -845,14 +880,14 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
         double cost_parent, cost_child;
         if(conn->getCost() == std::numeric_limits<double>::infinity())
         {
-          if(!checker_->check(actual_node->getConfiguration()))
+          if(not checker_->check(actual_node->getConfiguration()))
           {
             cost_parent = std::numeric_limits<double>::infinity();
             cost_child  = std::numeric_limits<double>::infinity();
           }
           else
           {
-            if(!checker_->checkPath(actual_node->getConfiguration(),child->getConfiguration()))
+            if(not checker_->checkPath(actual_node->getConfiguration(),child->getConfiguration()))
             {
               cost_child = std::numeric_limits<double>::infinity();
 
@@ -1083,15 +1118,14 @@ PathPtr Path::getSubpathFromConf(const Eigen::VectorXd& conf, const bool get_cop
     double cost;
     if(conn->getCost() == std::numeric_limits<double>::infinity())
     {
-      if(!checker_->checkPath(node->getConfiguration(),conn->getChild()->getConfiguration()))
-        cost = std::numeric_limits<double>::infinity();
-      else
-        cost  = metrics_->cost(node->getConfiguration(),conn->getChild()->getConfiguration());
+      checker_->checkPath(node->getConfiguration(),conn->getChild()->getConfiguration())?
+            (cost  = metrics_->cost(node->getConfiguration(),conn->getChild()->getConfiguration())):
+            (cost = std::numeric_limits<double>::infinity());
     }
     else
       cost  = metrics_->cost(node->getConfiguration(),conn->getChild()->getConfiguration());
 
-    ConnectionPtr conn_child = std::make_shared<Connection>(node, child, is_net);
+    ConnectionPtr conn_child = std::make_shared<Connection>(node,child,is_net);
     conn_child->setCost(cost);
     conn_child->add();
 
@@ -1317,7 +1351,6 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_fro
   bool validity = true;
   int idx;
   ConnectionPtr conn = findConnection(conf,idx);
-
   assert(conn != nullptr);
 
   if(conf == conn->getParent()->getConfiguration())

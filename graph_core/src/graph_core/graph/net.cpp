@@ -124,7 +124,7 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::getNetConnectionBetweenNod
 
     parent_map = computeConnectionFromNodeToNode(start_node,net_parent,visited_nodes);
 
-    if(!parent_map.empty())
+    if(not parent_map.empty())
       for(std::pair<double,std::vector<ConnectionPtr>> pair:parent_map)
       {
         pair.first = pair.first + net_parent_conn->getCost();
@@ -202,7 +202,7 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
 
         visited_nodes.pop_back();
 
-        if(!map2parent.empty())
+        if(not map2parent.empty())
         {
           for(const std::pair<double,std::vector<ConnectionPtr>>& parent_pair:map2parent)
           {

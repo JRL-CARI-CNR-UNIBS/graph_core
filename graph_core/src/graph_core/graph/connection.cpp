@@ -143,8 +143,13 @@ void Connection::changeConnectionType()
 
 std::ostream& operator<<(std::ostream& os, const Connection& connection)
 {
-  os << connection.parent_->getConfiguration().transpose() << " -->" << std::endl;
-  os << "-->" << connection.child_->getConfiguration().transpose() << std::endl;
+//  os << connection.parent_->getConfiguration().transpose() << " -->" << std::endl;
+//  os << "-->" << connection.child_->getConfiguration().transpose() << std::endl;
+
+  os << connection.parent_->getConfiguration().transpose()
+     << " --> "
+     << connection.child_->getConfiguration().transpose()
+     << " | cost: " << connection.cost_;
 
   return os;
 }

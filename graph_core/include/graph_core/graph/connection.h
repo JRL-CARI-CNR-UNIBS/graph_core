@@ -39,6 +39,7 @@ protected:
   bool valid_ = false;
   double euclidean_norm_;
   bool is_net_;
+  bool recently_checked_ = false;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -52,6 +53,16 @@ public:
   bool isNet()
   {
     return is_net_;
+  }
+
+  bool isRecentlyChecked()
+  {
+    return recently_checked_;
+  }
+
+  void setRecentlyChecked(bool checked)
+  {
+    recently_checked_ = checked;
   }
 
   bool isValid()
