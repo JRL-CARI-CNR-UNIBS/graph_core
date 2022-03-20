@@ -857,7 +857,6 @@ std::vector<ConnectionPtr> Tree::getConnectionToNode(NodePtr node)
   std::vector<ConnectionPtr> connections;
   NodePtr tmp_node = node;
 
-  int iter = 0;
   while (tmp_node != root_)
   {
     if (tmp_node->parent_connections_.size() != 1)
