@@ -94,30 +94,30 @@ void OccupancyGrid::update(const geometry_msgs::PoseArray &measure)
     if ( (iz<0) || (iz>=m_npnt))
       continue;
 
-    occup(std::floor(ix),
-         std::floor(iy),
-         std::floor(iz))=1;
-    occup(std::floor(ix),
-         std::floor(iy),
-         std::ceil(iz))=1;
-    occup(std::floor(ix),
-         std::ceil(iy),
-         std::floor(iz))=1;
-    occup(std::floor(ix),
-         std::ceil(iy),
-         std::ceil(iz))=1;
-    occup(std::ceil(ix),
-         std::floor(iy),
-         std::floor(iz))=1;
-    occup(std::ceil(ix),
-         std::floor(iy),
-         std::ceil(iz))=1;
-    occup(std::ceil(ix),
-         std::ceil(iy),
-         std::floor(iz))=1;
-    occup(std::ceil(ix),
-         std::ceil(iy),
-         std::ceil(iz))=1;
+    occup(int(std::floor(ix)),
+         int(std::floor(iy)),
+         int(std::floor(iz)))=1;
+    occup(int(std::floor(ix)),
+         int(std::floor(iy)),
+         int(std::ceil(iz)))=1;
+    occup(int(std::floor(ix)),
+         int(std::ceil(iy)),
+         int(std::floor(iz)))=1;
+    occup(int(std::floor(ix)),
+         int(std::ceil(iy)),
+         int(std::ceil(iz)))=1;
+    occup(int(std::ceil(ix)),
+         int(std::floor(iy)),
+         int(std::floor(iz)))=1;
+    occup(int(std::ceil(ix)),
+         int(std::floor(iy)),
+         int(std::ceil(iz)))=1;
+    occup(int(std::ceil(ix)),
+         int(std::ceil(iy)),
+         int(std::floor(iz)))=1;
+    occup(int(std::ceil(ix)),
+         int(std::ceil(iy)),
+         int(std::ceil(iz)))=1;
   }
   m_occupancy=(m_occupancy*m_frames+occup)/(m_frames+1);
   if (m_frames<m_max_frames_before_iir_filtering)
@@ -146,14 +146,14 @@ double OccupancyGrid::totalOccupancy(const std::vector<Eigen::Vector3d, Eigen::a
     if ( (iz<0) || (iz>=m_npnt))
       continue;
 
-    double occupancy=            m_occupancy(std::floor(ix),std::floor(iy),std::floor(iz));
-    occupancy=std::max(occupancy,m_occupancy(std::floor(ix),std::floor(iy),std::ceil(iz)));
-    occupancy=std::max(occupancy,m_occupancy(std::floor(ix),std::ceil(iy),std::floor(iz)));
-    occupancy=std::max(occupancy,m_occupancy(std::floor(ix),std::ceil(iy),std::ceil(iz)));
-    occupancy=std::max(occupancy,m_occupancy(std::ceil(ix),std::floor(iy),std::floor(iz)));
-    occupancy=std::max(occupancy,m_occupancy(std::ceil(ix),std::floor(iy),std::ceil(iz)));
-    occupancy=std::max(occupancy,m_occupancy(std::ceil(ix),std::ceil(iy),std::floor(iz)));
-    occupancy=std::max(occupancy,m_occupancy(std::ceil(ix),std::ceil(iy),std::ceil(iz)));
+    double occupancy=            m_occupancy(int(std::floor(ix)),int(std::floor(iy)),int(std::floor(iz) ));
+    occupancy=std::max(occupancy,m_occupancy(int(std::floor(ix)),int(std::floor(iy)),int(std::ceil(iz)  )));
+    occupancy=std::max(occupancy,m_occupancy(int(std::floor(ix)),int(std::ceil(iy) ),int(std::floor(iz) )));
+    occupancy=std::max(occupancy,m_occupancy(int(std::floor(ix)),int(std::ceil(iy) ),int(std::ceil(iz)  )));
+    occupancy=std::max(occupancy,m_occupancy(int(std::ceil(ix) ),int(std::floor(iy)),int(std::floor(iz) )));
+    occupancy=std::max(occupancy,m_occupancy(int(std::ceil(ix) ),int(std::floor(iy)),int(std::ceil(iz)  )));
+    occupancy=std::max(occupancy,m_occupancy(int(std::ceil(ix) ),int(std::ceil(iy) ),int(std::floor(iz) )));
+    occupancy=std::max(occupancy,m_occupancy(int(std::ceil(ix) ),int(std::ceil(iy) ),int(std::ceil(iz)  )));
     total_occupancy+=occupancy;
   }
   total_occupancy*=m_voxel_volume;
@@ -296,7 +296,7 @@ bool OccupancyGrid::fromPointCloud(const sensor_msgs::PointCloud &pc)
     if ( (iz<0) || (iz>=m_npnt))
       continue;
 
-    m_occupancy(ix,iy,iz)=pc.channels.at(0).values.at(idx);
+    m_occupancy(int(ix),int(iy),int(iz))=pc.channels.at(0).values.at(idx);
   }
   return true;
 }
