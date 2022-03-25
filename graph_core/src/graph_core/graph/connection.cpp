@@ -149,7 +149,8 @@ std::ostream& operator<<(std::ostream& os, const Connection& connection)
   os << connection.parent_->getConfiguration().transpose()
      << " --> "
      << connection.child_->getConfiguration().transpose()
-     << " | cost: " << connection.cost_;
+     << " | cost: " << connection.cost_
+     << " | net: "<<connection.is_net_;
 
   return os;
 }

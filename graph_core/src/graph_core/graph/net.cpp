@@ -108,7 +108,7 @@ bool Net::purgeFromHere(ConnectionPtr& conn2node, const std::vector<NodePtr>& wh
     return purgeSuccessors(node,white_list,removed_nodes);
 }
 
-std::multimap<double,std::vector<ConnectionPtr>> Net::getNetConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node)
+std::multimap<double,std::vector<ConnectionPtr>> Net::getNetConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node, const std::vector<NodePtr>& black_list)
 {
   NodePtr net_parent;
   std::vector<NodePtr> visited_nodes;
@@ -122,7 +122,7 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::getNetConnectionBetweenNod
     visited_nodes.push_back(goal_node);
     visited_nodes.push_back(net_parent);
 
-    parent_map = computeConnectionFromNodeToNode(start_node,net_parent,visited_nodes);
+    parent_map = computeConnectionFromNodeToNode(start_node,net_parent,black_list,visited_nodes);
 
     if(not parent_map.empty())
       for(std::pair<double,std::vector<ConnectionPtr>> pair:parent_map)
@@ -136,23 +136,29 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::getNetConnectionBetweenNod
   return map;
 }
 
-std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionBetweenNodes(const NodePtr &start_node, const NodePtr& goal_node)
+std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionBetweenNodes(const NodePtr &start_node, const NodePtr& goal_node, const std::vector<NodePtr>& black_list)
 {
   std::vector<NodePtr> visited_nodes;
   visited_nodes.push_back(goal_node);
 
-  return computeConnectionFromNodeToNode(start_node,goal_node,visited_nodes);
+  return computeConnectionFromNodeToNode(start_node,goal_node,black_list,visited_nodes);
 }
 
-std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionToNode(const NodePtr &node)
+std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionToNode(const NodePtr &node, const std::vector<NodePtr>& black_list)
 {
   std::vector<NodePtr> visited_nodes;
   visited_nodes.push_back(node);
 
-  return computeConnectionFromNodeToNode(linked_tree_->getRoot(),node,visited_nodes);
+  return computeConnectionFromNodeToNode(linked_tree_->getRoot(),node,black_list,visited_nodes);
 }
 
 std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, std::vector<NodePtr> &visited_nodes)
+{
+  std::vector<NodePtr> black_list;
+  return computeConnectionFromNodeToNode(start_node,goal_node,black_list,visited_nodes);
+}
+
+std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes)
 {
   std::multimap<double,std::vector<ConnectionPtr>> map;
   std::pair<double,std::vector<ConnectionPtr>> pair;
@@ -165,7 +171,7 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
     if(goal_node->parent_connections_.size() != 1)
     {
       ROS_ERROR("a node of a tree should have only a parent");
-      ROS_ERROR_STREAM("node \n" << *goal_node);
+      ROS_ERROR_STREAM("node \n" <<*goal_node);
 
       ROS_INFO_STREAM("current root "<<linked_tree_->getRoot()->getConfiguration().transpose()<< " "<<linked_tree_->getRoot());
       ROS_INFO_STREAM("goal node "<<goal_node->getConfiguration().transpose()<<" "<<goal_node);
@@ -193,12 +199,15 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
       }
       else
       {
+        if(std::find(black_list.begin(), black_list.end(), parent) != black_list.end())
+          continue;
+
         if(std::find(visited_nodes.begin(), visited_nodes.end(), parent) != visited_nodes.end())
           continue;
         else
           visited_nodes.push_back(parent);
 
-        std::multimap<double,std::vector<ConnectionPtr>> map2parent = computeConnectionFromNodeToNode(start_node,parent,visited_nodes);
+        std::multimap<double,std::vector<ConnectionPtr>> map2parent = computeConnectionFromNodeToNode(start_node,parent,black_list,visited_nodes);
 
         visited_nodes.pop_back();
 

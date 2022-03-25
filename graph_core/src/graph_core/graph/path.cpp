@@ -654,13 +654,13 @@ Eigen::VectorXd Path::projectOnClosestConnectionKeepingCurvilinearAbscissa(const
         double abscissa = curvilinearAbscissaOfPointGivenConnection(prj,i);
         distance_from_past_abs = abscissa-past_abscissa;
 
-          if(abscissa>=past_abscissa && distance_from_past_abs<min_distance_from_past_abs)
-          {
-            new_abscissa = abscissa;
-            min_distance_from_past_abs = distance_from_past_abs;
-            projection = prj;
-            idx = i;
-          }
+        if(abscissa>=past_abscissa && distance_from_past_abs<min_distance_from_past_abs)
+        {
+          new_abscissa = abscissa;
+          min_distance_from_past_abs = distance_from_past_abs;
+          projection = prj;
+          idx = i;
+        }
       }
     }
   }
@@ -859,12 +859,12 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
     NodePtr parent = conn->getParent();
     NodePtr child = conn->getChild();
 
-    if(parent->getConfiguration() == configuration)
+    if((parent->getConfiguration() - configuration).norm()<1e-06)
     {
       is_a_new_node = false;
       return parent;
     }
-    else if(child ->getConfiguration() == configuration)
+    else if((child ->getConfiguration() - configuration).norm()<1e-06)
     {
       is_a_new_node = false;
       return child;
@@ -874,6 +874,14 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
       //controlla se devi mettere connessione se rewire==false
       NodePtr actual_node = std::make_shared<Node>(configuration);
       is_a_new_node = true;
+
+      //ELIMINA
+      if(not (((configuration-parent->getConfiguration()).norm()>1e-06) && ((configuration-child->getConfiguration()).norm()>1e-06)))
+      {
+        ROS_INFO_STREAM("DIST PARENT: "<<(configuration-parent->getConfiguration()).norm() <<" DIST CHILD: "<<(configuration-child->getConfiguration()).norm());
+        assert(0);
+      }
+      //
 
       if(rewire)
       {
