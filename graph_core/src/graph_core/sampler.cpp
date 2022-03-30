@@ -89,6 +89,8 @@ void InformedSampler::setCost(const double &cost)
   if (cost_ < focii_distance_)
   {
     ROS_WARN("cost is %f, focci distance is %f", cost_, focii_distance_);
+    ROS_WARN_STREAM("start_configuration: " << start_configuration_.transpose());
+    ROS_WARN_STREAM("stop_configuration: " << stop_configuration_.transpose());
     cost_ = focii_distance_;
     min_radius_ = 0.0;
   }
