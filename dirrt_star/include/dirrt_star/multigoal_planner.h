@@ -91,7 +91,6 @@ protected:
   Eigen::VectorXd m_ub;
   Eigen::VectorXd m_max_speed_;
   std::string group_;
-  std::string tool_frame;
   bool display_flag=false;;
 
   pathplan::MetricsPtr metrics_;

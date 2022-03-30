@@ -90,11 +90,7 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
     ROS_DEBUG("display_flag is not set, default=false");
     display_flag=false;
   }
-  if (!m_nh.getParam("tool_frame",tool_frame))
-  {
-    ROS_DEBUG("tool_frame is not set, default=false");
-    display_flag=false;
-  }
+
   COMMENT("create metrics");
 
   if (!m_nh.getParam("use_avoidance_path",use_avoidance_metrics_))
@@ -193,7 +189,7 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
   if (display_flag)
   {
     if (!display)
-      display=std::make_shared<pathplan::Display>(planning_scene_,group_,tool_frame);
+      display=std::make_shared<pathplan::Display>(planning_scene_,group_);
     else
       display->clearMarkers();
   }

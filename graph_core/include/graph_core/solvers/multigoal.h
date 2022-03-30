@@ -52,6 +52,7 @@ protected:
 
   std::vector<TreePtr> goal_trees_;
   std::vector<TubeInformedSamplerPtr> tube_samplers_;
+  std::vector<InformedSamplerPtr> samplers_;
   std::vector<GoalStatus> status_;
 
   std::random_device rd_;
