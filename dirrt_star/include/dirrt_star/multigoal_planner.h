@@ -40,6 +40,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rosparam_utilities/rosparam_utilities.h>
 #include <geometry_msgs/PoseArray.h>
 #include <ros/callback_queue.h>
+#include <std_msgs/Float64MultiArray.h>
+
 
 #include <graph_core/graph/graph_display.h>
 
@@ -99,6 +101,7 @@ protected:
   pathplan::CollisionCheckerPtr checker;
 
   ros::Subscriber m_centroid_sub;
+  ros::Publisher m_solver_performance;
 
   double collision_distance_=0.04;
   double collision_thread_=5;

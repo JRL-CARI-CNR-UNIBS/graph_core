@@ -158,6 +158,8 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
   }
   m_max_refining_time=ros::WallDuration(refining_time);
 
+  m_solver_performance=m_nh.advertise<std_msgs::Float64MultiArray>("/solver_performance",1000);
+
 }
 
 
@@ -176,6 +178,17 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
   ros::WallTime start_time = ros::WallTime::now();
   ros::WallTime refine_time = ros::WallTime::now();
   m_is_running=true;
+
+  std_msgs::Float64MultiArray performace_msg;
+  performace_msg.layout.dim.resize(4);
+  performace_msg.layout.dim.at(0).label="time";
+  performace_msg.layout.dim.at(0).size=1;
+  performace_msg.layout.dim.at(1).label="iteration";
+  performace_msg.layout.dim.at(1).size=1;
+  performace_msg.layout.dim.at(2).label="cost";
+  performace_msg.layout.dim.at(2).size=1;
+  performace_msg.layout.dim.at(3).label=m_nh.getNamespace();
+  performace_msg.layout.dim.at(3).size=0;
 
   if (!planning_scene_)
   {
@@ -352,12 +365,17 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
   // BEGINNING OF THE IMPORTANT PART
   // ===============================
 
+
   // searching initial solutions
   pathplan::PathPtr solution;
   bool found_a_solution=false;
   unsigned int iteration=0;
   while((ros::WallTime::now()-start_time)<max_planning_time)
   {
+
+    performace_msg.data.push_back((ros::WallTime::now()-start_time).toSec());
+    performace_msg.data.push_back(iteration);
+    performace_msg.data.push_back(solver->getCost());
     iteration++;
     if (m_stop)
     {
@@ -391,6 +409,7 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
 
   ROS_INFO_STREAM(*solver);
 
+  m_solver_performance.publish(performace_msg);
 
   if (!found_a_solution)
   {
