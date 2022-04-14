@@ -52,7 +52,6 @@ void Connection::add()
     parent_->addChildConnection(pointer());
     child_->addParentConnection(pointer());
   }
-
 }
 void Connection::remove()
 {

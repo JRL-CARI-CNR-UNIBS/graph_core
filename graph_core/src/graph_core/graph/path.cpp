@@ -694,6 +694,9 @@ bool Path::removeNode(NodePtr& node, const std::vector<NodePtr> &white_list)
   if(node == connections_.front()->getParent() || node == connections_.back()->getChild())
   {
     ROS_ERROR_STREAM("FIRST OR LAST NODE "<<*node); //ELIMINA
+    for(const ConnectionPtr& conn:connections_)
+      ROS_INFO_STREAM(*conn);
+
     return false;
   }
 

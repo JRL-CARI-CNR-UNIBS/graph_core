@@ -177,6 +177,19 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
       ROS_INFO_STREAM("goal node "<<goal_node->getConfiguration().transpose()<<" "<<goal_node);
       ROS_INFO_STREAM("start node "<<start_node->getConfiguration().transpose()<<" "<<start_node);
 
+      ROS_INFO_STREAM("the child "<<goal_node->net_child_connections_.front()->getChild()->getConfiguration().transpose()<<" "<<goal_node->net_child_connections_.front()->getChild());
+
+      int count = 0;
+      for(const NodePtr& n:linked_tree_->getNodes())
+      {
+        if(n->getConfiguration() == goal_node->getConfiguration())
+        {
+          count++;
+          ROS_INFO_STREAM(*n<<"\n"<<n<<"\n count "<<count);
+        }
+      }
+      ROS_INFO_STREAM("EQUAL NODES "<<count);
+
       assert(0);
     }
 
