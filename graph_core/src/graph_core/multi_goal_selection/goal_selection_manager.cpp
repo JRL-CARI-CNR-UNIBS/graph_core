@@ -49,25 +49,25 @@ GoalSelectionManager::GoalSelectionManager(const std::string& name, const unsign
 
   if (!nh_.getParam("policy_type",policy_type_))
   {
-    ROS_DEBUG("policy type not set");
+    ROS_DEBUG("policy type not set. Default: MultiArmedBandit");
     policy_type_="MultiArmedBandit";
   }
 
   if (!nh_.getParam("policy_name",policy_name_))
   {
-    ROS_DEBUG("policy name not set");
+    ROS_DEBUG("policy name not set. Deafult: eGreedy");
     policy_name_="eGreedy";
   }
 
   if (!nh_.getParam("reward_fcn",reward_fcn_name_))
   {
-    ROS_DEBUG("reward fcn not set");
+    ROS_DEBUG("reward fcn not set. Default: RelativeImprovement");
     reward_fcn_name_="RelativeImprovement";
   }
 
   if (!nh_.getParam("warm_start_reward",do_warm_start_))
   {
-    ROS_DEBUG("warm start not set");
+    ROS_DEBUG("warm start not set.");
     do_warm_start_=false;
   }
 
@@ -90,12 +90,12 @@ GoalSelectionManager::GoalSelectionManager(const std::string& name, const unsign
       if (reward_fcn_name_.compare("BestCost"))
       {
         reward_fcn_name_ = "BestCost";
-        ROS_WARN("Reward fcn automatically set to BestCost because policy UniformOnVolume requires it.");
+        ROS_WARN("Reward fcn automatically set to BestCost because policy required by UniformOnVolume policy.");
       }
       if (!do_warm_start_)
       {
         do_warm_start_ = true;
-        ROS_WARN("Warm start automatically set because policy UniformOnVolume requires it.");
+        ROS_WARN("Warm start automatically set because required by UniformOnVolume policy.");
       }
       ROS_INFO_STREAM("Policy name: " << policy_name_);
     }
