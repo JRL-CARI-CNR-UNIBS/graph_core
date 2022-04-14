@@ -40,7 +40,7 @@ class GoalSelectionManager
 public:
 //  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   GoalSelectionManager(const std::string& name,const unsigned int& n_goals,const unsigned int& n_dof);
-  std::vector<double> calculateProbabilities(const std::vector<int>& were_goals_selected, const std::vector<double>& costs, const std::vector<double>& utopias, const double& best_cost);
+  std::vector<double> calculateProbabilities(const std::vector<bool>& were_goals_selected, const std::vector<double>& costs, const std::vector<double>& utopias, const double& best_cost);
   void warmStart(const std::vector<double>& costs, const std::vector<double>& utopias, const double& best_cost);
   bool isWarmStartSet(){return do_warm_start_;};
 

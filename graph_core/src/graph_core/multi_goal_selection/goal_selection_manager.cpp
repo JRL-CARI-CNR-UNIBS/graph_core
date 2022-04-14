@@ -143,7 +143,7 @@ GoalSelectionManager::GoalSelectionManager(const std::string& name, const unsign
   }
 }
 
-std::vector<double> GoalSelectionManager::calculateProbabilities(const std::vector<int>& were_goals_selected,
+std::vector<double> GoalSelectionManager::calculateProbabilities(const std::vector<bool>& were_goals_selected,
                                                                const std::vector<double>& costs,
                                                                const std::vector<double>& utopias,
                                                                const double& best_cost)

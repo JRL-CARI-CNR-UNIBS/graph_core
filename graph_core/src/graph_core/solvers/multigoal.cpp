@@ -137,7 +137,7 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
   tube_samplers_.push_back(tube_sampler);
   samplers_.push_back(sampler);
   status_.push_back(status);
-  were_goals_sampled_.push_back(0);
+  were_goals_sampled_.push_back(false);
   goal_probabilities_.push_back(1.0);
 
   if (isBestSolution(goal_nodes_.size()-1))
@@ -330,7 +330,7 @@ bool MultigoalSolver::update(PathPtr& solution)
   else
     goal_probabilities_ = goal_manager_->calculateProbabilities(were_goals_sampled_,costs_,utopias_,cost_);
 
-  std::fill(were_goals_sampled_.begin(), were_goals_sampled_.end(), 0);
+  std::fill(were_goals_sampled_.begin(), were_goals_sampled_.end(), false);
 
   bool global_improvement=false;
   double old_cost=cost_;
@@ -345,7 +345,7 @@ bool MultigoalSolver::update(PathPtr& solution)
     else if (ud_(gen_)>goal_probabilities_.at(igoal))
       continue;
 
-    were_goals_sampled_.at(igoal) = 1;
+    were_goals_sampled_.at(igoal) = true;
 
     NodePtr new_start_node, new_goal_node;
     bool add_to_start, add_to_goal;

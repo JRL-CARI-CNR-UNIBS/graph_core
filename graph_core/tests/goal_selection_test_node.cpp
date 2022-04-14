@@ -19,7 +19,7 @@ int main(int argc, char **argv)
   std::vector<double> true_costs(n_goals);
   std::vector<double> costs(n_goals);
   std::vector<double> utopias(n_goals);
-  std::vector<int> were_goals_selected(n_goals);
+  std::vector<bool> were_goals_selected(n_goals);
 
   std::vector<double> probabilities(n_goals);
   double offset = 10.0;
@@ -39,7 +39,7 @@ int main(int argc, char **argv)
     true_costs.at(i_goal) = offset + i_goal;
     costs.at(i_goal) = std::numeric_limits<double>::infinity();
     utopias.at(i_goal) = 0.0;
-    were_goals_selected.at(i_goal) = 0;
+    were_goals_selected.at(i_goal) = false;
     probabilities.at(i_goal) = 1.0;
   }
   auto rng = std::default_random_engine {};
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
   {
     probabilities = manager.calculateProbabilities(were_goals_selected,costs,utopias,best_cost);
 
-    were_goals_selected = std::vector<int>(n_goals,0);
+    were_goals_selected = std::vector<bool>(n_goals,false);
     int arm = -1;
     for (unsigned int i_goal=0;i_goal<n_goals;i_goal++)
     {
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
         double cost = true_costs.at(i_goal) + std::uniform_real_distribution<double>(0.0,1.0)(rand_gen);
         if (cost<best_cost)
           best_cost=cost;
-        were_goals_selected.at(i_goal) = 1;
+        were_goals_selected.at(i_goal) = true;
       }
     }
 
