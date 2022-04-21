@@ -45,7 +45,7 @@ protected:
   std::vector<double> costs_;
   std::vector<double> utopias_;
   std::vector<double> goal_probabilities_;
-  std::vector<int> were_goals_sampled_;
+  std::vector<bool> were_goals_sampled_;
   std::vector<PathPtr> solutions_;
   std::vector<double> goal_costs_;
   std::vector<double> path_costs_;

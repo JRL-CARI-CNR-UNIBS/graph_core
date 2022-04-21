@@ -52,9 +52,10 @@ public:
         return idx_goal;
       }
     }
-    ROS_ERROR("No arm selected: return index -1");
+    ROS_ERROR("Error in arm selection.");
     return -1;
   };
+
   void updateState(const int& i_goal, const double& reward)
   {
     if (pull_counter_.at(i_goal)==0)
@@ -84,6 +85,7 @@ public:
     }
     pull_counter_.at(i_goal)++;
   };
+
   std::string toString()
   {
     std::string str = "uniform on volume";

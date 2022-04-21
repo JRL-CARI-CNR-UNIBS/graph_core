@@ -17,7 +17,12 @@ public:
   {
     pull_counter_ = std::vector<int>(n_goals_, 0);
     expected_reward_ = std::vector<double>(n_goals_, 0.0);
-    epsilon_coef_ = 0.1;
+
+    if (!nh_.getParam("epsilon_coef", epsilon_coef_))
+    {
+      ROS_DEBUG("%s/epsilon_coef is not set. Deafult: 0.1",nh_.getNamespace().c_str());
+      epsilon_coef_=0.1;
+    }
   }
   
   virtual int selectNextArm()
@@ -30,15 +35,21 @@ public:
     }
     else
     {
-      std::vector<double> eExpectations = std::vector<double>(n_goals_, 0.0);
-      for(unsigned int i_goal=0;i_goal<n_goals_;i_goal++){
-        if(pull_counter_[i_goal]==0){
+      double max_expectation=-std::numeric_limits<double>::infinity();
+      unsigned int i_goal_best=0;
+      for(unsigned int i_goal=0; i_goal<n_goals_; i_goal++)
+      {
+        if(pull_counter_[i_goal]==0)
           return i_goal;
+
+        double exp = expected_reward_[i_goal]/pull_counter_[i_goal];
+        if (exp > max_expectation)
+        {
+          max_expectation = exp;
+          i_goal_best = i_goal;
         }
-        eExpectations[i_goal] = expected_reward_[i_goal]/pull_counter_[i_goal] ;
       }
-      int targetArm = vectorMaxIndex(eExpectations);
-      return targetArm;
+      return i_goal_best;
     }
   }
 
