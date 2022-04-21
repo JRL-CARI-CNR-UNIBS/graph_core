@@ -274,7 +274,7 @@ bool MultigoalSolver::config(const ros::NodeHandle& nh)
   if (!nh.getParam("forgetting_factor",forgetting_factor_))
   {
     ROS_WARN("%s/forgetting_factor is not set. using 0.01",nh.getNamespace().c_str());
-    tube_radius_=0.3;
+    forgetting_factor_=0.01;
   }
   if (forgetting_factor_<=0)
   {
