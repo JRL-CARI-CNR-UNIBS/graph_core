@@ -460,13 +460,10 @@ bool MultigoalSolver::update(PathPtr& solution)
 
         double cost_1=solutions_.at(igoal)->cost();
 
-          if (first_warp_)
+        if (first_warp_)
         {
           ros::WallTime twarp=ros::WallTime::now();
-          for (int iwarp=0;iwarp<10;iwarp++)
-          {
-            solutions_.at(igoal)->warp();
-          }
+          solutions_.at(igoal)->warp();
           ROS_DEBUG("warp: cost from %f to %f in %f second",cost_1,solutions_.at(igoal)->cost(),(ros::WallTime::now()-twarp).toSec());
 
           double cost_0=solutions_.at(igoal)->cost();
