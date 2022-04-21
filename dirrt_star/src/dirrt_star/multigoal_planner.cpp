@@ -247,6 +247,10 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
         ROS_ERROR("contact between %s and %s",contact.first.first.c_str(),contact.first.second.c_str());
       }
     }
+    else
+    {
+      ROS_FATAL("you shouldn't be here!");
+    }
     res.error_code_.val=moveit_msgs::MoveItErrorCodes::START_STATE_IN_COLLISION;
     m_is_running=false;
     return false;
