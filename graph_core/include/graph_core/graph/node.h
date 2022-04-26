@@ -79,6 +79,7 @@ public:
   void remoteChildConnection(const ConnectionPtr& connection);
   void remoteNetParentConnection(const ConnectionPtr& connection);
   void remoteNetChildConnection(const ConnectionPtr& connection);
+  bool switchParentConnection(const ConnectionPtr& net_connection);
 
   const Eigen::VectorXd& getConfiguration()
   {

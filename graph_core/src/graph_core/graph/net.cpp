@@ -160,6 +160,8 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
 
 std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes)
 {
+  ROS_INFO_STREAM("n "<<goal_node->getConfiguration().transpose()<<" "<<goal_node); //elimina
+
   std::multimap<double,std::vector<ConnectionPtr>> map;
   std::pair<double,std::vector<ConnectionPtr>> pair;
   NodePtr parent;
@@ -171,13 +173,13 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
     if(goal_node->parent_connections_.size() != 1)
     {
       ROS_ERROR("a node of a tree should have only a parent");
-      ROS_ERROR_STREAM("node \n" <<*goal_node);
+      ROS_ERROR_STREAM("goal node \n" <<*goal_node);
 
       ROS_INFO_STREAM("current root "<<linked_tree_->getRoot()->getConfiguration().transpose()<< " "<<linked_tree_->getRoot());
       ROS_INFO_STREAM("goal node "<<goal_node->getConfiguration().transpose()<<" "<<goal_node);
       ROS_INFO_STREAM("start node "<<start_node->getConfiguration().transpose()<<" "<<start_node);
 
-      ROS_INFO_STREAM("the child "<<goal_node->net_child_connections_.front()->getChild()->getConfiguration().transpose()<<" "<<goal_node->net_child_connections_.front()->getChild());
+      ROS_INFO_STREAM("the child "<<*goal_node->net_child_connections_.front()->getChild()<<" "<<goal_node->net_child_connections_.front()->getChild());
 
       int count = 0;
       for(const NodePtr& n:linked_tree_->getNodes())

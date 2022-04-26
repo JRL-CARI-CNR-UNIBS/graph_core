@@ -40,20 +40,20 @@ Node::Node(const Eigen::VectorXd &configuration)
 
 void Node::setAnalyzed(const bool &analyzed)
 {
-    analyzed_ = analyzed;
+  analyzed_ = analyzed;
 }
 bool Node::getAnalyzed()
 {
-    return analyzed_;
+  return analyzed_;
 }
 
 void Node::setNonOptimal(const bool &nonOptimal)
 {
-    non_optimal_ = nonOptimal;
+  non_optimal_ = nonOptimal;
 }
 bool Node::getNonOptimal()
 {
-    return non_optimal_;
+  return non_optimal_;
 }
 
 void Node::addParentConnection(const ConnectionPtr &connection)
@@ -86,11 +86,11 @@ void Node::remoteParentConnection(const ConnectionPtr &connection)
   if (it == parent_connections_.end())
   {
     ROS_FATAL("connection is not in the parent vector");
-//    throw std::invalid_argument("connection is not in the parent vector");
+    //    throw std::invalid_argument("connection is not in the parent vector");
   }
   else
   {
-   parent_connections_.erase(it);
+    parent_connections_.erase(it);
   }
 }
 
@@ -103,7 +103,7 @@ void Node::remoteNetParentConnection(const ConnectionPtr &connection)
   }
   else
   {
-   net_parent_connections_.erase(it);
+    net_parent_connections_.erase(it);
   }
 }
 
@@ -186,6 +186,39 @@ void Node::disconnectNetChildConnections()
   }
   net_child_connections_.clear();
 }
+
+bool Node::switchParentConnection(const ConnectionPtr& net_connection)
+{
+  if(std::find(net_parent_connections_.begin(),net_parent_connections_.end(),net_connection)>=net_parent_connections_.end())
+  {
+    ROS_ERROR("it is not a parent net connection of the node!");
+    return false;
+  }
+
+  assert(net_connection->getChild() == pointer());
+  assert(parent_connections_.size() == 1);
+
+  ConnectionPtr parent_connection = parent_connections_.front();
+  if(not parent_connection->convertToNetConnection())
+  {
+    ROS_ERROR("parent connection can't be converted into parent net connection!");
+    return false;
+  }
+
+  if(not net_connection->convertToConnection())
+  {
+    assert(parent_connections_.size() == 0);
+    parent_connection->convertToConnection();
+    assert(parent_connections_.size() == 1);
+
+    ROS_ERROR("parent net connection can't be converted into parent connection!");
+    return false;
+  }
+
+  assert(parent_connections_.size() == 1);
+  return true;
+}
+
 
 Node::~Node()
 {

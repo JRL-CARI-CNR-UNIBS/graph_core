@@ -87,7 +87,7 @@ void Connection::flip()
 {
   remove(); // remove connection from parent and child
   parent_.swap(child_);
-  add(); // add new connection from new parent and child
+  add();   // add new connection from new parent and child
 }
 Connection::~Connection()
 {
@@ -146,8 +146,13 @@ std::ostream& operator<<(std::ostream& os, const Connection& connection)
 //  os << "-->" << connection.child_->getConfiguration().transpose() << std::endl;
 
   os << connection.parent_->getConfiguration().transpose()
-     << " --> "
+     <<" ("
+     <<connection.parent_
+     << ") --> "
      << connection.child_->getConfiguration().transpose()
+     <<" ("
+     <<connection.child_
+     << ")"
      << " | cost: " << connection.cost_
      << " | net: "<<connection.is_net_;
 
