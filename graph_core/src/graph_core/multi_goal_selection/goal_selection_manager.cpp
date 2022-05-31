@@ -34,6 +34,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/multi_goal_selection/policies/policy_uniform_on_volume.h>
 
 #include <graph_core/multi_goal_selection/policies/policy_mab_egreedy.h>
+#include <graph_core/multi_goal_selection/policies/policy_mab_ucb.h>
+#include <graph_core/multi_goal_selection/policies/policy_mab_ts.h>
+
 #include <graph_core/multi_goal_selection/rewards/reward_relative_improvement.h>
 #include <graph_core/multi_goal_selection/rewards/reward_bernoulli.h>
 #include <graph_core/multi_goal_selection/rewards/reward_best_cost.h>
@@ -77,6 +80,16 @@ GoalSelectionManager::GoalSelectionManager(const std::string& name, const unsign
     if (!policy_name_.compare("eGreedy"))
     {
       policy_ = std::make_shared<multi_goal_selection::PolicyMABEGreedy>(nh_.getNamespace(),goal_number_);
+      ROS_INFO_STREAM("Policy name: " << policy_name_);
+    }
+    else if (!policy_name_.compare("UCB1"))
+    {
+      policy_ = std::make_shared<multi_goal_selection::PolicyMABUCB>(nh_.getNamespace(),goal_number_);
+      ROS_INFO_STREAM("Policy name: " << policy_name_);
+    }
+    else if (!policy_name_.compare("Thomson"))
+    {
+      policy_ = std::make_shared<multi_goal_selection::PolicyMABTS>(nh_.getNamespace(),goal_number_);
       ROS_INFO_STREAM("Policy name: " << policy_name_);
     }
     else if (!policy_name_.compare("PolicyUniformOnGoals"))

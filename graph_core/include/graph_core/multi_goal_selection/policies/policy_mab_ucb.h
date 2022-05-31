@@ -56,7 +56,7 @@ public:
   virtual std::string toString()
   {
     std::string str="UCB Policy with alpha=";
-    str+=std::to_string(epsilon_coef_);
+    str+=std::to_string(alpha_);
     return str;
   }
 
