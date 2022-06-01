@@ -11,6 +11,8 @@ class PolicyMABEGreedy : public PolicyMAB
 protected:
   double epsilon_coef_; //epsilon (random play prob) - epsilon_base/(current)t
                       //epsilonbase = cK/d2
+  double egreedy_forgetting_factor_;
+  std::vector<int> pulled_arms_;
 
 public:
   PolicyMABEGreedy(const std::string& name, const int& n_goals) : PolicyMAB(name, n_goals)
@@ -23,6 +25,13 @@ public:
       ROS_DEBUG("%s/epsilon_coef is not set. Deafult: 0.1",nh_.getNamespace().c_str());
       epsilon_coef_=0.1;
     }
+    if (!nh_.getParam("egreedy_forgetting_factor", egreedy_forgetting_factor_))
+    {
+      ROS_DEBUG("%s/egreedy_forgetting_factor is not set. Deafult: 0.0",nh_.getNamespace().c_str());
+      egreedy_forgetting_factor_=0.0;
+    }
+    else
+      ROS_INFO("%s/egreedy_forgetting_factor set to %f",nh_.getNamespace().c_str(),egreedy_forgetting_factor_);
   }
   
   virtual int selectNextArm()
@@ -42,10 +51,9 @@ public:
         if(pull_counter_[i_goal]==0)
           return i_goal;
 
-        double exp = expected_reward_[i_goal]/pull_counter_[i_goal];
-        if (exp > max_expectation)
+        if (expected_reward_[i_goal] > max_expectation)
         {
-          max_expectation = exp;
+          max_expectation = expected_reward_[i_goal];
           i_goal_best = i_goal;
         }
       }
@@ -55,8 +63,18 @@ public:
 
   virtual void updateState(const int& i_goal, const double& reward)
   {
-    pull_counter_[i_goal]+=1;
-    expected_reward_[i_goal]+=reward;
+    if (egreedy_forgetting_factor_<=0.0)
+    {
+      pull_counter_[i_goal]+=1;
+      expected_reward_[i_goal]+=(reward-expected_reward_[i_goal])/pull_counter_[i_goal];
+    }
+    else
+    {
+      for (unsigned int idx=0;idx<expected_reward_.size();idx++)
+        expected_reward_[idx]=(1-egreedy_forgetting_factor_)*expected_reward_[idx];
+      expected_reward_[i_goal]+=egreedy_forgetting_factor_*reward;
+      epsilon_coef_=std::min((1-egreedy_forgetting_factor_)*epsilon_coef_+egreedy_forgetting_factor_*reward,1.0);
+    }
   }
 
   virtual std::string toString()

@@ -1,7 +1,6 @@
 #pragma once
 
-#include <util.h>
-
+#include <graph_core/multi_goal_selection/goal_selection_util.h>
 
 //This implementation of Beta distribution is from
 //  http://stackoverflow.com/questions/15165202/random-number-generator-with-beta-distribution

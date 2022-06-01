@@ -32,7 +32,7 @@ public:
 
     alphas_ = std::vector<double>(n_goals_, alpha);
     betas_  = std::vector<double>(n_goals_, beta );
-    thetas_ = std::vector<int>(n_goals_, 0.0);
+    thetas_ = std::vector<double>(n_goals_, 0.0);
 
   }
   
@@ -43,7 +43,6 @@ public:
       thetas_[idx] = beta_distribution<double>(alphas_[idx], betas_[idx])(gen_) ;
     }
     return vectorMaxIndex(thetas_);
-
   }
 
   virtual void updateState(const int& i_goal, const double& reward)
