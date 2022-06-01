@@ -457,6 +457,16 @@ void TimeMultigoalSolver::cleanTree()
   ROS_DEBUG_STREAM("Removed nodes: " << start_tree_->purgeNodesOutsideEllipsoids(samplers,white_list));
 }
 
+bool TimeMultigoalSolver::addStartTree(const TreePtr &start_tree, const double &max_time)
+{
+  assert(start_tree);
+  start_tree_ = start_tree;
+  solved_ = false;
+  setProblem(max_time);
+  return true;
+}
+
+
 TreeSolverPtr TimeMultigoalSolver::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler)
 {
   return std::make_shared<TimeMultigoalSolver>(metrics,checker,sampler,time_based_sampler_->getMaxSpeed());

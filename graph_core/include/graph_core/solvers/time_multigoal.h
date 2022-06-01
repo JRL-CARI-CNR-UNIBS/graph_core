@@ -89,6 +89,7 @@ public:
 
   virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity());
   virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity());
+  virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity()) override;
   virtual void resetProblem();
   virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler);
 
