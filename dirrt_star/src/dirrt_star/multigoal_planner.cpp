@@ -34,8 +34,8 @@ namespace pathplan {
 namespace dirrt_star {
 
 MultigoalPlanner::MultigoalPlanner ( const std::string& name,
-                       const std::string& group,
-                       const moveit::core::RobotModelConstPtr& model ) :
+                                     const std::string& group,
+                                     const moveit::core::RobotModelConstPtr& model ) :
   PlanningContext ( name, group ),
   group_(group)
 {
@@ -85,11 +85,26 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
   urdf_model.initParam("robot_description");
 
 
-  if (!m_nh.getParam("display_bubbles",display_flag))
+  if (!m_nh.getParam("display_bubbles",display_flag_))
   {
     ROS_DEBUG("display_flag is not set, default=false");
-    display_flag=false;
+    display_flag_=false;
   }
+
+  if (!m_nh.getParam("display_tree",display_tree_))
+  {
+    ROS_DEBUG("display_tree is not set, default=false");
+    display_tree_=false;
+  }
+  if (display_tree_)
+  {
+    if (!m_nh.getParam("display_tree_period",display_tree_period_))
+    {
+      ROS_DEBUG("display_tree_rate is not set, default=1.0");
+      display_tree_period_=1.0;
+    }
+  }
+
 
   COMMENT("create metrics");
 
@@ -170,6 +185,14 @@ void MultigoalPlanner::clear()
 }
 
 
+void MultigoalPlanner::setSampler(pathplan::SamplerPtr& sampler,
+                                  pathplan::TreeSolverPtr& solver)
+{
+  sampler = std::make_shared<pathplan::InformedSampler>(m_lb, m_ub, m_lb, m_ub);
+  solver=std::make_shared<pathplan::MultigoalSolver>(metrics_, checker, sampler);
+
+}
+
 bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
 {
 
@@ -199,7 +222,7 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
   }
 
 
-  if (display_flag)
+  if (display_flag_ || display_tree_)
   {
     if (!display)
       display=std::make_shared<pathplan::Display>(planning_scene_,group_);
@@ -209,6 +232,7 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
 
   planning_scene::PlanningScenePtr ptr=planning_scene::PlanningScene::clone(planning_scene_);
   checker=std::make_shared<pathplan::ParallelMoveitCollisionChecker>(ptr,group_,collision_thread_,collision_distance_);
+
 
   moveit::core::RobotState start_state(robot_model_);
   moveit::core::robotStateMsgToRobotState(request_.start_state,start_state);
@@ -257,9 +281,15 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
   }
 
 
-  pathplan::NodePtr start_node=std::make_shared<pathplan::Node>(start_conf);
-  pathplan::SamplerPtr sampler = std::make_shared<pathplan::InformedSampler>(m_lb, m_ub, m_lb, m_ub);
-  pathplan::TreeSolverPtr solver=std::make_shared<pathplan::MultigoalSolver>(metrics_, checker, sampler);
+  m_start_node=std::make_shared<pathplan::Node>(start_conf);
+
+
+
+  pathplan::SamplerPtr sampler;
+  pathplan::TreeSolverPtr solver;
+
+  setSampler(sampler,solver);
+
   if (!solver->config(m_nh))
   {
     ROS_ERROR("Unable to configure the planner");
@@ -269,7 +299,7 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
   }
   if (use_avoidance_goal_)
     solver->setGoalCostFunction(m_avoidance_goal_cost_fcn);
-  solver->addStart(start_node);
+  solver->addStart(m_start_node);
 
   m_queue.callAvailable();
   bool at_least_a_goal=false;
@@ -374,12 +404,22 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
   pathplan::PathPtr solution;
   bool found_a_solution=false;
   unsigned int iteration=0;
+  ros::WallTime display_time = ros::WallTime::now();
   while((ros::WallTime::now()-start_time)<max_planning_time)
   {
 
     performace_msg.data.push_back((ros::WallTime::now()-start_time).toSec());
     performace_msg.data.push_back(iteration);
     performace_msg.data.push_back(solver->getCost());
+
+    if (display_tree_)
+    {
+      if ((ros::WallTime::now()-display_time).toSec()>display_tree_period_)
+      {
+        display_time = ros::WallTime::now();
+        display->displayTree(solver->getStartTree());
+      }
+    }
     iteration++;
     if (m_stop)
     {
@@ -413,19 +453,19 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
 
   ROS_INFO_STREAM(*solver);
 
-  m_solver_performance.publish(performace_msg);
+  m_solver_performance.publish( performace_msg);
 
   if (!found_a_solution)
   {
     ROS_ERROR("unable to find a valid path");
     res.error_code_.val=moveit_msgs::MoveItErrorCodes::PLANNING_FAILED;
     m_is_running=false;
-    if (display_flag)
+    if (display_flag_)
       display->displayTree(solver->getStartTree());
     return false;
   }
-//  if (display_flag)
-//    display->displayPath(solution);
+  //  if (display_flag)
+  //    display->displayPath(solution);
 
   if (!solver->completed())
   {
@@ -515,7 +555,7 @@ void MultigoalPlanner::centroidCb(const geometry_msgs::PoseArrayConstPtr& msg)
     point(2)=p.position.z;
     if (use_avoidance_goal_)
       m_avoidance_goal_cost_fcn->addPoint(point);
-//    ros::Duration(0.1).sleep();
+    //    ros::Duration(0.1).sleep();
     if (use_avoidance_metrics_)
       avoidance_metrics_->addPoint(point);
   }

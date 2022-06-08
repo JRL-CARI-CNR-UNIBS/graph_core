@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <moveit/planning_interface/planning_interface.h>
 #include <dirrt_star/multigoal_planner.h>
-//#include <dirrt_star/time_planner.h>
+#include <dirrt_star/time_planner.h>
 //#include <dirrt_star/hamp_time_planner.h>
 //#include <dirrt_star/probabilist_hamp_time_planner.h>
 
@@ -41,7 +41,7 @@ public:
   virtual bool initialize(const robot_model::RobotModelConstPtr& model, const std::string& ns) override;
   std::string getDescription() const override
   {
-    return "DIRRT";
+    return "CARI Motion planner";
   }
   bool canServiceRequest(const moveit_msgs::MotionPlanRequest &req) const override;
 

@@ -120,8 +120,10 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
     status=GoalStatus::search;
   }
 
-  InformedSamplerPtr sampler = std::make_shared<TubeInformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler_->getLB(),sampler_->getUB(),path_cost_+goal_cost_-goal_cost);
-  TubeInformedSamplerPtr tube_sampler = std::make_shared<TubeInformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler_->getLB(),sampler_->getUB(),path_cost_+goal_cost_-goal_cost);
+
+
+  InformedSamplerPtr sampler = std::make_shared<TubeInformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler_,metrics_);
+  TubeInformedSamplerPtr tube_sampler = std::make_shared<TubeInformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler_,metrics_);
   tube_sampler->setLocalBias(local_bias_);
   tube_sampler->setRadius(tube_radius_);
   if (solution)
@@ -309,20 +311,6 @@ bool MultigoalSolver::update(PathPtr& solution)
     completed_=true;
     return false;
   }
-
-
-//  for (unsigned int igoal=0;igoal<goal_nodes_.size();igoal++)
-//  {
-//    double min_prob=0.2;
-//    if ((costs_.at(igoal)-cost_)>2.0*cost_)
-//    {
-//      goal_probabilities_.at(igoal)=min_prob;
-//    }
-//    else
-//    {
-//      goal_probabilities_.at(igoal)=1.0-(1.0-min_prob)*((costs_.at(igoal)-cost_))/(2.0*cost_);
-//    }
-//  }
 
 
   if (goal_probabilities_.size()==1)

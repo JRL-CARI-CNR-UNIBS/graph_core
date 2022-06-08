@@ -93,13 +93,15 @@ protected:
   Eigen::VectorXd m_ub;
   Eigen::VectorXd m_max_speed_;
   std::string group_;
-  bool display_flag=false;;
+  bool display_flag_=false;
+  bool display_tree_=false;
+  double display_tree_period_=1.0;
 
   pathplan::MetricsPtr metrics_;
   pathplan::AvoidanceMetricsPtr avoidance_metrics_;
   pathplan::AvoidanceGoalCostFunctionPtr m_avoidance_goal_cost_fcn;
   pathplan::CollisionCheckerPtr checker;
-
+  pathplan::NodePtr m_start_node;
   ros::Subscriber m_centroid_sub;
   ros::Publisher m_solver_performance;
 
@@ -107,6 +109,9 @@ protected:
   double collision_thread_=5;
   bool m_is_running=false;
   bool m_stop=false;
+
+  virtual void setSampler(pathplan::SamplerPtr& sampler,
+                          pathplan::TreeSolverPtr& solver);
 
 
 };

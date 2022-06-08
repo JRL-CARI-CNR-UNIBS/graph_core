@@ -98,10 +98,10 @@ bool PathPlanerManager::initialize(const moveit::core::RobotModelConstPtr& model
     {
       ptr= std::make_shared<MultigoalPlanner>(ns+"/"+p.first,p.second,model);
     }
-//    else if (!type.compare("TimeBasedMultigoal"))
-//    {
-//      ptr= std::make_shared<TimeBasedMultiGoalPlanner>(ns+"/"+p.first,p.second,model);
-//    }
+    else if (!type.compare("TimeBasedMultigoal"))
+    {
+      ptr= std::make_shared<TimeBasedMultiGoalPlanner>(ns+"/"+p.first,p.second,model);
+    }
 //    else if (!type.compare("HAMPTimeBasedMultigoal"))
 //    {
 //      ptr= std::make_shared<HAMPTimeBasedMultiGoalPlanner>(ns+"/"+p.first,p.second,model);

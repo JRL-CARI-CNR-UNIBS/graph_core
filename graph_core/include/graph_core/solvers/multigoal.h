@@ -30,6 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/solvers/tree_solver.h>
 #include <graph_core/tube_informed_sampler.h>
 #include <graph_core/multi_goal_selection/goal_selection_manager.h>
+#include <graph_core/time_metrics.h>
+#include <graph_core/time_sampler.h>
 
 namespace pathplan
 {

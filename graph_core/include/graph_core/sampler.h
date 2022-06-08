@@ -121,6 +121,8 @@ public:
 
   virtual void sampleImproved(){}
 
+  virtual double cost(){return cost_;}
+
   const Eigen::VectorXd& getLB(){return lower_bound_;}
   const Eigen::VectorXd& getUB(){return upper_bound_;}
 
