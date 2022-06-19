@@ -38,8 +38,18 @@ Connection::Connection(const NodePtr& parent, const NodePtr& child, const bool i
   euclidean_norm_ = (child->getConfiguration() - parent->getConfiguration()).norm();
 }
 
+void Connection::add(const bool is_net)
+{
+  assert((is_net && child_->parent_connections_.size() == 1) || ((not is_net) && child_->parent_connections_.size() == 0));
+
+  is_net_ = is_net;
+  add();
+}
+
+
 void Connection::add()
 {
+  assert(not valid_);
   valid_ = true;
 
   if(is_net_)
@@ -91,6 +101,9 @@ void Connection::flip()
 }
 Connection::~Connection()
 {
+  remove();
+  parent_.reset();
+  child_.reset();
 }
 
 bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)

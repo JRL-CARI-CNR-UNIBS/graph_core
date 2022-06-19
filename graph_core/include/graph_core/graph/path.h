@@ -59,6 +59,9 @@ protected:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+  static const double TOLERANCE;
+
   Path(std::vector<ConnectionPtr> connections, const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
   Path(std::vector<NodePtr> nodes, const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
   const double& cost()
@@ -78,8 +81,10 @@ public:
   NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, const bool& rewire);
 
   //Remove unnecessary nodes
-  bool removeNode(NodePtr& node, const std::vector<NodePtr> &white_list);
-  bool removeNode(NodePtr& node, const int& idx_conn, const std::vector<NodePtr> &white_list);
+  bool removeNode(const NodePtr& node, const std::vector<NodePtr> &white_list);
+  bool removeNode(const NodePtr& node, const std::vector<NodePtr> &white_list, ConnectionPtr &new_conn);
+  bool removeNode(const NodePtr &node, const int& idx_conn, const std::vector<NodePtr> &white_list);
+  bool removeNode(const NodePtr &node, const int& idx_conn, const std::vector<NodePtr> &white_list, ConnectionPtr &new_conn);
   bool removeNodes(const std::vector<NodePtr>& white_list, std::vector<NodePtr>& deleted_nodes);
   bool removeNodes(const std::vector<NodePtr> &white_list);
   bool removeNodes();
@@ -87,7 +92,6 @@ public:
   //It gives the connection to which the configuration belongs
   ConnectionPtr findConnection(const Eigen::VectorXd& configuration, int& idx);
   ConnectionPtr findConnection(const Eigen::VectorXd& configuration);
-
 
   NodePtr findCloserNode(const Eigen::VectorXd& configuration, double &dist);
   NodePtr findCloserNode(const Eigen::VectorXd& configuration);
@@ -108,10 +112,8 @@ public:
   double getCostFromConf(const Eigen::VectorXd& conf);
   double getNormFromConf(const Eigen::VectorXd& conf);
 
-
   std::vector<NodePtr> getNodes();
   std::vector<Eigen::VectorXd> getWaypoints();
-
 
   std::vector<bool> getChangeWarp()
   {
@@ -176,16 +178,18 @@ public:
   }
 
   PathPtr clone();
+  bool splitConnection(const ConnectionPtr& conn1, const ConnectionPtr& conn2, const std::vector<ConnectionPtr>::iterator &it);
+  bool splitConnection(const ConnectionPtr& conn1, const ConnectionPtr& conn2, const ConnectionPtr& conn);
+  bool restoreConnection(const ConnectionPtr& conn, const NodePtr& node2remove);
   bool simplify(const double& distance = 0.02);
   bool isValid(const CollisionCheckerPtr &this_checker = nullptr);
   bool isValidFromConf(const Eigen::VectorXd &conf, const CollisionCheckerPtr &this_checker = nullptr);
   bool isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker = nullptr);
   bool isValidFromConn(const ConnectionPtr &this_conn, const CollisionCheckerPtr &this_checker = nullptr);
-  Eigen::VectorXd projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool &in_conn, bool verbose = false);
-  Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point);
+  Eigen::VectorXd projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool &in_conn, const bool verbose = false);
+  Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point, const bool verbose = false);
   Eigen::VectorXd projectOnClosestConnectionKeepingPastPrj(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, int &n_conn, int delta_n_conn = 1);
   Eigen::VectorXd projectOnClosestConnectionKeepingCurvilinearAbscissa(const Eigen::VectorXd& point, Eigen::VectorXd& past_prj, double &new_abscissa,  double &past_abscissa, int &n_conn, int delta_n_conn = 1);
-
 
   // return true if improve
   bool warp(const double& min_dist = 0.1, const double& max_time = std::numeric_limits<double>::infinity());

@@ -92,6 +92,7 @@ public:
   }
 
   void add();
+  void add(const bool is_net);
   void remove();
   void flip();
   bool convertToConnection();

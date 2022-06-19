@@ -160,8 +160,6 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
 
 std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes)
 {
-//  ROS_INFO_STREAM("n "<<goal_node->getConfiguration().transpose()<<" "<<goal_node); //elimina
-
   std::multimap<double,std::vector<ConnectionPtr>> map;
   std::pair<double,std::vector<ConnectionPtr>> pair;
   NodePtr parent;

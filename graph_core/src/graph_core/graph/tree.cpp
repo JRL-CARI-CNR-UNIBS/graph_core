@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
+const double Tree::TOLERANCE = 1e-6;
 
 Tree::Tree(const NodePtr& root,
            const double &max_distance,
@@ -77,7 +78,7 @@ bool Tree::tryExtendFromNode(const Eigen::VectorXd &configuration,
   assert(node);
   double distance = selectNextConfiguration(configuration,next_configuration,node);
 
-  if (distance < tolerance_)
+  if (distance < TOLERANCE)
     return true;
   else
     if (checker_->checkPath(node->getConfiguration(), next_configuration))
@@ -108,7 +109,7 @@ bool Tree::tryExtendFromNodeWithPathCheck(const Eigen::VectorXd &configuration,
   {
     double distance = selectNextConfiguration(configuration,next_configuration,node);
 
-    if (distance < tolerance_)
+    if (distance < TOLERANCE)
       return true;
     else
       if (checker_->checkPath(node->getConfiguration(), next_configuration))
@@ -126,7 +127,7 @@ double Tree::selectNextConfiguration(const Eigen::VectorXd& configuration,
 
   double distance = (node->getConfiguration() - configuration).norm();
 
-  if (distance < tolerance_)
+  if (distance < TOLERANCE)
   {
     next_configuration = configuration;
   }
@@ -218,7 +219,7 @@ bool Tree::extendToNode(const NodePtr& node,
     return false;
   }
 
-  if ((next_configuration - node->getConfiguration()).norm() < tolerance_)
+  if ((next_configuration - node->getConfiguration()).norm() < TOLERANCE)
   {
     new_node = node;
   }
@@ -247,7 +248,7 @@ bool Tree::connect(const Eigen::VectorXd &configuration, NodePtr &new_node)
     if(success)
     {
       new_node = tmp_node;
-      if ((new_node->getConfiguration() - configuration).norm() < tolerance_)
+      if ((new_node->getConfiguration() - configuration).norm() < TOLERANCE)
         return true;
     }
   }
@@ -290,7 +291,7 @@ bool Tree::informedExtend(const Eigen::VectorXd &configuration, NodePtr &new_nod
   for(const std::pair<double,extension>& n: best_nodes_map)
   {
     ext = n.second;
-    if (ext.distance < tolerance_)
+    if (ext.distance < TOLERANCE)
     {
       extend_ok = true;
       break;
@@ -331,7 +332,7 @@ bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node, const double &m
     {
       new_node = tmp_node;
 
-      if ((new_node->getConfiguration() - node->getConfiguration()).norm() < tolerance_)
+      if ((new_node->getConfiguration() - node->getConfiguration()).norm() < TOLERANCE)
         return true;
     }
 
