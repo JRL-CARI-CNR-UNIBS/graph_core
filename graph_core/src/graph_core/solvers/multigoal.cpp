@@ -122,7 +122,7 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
 
 
 
-  InformedSamplerPtr sampler = std::make_shared<TubeInformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler_,metrics_);
+  InformedSamplerPtr sampler = std::make_shared<InformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler_->getLB(),sampler_->getUB());
   TubeInformedSamplerPtr tube_sampler = std::make_shared<TubeInformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler_,metrics_);
   tube_sampler->setLocalBias(local_bias_);
   tube_sampler->setRadius(tube_radius_);
@@ -176,9 +176,14 @@ bool MultigoalSolver::isBestSolution(const int &index)
     if (status_.at(igoal)==GoalStatus::done)
       continue;
     if (mixed_strategy_)
+    {
       tube_samplers_.at(igoal)->setCost(path_cost_+goal_cost_-goal_costs_.at(igoal));
-    else if (informed_)
       samplers_.at(igoal)->setCost(path_cost_+goal_cost_-goal_costs_.at(igoal));
+    }
+    else if (informed_)
+    {
+      samplers_.at(igoal)->setCost(path_cost_+goal_cost_-goal_costs_.at(igoal));
+    }
   }
 
   if ((cost_<0.9999*cost_at_last_clean) || start_tree_->needCleaning())
