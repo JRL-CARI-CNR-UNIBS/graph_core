@@ -675,4 +675,9 @@ TreeSolverPtr MultigoalSolver::clone(const MetricsPtr& metrics, const CollisionC
 
 }
 
+std::vector<TreePtr> MultigoalSolver::getGoalTrees()
+{
+  return goal_trees_;
+}
+
 }  // namespace pathplan

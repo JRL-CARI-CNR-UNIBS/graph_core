@@ -418,6 +418,9 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
       {
         display_time = ros::WallTime::now();
         display->displayTree(solver->getStartTree());
+        std::vector<TreePtr> goal_trees = solver->getGoalTrees();
+        for (auto& goal_tree: goal_trees)
+          display->displayTree(goal_tree);
       }
     }
     iteration++;

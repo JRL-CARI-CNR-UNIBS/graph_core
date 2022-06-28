@@ -39,7 +39,7 @@ public:
 
   double getReward(const std::vector<double>& costs, const std::vector<double>& utopias, const double& best_cost)
   {
-    double reward = (best_cost < last_best_cost_) ? 1.0 : 0.0;
+    double reward = (best_cost < last_best_cost_-1e-6) ? 1.0 : 0.0;
     last_best_cost_ = best_cost;
     return reward;
   };

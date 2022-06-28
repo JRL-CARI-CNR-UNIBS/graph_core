@@ -99,6 +99,7 @@ public:
   virtual void resetProblem() override;
   virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler) override;
 
+  std::vector<TreePtr> getGoalTrees();
 
   void cleanTree();
 

@@ -160,6 +160,11 @@ public:
     return start_tree_;
   }
 
+  virtual std::vector<TreePtr> getGoalTrees()
+  {
+    ROS_DEBUG("virtual fcn");
+  }
+
   PathPtr getSolution() const
   {
     return solution_;
