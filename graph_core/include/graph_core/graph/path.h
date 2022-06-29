@@ -64,6 +64,7 @@ public:
 
   Path(std::vector<ConnectionPtr> connections, const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
   Path(std::vector<NodePtr> nodes, const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
+
   const double& cost()
   {
     computeCost();

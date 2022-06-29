@@ -67,7 +67,7 @@ void Connection::remove()
 {
   if (!valid_)
   {
-    ROS_ERROR("not valid");
+    //ROS_ERROR("not valid");
     return;
   }
 
