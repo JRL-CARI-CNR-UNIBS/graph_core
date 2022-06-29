@@ -46,7 +46,6 @@ void Connection::add(const bool is_net)
   add();
 }
 
-
 void Connection::add()
 {
   assert(not valid_);
@@ -101,9 +100,9 @@ void Connection::flip()
 }
 Connection::~Connection()
 {
-  remove();
-  parent_.reset();
-  child_.reset();
+//  remove();
+//  parent_.reset();
+//  child_.reset();
 }
 
 bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)

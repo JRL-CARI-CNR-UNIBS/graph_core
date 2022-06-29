@@ -82,18 +82,16 @@ Path::Path(std::vector<NodePtr> nodes,
 
 PathPtr Path::clone()
 {
-  std::vector<NodePtr> cloned_nodes;
+  std::vector<NodePtr> nodes;
   std::vector<ConnectionPtr> new_conn_vector;
-  std::vector<NodePtr> nodes = getNodes();
-  NodePtr n0 = std::make_shared<Node>(nodes.at(0)->getConfiguration());
-  cloned_nodes.push_back(n0);
+  std::vector<Eigen::VectorXd> wp = getWaypoints();
+  nodes.push_back(std::make_shared<Node>(wp.at(0));
 
-  for(unsigned int i = 1;i<nodes.size();i++)
+  for(unsigned int i = 1;i<wp.size();i++)
   {
-    NodePtr n = std::make_shared<Node>(nodes.at(i)->getConfiguration());
-    cloned_nodes.push_back(n);
+    nodes.push_back(std::make_shared<Node>(wp.at(i)));
 
-    ConnectionPtr conn = std::make_shared<Connection>(cloned_nodes.at(i-1),cloned_nodes.at(i));
+    ConnectionPtr conn = std::make_shared<Connection>(nodes.at(i-1),nodes.at(i));
     conn->setCost(connections_.at(i-1)->getCost());
     conn->add();
 
@@ -104,9 +102,6 @@ PathPtr Path::clone()
 
   new_path->setChangeWarp(change_warp_);
   new_path->setTree(nullptr);  //nodes are cloned, so the cloned path does not belong to the original tree
-
-  nodes.clear();
-  cloned_nodes.clear();
 
   return new_path;
 }
