@@ -399,7 +399,7 @@ bool MultigoalSolver::update(PathPtr& solution)
           {
 
             NodePtr parent=new_goal_node->getParents().at(0);
-            double cost_to_parent=new_goal_node->parent_connections_.at(0)->getCost();
+            double cost_to_parent=new_goal_node->parentConnection(0)->getCost();
             new_goal_node->disconnect();
 
             //goal_trees_.at(igoal)->keepOnlyThisBranch(goal_trees_.at(igoal)->getConnectionToNode(parent));
@@ -522,7 +522,7 @@ bool MultigoalSolver::update(PathPtr& solution)
           if (checker_->checkPath(new_start_node->getConfiguration(),
                                   goal_nodes_.at(igoal)->getConfiguration()))
           {
-            goal_nodes_.at(igoal)->parent_connections_.at(0)->remove();
+            goal_nodes_.at(igoal)->parentConnection(0)->remove();
             ConnectionPtr conn=std::make_shared<Connection>(new_start_node,goal_nodes_.at(igoal));
             conn->setCost(cost_to_goal);
             conn->add();

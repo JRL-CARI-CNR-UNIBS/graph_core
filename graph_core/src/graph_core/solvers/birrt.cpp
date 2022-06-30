@@ -91,7 +91,7 @@ bool BiRRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
   {
 
     NodePtr parent=new_goal_node->getParents().at(0);
-    double cost_to_parent=new_goal_node->parent_connections_.at(0)->getCost();
+    double cost_to_parent=new_goal_node->parentConnection(0)->getCost();
     new_goal_node->disconnect();
 
     std::vector<ConnectionPtr> connections=goal_tree_->getConnectionToNode(parent);
@@ -146,7 +146,7 @@ bool BiRRT::update(const NodePtr& n, PathPtr& solution)
   {
 
     NodePtr parent=new_goal_node->getParents().at(0);
-    double cost_to_parent=new_goal_node->parent_connections_.at(0)->getCost();
+    double cost_to_parent=new_goal_node->parentConnection(0)->getCost();
     new_goal_node->disconnect();
 
     std::vector<ConnectionPtr> connections=goal_tree_->getConnectionToNode(parent);

@@ -433,8 +433,7 @@ void Display::displayTreeNode(const NodePtr &n,
                               std::vector<geometry_msgs::Point>& points,
                               const bool check_in_tree)
 {
-  std::vector<ConnectionPtr> connections;
-  connections=n->child_connections_;
+  std::vector<ConnectionPtr> connections = n->getChildConnections();
 
   if (connections.size()==0)
     return;
@@ -509,8 +508,8 @@ void Display::displayNetNode(const NodePtr &n,
                              const NetPtr& net,
                              std::vector<geometry_msgs::Point>& points)
 {
-  std::vector<ConnectionPtr> connections=n->child_connections_;
-  std::vector<ConnectionPtr> net_connections=n->net_child_connections_;
+  std::vector<ConnectionPtr> connections=n->getChildConnections();
+  std::vector<ConnectionPtr> net_connections=n->getNetChildConnections();
 
   connections.insert(connections.end(),net_connections.begin(),net_connections.end());
   if(connections.empty())

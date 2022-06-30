@@ -65,7 +65,7 @@ Path::Path(std::vector<NodePtr> nodes,
     NodePtr child  = nodes.at(i+1);
 
     ConnectionPtr conn;
-    (child->parent_connections_.size() == 0)? (conn = std::make_shared<Connection>(parent,child,false)):
+    (child->getParentConnectionsSize() == 0)? (conn = std::make_shared<Connection>(parent,child,false)):
                                               (conn = std::make_shared<Connection>(parent,child,true));
     double cost = metrics->cost(parent,child);
     conn->setCost(cost);
@@ -717,8 +717,8 @@ bool Path::removeNode(const NodePtr& node, const int& idx_conn, const std::vecto
   ConnectionPtr conn_node_child  = connections_.at(idx_conn+1);
 
   if(conn_parent_node->isParallel(conn_node_child)
-     && ((node->parent_connections_.size()+node->net_parent_connections_.size()) <= 1)
-     && ((node->child_connections_ .size()+node->net_child_connections_ .size()) <= 1)
+     && ((node->getParentConnectionsSize()+node->getNetParentConnectionsSize()) <= 1)
+     && ((node->getChildConnectionsSize ()+node->getNetChildConnectionsSize ()) <= 1)
      )
   {
     assert(not tree_ || node != tree_->getRoot()); //node must have 1 parent (root must have zero) and 1 child (root may have many)

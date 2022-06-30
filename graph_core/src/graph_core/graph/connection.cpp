@@ -40,7 +40,7 @@ Connection::Connection(const NodePtr& parent, const NodePtr& child, const bool i
 
 void Connection::add(const bool is_net)
 {
-  assert((is_net && getChild()->parent_connections_.size() == 1) || ((not is_net) && getChild()->parent_connections_.size() == 0));
+  assert((is_net && getChild()->getParentConnectionsSize()== 1) || ((not is_net) && getChild()->getParentConnectionsSize() == 0));
 
   is_net_ = is_net;
   add();
@@ -71,7 +71,7 @@ void Connection::remove()
   }
 
   valid_ = false;
-  if (not parent_.expired())
+  if (parent_)
   {
     if(is_net_)
       getParent()->remoteNetChildConnection(pointer());
@@ -81,7 +81,7 @@ void Connection::remove()
   else
     ROS_FATAL("parent already destroied");
 
-  if (not child_.expired())
+  if (child_)
   {
     if(is_net_)
       getChild()->remoteNetParentConnection(pointer());

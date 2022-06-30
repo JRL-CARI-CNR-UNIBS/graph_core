@@ -52,7 +52,7 @@ bool Net::purgeSuccessors(NodePtr& node, const std::vector<NodePtr>& white_list,
     {
       assert(n.get()!=node.get());
 
-      if((n->net_parent_connections_.size())>0 || n == linked_tree_->getRoot())
+      if((n->getNetParentConnectionsSize())>0 || n == linked_tree_->getRoot())
         continue;
       else
       {
@@ -70,15 +70,15 @@ bool Net::purgeSuccessors(NodePtr& node, const std::vector<NodePtr>& white_list,
     std::vector<NodePtr> children = node->getChildren();
     for(NodePtr& successor2save: children)
     {
-      assert(successor2save->net_parent_connections_.size()>0);
-      assert(successor2save->parent_connections_.size() == 1);
-      assert(successor2save->parent_connections_.front()->getParent() == node);
+      assert(successor2save->getNetParentConnectionsSize()>0);
+      assert(successor2save->getParentConnectionsSize() == 1);
+      assert(successor2save->parentConnection(0)->getParent() == node);
 
-      conn2convert = successor2save->net_parent_connections_.front(); //the successor2save must be still part of the tree, so you convert one of its net parent connection into a parent connection
+      conn2convert = successor2save->netParentConnection(0); //the successor2save must be still part of the tree, so you convert one of its net parent connection into a parent connection
       assert(conn2convert->isNet());
       conn2convert->convertToConnection();
 
-      assert(successor2save->parent_connections_.size() == 1);
+      assert(successor2save->getParentConnectionsSize() == 1);
     }
 
     linked_tree_->purgeThisNode(node,removed_nodes);
@@ -91,11 +91,11 @@ bool Net::purgeFromHere(ConnectionPtr& conn2node, const std::vector<NodePtr>& wh
 {
   NodePtr node = conn2node->getChild();
 
-  if((node->net_parent_connections_.size())>0 || node == linked_tree_->getRoot())
+  if((node->getNetParentConnectionsSize())>0 || node == linked_tree_->getRoot())
   {
     if(not conn2node->isNet())
     {
-      ConnectionPtr conn2convert = node->net_parent_connections_.front();
+      ConnectionPtr conn2convert = node->netParentConnection(0);
       assert(conn2convert->isNet());
       conn2convert->convertToConnection();
       removed_nodes = 0;
@@ -111,11 +111,13 @@ bool Net::purgeFromHere(ConnectionPtr& conn2node, const std::vector<NodePtr>& wh
 std::multimap<double,std::vector<ConnectionPtr>> Net::getNetConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node, const std::vector<NodePtr>& black_list)
 {
   NodePtr net_parent;
+  ConnectionPtr net_parent_conn;
   std::vector<NodePtr> visited_nodes;
   std::multimap<double,std::vector<ConnectionPtr>> map, parent_map;
 
-  for(const ConnectionPtr& net_parent_conn: goal_node->net_parent_connections_)
+  for(unsigned int i=0;i<goal_node->getNetParentConnectionsSize();i++)
   {
+    net_parent_conn = goal_node->netParentConnection(i);
     net_parent = net_parent_conn->getParent();
 
     visited_nodes.clear();
@@ -168,7 +170,7 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
     return map;
   else
   {
-    if(goal_node->parent_connections_.size() != 1)
+    if(goal_node->getParentConnectionsSize() != 1)
     {
       ROS_ERROR("a node of a tree should have only a parent");
       ROS_ERROR_STREAM("goal node \n" <<*goal_node);
@@ -177,7 +179,7 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
       ROS_INFO_STREAM("goal node "<<goal_node->getConfiguration().transpose()<<" "<<goal_node);
       ROS_INFO_STREAM("start node "<<start_node->getConfiguration().transpose()<<" "<<start_node);
 
-      ROS_INFO_STREAM("the child "<<*goal_node->net_child_connections_.front()->getChild()<<" "<<goal_node->net_child_connections_.front()->getChild());
+      ROS_INFO_STREAM("the child "<<*goal_node->netChildConnection(0)->getChild()<<" "<<goal_node->netChildConnection(0)->getChild());
 
       int count = 0;
       for(const NodePtr& n:linked_tree_->getNodes())
@@ -193,10 +195,11 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
       assert(0);
     }
 
-    std::vector<ConnectionPtr> all_parent_connections = goal_node->parent_connections_;
-    all_parent_connections.insert(all_parent_connections.end(),goal_node->net_parent_connections_.begin(),goal_node->net_parent_connections_.end());
+    std::vector<ConnectionPtr> all_parent_connections = goal_node->getParentConnections();
+    std::vector<ConnectionPtr> net_parent_connections = goal_node->getNetParentConnections();
+    all_parent_connections.insert(all_parent_connections.end(),net_parent_connections.begin(),net_parent_connections.end());
 
-    for(const ConnectionPtr conn_parent_goal:all_parent_connections)
+    for(const ConnectionPtr& conn_parent_goal:all_parent_connections)
     {
       parent = conn_parent_goal->getParent();
 
@@ -226,7 +229,7 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
 
         if(not map2parent.empty())
         {
-          for(const std::pair<double,std::vector<ConnectionPtr>>& parent_pair:map2parent)
+          for(const std::pair<double,std::vector<ConnectionPtr>> &parent_pair:map2parent)
           {
             std::vector<ConnectionPtr> from_start_to_parent = parent_pair.second;
 

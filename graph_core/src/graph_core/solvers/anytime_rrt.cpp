@@ -171,8 +171,10 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     NodePtr root_child_on_path = conn_root_child_on_path->getChild();
     double cost_first_conn_on_path = conn_root_child_on_path->getCost();
 
-    for(const ConnectionPtr& conn2child : root->child_connections_)
+    ConnectionPtr conn2child;
+    for(unsigned int i=0;i<root->getChildConnectionsSize();i++)
     {
+      conn2child = root->childConnection(i);
       assert(conn2child->getParent() == start_tree_->getRoot());
 
       if(conn2child->getChild() != root_child_on_path)
@@ -337,7 +339,7 @@ bool AnytimeRRT::update(const Eigen::VectorXd& point, PathPtr &solution)
       {
         if(checker_->checkPath(new_node->getConfiguration(), tmp_goal_node_->getConfiguration()))
         {
-          assert(tmp_goal_node_->parent_connections_.empty());
+          assert(tmp_goal_node_->getParentConnectionsSize() == 0);
 
           start_tree_->removeNode(goal_node_);
           goal_node_ = tmp_goal_node_;

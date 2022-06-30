@@ -39,7 +39,7 @@ class Connection;
 class Node;
 typedef std::shared_ptr<Connection> ConnectionPtr;
 typedef std::shared_ptr<Node> NodePtr;
-typedef std::weak_ptr<Node> WeakNodePtr;
+typedef std::weak_ptr<Connection> ConnectionWeakPtr;
 
 Eigen::MatrixXd computeRotationMatrix(const Eigen::VectorXd& x1, const Eigen::VectorXd&  x2);
 

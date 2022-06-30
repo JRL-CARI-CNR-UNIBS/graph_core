@@ -33,6 +33,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
+typedef std::vector<ConnectionWeakPtr> WeakPtrVector;
+
 class Node: public std::enable_shared_from_this<Node>
 {
 protected:
@@ -40,11 +42,13 @@ protected:
   unsigned int ndof_;
   bool analyzed_;
   bool non_optimal_;
-public:
-  std::vector<ConnectionPtr> parent_connections_;
-  std::vector<ConnectionPtr> child_connections_;
-  std::vector<ConnectionPtr> net_parent_connections_;
-  std::vector<ConnectionPtr> net_child_connections_;
+
+  /* NB: Weak pointer to not create pointers cycles (=> memory leaks).
+   * Use getParentConnections() or parentConnection(int i) (and the other functions) to get the shared pointers*/
+  std::vector<ConnectionWeakPtr> child_connections_;
+  std::vector<ConnectionWeakPtr> parent_connections_;
+  std::vector<ConnectionWeakPtr> net_parent_connections_;
+  std::vector<ConnectionWeakPtr> net_child_connections_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -61,6 +65,14 @@ public:
   void addChildConnection(const ConnectionPtr& connection);
   void addNetParentConnection(const ConnectionPtr& connection);
   void addNetChildConnection(const ConnectionPtr& connection);
+  const int getParentConnectionsSize() const;
+  const int getNetParentConnectionsSize() const;
+  const int getChildConnectionsSize() const;
+  const int getNetChildConnectionsSize() const;
+  ConnectionPtr parentConnection(const int& i) const;
+  ConnectionPtr netParentConnection(const int& i) const;
+  ConnectionPtr childConnection(const int& i) const;
+  ConnectionPtr netChildConnection(const int& i) const;
   std::vector<NodePtr> getChildren() const;
   std::vector<NodePtr> getParents() const;
   std::vector<NodePtr> getNetParents() const;
@@ -69,6 +81,14 @@ public:
   const std::vector<NodePtr> getParentsConst() const;
   const std::vector<NodePtr> getNetParentsConst() const;
   const std::vector<NodePtr> getNetChildrenConst() const;
+  std::vector<ConnectionPtr> getParentConnections() const;
+  std::vector<ConnectionPtr> getNetParentConnections() const;
+  std::vector<ConnectionPtr> getChildConnections() const;
+  std::vector<ConnectionPtr> getNetChildConnections() const;
+  const std::vector<ConnectionPtr> getParentConnectionsConst() const;
+  const std::vector<ConnectionPtr> getNetParentConnectionsConst() const;
+  const std::vector<ConnectionPtr> getChildConnectionsConst() const;
+  const std::vector<ConnectionPtr> getNetChildConnectionsConst() const;
 
   void disconnect();
   void disconnectChildConnections();

@@ -455,7 +455,7 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const std::vector<NodePtr>
       if (!checker_->checkPath(n->getConfiguration(), node->getConfiguration()))
         continue;
 
-      node->parent_connections_.at(0)->remove();
+      node->parentConnection(0)->remove();
 
       ConnectionPtr conn = std::make_shared<Connection>(n, node);
       conn->setCost(cost_near_to_node);
@@ -490,7 +490,7 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const std::vector<NodePtr>
       if (!checker_->checkPath(node->getConfiguration(), n->getConfiguration()))
         continue;
 
-      n->parent_connections_.at(0)->remove();
+      n->parentConnection(0)->remove();
       ConnectionPtr conn = std::make_shared<Connection>(node, n);
       conn->setCost(cost_node_to_near);
       conn->add();
@@ -586,7 +586,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
       if(not checkPathToNode(n,checked_connections)) //validate connections to n
         continue;
 
-      node->parent_connections_.at(0)->remove();
+      node->parentConnection(0)->remove();
 
       ConnectionPtr conn = std::make_shared<Connection>(n, node);
       conn->setCost(cost_near_to_node);
@@ -643,7 +643,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
       if(not checker_->checkPath(node->getConfiguration(), n->getConfiguration()))
         continue;
 
-      n->parent_connections_.at(0)->remove();
+      n->parentConnection(0)->remove();
 
       ConnectionPtr conn = std::make_shared<Connection>(node, n);
       conn->setCost(cost_node_to_near);
@@ -696,7 +696,7 @@ bool Tree::rewireK(const Eigen::VectorXd &configuration)
       continue;
 
 
-    new_node->parent_connections_.at(0)->remove();
+    new_node->parentConnection(0)->remove();
 
     ConnectionPtr conn = std::make_shared<Connection>(node, new_node);
     conn->setCost(cost_near_to_new);
@@ -724,7 +724,7 @@ bool Tree::rewireK(const Eigen::VectorXd &configuration)
     if (!checker_->checkPath(new_node->getConfiguration(), n->getConfiguration()))
       continue;
 
-    n->parent_connections_.at(0)->remove();
+    n->parentConnection(0)->remove();
     ConnectionPtr conn = std::make_shared<Connection>(new_node, n);
     conn->setCost(cost_new_to_near);
     conn->add();
@@ -834,21 +834,21 @@ double Tree::costToNode(NodePtr node)
   double cost = 0;
   while (node != root_)
   {
-    if (node->parent_connections_.size() != 1)
+    if (node->getParentConnectionsSize() != 1)
     {
       ROS_ERROR_STREAM("a tree node should have exactly a parent. this node has 0: "<<*node);
       return std::numeric_limits<double>::infinity();
     }
 
-    if (node->parent_connections_.at(0)->getParent() == node)
+    if (node->parentConnection(0)->getParent() == node)
     {
       ROS_FATAL_STREAM("node "<< node.get() <<"=\n" << *node);
-      ROS_FATAL_STREAM("to parent\n" << * (node->parent_connections_.at(0)));
+      ROS_FATAL_STREAM("to parent\n" << * (node->parentConnection(0)));
       ROS_FATAL("connection between the same node");
       assert(0);
     }
-    cost += node->parent_connections_.at(0)->getCost();
-    node = node->parent_connections_.at(0)->getParent();
+    cost += node->parentConnection(0)->getCost();
+    node = node->parentConnection(0)->getParent();
   }
   return cost;
 }
@@ -860,11 +860,11 @@ std::vector<ConnectionPtr> Tree::getConnectionToNode(NodePtr node)
 
   while (tmp_node != root_)
   {
-    if (tmp_node->parent_connections_.size() != 1)
+    if (tmp_node->getParentConnectionsSize() != 1)
     {
       ROS_ERROR("a tree node should have only a parent");
       ROS_ERROR_STREAM("node \n" << *tmp_node);
-      ROS_INFO_STREAM("parent conns size: "<<tmp_node->parent_connections_.size()); //ELIMINA
+      ROS_INFO_STREAM("parent conns size: "<<tmp_node->getParentConnectionsSize()); //ELIMINA
 
       for(const NodePtr& p:tmp_node->getParents())
         ROS_INFO_STREAM("parent:\n"<<*p);
@@ -887,8 +887,8 @@ std::vector<ConnectionPtr> Tree::getConnectionToNode(NodePtr node)
       assert(0);
     }
 
-    connections.push_back(tmp_node->parent_connections_.at(0));
-    tmp_node = tmp_node->parent_connections_.at(0)->getParent();
+    connections.push_back(tmp_node->parentConnection(0));
+    tmp_node = tmp_node->parentConnection(0)->getParent();
   }
   std::reverse(connections.begin(), connections.end());
 
@@ -1104,7 +1104,7 @@ unsigned int Tree::purgeNodes(const SamplerPtr& sampler, const std::vector<NodeP
 
     if (nodes_to_remove < removed_nodes)
       break;
-    if (nodes_.at(idx)->child_connections_.size() == 0)
+    if (nodes_.at(idx)->getChildConnectionsSize() == 0)
     {
       removed_nodes++;
       nodes_.at(idx)->disconnect();
@@ -1244,9 +1244,11 @@ void Tree::populateTreeFromNodeConsideringCost(const NodePtr& node, const Eigen:
     cost_to_node += conn->getCost();
 
   NodePtr child;
+  ConnectionPtr conn;
   double cost_to_child;
-  for(const ConnectionPtr& conn:node->child_connections_)
+  for(unsigned int i=0; i<node->getChildConnectionsSize();i++)
   {
+    conn = node->childConnection(i);
     child = conn->getChild();
 
     std::vector<NodePtr>::const_iterator it = std::find(black_list.begin(), black_list.end(), child);
@@ -1414,17 +1416,21 @@ bool Tree::recheckCollision()
 }
 bool Tree::recheckCollisionFromNode(NodePtr& n)
 {
+  NodePtr child;
+  ConnectionPtr conn;
   std::vector<NodePtr> white_list;
   unsigned int removed_nodes;
-  for (ConnectionPtr conn: n->child_connections_)
+  for(unsigned int i=0; i<n->getChildConnectionsSize();i++)
   {
-    NodePtr n=conn->getChild();
+    conn = n->childConnection(i);
+    child=conn->getChild();
+
     if (not checker_->checkConnection(conn))
     {
-      purgeFromHere(n,white_list,removed_nodes);
+      purgeFromHere(child,white_list,removed_nodes);
       return false;
     }
-    if (not recheckCollisionFromNode(n))
+    if (not recheckCollisionFromNode(child))
       return false;
   }
   return true;
