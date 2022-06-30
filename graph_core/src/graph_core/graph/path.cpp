@@ -82,23 +82,27 @@ Path::Path(std::vector<NodePtr> nodes,
 
 PathPtr Path::clone()
 {
-  std::vector<NodePtr> nodes;
+  NodePtr parent, child;
   std::vector<ConnectionPtr> new_conn_vector;
   std::vector<Eigen::VectorXd> wp = getWaypoints();
-  nodes.push_back(std::make_shared<Node>(wp.at(0));
+
+  parent = std::make_shared<Node>(wp.at(0));
 
   for(unsigned int i = 1;i<wp.size();i++)
   {
-    nodes.push_back(std::make_shared<Node>(wp.at(i)));
+    child = std::make_shared<Node>(wp.at(i));
 
-    ConnectionPtr conn = std::make_shared<Connection>(nodes.at(i-1),nodes.at(i));
+    ConnectionPtr conn = std::make_shared<Connection>(parent,child);
     conn->setCost(connections_.at(i-1)->getCost());
     conn->add();
 
     new_conn_vector.push_back(conn);
+    parent = child;                   //NB: parent of connection i+1 must be the child (same object) of connection i
   }
 
   PathPtr new_path = std::make_shared<Path>(new_conn_vector,metrics_,checker_);
+
+  ROS_INFO_STREAM(*new_path);
 
   new_path->setChangeWarp(change_warp_);
   new_path->setTree(nullptr);  //nodes are cloned, so the cloned path does not belong to the original tree
@@ -415,12 +419,19 @@ std::vector<NodePtr> Path::getNodes()
   return nodes;
 }
 
-
 std::vector<Eigen::VectorXd> Path::getWaypoints()
 {
   std::vector<Eigen::VectorXd> wp;
   if (connections_.size() == 0)
     return wp;
+
+  //elimina
+  ROS_ERROR_STREAM("Connections size: "<<connections_.size());
+  ROS_INFO_STREAM(connections_.at(0)->getParent());
+  ROS_INFO_STREAM(connections_.at(0)->getChild());
+  ROS_INFO_STREAM(connections_.at(0)->getParent()->getConfiguration().transpose());
+  ROS_INFO_STREAM(connections_.at(0)->getChild()->getConfiguration().transpose());
+  //
 
   wp.push_back(connections_.at(0)->getParent()->getConfiguration());
   for (const ConnectionPtr& conn : connections_)
@@ -428,7 +439,6 @@ std::vector<Eigen::VectorXd> Path::getWaypoints()
 
   return wp;
 }
-
 
 ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration)
 {
@@ -1493,13 +1503,13 @@ std::ostream& operator<<(std::ostream& os, const Path& path)
   for(const ConnectionPtr& conn:path.connections_)
     os << *conn << std::endl;
 
-//  os << "waypoints= " << std::endl << "[";
+  //  os << "waypoints= " << std::endl << "[";
 
-//  for (const ConnectionPtr& conn : path.connections_)
-//  {
-//    os << conn->getParent()->getConfiguration().transpose() << ";" << std::endl;
-//  }
-//  os << path.connections_.back()->getChild()->getConfiguration().transpose() << "];" << std::endl;
+  //  for (const ConnectionPtr& conn : path.connections_)
+  //  {
+  //    os << conn->getParent()->getConfiguration().transpose() << ";" << std::endl;
+  //  }
+  //  os << path.connections_.back()->getChild()->getConfiguration().transpose() << "];" << std::endl;
 
   return os;
 }

@@ -33,8 +33,8 @@ namespace pathplan
 class Connection : public std::enable_shared_from_this<Connection>
 {
 protected:
-  NodePtr parent_;
-  NodePtr child_;
+  WeakNodePtr parent_;  //NB: Weak pointer to not create pointers cycle (=> memory leaks). Use getParent to get the shared pointer
+  WeakNodePtr child_;   //NB: Weak pointer to not create pointers cycle (=> memory leaks). Use getChild  to get the shared pointer
   double cost_;
   bool valid_ = false;
   double euclidean_norm_;
@@ -82,13 +82,15 @@ public:
   {
     return euclidean_norm_;
   }
-  const NodePtr& getParent() const
+  NodePtr getParent() const
   {
-    return parent_;
+    assert(not parent_.expired());
+    return parent_.lock();
   }
-  const NodePtr& getChild() const
+  NodePtr getChild() const
   {
-    return child_;
+    assert(not child_.expired());
+    return child_.lock();
   }
 
   void add();

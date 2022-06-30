@@ -40,7 +40,7 @@ Connection::Connection(const NodePtr& parent, const NodePtr& child, const bool i
 
 void Connection::add(const bool is_net)
 {
-  assert((is_net && child_->parent_connections_.size() == 1) || ((not is_net) && child_->parent_connections_.size() == 0));
+  assert((is_net && getChild()->parent_connections_.size() == 1) || ((not is_net) && getChild()->parent_connections_.size() == 0));
 
   is_net_ = is_net;
   add();
@@ -53,13 +53,13 @@ void Connection::add()
 
   if(is_net_)
   {
-    parent_->addNetChildConnection(pointer());
-    child_->addNetParentConnection(pointer());
+    getParent()->addNetChildConnection(pointer());
+    getChild()->addNetParentConnection(pointer());
   }
   else
   {
-    parent_->addChildConnection(pointer());
-    child_->addParentConnection(pointer());
+    getParent()->addChildConnection(pointer());
+    getChild()->addParentConnection(pointer());
   }
 }
 void Connection::remove()
@@ -71,22 +71,22 @@ void Connection::remove()
   }
 
   valid_ = false;
-  if (parent_)
+  if (not parent_.expired())
   {
     if(is_net_)
-      parent_->remoteNetChildConnection(pointer());
+      getParent()->remoteNetChildConnection(pointer());
     else
-      parent_->remoteChildConnection(pointer());
+      getParent()->remoteChildConnection(pointer());
   }
   else
     ROS_FATAL("parent already destroied");
 
-  if (child_)
+  if (not child_.expired())
   {
     if(is_net_)
-      child_->remoteNetParentConnection(pointer());
+      getChild()->remoteNetParentConnection(pointer());
     else
-      child_->remoteParentConnection(pointer());
+      getChild()->remoteParentConnection(pointer());
   }
   else
     ROS_FATAL("child already destroied");
@@ -100,9 +100,6 @@ void Connection::flip()
 }
 Connection::~Connection()
 {
-//  remove();
-//  parent_.reset();
-//  child_.reset();
 }
 
 bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)
@@ -114,7 +111,7 @@ bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)
     return false;
   }
   // v1 dot v2 = norm(v1)*norm(v2)*cos(angle)
-  double scalar= (child_->getConfiguration()-parent_->getConfiguration()).dot(
+  double scalar= (getChild()->getConfiguration()-getParent()->getConfiguration()).dot(
         conn->getChild()->getConfiguration()-conn->getParent()->getConfiguration());
 
   // v1 dot v2 = norm(v1)*norm(v2) if v1 // v2
@@ -157,13 +154,13 @@ std::ostream& operator<<(std::ostream& os, const Connection& connection)
 //  os << connection.parent_->getConfiguration().transpose() << " -->" << std::endl;
 //  os << "-->" << connection.child_->getConfiguration().transpose() << std::endl;
 
-  os << connection.parent_->getConfiguration().transpose()
+  os << connection.getParent()->getConfiguration().transpose()
      <<" ("
-     <<connection.parent_
+     <<connection.getParent()
      << ") --> "
-     << connection.child_->getConfiguration().transpose()
+     << connection.getChild()->getConfiguration().transpose()
      <<" ("
-     <<connection.child_
+     <<connection.getChild()
      << ")"
      << " | cost: " << connection.cost_
      << " | net: "<<connection.is_net_;
