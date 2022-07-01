@@ -29,8 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
-const double Tree::TOLERANCE = 1e-6;
-
 Tree::Tree(const NodePtr& root,
            const double &max_distance,
            const CollisionCheckerPtr &checker,

@@ -73,8 +73,6 @@ protected:
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  static const double TOLERANCE;
-
   Tree(const NodePtr& root,
        const double& max_distance,
        const CollisionCheckerPtr& checker,

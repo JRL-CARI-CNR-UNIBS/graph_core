@@ -28,7 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/graph/path.h>
 namespace pathplan
 {
-const double Path::TOLERANCE = Tree::TOLERANCE;
 
 Path::Path(std::vector<ConnectionPtr> connections,
            const MetricsPtr& metrics,
@@ -38,6 +37,9 @@ Path::Path(std::vector<ConnectionPtr> connections,
   checker_(checker)
 {
   assert(connections_.size() > 0);
+
+  start_node_ = connections_.front()->getParent();
+  goal_node_  = connections_.back ()->getChild ();
 
   cost_ = 0;
 
@@ -56,6 +58,9 @@ Path::Path(std::vector<NodePtr> nodes,
   checker_(checker)
 {
   assert(nodes.size() > 0);
+
+  start_node_ = nodes.front();
+  goal_node_  = nodes.back ();
 
   connections_.clear();
   cost_ = 0;
@@ -136,7 +141,7 @@ Eigen::VectorXd Path::pointOnCurvilinearAbscissa(const double& abscissa)
     euclidean_norm += conn->norm();
 
   }
-  return connections_.back()->getChild()->getConfiguration();
+  return goal_node_->getConfiguration();
 }
 
 double Path::curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf, int& idx)
@@ -465,7 +470,7 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
     distP = (parent-configuration).norm();
     distC = (configuration-child) .norm();
 
-    if(std::abs(dist-distP-distC)<Path::TOLERANCE)
+    if(std::abs(dist-distP-distC)<TOLERANCE)
     {
       conn = connections_.at(i);
       idx = i;
@@ -536,7 +541,7 @@ Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const Co
 
     distance = (point-projection).norm();
     assert(not std::isnan(distance));
-    assert((point-projection).dot(conn_vector)<Path::TOLERANCE);
+    assert((point-projection).dot(conn_vector)<TOLERANCE);
 
     ((s>=0.0) && (s<=conn_length))? (in_conn = true):
                                     (in_conn = false);
@@ -701,7 +706,7 @@ bool Path::removeNodes(const std::vector<NodePtr> &white_list)
 
 bool Path::removeNode(const NodePtr& node, const int& idx_conn, const std::vector<NodePtr> &white_list, ConnectionPtr& new_conn)
 {
-  if(node == connections_.front()->getParent() || node == connections_.back()->getChild())
+  if(node == start_node_ || node == goal_node_)
     return false;
 
   if(std::find(white_list.begin(),white_list.end(),node)<white_list.end())
@@ -759,7 +764,7 @@ bool Path::removeNode(const NodePtr& node, const std::vector<NodePtr> &white_lis
 
 bool Path::removeNode(const NodePtr& node, const std::vector<NodePtr> &white_list, ConnectionPtr& new_conn)
 {
-  if(node == connections_.front()->getParent() || node == connections_.back()->getChild())
+  if(node == start_node_ || node == goal_node_)
     return false;
 
   ConnectionPtr conn_parent_node,conn_node_child;
@@ -925,14 +930,14 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
 
     ROS_INFO_STREAM("dist from parent: "<<(parent->getConfiguration() - configuration).norm()); //elimina
     ROS_INFO_STREAM("dist from child: "<<(child ->getConfiguration() - configuration).norm()); //elimina
-    ROS_INFO_STREAM("PATH TOLL: "<<Path::TOLERANCE); //elimina
+    ROS_INFO_STREAM("PATH TOLL: "<<TOLERANCE); //elimina
 
-    if((parent->getConfiguration() - configuration).norm()<=Path::TOLERANCE)
+    if((parent->getConfiguration() - configuration).norm()<=TOLERANCE)
     {
       is_a_new_node = false;
       return parent;
     }
-    else if((child ->getConfiguration() - configuration).norm()<=Path::TOLERANCE)
+    else if((child ->getConfiguration() - configuration).norm()<=TOLERANCE)
     {
       is_a_new_node = false;
       return child;
@@ -1207,7 +1212,7 @@ PathPtr Path::getSubpathToNode(const NodePtr& node)
 
 PathPtr Path::getSubpathToNode(const Eigen::VectorXd& conf)
 {
-  if((conf-connections_.front()->getParent()->getConfiguration()).norm()<Path::TOLERANCE)
+  if((conf-start_node_->getConfiguration()).norm()<TOLERANCE)
   {
     ROS_ERROR("No subpath available, the node is equal to the first node of the path");
     ROS_INFO_STREAM("configuration: "<<conf.transpose());
@@ -1215,7 +1220,7 @@ PathPtr Path::getSubpathToNode(const Eigen::VectorXd& conf)
     throw std::invalid_argument("No subpath available, the node is equal to the first node of the path");
   }
 
-  if((conf-connections_.back()->getChild()->getConfiguration()).norm()<Path::TOLERANCE)
+  if((conf-goal_node_->getConfiguration()).norm()<TOLERANCE)
   {
     return this->pointer();
   }
@@ -1223,7 +1228,7 @@ PathPtr Path::getSubpathToNode(const Eigen::VectorXd& conf)
   PathPtr subpath;
   for(unsigned int idx=0; idx<connections_.size(); idx++)
   {
-    if((conf-connections_.at(idx)->getChild()->getConfiguration()).norm()<Path::TOLERANCE)
+    if((conf-connections_.at(idx)->getChild()->getConfiguration()).norm()<TOLERANCE)
     {
       std::vector<ConnectionPtr> conn;
       conn.assign(connections_.begin(), connections_.begin()+idx+1); // to save the idx connections
@@ -1247,14 +1252,14 @@ PathPtr Path::getSubpathFromNode(const NodePtr& node)
 
 PathPtr Path::getSubpathFromNode(const Eigen::VectorXd& conf)
 {
-  if((conf-connections_.back()->getChild()->getConfiguration()).norm()<Path::TOLERANCE)
+  if((conf-goal_node_->getConfiguration()).norm()<TOLERANCE)
   {
     ROS_ERROR("No subpath available, the node is equal to the last node of the path");
     ROS_INFO_STREAM("configuration: "<<conf.transpose());
     throw std::invalid_argument("No subpath available, the node is equal to the last node of the path");
   }
 
-  if((conf-connections_.front()->getParent()->getConfiguration()).norm()<Path::TOLERANCE)
+  if((conf-start_node_->getConfiguration()).norm()<TOLERANCE)
   {
     return this->pointer();
   }
@@ -1262,7 +1267,7 @@ PathPtr Path::getSubpathFromNode(const Eigen::VectorXd& conf)
   PathPtr subpath;
   for(unsigned int idx=0; idx<connections_.size(); idx++)
   {
-    if((conf-connections_.at(idx)->getChild()->getConfiguration()).norm()<Path::TOLERANCE)
+    if((conf-connections_.at(idx)->getChild()->getConfiguration()).norm()<TOLERANCE)
     {
       std::vector<ConnectionPtr> conn;
       conn.assign(connections_.begin()+idx+1, connections_.end());
@@ -1434,7 +1439,7 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_fro
     }
     else
     {
-      ROS_INFO_STREAM("Conf is equal to goal, no connection to validate from here. Conf: "<<conf.transpose()<<" goal: "<<connections_.back()->getChild()->getConfiguration().transpose());
+      ROS_INFO_STREAM("Conf is equal to goal, no connection to validate from here. Conf: "<<conf.transpose()<<" goal: "<<goal_node_->getConfiguration().transpose());
       validity = true;
       assert(0);
     }
@@ -1479,7 +1484,7 @@ XmlRpc::XmlRpcValue Path::toXmlRpcValue(bool reverse) const
   }
   else
   {
-    x[0]=connections_.back()->getChild()->toXmlRpcValue();
+    x[0]=goal_node_->toXmlRpcValue();
     for (size_t idx=0;idx<connections_.size();idx++)
       x[idx+1]=connections_.at(connections_.size()-idx-1)->getParent()->toXmlRpcValue();
   }
@@ -1492,6 +1497,9 @@ void Path::flip()
     conn->flip();
 
   std::reverse(connections_.begin(),connections_.end());
+
+  start_node_ = connections_.front()->getParent();
+  goal_node_  = connections_.back ()->getChild ();
 }
 
 std::ostream& operator<<(std::ostream& os, const Path& path)
@@ -1509,7 +1517,7 @@ std::ostream& operator<<(std::ostream& os, const Path& path)
   //  {
   //    os << conn->getParent()->getConfiguration().transpose() << ";" << std::endl;
   //  }
-  //  os << path.connections_.back()->getChild()->getConfiguration().transpose() << "];" << std::endl;
+  //  os << path.goal_node_->getConfiguration().transpose() << "];" << std::endl;
 
   return os;
 }

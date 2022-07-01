@@ -40,6 +40,9 @@ class Node;
 typedef std::shared_ptr<Connection> ConnectionPtr;
 typedef std::shared_ptr<Node> NodePtr;
 typedef std::weak_ptr<Connection> ConnectionWeakPtr;
+typedef std::weak_ptr<Node> NodeWeakPtr;
+
+static const double TOLERANCE = 1e-06;
 
 Eigen::MatrixXd computeRotationMatrix(const Eigen::VectorXd& x1, const Eigen::VectorXd&  x2);
 

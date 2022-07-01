@@ -40,6 +40,8 @@ typedef std::shared_ptr<Path> PathPtr;
 class Path: public std::enable_shared_from_this<Path>
 {
 protected:
+  NodePtr start_node_;
+  NodePtr goal_node_;
   std::vector<ConnectionPtr> connections_;
   MetricsPtr metrics_;
   CollisionCheckerPtr checker_;
@@ -59,8 +61,6 @@ protected:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  static const double TOLERANCE;
 
   Path(std::vector<ConnectionPtr> connections, const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
   Path(std::vector<NodePtr> nodes, const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
@@ -176,6 +176,9 @@ public:
     change_warp_.at(0) = false;
 
     connections_ = conn;
+
+    start_node_ = connections_.front()->getParent();
+    goal_node_  = connections_.back ()->getChild ();
   }
 
   PathPtr clone();
