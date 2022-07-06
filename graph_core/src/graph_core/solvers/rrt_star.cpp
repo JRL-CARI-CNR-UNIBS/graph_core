@@ -37,7 +37,6 @@ bool RRTStar::addStartTree(const TreePtr &start_tree, const double &max_time)
   return setProblem(max_time);
 }
 
-
 bool RRTStar::addGoal(const NodePtr &goal_node, const double &max_time)
 {
   solved_ = false;
@@ -59,11 +58,15 @@ bool RRTStar::config(const ros::NodeHandle& nh)
 
 bool RRTStar::update(PathPtr& solution)
 {
+  PATH_COMMENT("RRT*::update");
+
   return update(sampler_->sample(), solution);
 }
 
 bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 {
+  PATH_COMMENT("RRT*::update");
+
   if (!init_)
     return false;
   if (cost_ <= utopia_tolerance_ * best_utopia_)
@@ -96,6 +99,8 @@ bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 
 bool RRTStar::update(const NodePtr& n, PathPtr& solution)
 {
+  PATH_COMMENT("RRT*::update");
+
   if (!init_)
     return false;
   if (cost_ <= utopia_tolerance_ * best_utopia_)

@@ -88,7 +88,6 @@ bool TreeSolver::config(const ros::NodeHandle& nh)
 bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const double& max_time)
 {
   ros::WallTime tic = ros::WallTime::now();
-
   if(max_time <=0.0) return false;
 
   for (unsigned int iter = 0; iter < max_iter; iter++)
@@ -127,9 +126,7 @@ bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node
     return false;
   }
 
-  ros::WallTime toc = ros::WallTime::now();
-  //ROS_INFO_STREAM("time: "<<(toc-tic).toSec()<<" max_t: "<<max_time);
-
+  //ROS_INFO_STREAM("time: "<<(ros::WallTime::now()-tic).toSec()<<" max_t: "<<max_time);
   return true;
 }
 

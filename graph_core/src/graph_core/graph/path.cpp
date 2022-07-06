@@ -87,17 +87,19 @@ Path::Path(std::vector<NodePtr> nodes,
 
 PathPtr Path::clone()
 {
-  NodePtr parent, child;
+  ConnectionPtr conn;
+  NodePtr start, parent, child;  //start keep alive the first node (not pointed by any shared ptr)
   std::vector<ConnectionPtr> new_conn_vector;
-  std::vector<Eigen::VectorXd> wp = getWaypoints();
 
-  parent = std::make_shared<Node>(wp.at(0));
+  std::vector<Eigen::VectorXd> wp = getWaypoints();
+  start = std::make_shared<Node>(wp.at(0));
+  parent = start;
 
   for(unsigned int i = 1;i<wp.size();i++)
   {
     child = std::make_shared<Node>(wp.at(i));
 
-    ConnectionPtr conn = std::make_shared<Connection>(parent,child);
+    conn = std::make_shared<Connection>(parent,child);
     conn->setCost(connections_.at(i-1)->getCost());
     conn->add();
 
@@ -106,8 +108,6 @@ PathPtr Path::clone()
   }
 
   PathPtr new_path = std::make_shared<Path>(new_conn_vector,metrics_,checker_);
-
-  ROS_INFO_STREAM(*new_path);
 
   new_path->setChangeWarp(change_warp_);
   new_path->setTree(nullptr);  //nodes are cloned, so the cloned path does not belong to the original tree
@@ -233,8 +233,7 @@ double Path::getCostFromConf(const Eigen::VectorXd &conf)
     {
       if(this_conn->getCost() == std::numeric_limits<double>::infinity())
       {
-        ConnectionPtr conn = std::make_shared<Connection>(std::make_shared<Node>(conf),this_conn->getChild());
-        if(checker_->checkConnection(conn))
+        if(checker_->checkPath(conf,this_conn->getChild()->getConfiguration()))
           cost += metrics_->cost(conf,this_conn->getChild()->getConfiguration());
         else
           cost = std::numeric_limits<double>::infinity();
@@ -411,7 +410,7 @@ bool Path::resample(const double &distance)
 
 }
 
-std::vector<NodePtr> Path::getNodes()
+std::vector<NodePtr> Path::getNodes() const
 {
   std::vector<NodePtr> nodes;
   if (connections_.size() == 0)
@@ -424,25 +423,35 @@ std::vector<NodePtr> Path::getNodes()
   return nodes;
 }
 
-std::vector<Eigen::VectorXd> Path::getWaypoints()
+std::vector<Eigen::VectorXd> Path::getWaypoints() const
 {
   std::vector<Eigen::VectorXd> wp;
-  if (connections_.size() == 0)
+  if(connections_.empty())
     return wp;
-
-  //elimina
-  ROS_ERROR_STREAM("Connections size: "<<connections_.size());
-  ROS_INFO_STREAM(connections_.at(0)->getParent());
-  ROS_INFO_STREAM(connections_.at(0)->getChild());
-  ROS_INFO_STREAM(connections_.at(0)->getParent()->getConfiguration().transpose());
-  ROS_INFO_STREAM(connections_.at(0)->getChild()->getConfiguration().transpose());
-  //
 
   wp.push_back(connections_.at(0)->getParent()->getConfiguration());
   for (const ConnectionPtr& conn : connections_)
     wp.push_back(conn->getChild()->getConfiguration());
 
   return wp;
+}
+
+void Path::setConnections(const std::vector<ConnectionPtr>& conn)
+{
+  change_warp_.clear();
+  cost_ = 0;
+
+  for(const ConnectionPtr& connection : conn)
+  {
+    cost_ += connection->getCost();
+    change_warp_.push_back(true);
+  }
+  change_warp_.at(0) = false;
+
+  start_node_ = conn.front()->getParent();
+  goal_node_  = conn.back ()->getChild ();
+
+  connections_ = conn;
 }
 
 ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration)
@@ -909,12 +918,12 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
 {
   is_a_new_node = false;
 
-  if(rewire && !tree_)
-  {
-    ROS_ERROR("Tree not set, the new node can't be added to the path");
-    assert(0);
-    return nullptr;
-  }
+  //  if(rewire && !tree_)
+  //  {
+  //    ROS_ERROR("Tree not set, the new node can't be added to the path");
+  //    assert(0);
+  //    return nullptr;
+  //  }
 
   if(conn)
   {
@@ -927,10 +936,6 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
 
     NodePtr parent = conn->getParent();
     NodePtr child = conn->getChild();
-
-    ROS_INFO_STREAM("dist from parent: "<<(parent->getConfiguration() - configuration).norm()); //elimina
-    ROS_INFO_STREAM("dist from child: "<<(child ->getConfiguration() - configuration).norm()); //elimina
-    ROS_INFO_STREAM("PATH TOLL: "<<TOLERANCE); //elimina
 
     if((parent->getConfiguration() - configuration).norm()<=TOLERANCE)
     {
@@ -989,12 +994,10 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
         ConnectionPtr conn_parent = std::make_shared<Connection>(parent, actual_node,false);
         conn_parent->setCost(cost_parent);
         conn_parent->add();
-        //        conn_parent->setRecentlyChecked(conn->isRecentlyChecked());
 
         ConnectionPtr conn_child = std::make_shared<Connection>(actual_node,child,conn->isNet());
         conn_child->setCost(cost_child);
         conn_child->add();
-        //        conn_child->setRecentlyChecked(conn->isRecentlyChecked());
 
         unsigned int size_before = connections_.size();
         splitConnection(conn_parent,conn_child,it);
@@ -1092,10 +1095,12 @@ PathPtr Path::getSubpathToConf(const Eigen::VectorXd& conf, const bool get_copy)
     node = addNodeAtCurrentConfig(conf,conn,false);
 
     NodePtr parent;
+    PathPtr path_to_parent;
     std::vector<ConnectionPtr> connections_to_parent;
     if(idx_conn > 0)
     {
-      connections_to_parent = ((getSubpathToNode(conn->getParent()))->clone())->getConnections();
+      path_to_parent = (getSubpathToNode(conn->getParent()))->clone();
+      connections_to_parent = path_to_parent->getConnections();
       parent = connections_to_parent.back()->getChild();
     }
     else
@@ -1168,10 +1173,12 @@ PathPtr Path::getSubpathFromConf(const Eigen::VectorXd& conf, const bool get_cop
     node = addNodeAtCurrentConfig(conf,conn,false);
 
     NodePtr child;
+    PathPtr path_from_child;
     std::vector<ConnectionPtr> connections_from_child;
     if(idx_conn < connections_.size()-1)
     {
-      connections_from_child = (getSubpathFromNode(conn->getChild())->clone())->getConnections();
+      path_from_child = getSubpathFromNode(conn->getChild())->clone();
+      connections_from_child = path_from_child->getConnections();
       child = connections_from_child.front()->getParent();
     }
     else
@@ -1493,10 +1500,10 @@ XmlRpc::XmlRpcValue Path::toXmlRpcValue(bool reverse) const
 
 void Path::flip()
 {
+  std::reverse(connections_.begin(),connections_.end()); //must be before connections flip
+
   for (ConnectionPtr conn: connections_)
     conn->flip();
-
-  std::reverse(connections_.begin(),connections_.end());
 
   start_node_ = connections_.front()->getParent();
   goal_node_  = connections_.back ()->getChild ();

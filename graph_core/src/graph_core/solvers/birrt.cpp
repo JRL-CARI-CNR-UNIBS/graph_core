@@ -46,7 +46,7 @@ bool BiRRT::addGoal(const NodePtr &goal_node, const double &max_time)
 
 bool BiRRT::update(PathPtr &solution)
 {
-  PATH_COMMENT("Birrt::update");
+  PATH_COMMENT("RRTConnect::update");
   if (solved_)
   {
     PATH_COMMENT("alreay found a solution");
@@ -76,9 +76,15 @@ bool BiRRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
     return true;
   }
 
-
+  double distance;
   NodePtr new_start_node, new_goal_node;
-  bool add_to_start, add_to_goal;
+  bool add_to_start, add_to_goal, tree_connected;
+
+  //  add_to_start = extend_? start_tree_->extend(configuration, new_start_node):
+  //                          start_tree_->connect(configuration, new_start_node);
+
+  //  add_to_goal = extend_? goal_tree_->extend(configuration, new_goal_node):
+  //                         goal_tree_->connect(configuration, new_goal_node);
 
   add_to_start = extend_? start_tree_->extend(configuration, new_start_node):
                           start_tree_->connect(configuration, new_start_node);
@@ -86,9 +92,16 @@ bool BiRRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
   add_to_goal = extend_? goal_tree_->extend(configuration, new_goal_node):
                          goal_tree_->connect(configuration, new_goal_node);
 
-
-  if (add_to_start && add_to_goal) // a solution is found
+  if(add_to_start && add_to_goal)
   {
+    distance = (new_start_node->getConfiguration()-new_goal_node->getConfiguration()).norm();
+    tree_connected = (distance<TOLERANCE);
+    PATH_COMMENT("Distance between node added to start tree and node added to goal tree: %f (tolerance %f)",distance,TOLERANCE);
+  }
+
+  if (tree_connected) // a solution is found
+  {
+    PATH_COMMENT("Trees connected");
 
     NodePtr parent=new_goal_node->getParents().at(0);
     double cost_to_parent=new_goal_node->parentConnection(0)->getCost();
@@ -133,17 +146,32 @@ bool BiRRT::update(const NodePtr& n, PathPtr& solution)
     return true;
   }
 
+  double distance;
   NodePtr new_start_node, new_goal_node;
-  bool add_to_start, add_to_goal;
+  bool add_to_start, add_to_goal, tree_connected;
 
-  add_to_start = extend_? start_tree_->extendToNode(n, new_start_node):
-                          start_tree_->connectToNode(n, new_start_node);
+//  add_to_start = extend_? start_tree_->extendToNode(n, new_start_node):
+//                          start_tree_->connectToNode(n, new_start_node);
 
-  add_to_goal = extend_? goal_tree_->extend(n->getConfiguration(), new_goal_node):
-                         goal_tree_->connect(n->getConfiguration(), new_goal_node);
+//  add_to_goal = extend_? goal_tree_->extend(n->getConfiguration(), new_goal_node):  //CHIEDI
+//                         goal_tree_->connect(n->getConfiguration(), new_goal_node);
 
-  if (add_to_start && add_to_goal) // a solution is found
+    add_to_start = extend_? start_tree_->extendToNode(n, new_start_node):
+                            start_tree_->connectToNode(n, new_start_node);
+
+    add_to_goal = extend_? goal_tree_->extendToNode(n, new_goal_node):
+                           goal_tree_->connectToNode(n, new_goal_node);
+
+  if(add_to_start && add_to_goal)
   {
+    distance = (new_start_node->getConfiguration()-new_goal_node->getConfiguration()).norm();
+    tree_connected = (distance<TOLERANCE);
+    PATH_COMMENT("Distance between node added to start tree and node added to goal tree: %f (tolerance %f)",distance,TOLERANCE);
+  }
+
+  if (tree_connected) // a solution is found
+  {
+    PATH_COMMENT("Trees connected");
 
     NodePtr parent=new_goal_node->getParents().at(0);
     double cost_to_parent=new_goal_node->parentConnection(0)->getCost();

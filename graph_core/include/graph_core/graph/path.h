@@ -76,7 +76,7 @@ public:
     return shared_from_this();
   }
 
-  //It creates a node corresponding to the configuration and creates the correct connections inside the current_path_
+  //Add node to the path
   NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr &conn, const bool &rewire, bool& is_a_new_node);
   NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr &conn, const bool &rewire);
   NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, const bool& rewire);
@@ -113,8 +113,18 @@ public:
   double getCostFromConf(const Eigen::VectorXd& conf);
   double getNormFromConf(const Eigen::VectorXd& conf);
 
-  std::vector<NodePtr> getNodes();
-  std::vector<Eigen::VectorXd> getWaypoints();
+  std::vector<NodePtr> getNodes() const;
+  std::vector<Eigen::VectorXd> getWaypoints() const;
+
+  NodePtr getStartNode() const
+  {
+    return start_node_;
+  }
+
+  NodePtr getGoalNode() const
+  {
+    return goal_node_;
+  }
 
   std::vector<bool> getChangeWarp()
   {
@@ -163,25 +173,8 @@ public:
     return connections_;
   }
 
-  void setConnections(const std::vector<ConnectionPtr>& conn)
-  {
-    change_warp_.clear();
-    cost_ = 0;
-
-    for(const ConnectionPtr& connection : conn)
-    {
-      cost_ += connection->getCost();
-      change_warp_.push_back(true);
-    }
-    change_warp_.at(0) = false;
-
-    connections_ = conn;
-
-    start_node_ = connections_.front()->getParent();
-    goal_node_  = connections_.back ()->getChild ();
-  }
-
   PathPtr clone();
+  void setConnections(const std::vector<ConnectionPtr>& conn);
   bool splitConnection(const ConnectionPtr& conn1, const ConnectionPtr& conn2, const std::vector<ConnectionPtr>::iterator &it);
   bool splitConnection(const ConnectionPtr& conn1, const ConnectionPtr& conn2, const ConnectionPtr& conn);
   bool restoreConnection(const ConnectionPtr& conn, const NodePtr& node2remove);

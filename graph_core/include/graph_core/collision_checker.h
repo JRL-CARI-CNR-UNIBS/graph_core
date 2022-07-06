@@ -208,6 +208,4 @@ public:
     return configuration.cwiseAbs().maxCoeff() > 1;
   }
 };
-
-
 }

@@ -122,9 +122,8 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     NodePtr tmp_goal_node  = std::make_shared<Node>(goal_node->getConfiguration());
     improved = AnytimeRRT::improve(tmp_start_node,tmp_goal_node,solution,max_iter,(max_time-time));
 
-    improved?
-          (n_failed_iter = 0):
-          (n_failed_iter++);
+    improved? (n_failed_iter = 0):
+              (n_failed_iter++);
 
     assert(not (improved) or start_tree_==new_tree_);
 
@@ -262,7 +261,7 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
 
   for (unsigned int iter = 0; iter < max_iter; iter++)
   {
-    if(AnytimeRRT::update(solution))
+    if(AnytimeRRT::improveUpdate(solution))
     {
       PATH_COMMENT_STREAM("Improved path cost: "<<path_cost_);
 
@@ -296,11 +295,11 @@ void AnytimeRRT::resetProblem()
   RRT::resetProblem();
 }
 
-bool AnytimeRRT::update(PathPtr &solution)
+bool AnytimeRRT::improveUpdate(PathPtr &solution)
 {
-  PATH_COMMENT("AnytimeRRT::update");
+  PATH_COMMENT("AnytimeRRT::improveUpdate");
 
-  if (completed_)
+  if(completed_)
   {
     PATH_COMMENT("already found the best solution");
     solution = solution_;
@@ -310,12 +309,12 @@ bool AnytimeRRT::update(PathPtr &solution)
   if (improve_sampler_->collapse())
     return false;
 
-  return AnytimeRRT::update(improve_sampler_->sample(), solution);
+  return AnytimeRRT::improveUpdate(improve_sampler_->sample(), solution);
 }
 
-bool AnytimeRRT::update(const Eigen::VectorXd& point, PathPtr &solution)
+bool AnytimeRRT::improveUpdate(const Eigen::VectorXd& point, PathPtr &solution)
 {
-  PATH_COMMENT("AnytimeRRT::update");
+  PATH_COMMENT("AnytimeRRT::improveUpdate");
 
   if (completed_)
   {
@@ -332,6 +331,7 @@ bool AnytimeRRT::update(const Eigen::VectorXd& point, PathPtr &solution)
       std::vector<ConnectionPtr> conn2node = new_tree_->getConnectionToNode(new_node);
       double cost_node2goal = metrics_->cost(new_node, tmp_goal_node_);
       double new_solution_cost = cost_node2goal;
+
       for(const ConnectionPtr& conn: conn2node)
         new_solution_cost += conn->getCost();
 
@@ -372,7 +372,7 @@ bool AnytimeRRT::update(const Eigen::VectorXd& point, PathPtr &solution)
 
 bool AnytimeRRT::update(const NodePtr& n, PathPtr &solution)
 {
-  PATH_COMMENT("Update to node not yet available");
+  ROS_FATAL("Update to node not yet available");
   return false;
 }
 

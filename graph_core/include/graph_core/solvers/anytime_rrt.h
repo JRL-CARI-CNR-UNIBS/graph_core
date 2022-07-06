@@ -132,9 +132,9 @@ public:
                      const double &max_time = std::numeric_limits<double>::infinity()) override;
   virtual bool config(const ros::NodeHandle& nh) override;
   virtual void resetProblem() override;
-  virtual bool update(const Eigen::VectorXd& point, PathPtr& solution) override;
+  virtual bool improveUpdate(const Eigen::VectorXd& point, PathPtr& solution);
+  virtual bool improveUpdate(PathPtr& solution);
   virtual bool update(const NodePtr& n, PathPtr& solution) override;
-  virtual bool update(PathPtr& solution) override;
   virtual TreeSolverPtr clone(const MetricsPtr& metrics,
                               const CollisionCheckerPtr& checker,
                               const SamplerPtr& sampler) override;

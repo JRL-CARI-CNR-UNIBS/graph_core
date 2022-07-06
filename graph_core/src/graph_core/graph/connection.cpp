@@ -71,22 +71,22 @@ void Connection::remove()
   }
 
   valid_ = false;
-  if (parent_)
+  if(not (parent_.expired()))
   {
     if(is_net_)
-      getParent()->remoteNetChildConnection(pointer());
+      getParent()->removeNetChildConnection(pointer());
     else
-      getParent()->remoteChildConnection(pointer());
+      getParent()->removeChildConnection(pointer());
   }
   else
     ROS_FATAL("parent already destroied");
 
-  if (child_)
+  if(child_)
   {
     if(is_net_)
-      getChild()->remoteNetParentConnection(pointer());
+      getChild()->removeNetParentConnection(pointer());
     else
-      getChild()->remoteParentConnection(pointer());
+      getChild()->removeParentConnection(pointer());
   }
   else
     ROS_FATAL("child already destroied");
@@ -95,7 +95,9 @@ void Connection::remove()
 void Connection::flip()
 {
   remove(); // remove connection from parent and child
-  parent_.swap(child_);
+  NodePtr tmp = child_;
+  child_ = parent_.lock();
+  parent_ = tmp;
   add();   // add new connection from new parent and child
 }
 Connection::~Connection()
@@ -153,6 +155,9 @@ std::ostream& operator<<(std::ostream& os, const Connection& connection)
 {
 //  os << connection.parent_->getConfiguration().transpose() << " -->" << std::endl;
 //  os << "-->" << connection.child_->getConfiguration().transpose() << std::endl;
+
+  assert(connection.getParent() != nullptr);
+  assert(connection.getChild() != nullptr);
 
   os << connection.getParent()->getConfiguration().transpose()
      <<" ("

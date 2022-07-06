@@ -143,18 +143,15 @@ double Tree::selectNextConfiguration(const Eigen::VectorXd& configuration,
 
 bool Tree::extendOnly(NodePtr& closest_node, NodePtr &new_node, ConnectionPtr &connection)
 {
-  ConnectionPtr conn;
   double cost = metrics_->cost(closest_node, new_node);
-  conn = std::make_shared<Connection>(closest_node, new_node);
-  conn->add();
-  conn->setCost(cost);
+  connection = std::make_shared<Connection>(closest_node, new_node);
+  connection->add();
+  connection->setCost(cost);
 
-  connection = conn;
   addNode(new_node,false);
 
   return true;
 }
-
 
 bool Tree::extend(const Eigen::VectorXd &configuration, NodePtr &new_node)
 {
@@ -263,7 +260,7 @@ bool Tree::informedExtend(const Eigen::VectorXd &configuration, NodePtr &new_nod
   };
 
   std::map<double,NodePtr> closest_nodes_map = nearK(configuration);
-  if(closest_nodes_map.size() == 0) assert(0);
+  assert(closest_nodes_map.size()>0);
 
   double heuristic, distance, cost2node;
   Eigen::VectorXd new_configuration;

@@ -33,7 +33,7 @@ namespace pathplan
 class Connection : public std::enable_shared_from_this<Connection>
 {
 protected:
-  NodePtr parent_;
+  NodeWeakPtr parent_;
   NodePtr child_;
   double cost_;
   bool valid_ = false;
@@ -84,7 +84,8 @@ public:
   }
   NodePtr getParent() const
   {
-    return parent_;
+    assert(not parent_.expired());
+    return parent_.lock();
   }
   NodePtr getChild() const
   {
@@ -100,11 +101,9 @@ public:
   void changeConnectionType();
   bool isParallel(const ConnectionPtr& conn, const double& toll = 1e-06);
 
-  friend std::ostream& operator<<(std::ostream& os, const Connection& connection);
   ~Connection();
+  friend std::ostream& operator<<(std::ostream& os, const Connection& connection);
 };
-
-
 
 std::ostream& operator<<(std::ostream& os, const Connection& connection);
 

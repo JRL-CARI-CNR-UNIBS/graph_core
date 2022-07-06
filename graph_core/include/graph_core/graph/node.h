@@ -43,12 +43,11 @@ protected:
   bool analyzed_;
   bool non_optimal_;
 
-  /* NB: Weak pointer to not create pointers cycles (=> memory leaks).
-   * Use getParentConnections() or parentConnection(int i) (and the other functions) to get the shared pointers*/
-  std::vector<ConnectionWeakPtr> child_connections_;
-  std::vector<ConnectionWeakPtr> parent_connections_;
-  std::vector<ConnectionWeakPtr> net_parent_connections_;
-  std::vector<ConnectionWeakPtr> net_child_connections_;
+  std::vector<ConnectionWeakPtr> parent_connections_;     //Weak ptr to avoid pointers cycles
+  std::vector<ConnectionWeakPtr> net_parent_connections_; //Weak ptr to avoid pointers cycles
+
+  std::vector<ConnectionPtr> child_connections_;
+  std::vector<ConnectionPtr> net_child_connections_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -95,10 +94,10 @@ public:
   void disconnectParentConnections();
   void disconnectNetParentConnections();
   void disconnectNetChildConnections();
-  void remoteParentConnection(const ConnectionPtr& connection);
-  void remoteChildConnection(const ConnectionPtr& connection);
-  void remoteNetParentConnection(const ConnectionPtr& connection);
-  void remoteNetChildConnection(const ConnectionPtr& connection);
+  void removeParentConnection(const ConnectionPtr& connection);
+  void removeChildConnection(const ConnectionPtr& connection);
+  void removeNetParentConnection(const ConnectionPtr& connection);
+  void removeNetChildConnection(const ConnectionPtr& connection);
   bool switchParentConnection(const ConnectionPtr& net_connection);
 
   const Eigen::VectorXd& getConfiguration()
@@ -106,7 +105,6 @@ public:
     return configuration_;
   }
   ~Node();
-
 
   XmlRpc::XmlRpcValue toXmlRpcValue() const;
   friend std::ostream& operator<<(std::ostream& os, const Node& path);

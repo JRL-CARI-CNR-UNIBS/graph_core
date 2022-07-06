@@ -67,7 +67,6 @@ void Node::addChildConnection(const ConnectionPtr &connection)
 {
   assert(connection->getParent() == pointer());
   child_connections_.push_back(connection);
-  assert(child_connections_.back().lock() == connection);
 }
 
 void Node::addNetParentConnection(const ConnectionPtr &connection)
@@ -81,10 +80,9 @@ void Node::addNetChildConnection(const ConnectionPtr &connection)
 {
   assert(connection->getParent() == pointer());
   net_child_connections_.push_back(connection);
-  assert(net_child_connections_.back().lock() == connection);
 }
 
-void Node::remoteParentConnection(const ConnectionPtr &connection)
+void Node::removeParentConnection(const ConnectionPtr &connection)
 {
   std::vector<ConnectionWeakPtr>::iterator it =
       std::find_if(parent_connections_.begin(), parent_connections_.end(),
@@ -101,7 +99,7 @@ void Node::remoteParentConnection(const ConnectionPtr &connection)
   }
 }
 
-void Node::remoteNetParentConnection(const ConnectionPtr &connection)
+void Node::removeNetParentConnection(const ConnectionPtr &connection)
 {
   std::vector<ConnectionWeakPtr>::iterator it =
       std::find_if(net_parent_connections_.begin(), net_parent_connections_.end(),
@@ -117,11 +115,9 @@ void Node::remoteNetParentConnection(const ConnectionPtr &connection)
   }
 }
 
-void Node::remoteChildConnection(const ConnectionPtr &connection)
+void Node::removeChildConnection(const ConnectionPtr &connection)
 {
-  std::vector<ConnectionWeakPtr>::iterator it =
-      std::find_if(child_connections_.begin(), child_connections_.end(),
-                   [&connection](const ConnectionWeakPtr& conn){return connection == conn.lock();});
+  std::vector<ConnectionPtr>::iterator it = std::find(child_connections_.begin(),child_connections_.end(),connection);
 
   if (it == child_connections_.end())
   {
@@ -134,11 +130,9 @@ void Node::remoteChildConnection(const ConnectionPtr &connection)
   }
 }
 
-void Node::remoteNetChildConnection(const ConnectionPtr &connection)
+void Node::removeNetChildConnection(const ConnectionPtr &connection)
 {
-  std::vector<ConnectionWeakPtr>::iterator it =
-      std::find_if(net_child_connections_.begin(), net_child_connections_.end(),
-                   [&connection](const ConnectionWeakPtr& conn){return connection == conn.lock();});
+  std::vector<ConnectionPtr>::iterator it = std::find(net_child_connections_.begin(),net_child_connections_.end(),connection);
 
   if (it == net_child_connections_.end())
   {
@@ -167,7 +161,7 @@ void Node::disconnectParentConnections()
     conn = parent_connections_[i].lock();
     if(conn)
       if (conn->getParent())
-        conn->getParent()->remoteChildConnection(conn);
+        conn->getParent()->removeChildConnection(conn);
   }
   parent_connections_.clear();
 }
@@ -180,33 +174,29 @@ void Node::disconnectNetParentConnections()
     conn = net_parent_connections_[i].lock();
     if (conn)
       if (conn->getParent())
-        conn->getParent()->remoteNetChildConnection(conn);
+        conn->getParent()->removeNetChildConnection(conn);
   }
   net_parent_connections_.clear();
 }
 
 void Node::disconnectChildConnections()
 {
-  ConnectionPtr conn;
-  for (unsigned int i=0;i<child_connections_.size();i++)
+  for(const ConnectionPtr& conn:child_connections_)
   {
-    conn = child_connections_[i].lock();
     if (conn)
       if (conn->getChild())
-        conn->getChild()->remoteParentConnection(conn);
+        conn->getChild()->removeParentConnection(conn);
   }
   child_connections_.clear();
 }
 
 void Node::disconnectNetChildConnections()
 {
-  ConnectionPtr conn;
-  for (unsigned int i=0;i<net_child_connections_.size();i++)
+  for(const ConnectionPtr& conn:net_child_connections_)
   {
-    conn = net_child_connections_[i].lock();
     if (conn)
       if (conn->getChild())
-        conn->getChild()->remoteNetParentConnection(conn);
+        conn->getChild()->removeNetParentConnection(conn);
   }
   net_child_connections_.clear();
 }
@@ -278,12 +268,12 @@ ConnectionPtr Node::netParentConnection(const int& i) const
 
 ConnectionPtr Node::childConnection(const int& i) const
 {
-  return child_connections_.at(i).lock();
+  return child_connections_.at(i);
 }
 
 ConnectionPtr Node::netChildConnection(const int& i) const
 {
-  return net_child_connections_.at(i).lock();
+  return net_child_connections_.at(i);
 }
 
 std::vector<ConnectionPtr> Node::getParentConnections() const
@@ -308,22 +298,12 @@ std::vector<ConnectionPtr> Node::getNetParentConnections() const
 
 std::vector<ConnectionPtr> Node::getChildConnections() const
 {
-  std::vector<ConnectionPtr> v(child_connections_.size());
-
-  //transform into a shared_ptr vector
-  std::transform(child_connections_.begin(),child_connections_.end(),v.begin(),
-                 [](const ConnectionWeakPtr& weakPtr){return weakPtr.lock();});
-  return v;
+  return child_connections_;
 }
 
 std::vector<ConnectionPtr> Node::getNetChildConnections() const
 {
-  std::vector<ConnectionPtr> v(net_child_connections_.size());
-
-  //transform into a shared_ptr vector
-  std::transform(net_child_connections_.begin(),net_child_connections_.end(),v.begin(),
-                 [](const ConnectionWeakPtr& weakPtr){return weakPtr.lock();});
-  return v;
+  return net_child_connections_;
 }
 
 const std::vector<ConnectionPtr> Node::getParentConnectionsConst() const
@@ -352,10 +332,8 @@ std::vector<NodePtr> Node::getChildren() const
   if (child_connections_.size()==0)
     return children;
 
-  ConnectionPtr conn;
-  for(unsigned int i=0; i<child_connections_.size();i++)
+  for(const ConnectionPtr& conn:child_connections_)
   {
-    conn = child_connections_[i].lock();
     assert(conn);
     children.push_back(conn->getChild());
   }
@@ -373,10 +351,8 @@ std::vector<NodePtr> Node::getNetChildren() const
   if (net_child_connections_.size()==0)
     return children;
 
-  ConnectionPtr conn;
-  for(unsigned int i=0; i<net_child_connections_.size();i++)
+  for(const ConnectionPtr& conn:net_child_connections_)
   {
-    conn = net_child_connections_[i].lock();
     assert(conn);
     children.push_back(conn->getChild());
   }
