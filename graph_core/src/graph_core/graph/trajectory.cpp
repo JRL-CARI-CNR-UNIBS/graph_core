@@ -192,7 +192,7 @@ moveit::core::RobotState Trajectory::fromWaypoints2State(Eigen::VectorXd waypoin
 
 robot_trajectory::RobotTrajectoryPtr Trajectory::fromPath2Trj()
 {
-  if(path_ == NULL)
+  if(path_ == nullptr)
   {
     throw std::invalid_argument("Path not assigned");
   }
@@ -217,7 +217,7 @@ robot_trajectory::RobotTrajectoryPtr Trajectory::fromPath2Trj()
 
 robot_trajectory::RobotTrajectoryPtr Trajectory::fromPath2Trj(const trajectory_msgs::JointTrajectoryPoint& pnt)
 {
-  if(path_ == NULL)
+  if(path_ == nullptr)
   {
     throw std::invalid_argument("Path not assigned");
   }

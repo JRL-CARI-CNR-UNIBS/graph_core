@@ -458,7 +458,7 @@ void Path::setConnections(const std::vector<ConnectionPtr>& conn)
     if(child)
     {
       if(child != connection->getParent())
-        throw std::invalid_argument("parent of a connection is different from the child of the previous connection!");
+        throw std::runtime_error("parent of a connection is different from the child of the previous connection!");
 
       child = connection->getChild();
     }
@@ -1040,7 +1040,7 @@ NodePtr Path::findCloserNode(const Eigen::VectorXd& configuration, double &dist)
   if(connections_.size()<1)
   {
     ROS_ERROR("No connections");
-    throw std::invalid_argument("No connections");
+    throw std::runtime_error("No connections");
   }
 
   NodePtr closest_node=connections_.at(0)->getParent();
