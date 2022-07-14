@@ -162,6 +162,8 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
 
 std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes)
 {
+  //Depth-first search
+
   std::multimap<double,std::vector<ConnectionPtr>> map;
   std::pair<double,std::vector<ConnectionPtr>> pair;
   NodePtr parent;
@@ -179,6 +181,7 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
       ROS_INFO_STREAM("goal node "<<goal_node->getConfiguration().transpose()<<" "<<goal_node);
       ROS_INFO_STREAM("start node "<<start_node->getConfiguration().transpose()<<" "<<start_node);
 
+      if(goal_node->getNetChildConnectionsSize()>0);
       ROS_INFO_STREAM("the child "<<*goal_node->netChildConnection(0)->getChild()<<" "<<goal_node->netChildConnection(0)->getChild());
 
       int count = 0;
@@ -191,6 +194,8 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
         }
       }
       ROS_INFO_STREAM("EQUAL NODES "<<count);
+
+      ROS_INFO_STREAM("in tree: "<<linked_tree_->isInTree(goal_node));
 
       assert(0);
     }
@@ -210,6 +215,9 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
 
         pair.first = conn_parent_goal->getCost();
         pair.second = from_start_to_node;
+
+        if(verbose_)
+          ROS_INFO_STREAM("New conn inserted: "<<conn_parent_goal<<" "<<*conn_parent_goal<<" cost up to now: "<<pair.first);
 
         map.insert(pair);
       }
@@ -241,6 +249,9 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
 
               pair.first = parent_pair.first + conn_parent_goal->getCost();
               pair.second = from_start_to_parent;
+
+              if(verbose_)
+                ROS_INFO_STREAM("New conn inserted: "<<conn_parent_goal<<" "<<*conn_parent_goal<<" cost up to now: "<<pair.first);
 
               map.insert(pair);
             }

@@ -76,6 +76,8 @@ Path::Path(std::vector<NodePtr> nodes,
     conn->setCost(cost);
     conn->add();
 
+    assert(child->getParentConnectionsSize() == 1);
+
     connections_.push_back(conn);
 
     cost_ += cost;
@@ -102,6 +104,8 @@ PathPtr Path::clone()
     conn = std::make_shared<Connection>(parent,child);
     conn->setCost(connections_.at(i-1)->getCost());
     conn->add();
+
+    assert(child->getParentConnectionsSize() == 1);
 
     new_conn_vector.push_back(conn);
     parent = child;                   //NB: parent of connection i+1 must be the child (same object) of connection i
@@ -346,6 +350,9 @@ bool Path::bisection(const unsigned int &connection_idx,
     conn12->add();
     conn23->add();
 
+    assert(child->getParentConnectionsSize() == 1);
+    assert(conn23->getChild()->getParentConnectionsSize() == 1);
+
     if (tree_)
       tree_->addNode(n, false);
   }
@@ -441,10 +448,20 @@ void Path::setConnections(const std::vector<ConnectionPtr>& conn)
   change_warp_.clear();
   cost_ = 0;
 
+  NodePtr child = nullptr;
+
   for(const ConnectionPtr& connection : conn)
   {
     cost_ += connection->getCost();
     change_warp_.push_back(true);
+
+    if(child)
+    {
+      if(child != connection->getParent())
+        throw std::invalid_argument("parent of a connection is different from the child of the previous connection!");
+
+      child = connection->getChild();
+    }
   }
   change_warp_.at(0) = false;
 
@@ -745,6 +762,8 @@ bool Path::removeNode(const NodePtr& node, const int& idx_conn, const std::vecto
 
     node->disconnect();
 
+    assert(new_conn->getChild()->getParentConnectionsSize() == 1);
+
     if(tree_)
       tree_->removeNode(node);
 
@@ -986,8 +1005,6 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
           cost_child  = conn->getCost() - cost_parent;
         }
 
-        conn->remove();
-
         if(tree_)
           tree_->addNode(actual_node);
 
@@ -999,10 +1016,14 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
         conn_child->setCost(cost_child);
         conn_child->add();
 
+        conn->remove();
+
+        assert(actual_node->getParentConnectionsSize() == 1);
+        assert(child      ->getParentConnectionsSize() == 1);
+
         unsigned int size_before = connections_.size();
         splitConnection(conn_parent,conn_child,it);
         assert(connections_.size() == (size_before+1));
-
       }
       return actual_node;
     }
@@ -1121,6 +1142,8 @@ PathPtr Path::getSubpathToConf(const Eigen::VectorXd& conf, const bool get_copy)
     conn_parent->setCost(cost);
     conn_parent->add();
 
+    assert(node->getParentConnectionsSize() == 1);
+
     std::vector<ConnectionPtr> connections_vector;
     if(not connections_to_parent.empty())
       connections_vector = connections_to_parent;
@@ -1199,6 +1222,8 @@ PathPtr Path::getSubpathFromConf(const Eigen::VectorXd& conf, const bool get_cop
     ConnectionPtr conn_child = std::make_shared<Connection>(node,child,is_net);
     conn_child->setCost(cost);
     conn_child->add();
+
+    assert(child->getParentConnectionsSize() == 1);
 
     std::vector<ConnectionPtr> connections_vector;
     connections_vector.push_back(conn_child);
@@ -1327,6 +1352,8 @@ bool Path::simplify(const double& distance)
       conn->add();
 
       connections_.at(ic)->remove();
+      assert(conn->getChild()->getParentConnectionsSize() == 1);
+
       connections_.erase(connections_.begin() + (ic - 1), connections_.begin() + ic + 1);
       connections_.insert(connections_.begin() + (ic - 1), conn);
 

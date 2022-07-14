@@ -279,6 +279,8 @@ ConnectionPtr Node::netChildConnection(const int& i) const
 std::vector<ConnectionPtr> Node::getParentConnections() const
 {
   std::vector<ConnectionPtr> v(parent_connections_.size());
+  if(v.empty())
+    return v;
 
   //transform into a shared_ptr vector
   std::transform(parent_connections_.begin(),parent_connections_.end(),v.begin(),
@@ -289,6 +291,8 @@ std::vector<ConnectionPtr> Node::getParentConnections() const
 std::vector<ConnectionPtr> Node::getNetParentConnections() const
 {
   std::vector<ConnectionPtr> v(net_parent_connections_.size());
+  if(v.empty())
+    return v;
 
   //transform into a shared_ptr vector
   std::transform(net_parent_connections_.begin(),net_parent_connections_.end(),v.begin(),
