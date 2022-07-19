@@ -41,7 +41,7 @@ public:
   {
     double reward = 0.0;
     if (last_best_cost_!=std::numeric_limits<double>::infinity())
-      reward = (last_best_cost_ - best_cost)/last_best_cost_; // reward \in [0,1] assuming best_cost>=0 and best_cost<=last_best_cost_
+      reward = 100*(last_best_cost_ - best_cost)/last_best_cost_; // reward \in [0,1] assuming best_cost>=0 and best_cost<=last_best_cost_
 
     last_best_cost_ = best_cost;
     return reward;
