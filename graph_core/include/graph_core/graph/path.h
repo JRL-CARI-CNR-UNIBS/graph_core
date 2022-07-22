@@ -174,6 +174,7 @@ public:
   }
 
   PathPtr clone();
+  bool onLine(double toll = 1e-06);
   void setConnections(const std::vector<ConnectionPtr>& conn);
   bool splitConnection(const ConnectionPtr& conn1, const ConnectionPtr& conn2, const std::vector<ConnectionPtr>::iterator &it);
   bool splitConnection(const ConnectionPtr& conn1, const ConnectionPtr& conn2, const ConnectionPtr& conn);

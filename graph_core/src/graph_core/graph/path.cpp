@@ -43,10 +43,22 @@ Path::Path(std::vector<ConnectionPtr> connections,
 
   cost_ = 0;
 
+  NodePtr child = nullptr;
   for (const ConnectionPtr& conn : connections_)
   {
     cost_ += conn->getCost();
     change_warp_.push_back(true);
+
+    if(child)
+    {
+      if(child != conn->getParent())
+      {
+        for(const ConnectionPtr& c : connections_)
+          ROS_WARN_STREAM(*c);
+        throw std::runtime_error("parent of a connection is different from the child of the previous connection!");
+      }
+    }
+    child = conn->getChild();
   }
   change_warp_.at(0) = false;
 }
@@ -458,10 +470,14 @@ void Path::setConnections(const std::vector<ConnectionPtr>& conn)
     if(child)
     {
       if(child != connection->getParent())
-        throw std::runtime_error("parent of a connection is different from the child of the previous connection!");
+      {
+        for(const ConnectionPtr& c : conn)
+          ROS_WARN_STREAM(*c);
 
-      child = connection->getChild();
+        throw std::runtime_error("parent of a connection is different from the child of the previous connection!");
+      }
     }
+    child = connection->getChild();
   }
   change_warp_.at(0) = false;
 
@@ -527,7 +543,7 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
 }
 
 Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool& in_conn, const bool verbose)
-{ 
+{
   Eigen::VectorXd parent = conn->getParent()->getConfiguration();
   Eigen::VectorXd child  = conn->getChild() ->getConfiguration();
 
@@ -849,18 +865,15 @@ bool Path::splitConnection(const ConnectionPtr& conn1, const ConnectionPtr& conn
 
 bool Path::restoreConnection(const ConnectionPtr& conn, const NodePtr& node2remove)
 {
-  int idx = -1;
-  for(unsigned int i=0; i<connections_.size()-1;i++)
-  {
-    if(connections_.at(i)->getChild() == node2remove)
-    {
-      idx = i;
-      break;
-    }
-  }
+  std::vector<ConnectionPtr>::iterator it = std::find_if(connections_.begin(),connections_.end(),[&](ConnectionPtr c)->bool{return (c->getChild() == node2remove);});
 
-  if(idx<0)
+  if(it>=connections_.end())
     return false;
+
+  int idx = std::distance(connections_.begin(),it);
+
+  assert(idx>=0);
+  assert(connections_.at(idx) == *it);
 
   if((conn->getParent() != connections_.at(idx)->getParent()) || (conn->getChild() != connections_.at(idx+1)->getChild()))
   {
@@ -872,7 +885,6 @@ bool Path::restoreConnection(const ConnectionPtr& conn, const NodePtr& node2remo
     return false;
   }
 
-  std::vector<ConnectionPtr>::iterator it = connections_.begin()+idx;
   *it = conn;
   connections_.erase(it+1);
 
@@ -1025,6 +1037,7 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
         splitConnection(conn_parent,conn_child,it);
         assert(connections_.size() == (size_before+1));
       }
+
       return actual_node;
     }
   }
@@ -1248,7 +1261,7 @@ PathPtr Path::getSubpathToNode(const Eigen::VectorXd& conf)
   {
     ROS_ERROR("No subpath available, the node is equal to the first node of the path");
     ROS_INFO_STREAM("configuration: "<<conf.transpose());
-    ROS_INFO_STREAM("path:\n"<<this);
+    ROS_INFO_STREAM("path:\n"<<*this);
     throw std::invalid_argument("No subpath available, the node is equal to the first node of the path");
   }
 
@@ -1272,7 +1285,7 @@ PathPtr Path::getSubpathToNode(const Eigen::VectorXd& conf)
 
   ROS_ERROR("The node doesn't belong to this path");
   ROS_INFO_STREAM("configuration: "<<conf.transpose());
-  ROS_INFO_STREAM("path:\n"<<this);
+  ROS_INFO_STREAM("path:\n"<<*this);
 
   throw std::invalid_argument("The node doesn't belong to this path");
 }
@@ -1288,6 +1301,7 @@ PathPtr Path::getSubpathFromNode(const Eigen::VectorXd& conf)
   {
     ROS_ERROR("No subpath available, the node is equal to the last node of the path");
     ROS_INFO_STREAM("configuration: "<<conf.transpose());
+    ROS_INFO_STREAM("path:\n"<<*this);
     throw std::invalid_argument("No subpath available, the node is equal to the last node of the path");
   }
 
@@ -1311,7 +1325,7 @@ PathPtr Path::getSubpathFromNode(const Eigen::VectorXd& conf)
 
   ROS_ERROR("The node doesn't belong to this path");
   ROS_INFO_STREAM("configuration: "<<conf.transpose());
-  ROS_INFO_STREAM("path:\n"<<this);
+  ROS_INFO_STREAM("path:\n"<<*this);
 
   throw std::invalid_argument("The node doesn't belong to this path");
 }
@@ -1324,7 +1338,8 @@ bool Path::simplify(const double& distance)
   if(connections_.size()>1)
   {
     double dist = (connections_.at(0)->getParent()->getConfiguration() - connections_.at(0)->getChild()->getConfiguration()).norm();
-    if(dist < distance) reconnect_first_conn = true;
+    if(dist < distance)
+      reconnect_first_conn = true;
   }
 
   unsigned int ic = 1;
@@ -1534,6 +1549,23 @@ void Path::flip()
 
   start_node_ = connections_.front()->getParent();
   goal_node_  = connections_.back ()->getChild ();
+}
+
+bool Path::onLine(double toll)
+{
+  if(connections_.empty())
+    throw std::invalid_argument("connections vector is empty!");
+
+  if(connections_.size() == 1)
+    return true;
+
+  for(unsigned int i=0;i<connections_.size()-1;i++)
+  {
+    if(not connections_[i]->isParallel(connections_[i+1],toll))
+      return false;
+  }
+
+  return true;
 }
 
 std::ostream& operator<<(std::ostream& os, const Path& path)
