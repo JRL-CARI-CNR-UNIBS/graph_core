@@ -91,7 +91,7 @@ public:
   bool removeNodes();
 
   //It gives the connection to which the configuration belongs
-  ConnectionPtr findConnection(const Eigen::VectorXd& configuration, int& idx);
+  ConnectionPtr findConnection(const Eigen::VectorXd& configuration, int& idx, bool verbose = false);
   ConnectionPtr findConnection(const Eigen::VectorXd& configuration);
 
   NodePtr findCloserNode(const Eigen::VectorXd& configuration, double &dist);
@@ -174,6 +174,7 @@ public:
   }
 
   PathPtr clone();
+  double length();
   bool onLine(double toll = 1e-06);
   void setConnections(const std::vector<ConnectionPtr>& conn);
   bool splitConnection(const ConnectionPtr& conn1, const ConnectionPtr& conn2, const std::vector<ConnectionPtr>::iterator &it);

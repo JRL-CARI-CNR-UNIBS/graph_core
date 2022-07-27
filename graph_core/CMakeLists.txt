@@ -44,6 +44,7 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/tube_informed_sampler.cpp
   src/${PROJECT_NAME}/time_sampler.cpp
   src/${PROJECT_NAME}/util.cpp
+  src/${PROJECT_NAME}/log.cpp
   src/${PROJECT_NAME}/moveit_collision_checker.cpp
   src/${PROJECT_NAME}/parallel_moveit_collision_checker.cpp
   src/${PROJECT_NAME}/narrow_pass_checker.cpp

@@ -1,4 +1,3 @@
-#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -25,25 +24,25 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
-
-#include <eigen3/Eigen/Core>
-#include <ros/ros.h>
 #include <graph_core/log.h>
-#define PATH_COMMENT(...) ROS_LOG(::ros::console::levels::Debug, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
-#define PATH_COMMENT_STREAM(...) ROS_LOG_STREAM(::ros::console::levels::Debug, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
 
-namespace pathplan
+namespace ros_log_color
 {
-
-class Connection;
-class Node;
-typedef std::shared_ptr<Connection> ConnectionPtr;
-typedef std::shared_ptr<Node> NodePtr;
-typedef std::weak_ptr<Connection> ConnectionWeakPtr;
-typedef std::weak_ptr<Node> NodeWeakPtr;
-
-static const double TOLERANCE = 1e-06;
-
-Eigen::MatrixXd computeRotationMatrix(const Eigen::VectorXd& x1, const Eigen::VectorXd&  x2);
+std::ostream& operator<<(std::ostream& os, PRINT_COLOR c)
+{
+  switch(c)
+  {
+  case BLACK    : os << "\033[1;30m"; break;
+  case RED      : os << "\033[1;31m"; break;
+  case GREEN    : os << "\033[1;32m"; break;
+  case YELLOW   : os << "\033[1;33m"; break;
+  case BLUE     : os << "\033[1;34m"; break;
+  case MAGENTA  : os << "\033[1;35m"; break;
+  case CYAN     : os << "\033[1;36m"; break;
+  case WHITE    : os << "\033[1;37m"; break;
+  case ENDCOLOR : os << "\033[0m";    break;
+  default       : os << "\033[1;37m";
+  }
+  return os;
+}
 }

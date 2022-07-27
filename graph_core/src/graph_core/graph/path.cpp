@@ -140,6 +140,14 @@ double Path::computeEuclideanNorm()
   return euclidean_norm;
 }
 
+double Path::length()
+{
+  double length = 0.0;
+  for(const ConnectionPtr &c:connections_)
+    length+=c->norm();
+
+  return length;
+}
 
 Eigen::VectorXd Path::pointOnCurvilinearAbscissa(const double& abscissa)
 {
@@ -469,6 +477,8 @@ void Path::setConnections(const std::vector<ConnectionPtr>& conn)
 
     if(child)
     {
+      assert(child->getParentConnectionsSize() == 1);
+
       if(child != connection->getParent())
       {
         for(const ConnectionPtr& c : conn)
@@ -493,11 +503,29 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration)
   return findConnection(configuration,idx);
 }
 
-ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& idx)
+ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& idx, bool verbose)
 {
   ConnectionPtr conn = nullptr;
   idx = -1;
 
+  // Check if a node corresponds to configuration. This is useful when you have overlapping connections
+  std::vector<NodePtr> nodes = getNodes();
+  std::vector<NodePtr>::iterator it = std::find_if(nodes.begin(),nodes.end(),[&](NodePtr& n) ->bool{
+      return (configuration-n->getConfiguration()).norm()<=TOLERANCE;});
+
+  if(it<nodes.end())
+  {
+    int it_distance = std::distance(nodes.begin(),it);
+    if(it_distance == 0)
+      idx = 0;
+    else
+      idx = it_distance-1;
+
+    conn = connections_.at(idx);
+    return conn;
+  }
+
+ // Check for connections
   Eigen::VectorXd parent;
   Eigen::VectorXd child;
 
@@ -512,6 +540,9 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
     distP = (parent-configuration).norm();
     distC = (configuration-child) .norm();
 
+    if(verbose)
+      ROS_INFO("dist %f, distP %f, distC %f, diff %f",dist,distP,distC,std::abs(dist-distP-distC));
+
     if(std::abs(dist-distP-distC)<TOLERANCE)
     {
       conn = connections_.at(i);
@@ -520,7 +551,6 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
     }
   }
 
-  // -->ERROR MSG<--
   ROS_ERROR("Connection not found");
   ROS_INFO_STREAM("conf: "<<configuration.transpose());
 
@@ -537,7 +567,6 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
 
     ROS_INFO("conn n %d, length %f, dist from parent %f, dist from child %f, error %f",i,dist,distP,distC,err);
   }
-  // -->         <--
 
   return nullptr;
 }

@@ -26,24 +26,35 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#include <eigen3/Eigen/Core>
 #include <ros/ros.h>
-#include <graph_core/log.h>
-#define PATH_COMMENT(...) ROS_LOG(::ros::console::levels::Debug, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
-#define PATH_COMMENT_STREAM(...) ROS_LOG_STREAM(::ros::console::levels::Debug, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
 
-namespace pathplan
+/* ROS LOG WITH COLORS
+   ref: https://gist.github.com/artivis/51c6c9436481b16cab2f */
+
+namespace ros_log_color
 {
+  enum PRINT_COLOR
+  {
+    BLACK,
+    RED,
+    GREEN,
+    YELLOW,
+    BLUE,
+    MAGENTA,
+    CYAN,
+    WHITE,
+    ENDCOLOR
+  };
 
-class Connection;
-class Node;
-typedef std::shared_ptr<Connection> ConnectionPtr;
-typedef std::shared_ptr<Node> NodePtr;
-typedef std::weak_ptr<Connection> ConnectionWeakPtr;
-typedef std::weak_ptr<Node> NodeWeakPtr;
-
-static const double TOLERANCE = 1e-06;
-
-Eigen::MatrixXd computeRotationMatrix(const Eigen::VectorXd& x1, const Eigen::VectorXd&  x2);
+  std::ostream& operator<<(std::ostream& os, PRINT_COLOR c);
 }
+
+#define ROS_BLACK_STREAM(x)   ROS_INFO_STREAM(ros_log_color::PRINT_COLOR::BLACK   << x << ros_log_color::PRINT_COLOR::ENDCOLOR)
+#define ROS_RED_STREAM(x)     ROS_INFO_STREAM(ros_log_color::PRINT_COLOR::RED     << x << ros_log_color::PRINT_COLOR::ENDCOLOR)
+#define ROS_GREEN_STREAM(x)   ROS_INFO_STREAM(ros_log_color::PRINT_COLOR::GREEN   << x << ros_log_color::PRINT_COLOR::ENDCOLOR)
+#define ROS_YELLOW_STREAM(x)  ROS_INFO_STREAM(ros_log_color::PRINT_COLOR::YELLOW  << x << ros_log_color::PRINT_COLOR::ENDCOLOR)
+#define ROS_BLUE_STREAM(x)    ROS_INFO_STREAM(ros_log_color::PRINT_COLOR::BLUE    << x << ros_log_color::PRINT_COLOR::ENDCOLOR)
+#define ROS_MAGENTA_STREAM(x) ROS_INFO_STREAM(ros_log_color::PRINT_COLOR::MAGENTA << x << ros_log_color::PRINT_COLOR::ENDCOLOR)
+#define ROS_CYAN_STREAM(x)    ROS_INFO_STREAM(ros_log_color::PRINT_COLOR::CYAN    << x << ros_log_color::PRINT_COLOR::ENDCOLOR)
+#define ROS_WHITE_STREAM(x)   ROS_INFO_STREAM(ros_log_color::PRINT_COLOR::WHITE   << x << ros_log_color::PRINT_COLOR::ENDCOLOR)
+
