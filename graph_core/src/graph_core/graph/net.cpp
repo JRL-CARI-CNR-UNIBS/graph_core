@@ -108,42 +108,26 @@ bool Net::purgeFromHere(ConnectionPtr& conn2node, const std::vector<NodePtr>& wh
     return purgeSuccessors(node,white_list,removed_nodes);
 }
 
-std::multimap<double,std::vector<ConnectionPtr>> Net::getNetConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node, const std::vector<NodePtr>& black_list)
+std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionBetweenNodes(const NodePtr &start_node, const NodePtr& goal_node, const std::vector<NodePtr>& black_list)
 {
-  NodePtr net_parent;
-  ConnectionPtr net_parent_conn;
-  std::vector<NodePtr> visited_nodes;
-  std::multimap<double,std::vector<ConnectionPtr>> map, parent_map;
-
-  for(unsigned int i=0;i<goal_node->getNetParentConnectionsSize();i++)
-  {
-    net_parent_conn = goal_node->netParentConnection(i);
-    net_parent = net_parent_conn->getParent();
-
-    visited_nodes.clear();
-    visited_nodes.push_back(goal_node);
-    visited_nodes.push_back(net_parent);
-
-    parent_map = computeConnectionFromNodeToNode(start_node,net_parent,black_list,visited_nodes);
-
-    if(not parent_map.empty())
-      for(std::pair<double,std::vector<ConnectionPtr>> pair:parent_map)
-      {
-        pair.first = pair.first + net_parent_conn->getCost();
-        pair.second.push_back(net_parent_conn);
-        map.insert(pair);
-      }
-  }
-
-  return map;
+  double cost2beat = std::numeric_limits<double>::infinity();
+  return getConnectionBetweenNodes(start_node,goal_node,cost2beat,black_list);
 }
 
-std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionBetweenNodes(const NodePtr &start_node, const NodePtr& goal_node, const std::vector<NodePtr>& black_list)
+std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionBetweenNodes(const NodePtr &start_node, const NodePtr& goal_node, const double& cost2beat, const std::vector<NodePtr>& black_list)
 {
   std::vector<NodePtr> visited_nodes;
   visited_nodes.push_back(goal_node);
 
-  return computeConnectionFromNodeToNode(start_node,goal_node,black_list,visited_nodes);
+  double cost2here = 0.0;
+
+  return computeConnectionFromNodeToNode(start_node,goal_node,cost2here,cost2beat,black_list,visited_nodes);
+}
+
+std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionToNode(const NodePtr &node, const std::vector<NodePtr>& black_list)
+{
+  double cost2beat = std::numeric_limits<double>::infinity();
+  return getConnectionToNode(node,cost2beat,black_list);
 }
 
 std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionToNode(const NodePtr &node, const double& cost2beat, const std::vector<NodePtr>& black_list)
@@ -154,12 +138,6 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionToNode(const 
   double cost2here = 0.0;
 
   return computeConnectionFromNodeToNode(linked_tree_->getRoot(),node,cost2here,cost2beat,black_list,visited_nodes);
-}
-
-std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionToNode(const NodePtr &node, const std::vector<NodePtr>& black_list)
-{
-  double cost2beat = std::numeric_limits<double>::infinity();
-  return computeConnectionFromNodeToNode(linked_tree_->getRoot(),node,cost2beat,black_list);
 }
 
 std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, std::vector<NodePtr> &visited_nodes)
