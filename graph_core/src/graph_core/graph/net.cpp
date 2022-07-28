@@ -146,12 +146,20 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionBetweenNodes(
   return computeConnectionFromNodeToNode(start_node,goal_node,black_list,visited_nodes);
 }
 
-std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionToNode(const NodePtr &node, const std::vector<NodePtr>& black_list)
+std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionToNode(const NodePtr &node, const double& cost2beat, const std::vector<NodePtr>& black_list)
 {
   std::vector<NodePtr> visited_nodes;
   visited_nodes.push_back(node);
 
-  return computeConnectionFromNodeToNode(linked_tree_->getRoot(),node,black_list,visited_nodes);
+  double cost2here = 0.0;
+
+  return computeConnectionFromNodeToNode(linked_tree_->getRoot(),node,cost2here,cost2beat,black_list,visited_nodes);
+}
+
+std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionToNode(const NodePtr &node, const std::vector<NodePtr>& black_list)
+{
+  double cost2beat = std::numeric_limits<double>::infinity();
+  return computeConnectionFromNodeToNode(linked_tree_->getRoot(),node,cost2beat,black_list);
 }
 
 std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, std::vector<NodePtr> &visited_nodes)
@@ -162,105 +170,133 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
 
 std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes)
 {
+  double cost2here = 0.0;
+  double cost2beat = std::numeric_limits<double>::infinity();
+  return computeConnectionFromNodeToNode(start_node, goal_node, cost2here, cost2beat, black_list, visited_nodes);
+}
+
+std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here, const double& cost2beat, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes)
+{
+  std::vector<ConnectionPtr> connections2here;
+  return computeConnectionFromNodeToNode(start_node,goal_node,cost2here,cost2beat,black_list,visited_nodes,connections2here);
+}
+
+std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here, const double& cost2beat, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes, std::vector<ConnectionPtr>& connections2here)
+{
   //Depth-first search
 
-  std::multimap<double,std::vector<ConnectionPtr>> map;
-  std::pair<double,std::vector<ConnectionPtr>> pair;
   NodePtr parent;
+  std::multimap<double,std::vector<ConnectionPtr>> map;
 
   if(goal_node == linked_tree_->getRoot() || goal_node == start_node)
     return map;
   else
   {
-    if(goal_node->getParentConnectionsSize() != 1)
-    {
-      ROS_ERROR("a node of a tree should have only a parent");
-      ROS_ERROR_STREAM("goal node \n" <<*goal_node);
+    assert([&]() ->bool{
+             if(goal_node->getParentConnectionsSize() != 1)
+             {
+               ROS_ERROR("a node of a tree should have only a parent");
+               ROS_ERROR_STREAM("goal node \n" <<*goal_node);
 
-      ROS_INFO_STREAM("current root "<<linked_tree_->getRoot()->getConfiguration().transpose()<< " "<<linked_tree_->getRoot());
-      ROS_INFO_STREAM("goal node "<<goal_node->getConfiguration().transpose()<<" "<<goal_node);
-      ROS_INFO_STREAM("start node "<<start_node->getConfiguration().transpose()<<" "<<start_node);
+               ROS_INFO_STREAM("current root "<<linked_tree_->getRoot()->getConfiguration().transpose()<< " "<<linked_tree_->getRoot());
+               ROS_INFO_STREAM("goal node "<<goal_node->getConfiguration().transpose()<<" "<<goal_node);
+               ROS_INFO_STREAM("start node "<<start_node->getConfiguration().transpose()<<" "<<start_node);
 
-      if(goal_node->getNetChildConnectionsSize()>0);
-      ROS_INFO_STREAM("the child "<<*goal_node->netChildConnection(0)->getChild()<<" "<<goal_node->netChildConnection(0)->getChild());
+               if(goal_node->getNetChildConnectionsSize()>0);
+               ROS_INFO_STREAM("the child "<<*goal_node->netChildConnection(0)->getChild()<<" "<<goal_node->netChildConnection(0)->getChild());
 
-      int count = 0;
-      for(const NodePtr& n:linked_tree_->getNodes())
-      {
-        if(n->getConfiguration() == goal_node->getConfiguration())
-        {
-          count++;
-          ROS_INFO_STREAM(*n<<"\n"<<n<<"\n count "<<count);
-        }
-      }
-      ROS_INFO_STREAM("EQUAL NODES "<<count);
+               int count = 0;
+               for(const NodePtr& n:linked_tree_->getNodes())
+               {
+                 if(n->getConfiguration() == goal_node->getConfiguration())
+                 {
+                   count++;
+                   ROS_INFO_STREAM(*n<<"\n"<<n<<"\n count "<<count);
+                 }
+               }
+               ROS_INFO_STREAM("EQUAL NODES "<<count);
 
-      ROS_INFO_STREAM("in tree: "<<linked_tree_->isInTree(goal_node));
+               ROS_INFO_STREAM("in tree: "<<linked_tree_->isInTree(goal_node));
 
-      assert(0);
-    }
+               return false;
+             }
+             return true;
+           }());
 
     std::vector<ConnectionPtr> all_parent_connections = goal_node->getParentConnections();
     std::vector<ConnectionPtr> net_parent_connections = goal_node->getNetParentConnections();
     all_parent_connections.insert(all_parent_connections.end(),net_parent_connections.begin(),net_parent_connections.end());
 
-    for(const ConnectionPtr& conn_parent_goal:all_parent_connections)
+    double cost2parent;
+    for(const ConnectionPtr& conn2parent:all_parent_connections)
     {
-      parent = conn_parent_goal->getParent();
+      parent = conn2parent->getParent();
+      cost2parent = cost2here+conn2parent->getCost();
 
+      if(cost2parent>=cost2beat)
+      {
+        if(verbose_)
+          ROS_INFO("cost up to now %f, cost to beat %f -> don't follow this branch!",cost2parent,cost2beat);
+
+        continue;
+      }
+
+      std::vector<ConnectionPtr> connections2parent = connections2here;
       if(parent == start_node)
       {
-        std::vector<ConnectionPtr> from_start_to_node;
-        from_start_to_node.push_back(conn_parent_goal);
+        //When the start node is reached, a solution is found -> reverse the connections vector and insert into the map
+        connections2parent.push_back(conn2parent);
+        std::reverse(connections2parent.begin(),connections2parent.end());
 
-        pair.first = conn_parent_goal->getCost();
-        pair.second = from_start_to_node;
+        std::pair<double,std::vector<ConnectionPtr>> pair;
+        pair.first = cost2parent;
+        pair.second = connections2parent;
 
         if(verbose_)
-          ROS_INFO_STREAM("New conn inserted: "<<conn_parent_goal<<" "<<*conn_parent_goal<<" cost up to now: "<<pair.first);
+        {
+          ROS_INFO_STREAM("New conn inserted: "<<conn2parent<<" "<<*conn2parent<<" cost up to now: "<<cost2parent<<" cost to beat: "<<cost2beat);
+          ROS_INFO_STREAM("Start node reached! Cost: "<<cost2parent);
+        }
 
         map.insert(pair);
       }
       else
       {
         if(std::find(black_list.begin(), black_list.end(), parent) != black_list.end())
+        {
+          if(verbose_)
+            ROS_INFO_STREAM("parent belongs to black list, skipping..");
+
           continue;
+        }
 
         if(std::find(visited_nodes.begin(), visited_nodes.end(), parent) != visited_nodes.end())
+        {
+          if(verbose_)
+            ROS_INFO_STREAM("avoiding cycles...");
+
           continue;
+        }
         else
           visited_nodes.push_back(parent);
 
-        std::multimap<double,std::vector<ConnectionPtr>> map2parent = computeConnectionFromNodeToNode(start_node,parent,black_list,visited_nodes);
+        connections2parent.push_back(conn2parent);
 
+        if(verbose_)
+          ROS_INFO_STREAM("New conn inserted: "<<conn2parent<<" "<<*conn2parent<<" cost up to now: "<<cost2parent<<" cost to beat: "<<cost2beat);
+
+        std::multimap<double,std::vector<ConnectionPtr>> map_to_start_through_parent;
+        map_to_start_through_parent= computeConnectionFromNodeToNode(start_node,parent,cost2parent,cost2beat,
+                                                                     black_list,visited_nodes,connections2parent);
         visited_nodes.pop_back();
 
-        if(not map2parent.empty())
-        {
-          for(const std::pair<double,std::vector<ConnectionPtr>> &parent_pair:map2parent)
-          {
-            std::vector<ConnectionPtr> from_start_to_parent = parent_pair.second;
-
-            if(from_start_to_parent.front()->getParent() != start_node)
-              continue;
-            else
-            {
-              from_start_to_parent.push_back(conn_parent_goal);
-
-              pair.first = parent_pair.first + conn_parent_goal->getCost();
-              pair.second = from_start_to_parent;
-
-              if(verbose_)
-                ROS_INFO_STREAM("New conn inserted: "<<conn_parent_goal<<" "<<*conn_parent_goal<<" cost up to now: "<<pair.first);
-
-              map.insert(pair);
-            }
-          }
-        }
+        if(not map_to_start_through_parent.empty())
+          map.insert(map_to_start_through_parent.begin(),map_to_start_through_parent.end());
       }
     }
     return map;
   }
 }
+
 
 }  // end namespace pathplan
