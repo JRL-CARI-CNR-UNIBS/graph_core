@@ -215,10 +215,12 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
       if(cost2parent>cost_to_beat_ || std::abs(cost2parent-cost_to_beat_)<=NET_ERROR_TOLERANCE) //to cope with machine errors
       {
         if(verbose_)
-          ROS_INFO("cost up to now %f, cost to beat %f -> don't follow this branch!",cost2parent,cost2beat);
+          ROS_INFO("cost up to now %f, cost to beat %f -> don't follow this branch!",cost2parent,cost_to_beat_);
 
         continue;
       }
+
+      assert(cost2parent < cost_to_beat_);
 
       if(parent == start_node)
       {
@@ -233,14 +235,12 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
         pair.first = cost2parent;
         pair.second = connections2parent;
 
-        assert(cost2parent < cost_to_beat_);
-
         cost_to_beat_ = cost2parent;
 
         if(verbose_)
         {
-          ROS_INFO_STREAM("New conn inserted: "<<conn2parent<<" "<<*conn2parent<<" cost up to now: "<<cost2parent<<" cost to beat: "<<cost2beat);
-          ROS_INFO_STREAM("Start node reached! Cost: "<<cost2parent);
+          ROS_INFO_STREAM("New conn inserted: "<<conn2parent<<" "<<*conn2parent<<" cost up to now: "<<cost2parent<<" cost to beat: "<<cost_to_beat_);
+          ROS_INFO_STREAM("Start node reached! Cost: "<<cost2parent<<" (cost to beat updated)");
         }
 
         map.insert(pair);
@@ -269,7 +269,7 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
         connections2parent.push_back(conn2parent);
 
         if(verbose_)
-          ROS_INFO_STREAM("New conn inserted: "<<conn2parent<<" "<<*conn2parent<<" cost up to now: "<<cost2parent<<" cost to beat: "<<cost2beat);
+          ROS_INFO_STREAM("New conn inserted: "<<conn2parent<<" "<<*conn2parent<<" cost up to now: "<<cost2parent<<" cost to beat: "<<cost_to_beat_);
 
         std::multimap<double,std::vector<ConnectionPtr>> map_to_start_through_parent;
         map_to_start_through_parent= computeConnectionFromNodeToNode(start_node,parent,cost2parent,black_list,
