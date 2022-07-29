@@ -219,11 +219,13 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
         continue;
       }
 
-      std::vector<ConnectionPtr> connections2parent = connections2here;
       if(parent == start_node)
       {
-        //When the start node is reached, a solution is found -> reverse the connections vector and insert into the map
+        //When the start node is reached, a solution is found -> insert into the map
+
+        std::vector<ConnectionPtr> connections2parent = connections2here;
         connections2parent.push_back(conn2parent);
+
         std::reverse(connections2parent.begin(),connections2parent.end());
 
         std::pair<double,std::vector<ConnectionPtr>> pair;
@@ -258,6 +260,7 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
         else
           visited_nodes.push_back(parent);
 
+        std::vector<ConnectionPtr> connections2parent = connections2here;
         connections2parent.push_back(conn2parent);
 
         if(verbose_)
