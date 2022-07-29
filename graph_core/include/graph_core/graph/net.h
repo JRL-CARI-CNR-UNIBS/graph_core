@@ -43,6 +43,9 @@ protected:
   TreePtr linked_tree_;
   double cost_to_beat_;
   bool verbose_;
+  bool search_every_solution_;
+  int curse_of_dimensionality_;
+  ros::WallTime tic_fcn_call_;
 
   std::multimap<double,std::vector<ConnectionPtr>> computeConnectionFromNodeToNode(const NodePtr &start_node, const NodePtr &goal_node, std::vector<NodePtr>& visited_nodes);
   std::multimap<double,std::vector<ConnectionPtr>> computeConnectionFromNodeToNode(const NodePtr &start_node, const NodePtr &goal_node, const std::vector<NodePtr> &black_list, std::vector<NodePtr>& visited_nodes);
@@ -54,6 +57,7 @@ public:
   Net(const TreePtr& tree)
   {
     verbose_ = false;
+    search_every_solution_ = true;
     setTree(tree);
   }
 
@@ -76,6 +80,11 @@ public:
   void setVerbosity(const bool verbose)
   {
     verbose_ = verbose;
+  }
+
+  void searchEverySolution(const bool search_every_solution)
+  {
+    search_every_solution_ = search_every_solution;
   }
 
   bool purgeFromHere(ConnectionPtr& conn2node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes); //VEDI CON MANUEL

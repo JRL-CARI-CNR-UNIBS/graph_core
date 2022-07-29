@@ -116,12 +116,20 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionBetweenNodes(
 
 std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionBetweenNodes(const NodePtr &start_node, const NodePtr& goal_node, const double& cost2beat, const std::vector<NodePtr>& black_list)
 {
+  ros::WallTime tic = ros::WallTime::now();
+
   std::vector<NodePtr> visited_nodes;
   visited_nodes.push_back(goal_node);
 
   double cost2here = 0.0;
 
-  return computeConnectionFromNodeToNode(start_node,goal_node,cost2here,cost2beat,black_list,visited_nodes);
+  curse_of_dimensionality_ = 0;
+
+  tic_fcn_call_ = ros::WallTime::now();
+  auto res = computeConnectionFromNodeToNode(start_node,goal_node,cost2here,cost2beat,black_list,visited_nodes);
+  ROS_WARN_STREAM("NET TIME: "<<(ros::WallTime::now()-tic).toSec());
+
+  return res;
 }
 
 std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionToNode(const NodePtr &node, const std::vector<NodePtr>& black_list)
@@ -136,6 +144,8 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionToNode(const 
   visited_nodes.push_back(node);
 
   double cost2here = 0.0;
+
+  curse_of_dimensionality_ = 0;
 
   return computeConnectionFromNodeToNode(linked_tree_->getRoot(),node,cost2here,cost2beat,black_list,visited_nodes);
 }
@@ -162,15 +172,41 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
 
 std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes, std::vector<ConnectionPtr>& connections2here)
 {
+  long double fcn_time = (ros::WallTime::now()-tic_fcn_call_).toSec();
+  assert(fcn_time<1e-03);
+  ROS_INFO_STREAM("time fcn call "<<fcn_time);
+
   //Depth-first search
+  curse_of_dimensionality_++;
+
+  ros::WallTime tic = ros::WallTime::now();
+
+  long double time_if = 0.0;
+  long double time_init = 0.0;
+  long double time_insert = 0.0;
+  long double time_cost = 0.0;
+  long double time_rev = 0.0;
+  long double time_bl = 0.0;
+  long double time_vn = 0.0;
 
   NodePtr parent;
   std::multimap<double,std::vector<ConnectionPtr>> map;
 
+  time_init = (ros::WallTime::now()-tic).toSec();
+  assert(time_init<1e-03);
+  tic = ros::WallTime::now();
+
+
   if(goal_node == linked_tree_->getRoot() || goal_node == start_node)
+  {
+    ROS_INFO("node %i, time_if %lf, time_init %lf, time_insert %lf, time_cost %lf, time_rev %lf, time_bl %lf, time_vn %lf",curse_of_dimensionality_,time_if, time_init, time_insert, time_cost, time_rev, time_bl, time_vn);
     return map;
+  }
   else
   {
+    time_if = (ros::WallTime::now()-tic).toSec();
+    assert(time_if<1e-03);
+
     assert([&]() ->bool{
              if(goal_node->getParentConnectionsSize() != 1)
              {
@@ -202,23 +238,33 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
              return true;
            }());
 
+    tic = ros::WallTime::now();
+
     std::vector<ConnectionPtr> all_parent_connections = goal_node->getParentConnections();
     std::vector<ConnectionPtr> net_parent_connections = goal_node->getNetParentConnections();
     all_parent_connections.insert(all_parent_connections.end(),net_parent_connections.begin(),net_parent_connections.end());
 
+    time_insert = (ros::WallTime::now()-tic).toSec();
+    assert(time_insert<1e-03);
+
     double cost2parent;
     for(const ConnectionPtr& conn2parent:all_parent_connections)
     {
+      tic = ros::WallTime::now();
+
       parent = conn2parent->getParent();
       cost2parent = cost2here+conn2parent->getCost();
 
       if(cost2parent == std::numeric_limits<double>::infinity() || cost2parent>=cost_to_beat_ || std::abs(cost2parent-cost_to_beat_)<=NET_ERROR_TOLERANCE) //NET_ERROR_TOLERANCE to cope with machine errors
       {
         if(verbose_)
-          ROS_INFO("cost up to now %f, cost to beat %f -> don't follow this branch!",cost2parent,cost_to_beat_);
+          ROS_INFO("cost up to now %lf, cost to beat %f -> don't follow this branch!",cost2parent,cost_to_beat_);
 
         continue;
       }
+
+      time_cost = (ros::WallTime::now()-tic).toSec();
+      assert(time_cost<1e-03);
 
       assert([&]() ->bool{
                if(not(cost2parent<cost_to_beat_))
@@ -233,16 +279,22 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
       {
         //When the start node is reached, a solution is found -> insert into the map
 
+        tic = ros::WallTime::now();
+
         std::vector<ConnectionPtr> connections2parent = connections2here;
         connections2parent.push_back(conn2parent);
 
         std::reverse(connections2parent.begin(),connections2parent.end());
 
+        time_rev = (ros::WallTime::now()-tic).toSec();
+        assert(time_rev<1e-03);
+
         std::pair<double,std::vector<ConnectionPtr>> pair;
         pair.first = cost2parent;
         pair.second = connections2parent;
 
-        cost_to_beat_ = cost2parent;
+        if(not search_every_solution_) //update cost_to_beat_ -> search only for better solutions than this one
+          cost_to_beat_ = cost2parent;
 
         if(verbose_)
         {
@@ -250,10 +302,13 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
           ROS_INFO_STREAM("Start node reached! Cost: "<<cost2parent<<" (cost to beat updated)");
         }
 
+        ROS_INFO("node %i, time_if %lf, time_init %lf, time_insert %lf, time_cost %lf, time_rev %lf, time_bl %lf, time_vn %f",curse_of_dimensionality_,time_if, time_init, time_insert, time_cost, time_rev, time_bl, time_vn);
         map.insert(pair);
       }
       else
       {
+        tic = ros::WallTime::now();
+
         if(std::find(black_list.begin(), black_list.end(), parent) != black_list.end())
         {
           if(verbose_)
@@ -261,6 +316,12 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
 
           continue;
         }
+
+        time_bl = (ros::WallTime::now()-tic).toSec();
+        assert(time_bl<1e-03);
+
+
+        tic = ros::WallTime::now();
 
         if(std::find(visited_nodes.begin(), visited_nodes.end(), parent) != visited_nodes.end())
         {
@@ -272,19 +333,32 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
         else
           visited_nodes.push_back(parent);
 
+        time_vn = (ros::WallTime::now()-tic).toSec();
+        assert(time_vn<1e-03);
+
+
         std::vector<ConnectionPtr> connections2parent = connections2here;
         connections2parent.push_back(conn2parent);
 
         if(verbose_)
           ROS_INFO_STREAM("New conn inserted: "<<conn2parent<<" "<<*conn2parent<<" cost up to now: "<<cost2parent<<" cost to beat: "<<cost_to_beat_);
 
+
+        ROS_INFO("node %i, time_if %lf, time_init %lf, time_insert %lf, time_cost %lf, time_rev %lf, time_bl %lf, time_vn %lf",curse_of_dimensionality_,time_if, time_init, time_insert, time_cost, time_rev, time_bl, time_vn);
+
+        tic_fcn_call_ = ros::WallTime::now();
         std::multimap<double,std::vector<ConnectionPtr>> map_to_start_through_parent;
         map_to_start_through_parent= computeConnectionFromNodeToNode(start_node,parent,cost2parent,black_list,
                                                                      visited_nodes,connections2parent);
+        tic = ros::WallTime::now();
         visited_nodes.pop_back();
 
         if(not map_to_start_through_parent.empty())
           map.insert(map_to_start_through_parent.begin(),map_to_start_through_parent.end());
+
+        long double time_map = (ros::WallTime::now()-tic).toSec();
+        assert(time_map<1e-03);
+        ROS_INFO("map time %lf",time_map);
       }
     }
     return map;
