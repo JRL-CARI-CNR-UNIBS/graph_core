@@ -212,7 +212,7 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
       parent = conn2parent->getParent();
       cost2parent = cost2here+conn2parent->getCost();
 
-      if(cost2parent>cost_to_beat_ || std::abs(cost2parent-cost_to_beat_)<=NET_ERROR_TOLERANCE) //to cope with machine errors
+      if(cost2parent == std::numeric_limits<double>::infinity() || cost2parent>=cost_to_beat_ || std::abs(cost2parent-cost_to_beat_)<=NET_ERROR_TOLERANCE) //NET_ERROR_TOLERANCE to cope with machine errors
       {
         if(verbose_)
           ROS_INFO("cost up to now %f, cost to beat %f -> don't follow this branch!",cost2parent,cost_to_beat_);
@@ -220,7 +220,14 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
         continue;
       }
 
-      assert(cost2parent < cost_to_beat_);
+      assert([&]() ->bool{
+               if(not(cost2parent<cost_to_beat_))
+               {
+                 ROS_INFO("cost to parent %f, cost to beat %f ",cost2parent,cost_to_beat_);
+                 return false;
+               }
+               return true;
+             }());
 
       if(parent == start_node)
       {
