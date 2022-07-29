@@ -41,6 +41,7 @@ class Net: public std::enable_shared_from_this<Net>
 
 protected:
   TreePtr linked_tree_;
+  double cost_to_beat_;
   bool verbose_;
 
   std::multimap<double,std::vector<ConnectionPtr>> computeConnectionFromNodeToNode(const NodePtr &start_node, const NodePtr &goal_node, std::vector<NodePtr>& visited_nodes);

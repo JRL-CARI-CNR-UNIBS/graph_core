@@ -155,11 +155,12 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
 
 std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here, const double& cost2beat, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes)
 {
+  cost_to_beat_ = cost2beat;
   std::vector<ConnectionPtr> connections2here;
-  return computeConnectionFromNodeToNode(start_node,goal_node,cost2here,cost2beat,black_list,visited_nodes,connections2here);
+  return computeConnectionFromNodeToNode(start_node,goal_node,cost2here,black_list,visited_nodes,connections2here);
 }
 
-std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here, const double& cost2beat, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes, std::vector<ConnectionPtr>& connections2here)
+std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes, std::vector<ConnectionPtr>& connections2here)
 {
   //Depth-first search
 
@@ -211,7 +212,7 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
       parent = conn2parent->getParent();
       cost2parent = cost2here+conn2parent->getCost();
 
-      if(cost2parent>cost2beat || std::abs(cost2parent-cost2beat)<=NET_ERROR_TOLERANCE) //to cope with machine errors
+      if(cost2parent>cost_to_beat_ || std::abs(cost2parent-cost_to_beat_)<=NET_ERROR_TOLERANCE) //to cope with machine errors
       {
         if(verbose_)
           ROS_INFO("cost up to now %f, cost to beat %f -> don't follow this branch!",cost2parent,cost2beat);
@@ -231,6 +232,10 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
         std::pair<double,std::vector<ConnectionPtr>> pair;
         pair.first = cost2parent;
         pair.second = connections2parent;
+
+        assert(cost2parent < cost_to_beat_);
+
+        cost_to_beat_ = cost2parent;
 
         if(verbose_)
         {
@@ -267,8 +272,8 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
           ROS_INFO_STREAM("New conn inserted: "<<conn2parent<<" "<<*conn2parent<<" cost up to now: "<<cost2parent<<" cost to beat: "<<cost2beat);
 
         std::multimap<double,std::vector<ConnectionPtr>> map_to_start_through_parent;
-        map_to_start_through_parent= computeConnectionFromNodeToNode(start_node,parent,cost2parent,cost2beat,
-                                                                     black_list,visited_nodes,connections2parent);
+        map_to_start_through_parent= computeConnectionFromNodeToNode(start_node,parent,cost2parent,black_list,
+                                                                     visited_nodes,connections2parent);
         visited_nodes.pop_back();
 
         if(not map_to_start_through_parent.empty())
