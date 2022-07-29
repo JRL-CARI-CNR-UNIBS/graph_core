@@ -28,9 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/ros.h>
 
-/* ROS LOG WITH COLORS
-   ref: https://gist.github.com/artivis/51c6c9436481b16cab2f */
-
 namespace ros_log_color
 {
   enum PRINT_COLOR
