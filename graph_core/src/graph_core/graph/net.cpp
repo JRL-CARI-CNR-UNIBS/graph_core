@@ -108,13 +108,13 @@ bool Net::purgeFromHere(ConnectionPtr& conn2node, const std::vector<NodePtr>& wh
     return purgeSuccessors(node,white_list,removed_nodes);
 }
 
-std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionBetweenNodes(const NodePtr &start_node, const NodePtr& goal_node, const std::vector<NodePtr>& black_list)
+std::multimap<double,std::vector<ConnectionPtr>>& Net::getConnectionBetweenNodes(const NodePtr &start_node, const NodePtr& goal_node, const std::vector<NodePtr>& black_list)
 {
   double cost2beat = std::numeric_limits<double>::infinity();
   return getConnectionBetweenNodes(start_node,goal_node,cost2beat,black_list);
 }
 
-std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionBetweenNodes(const NodePtr &start_node, const NodePtr& goal_node, const double& cost2beat, const std::vector<NodePtr>& black_list)
+std::multimap<double,std::vector<ConnectionPtr>>& Net::getConnectionBetweenNodes(const NodePtr &start_node, const NodePtr& goal_node, const double& cost2beat, const std::vector<NodePtr>& black_list)
 {
   ros::WallTime tic = ros::WallTime::now();
 
@@ -123,54 +123,59 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionBetweenNodes(
 
   double cost2here = 0.0;
 
+  map_.clear();
   curse_of_dimensionality_ = 0;
 
   tic_fcn_call_ = ros::WallTime::now();
-  auto res = computeConnectionFromNodeToNode(start_node,goal_node,cost2here,cost2beat,black_list,visited_nodes);
+  computeConnectionFromNodeToNode(start_node,goal_node,cost2here,cost2beat,black_list,visited_nodes);
   ROS_WARN_STREAM("NET TIME: "<<(ros::WallTime::now()-tic).toSec());
 
-  return res;
+  return map_;
 }
 
-std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionToNode(const NodePtr &node, const std::vector<NodePtr>& black_list)
+std::multimap<double,std::vector<ConnectionPtr>>& Net::getConnectionToNode(const NodePtr &node, const std::vector<NodePtr>& black_list)
 {
   double cost2beat = std::numeric_limits<double>::infinity();
   return getConnectionToNode(node,cost2beat,black_list);
 }
 
-std::multimap<double,std::vector<ConnectionPtr>> Net::getConnectionToNode(const NodePtr &node, const double& cost2beat, const std::vector<NodePtr>& black_list)
+std::multimap<double,std::vector<ConnectionPtr>>& Net::getConnectionToNode(const NodePtr &node, const double& cost2beat, const std::vector<NodePtr>& black_list)
 {
+
   std::vector<NodePtr> visited_nodes;
   visited_nodes.push_back(node);
 
   double cost2here = 0.0;
 
+  map_.clear();
   curse_of_dimensionality_ = 0;
 
-  return computeConnectionFromNodeToNode(linked_tree_->getRoot(),node,cost2here,cost2beat,black_list,visited_nodes);
+  computeConnectionFromNodeToNode(linked_tree_->getRoot(),node,cost2here,cost2beat,black_list,visited_nodes);
+
+  return map_;
 }
 
-std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, std::vector<NodePtr> &visited_nodes)
+void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, std::vector<NodePtr> &visited_nodes)
 {
   std::vector<NodePtr> black_list;
   return computeConnectionFromNodeToNode(start_node,goal_node,black_list,visited_nodes);
 }
 
-std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes)
+void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes)
 {
   double cost2here = 0.0;
   double cost2beat = std::numeric_limits<double>::infinity();
   return computeConnectionFromNodeToNode(start_node, goal_node, cost2here, cost2beat, black_list, visited_nodes);
 }
 
-std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here, const double& cost2beat, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes)
+void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here, const double& cost2beat, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes)
 {
   cost_to_beat_ = cost2beat;
   std::vector<ConnectionPtr> connections2here;
   return computeConnectionFromNodeToNode(start_node,goal_node,cost2here,black_list,visited_nodes,connections2here);
 }
 
-std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes, std::vector<ConnectionPtr>& connections2here)
+void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes, std::vector<ConnectionPtr>& connections2here)
 {
   long double fcn_time = (ros::WallTime::now()-tic_fcn_call_).toSec();
   assert(fcn_time<1e-03);
@@ -190,7 +195,6 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
   long double time_vn = 0.0;
 
   NodePtr parent;
-  std::multimap<double,std::vector<ConnectionPtr>> map;
 
   time_init = (ros::WallTime::now()-tic).toSec();
   assert(time_init<1e-03);
@@ -200,7 +204,7 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
   if(goal_node == linked_tree_->getRoot() || goal_node == start_node)
   {
     ROS_INFO("node %i, time_if %lf, time_init %lf, time_insert %lf, time_cost %lf, time_rev %lf, time_bl %lf, time_vn %lf",curse_of_dimensionality_,time_if, time_init, time_insert, time_cost, time_rev, time_bl, time_vn);
-    return map;
+    return;
   }
   else
   {
@@ -303,7 +307,7 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
         }
 
         ROS_INFO("node %i, time_if %lf, time_init %lf, time_insert %lf, time_cost %lf, time_rev %lf, time_bl %lf, time_vn %f",curse_of_dimensionality_,time_if, time_init, time_insert, time_cost, time_rev, time_bl, time_vn);
-        map.insert(pair);
+        map_.insert(pair);
       }
       else
       {
@@ -347,21 +351,17 @@ std::multimap<double,std::vector<ConnectionPtr>> Net::computeConnectionFromNodeT
         ROS_INFO("node %i, time_if %lf, time_init %lf, time_insert %lf, time_cost %lf, time_rev %lf, time_bl %lf, time_vn %lf",curse_of_dimensionality_,time_if, time_init, time_insert, time_cost, time_rev, time_bl, time_vn);
 
         tic_fcn_call_ = ros::WallTime::now();
-        std::multimap<double,std::vector<ConnectionPtr>> map_to_start_through_parent;
-        map_to_start_through_parent= computeConnectionFromNodeToNode(start_node,parent,cost2parent,black_list,
-                                                                     visited_nodes,connections2parent);
+        computeConnectionFromNodeToNode(start_node,parent,cost2parent,black_list,
+                                        visited_nodes,connections2parent);
         tic = ros::WallTime::now();
         visited_nodes.pop_back();
-
-        if(not map_to_start_through_parent.empty())
-          map.insert(map_to_start_through_parent.begin(),map_to_start_through_parent.end());
 
         long double time_map = (ros::WallTime::now()-tic).toSec();
         assert(time_map<1e-03);
         ROS_INFO("map time %lf",time_map);
       }
     }
-    return map;
+    return;
   }
 }
 
