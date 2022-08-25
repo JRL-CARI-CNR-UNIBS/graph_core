@@ -47,6 +47,7 @@ protected:
   bool search_every_solution_;
   int curse_of_dimensionality_;
   ros::WallTime tic_fcn_call_;
+  std::vector<double> time_vector_;
 
   void computeConnectionFromNodeToNode(const NodePtr &start_node, const NodePtr &goal_node, std::vector<NodePtr>& visited_nodes);
   void computeConnectionFromNodeToNode(const NodePtr &start_node, const NodePtr &goal_node, const std::vector<NodePtr> &black_list, std::vector<NodePtr>& visited_nodes);
