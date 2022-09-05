@@ -92,6 +92,21 @@ public:
     return nodes_;
   }
 
+  const std::vector<NodePtr>& getNodesConst()
+  {
+    return nodes_;
+  }
+
+  void getLeaves(std::vector<NodePtr>& leaves)
+  {
+    std::for_each(nodes_.begin(),nodes_.end(),[&](NodePtr n){
+      assert(((n->getParentConnectionsSize() == 1) && (n!=root_)) || (n == root_));
+
+      if(n->getChildConnectionsSize() == 0)
+        leaves.push_back(n);
+    });
+  }
+
   bool changeRoot(const NodePtr& node);
 
   virtual void addNode(const NodePtr& node, const bool& check_if_present = true);

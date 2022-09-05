@@ -90,6 +90,8 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   {
     success = AnytimeRRT::solveWithRRT(solution,max_iter,(max_time-time));
 
+    PATH_COMMENT_STREAM("Tree has "<<start_tree_->getNumberOfNodes()<<" nodes");
+
     if(!success)
       n_failed_iter++;
 
@@ -121,6 +123,8 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     NodePtr tmp_start_node = std::make_shared<Node>(start_node->getConfiguration());
     NodePtr tmp_goal_node  = std::make_shared<Node>(goal_node->getConfiguration());
     improved = AnytimeRRT::improve(tmp_start_node,tmp_goal_node,solution,max_iter,(max_time-time));
+
+    PATH_COMMENT_STREAM("New tree has "<<new_tree_->getNumberOfNodes()<<" nodes");
 
     improved? (n_failed_iter = 0):
               (n_failed_iter++);
@@ -203,6 +207,8 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     solution_ = solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
     solution->setTree(start_tree_);
   }
+
+  PATH_COMMENT_STREAM("Final tree has "<<start_tree_->getNumberOfNodes()<<" nodes");
 
   return solved_;
 }

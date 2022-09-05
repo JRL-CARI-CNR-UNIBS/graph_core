@@ -56,7 +56,10 @@ public:
     return "";
   }
 
-  virtual planning_scene::PlanningScenePtr getPlanningScene() {}
+  virtual planning_scene::PlanningScenePtr getPlanningScene()
+  {
+    return nullptr;
+  }
 
   virtual CollisionCheckerPtr clone()
   {

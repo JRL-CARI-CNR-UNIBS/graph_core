@@ -67,9 +67,8 @@ ParallelMoveitCollisionChecker::ParallelMoveitCollisionChecker(const planning_sc
 void ParallelMoveitCollisionChecker::resetQueue()
 {
   at_least_a_collision_=false;
-  stop_mutex_.lock();
   stop_check_=true;
-  stop_mutex_.unlock();
+
   thread_iter_=0;
   for (int idx=0;idx<threads_num_;idx++)
   {
@@ -102,9 +101,8 @@ bool ParallelMoveitCollisionChecker::checkAllQueues()
   assert(queues_.size() == threads_.size());
   assert(threads_num_ == threads_.size());
 
-  stop_mutex_.lock();
   stop_check_=false;
-  stop_mutex_.unlock();
+
   for (int idx=0;idx<threads_num_;idx++)
   {
     if (queues_.at(idx).size()>0)
@@ -124,13 +122,9 @@ void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
 {
   robot_state::RobotStatePtr state=std::make_shared<robot_state::RobotState>(planning_scenes_.at(thread_idx)->getCurrentState());
   const std::vector<std::vector<double>>& queue=queues_.at(thread_idx);
-  bool stop_check;
   for (const std::vector<double>& configuration: queue)
   {
-    stop_mutex_.lock();
-    stop_check = stop_check_;
-    stop_mutex_.unlock();
-    if(stop_check)
+    if(stop_check_)
       break;
 
     assert(configuration.size()>0);
@@ -139,9 +133,7 @@ void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
     if (!state->satisfiesBounds())
     {
       at_least_a_collision_=true;
-      stop_mutex_.lock();
       stop_check_=true;
-      stop_mutex_.unlock();
       break;
     }
     //    state->updateCollisionBodyTransforms();
@@ -149,9 +141,7 @@ void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
     if (!planning_scenes_.at(thread_idx)->isStateValid(*state,group_name_))
     {
       at_least_a_collision_=true;
-      stop_mutex_.lock();
       stop_check_=true;
-      stop_mutex_.unlock();
       break;
     }
 
@@ -175,9 +165,7 @@ void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
 ParallelMoveitCollisionChecker::~ParallelMoveitCollisionChecker()
 {
   ROS_DEBUG("closing collision threads");
-  stop_mutex_.lock();
   stop_check_=true;
-  stop_mutex_.unlock();
 
   for (int idx=0;idx<threads_num_;idx++)
   {
@@ -187,35 +175,43 @@ ParallelMoveitCollisionChecker::~ParallelMoveitCollisionChecker()
   ROS_DEBUG("collision threads closed");
 }
 
+bool ParallelMoveitCollisionChecker::asyncSetPlanningSceneMsg(const planning_scene::PlanningScenePtr &planning_scene, const moveit_msgs::PlanningScene& msg)
+{
+  return planning_scene->setPlanningSceneMsg(msg);
+}
+
 void ParallelMoveitCollisionChecker::setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg)
 {
-  stop_mutex_.lock();
   stop_check_=true;
-  stop_mutex_.unlock();
 
   for (int idx=0;idx<threads_num_;idx++)
   {
     if (threads_.at(idx).joinable())
       threads_.at(idx).join();
   }
+
   if (!planning_scene_->setPlanningSceneMsg(msg))
   {
     ROS_ERROR_THROTTLE(1,"unable to upload scene");
   }
+
+  std::vector<std::shared_future<bool>> futures;
   for (int idx=0;idx<threads_num_;idx++)
   {
-    if(!planning_scenes_.at(idx)->setPlanningSceneMsg(msg))
-    {
+    futures.push_back(std::async(std::launch::async,&ParallelMoveitCollisionChecker::asyncSetPlanningSceneMsg,
+                                 this,planning_scenes_.at(idx),msg));
+  }
+
+  for (int idx=0;idx<threads_num_;idx++)
+  {
+    if(!futures.at(idx).get())
       ROS_ERROR_THROTTLE(1,"unable to upload scene");
-    }
   }
 }
 
 void ParallelMoveitCollisionChecker::setPlanningScene(planning_scene::PlanningScenePtr &planning_scene)
 {
-  stop_mutex_.lock();
   stop_check_=true;
-  stop_mutex_.unlock();
 
   for (int idx=0;idx<threads_num_;idx++)
   {

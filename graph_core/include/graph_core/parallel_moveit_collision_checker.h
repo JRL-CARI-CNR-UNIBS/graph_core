@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/moveit_collision_checker.h>
 #include <thread>
+#include <future>
 #include <mutex>
 
 namespace pathplan
@@ -45,7 +46,6 @@ protected:
   std::string group_name_;
   double min_distance_;
 
-  std::mutex stop_mutex_;
   std::vector<std::vector<std::vector<double>>> queues_;
   std::vector<std::thread> threads_;
   std::vector<planning_scene::PlanningScenePtr> planning_scenes_;
@@ -54,6 +54,7 @@ protected:
   void queueUp(const Eigen::VectorXd &q);
   bool checkAllQueues();
   void collisionThread(int thread_idx);
+  bool asyncSetPlanningSceneMsg(const planning_scene::PlanningScenePtr &planning_scene, const moveit_msgs::PlanningScene& msg);
 
   void queueConnection(const Eigen::VectorXd& configuration1,
                        const Eigen::VectorXd& configuration2);

@@ -99,28 +99,18 @@ bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iterat
 {
   ros::WallTime tic = ros::WallTime::now();
 
-  if(max_time<=0.0) return false;
+  if(max_time<=0.0)
+    return false;
 
   unsigned int iter = 0;
   solution = path_;
   while (iter++ < max_iteration)
   {
-    //    tic_cycle = ros::WallTime::now();
-
     if (solved_)
     {
-      //ROS_FATAL("solved in %u iterations", iter);
       return true;
     }
     step(solution);
-
-    //    toc_cycle = ros::WallTime::now();
-    //    time_vector.push_back((toc_cycle-tic_cycle).toSec());
-    //    mean = std::accumulate(time_vector.begin(), time_vector.end(),0.0)/((double) time_vector.size());
-    //    toc = ros::WallTime::now();
-    //    time = max_time-(toc-tic).toSec();
-
-    //    if(time<0.7*mean || time<=0.0) break;
 
     if((ros::WallTime::now()-tic).toSec() >= 0.98*max_time) break;
   }

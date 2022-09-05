@@ -198,7 +198,9 @@ bool Tree::extendWithPathCheck(const Eigen::VectorXd &configuration, NodePtr &ne
   if(not extendOnly(closest_node,new_node,connection))
     return false;
 
+  connection->setRecentlyChecked(true);
   checked_connections.push_back(connection);
+
   return true;
 }
 
@@ -351,11 +353,9 @@ bool Tree::checkPathToNode(const NodePtr& node, std::vector<ConnectionPtr>& chec
 
   for(const ConnectionPtr& conn: path_connections)
   {
-    std::vector<ConnectionPtr>::iterator it = std::find(checked_connections.begin(),checked_connections.end(),conn);
-
-    if(it<checked_connections.end())
+    if(conn->isRecentlyChecked())
     {
-      if((*it)->getCost() == std::numeric_limits<double>::infinity())
+      if(conn->getCost() == std::numeric_limits<double>::infinity())
         return false;
     }
     else
@@ -367,6 +367,7 @@ bool Tree::checkPathToNode(const NodePtr& node, std::vector<ConnectionPtr>& chec
     if(not checker_->checkConnection(conn))
     {
       conn->setCost(std::numeric_limits<double>::infinity());
+      conn->setRecentlyChecked(true);
       checked_connections.push_back(conn);
 
       return false;
@@ -374,6 +375,7 @@ bool Tree::checkPathToNode(const NodePtr& node, std::vector<ConnectionPtr>& chec
     else
     {
       conn->setCost(metrics_->cost(conn->getParent(),conn->getChild()));
+      conn->setRecentlyChecked(true);
       checked_connections.push_back(conn);
     }
   }
@@ -586,6 +588,8 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
       ConnectionPtr conn = std::make_shared<Connection>(n, node);
       conn->setCost(cost_near_to_node);
       conn->add();
+
+      conn->setRecentlyChecked(true);
       checked_connections.push_back(conn);
 
       nearest_node = n;
@@ -644,6 +648,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
       conn->setCost(cost_node_to_near);
       conn->add();
 
+      conn->setRecentlyChecked(true);
       checked_connections.push_back(conn);
 
       improved = true;

@@ -45,8 +45,11 @@ protected:
   double cost_to_beat_;
   bool verbose_;
   bool search_every_solution_;
+  bool search_in_tree_;
   int curse_of_dimensionality_;
   ros::WallTime tic_fcn_call_;
+  ros::WallTime tic_search_;
+  double max_time_;
   std::vector<double> time_vector_;
 
   void computeConnectionFromNodeToNode(const NodePtr &start_node, const NodePtr &goal_node, std::vector<NodePtr>& visited_nodes);
@@ -65,13 +68,14 @@ public:
 
   void setTree(const TreePtr& tree)
   {
-    if(tree->isSubtree())
-    {
-      SubtreePtr subtree = std::static_pointer_cast<Subtree>(tree);
-      linked_tree_ = subtree->getParentTree();
-    }
-    else
-      linked_tree_ = tree;
+//    if(tree->isSubtree())
+//    {
+//      SubtreePtr subtree = std::static_pointer_cast<Subtree>(tree);
+//      linked_tree_ = subtree->getParentTree();
+//    }
+//    else
+//      linked_tree_ = tree;
+    linked_tree_ = tree;
   }
 
   TreePtr getTree()
@@ -91,11 +95,11 @@ public:
 
   bool purgeFromHere(ConnectionPtr& conn2node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes); //VEDI CON MANUEL
 
-  std::multimap<double,std::vector<ConnectionPtr>>& getConnectionToNode(const NodePtr& node, const std::vector<NodePtr>& black_list = {});
-  std::multimap<double,std::vector<ConnectionPtr>>& getConnectionToNode(const NodePtr& node, const double& cost2beat, const std::vector<NodePtr>& black_list = {});
+  std::multimap<double,std::vector<ConnectionPtr>>& getConnectionToNode(const NodePtr& node, const std::vector<NodePtr>& black_list = {}, const double& max_time = std::numeric_limits<double>::infinity());
+  std::multimap<double,std::vector<ConnectionPtr>>& getConnectionToNode(const NodePtr& node, const double& cost2beat, const std::vector<NodePtr>& black_list = {}, const double& max_time = std::numeric_limits<double>::infinity());
 
-  std::multimap<double,std::vector<ConnectionPtr>>& getConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node, const std::vector<NodePtr> &black_list = {});
-  std::multimap<double,std::vector<ConnectionPtr>>& getConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2beat, const std::vector<NodePtr> &black_list = {});
+  std::multimap<double,std::vector<ConnectionPtr>>& getConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node, const std::vector<NodePtr> &black_list = {}, const double& max_time = std::numeric_limits<double>::infinity());
+  std::multimap<double,std::vector<ConnectionPtr>>& getConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2beat, const std::vector<NodePtr> &black_list = {}, const double& max_time = std::numeric_limits<double>::infinity(), const bool &search_in_tree = false);
 };
 
 }
