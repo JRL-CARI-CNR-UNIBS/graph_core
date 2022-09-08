@@ -113,20 +113,11 @@ bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node
   addGoal(goal_node);
 
   ros::WallTime tic = ros::WallTime::now();
-
   if (!solve(solution, max_iter, max_time))
   {
-    ROS_INFO("No solutions found");
-
-    ros::WallTime toc = ros::WallTime::now();
-    ROS_INFO_STREAM("time: "<<(toc-tic).toSec()<<" max_t: "<<max_time);
-
-    //assert(0);
-
+    ROS_INFO_STREAM("No solutions found. Time: "<<(ros::WallTime::now()-tic).toSec()<<", max time: "<<max_time);
     return false;
   }
-
-  //ROS_INFO_STREAM("time: "<<(ros::WallTime::now()-tic).toSec()<<" max_t: "<<max_time);
   return true;
 }
 
