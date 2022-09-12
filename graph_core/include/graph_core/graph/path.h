@@ -85,10 +85,10 @@ public:
   bool removeNode(const NodePtr& node, const std::vector<NodePtr> &white_list);
   bool removeNode(const NodePtr& node, const std::vector<NodePtr> &white_list, ConnectionPtr &new_conn);
   bool removeNode(const NodePtr &node, const int& idx_conn, const std::vector<NodePtr> &white_list);
-  bool removeNode(const NodePtr &node, const int& idx_conn, const std::vector<NodePtr> &white_list, ConnectionPtr &new_conn);
-  bool removeNodes(const std::vector<NodePtr>& white_list, std::vector<NodePtr>& deleted_nodes);
-  bool removeNodes(const std::vector<NodePtr> &white_list);
-  bool removeNodes();
+  bool removeNode(const NodePtr &node, const int& idx_conn, const std::vector<NodePtr> &white_list, ConnectionPtr &new_conn, const double &toll = 1e-06);
+  bool removeNodes(const std::vector<NodePtr>& white_list, std::vector<NodePtr>& deleted_nodes, const double &toll = 1e-06);
+  bool removeNodes(const std::vector<NodePtr> &white_list, const double& toll = 1e-06);
+  bool removeNodes(const double& toll = 1e-06);
 
   //It gives the connection to which the configuration belongs
   ConnectionPtr findConnection(const Eigen::VectorXd& configuration, int& idx, bool verbose = false);

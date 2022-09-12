@@ -117,7 +117,10 @@ PathPtr Path::clone()
     conn->setCost(connections_.at(i-1)->getCost());
     conn->add();
 
-    assert(child->getParentConnectionsSize() == 1);
+    assert(child->getParentConnectionsSize()    == 1);
+    assert(child->getNetParentConnectionsSize() == 0);
+    assert(child->getChildConnectionsSize()     == 0);
+    assert(child->getNetChildConnectionsSize()  == 0);
 
     new_conn_vector.push_back(conn);
     parent = child;                   //NB: parent of connection i+1 must be the child (same object) of connection i
@@ -763,19 +766,19 @@ Eigen::VectorXd Path::projectOnClosestConnectionKeepingCurvilinearAbscissa(const
   return projection;
 }
 
-bool Path::removeNodes()
+bool Path::removeNodes(const double &toll)
 {
   std::vector<NodePtr> deleted_nodes, white_list;
-  return removeNodes(white_list, deleted_nodes);
+  return removeNodes(white_list, deleted_nodes,toll);
 }
 
-bool Path::removeNodes(const std::vector<NodePtr> &white_list)
+bool Path::removeNodes(const std::vector<NodePtr> &white_list, const double& toll)
 {
   std::vector<NodePtr> deleted_nodes;
-  return removeNodes(white_list, deleted_nodes);
+  return removeNodes(white_list,deleted_nodes,toll);
 }
 
-bool Path::removeNode(const NodePtr& node, const int& idx_conn, const std::vector<NodePtr> &white_list, ConnectionPtr& new_conn)
+bool Path::removeNode(const NodePtr& node, const int& idx_conn, const std::vector<NodePtr> &white_list, ConnectionPtr& new_conn, const double& toll)
 {
   if(node == start_node_ || node == goal_node_)
     return false;
@@ -792,11 +795,17 @@ bool Path::removeNode(const NodePtr& node, const int& idx_conn, const std::vecto
   ConnectionPtr conn_parent_node = connections_.at(idx_conn);
   ConnectionPtr conn_node_child  = connections_.at(idx_conn+1);
 
-  if(conn_parent_node->isParallel(conn_node_child)
-     && ((node->getParentConnectionsSize()+node->getNetParentConnectionsSize()) <= 1)
-     && ((node->getChildConnectionsSize ()+node->getNetChildConnectionsSize ()) <= 1)
-     )
+  //elimina
+  bool parallel = conn_parent_node->isParallel(conn_node_child, toll);
+  bool parent_cond = ((node->getParentConnectionsSize()+node->getNetParentConnectionsSize()) == 1);
+  bool child_cond = ((node->getChildConnectionsSize ()+node->getNetChildConnectionsSize ()) == 1);
+
+  ROS_INFO_STREAM("parallel: "<<parallel<<", parent cond: "<<parent_cond<<", child cond: "<<child_cond);
+  //
+
+  if(parallel && parent_cond && child_cond)
   {
+    ROS_INFO("IN_REMOVED");
     assert(not tree_ || node != tree_->getRoot()); //node must have 1 parent (root must have zero) and 1 child (root may have many)
 
     bool is_net = conn_node_child->isNet();
@@ -813,6 +822,7 @@ bool Path::removeNode(const NodePtr& node, const int& idx_conn, const std::vecto
       tree_->removeNode(node);
 
     std::vector<ConnectionPtr>::iterator it = connections_.begin()+idx_conn;
+    assert((*it)->getChild() == node);
     *it = new_conn;
     it = connections_.erase(it+1);
 
@@ -927,11 +937,13 @@ bool Path::restoreConnection(const ConnectionPtr& conn, const NodePtr& node2remo
   return true;
 }
 
-bool Path::removeNodes(const std::vector<NodePtr> &white_list, std::vector<NodePtr> &deleted_nodes)
+bool Path::removeNodes(const std::vector<NodePtr> &white_list, std::vector<NodePtr> &deleted_nodes, const double& toll)
 {
   bool removed;
+  NodePtr node;
   std::vector<NodePtr> void_list;
   bool at_least_one_removed = false;
+  ConnectionPtr conn_parent_node, conn_node_child, new_conn;
 
   do
   {
@@ -939,17 +951,18 @@ bool Path::removeNodes(const std::vector<NodePtr> &white_list, std::vector<NodeP
 
     for(unsigned int i=0;i<connections_.size()-1;i++)
     {
-      ConnectionPtr conn_parent_node = connections_.at(i);
-      ConnectionPtr conn_node_child  = connections_.at(i+1);
+      conn_parent_node = connections_.at(i);
+      conn_node_child  = connections_.at(i+1);
 
-      NodePtr node = conn_parent_node->getChild();
+      node = conn_parent_node->getChild();
       assert(node == conn_node_child->getParent());
 
       if(std::find(white_list.begin(),white_list.end(),node)<white_list.end())
         continue;
 
-      if(removeNode(node,i,void_list))
+      if(removeNode(node,i,void_list,new_conn,toll))
       {
+        ROS_WARN("REMOVED");
         removed = true;
         at_least_one_removed = true;
         deleted_nodes.push_back(node);
