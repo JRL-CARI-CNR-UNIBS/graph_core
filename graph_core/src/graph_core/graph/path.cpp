@@ -1485,21 +1485,27 @@ bool Path::isValidFromConn(const ConnectionPtr& this_conn, const CollisionChecke
 bool Path::isValidFromConf(const Eigen::VectorXd &conf, const CollisionCheckerPtr &this_checker)
 {
   int pos_closest_obs_from_goal = -1;
-  bool validity = isValidFromConf(conf,pos_closest_obs_from_goal,this_checker);
-  return validity;
+  return isValidFromConf(conf,pos_closest_obs_from_goal,this_checker);
 }
 
-bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker)
+bool Path::isValidFromConf(const Eigen::VectorXd &conf, const int& conn_idx, const CollisionCheckerPtr &this_checker)
 {
+  int pos_closest_obs_from_goal = -1;
+  return isValidFromConf(conf,conn_idx,pos_closest_obs_from_goal,this_checker);
+}
+
+bool Path::isValidFromConf(const Eigen::VectorXd &conf, const int& conn_idx, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker)
+{
+  assert(conn_idx >= 0);
+
+  ConnectionPtr conn = connections_.at(conn_idx);
+
   CollisionCheckerPtr checker = checker_;
   if(this_checker != nullptr)
     checker = this_checker;
 
   pos_closest_obs_from_goal = -1;
   bool validity = true;
-  int idx;
-  ConnectionPtr conn = findConnection(conf,idx);
-  assert(conn != nullptr);
 
   if(conf == conn->getParent()->getConfiguration())
   {
@@ -1507,7 +1513,7 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_fro
 
     if(not validity)
     {
-      for(int i = (connections_.size()-1);i>=idx;i--)
+      for(int i = (connections_.size()-1);i>=conn_idx;i--)
       {
         if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-1-i;
       }
@@ -1515,14 +1521,13 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_fro
   }
   else if(conf == conn->getChild()->getConfiguration())
   {
-    if(idx<connections_.size()-1)
+    if(conn_idx<connections_.size()-1)
     {
-      conn = connections_.at(idx+1);
-      validity = isValidFromConn(conn,checker);
+      validity = isValidFromConn(connections_.at(conn_idx+1),checker);
 
       if(not validity)
       {
-        for(int i = (connections_.size()-1);i>=idx+1;i--)
+        for(int i = (connections_.size()-1);i>=conn_idx+1;i--)
         {
           if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-1-i;
         }
@@ -1541,15 +1546,15 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_fro
     {
       validity = false;
       conn->setCost(std::numeric_limits<double>::infinity());
-      pos_closest_obs_from_goal = connections_.size()-1-idx;
+      pos_closest_obs_from_goal = connections_.size()-1-conn_idx;
     }
 
-    if(idx<connections_.size()-1)  //also if the checker has failed, this check is important to update the cost of all the connections
+    if(conn_idx<connections_.size()-1)  //also if the checker has failed, this check is important to update the cost of all the connections
     {
-      if(!isValidFromConn(connections_.at(idx+1),checker))
+      if(!isValidFromConn(connections_.at(conn_idx+1),checker))
       {
         validity = false;
-        for(int i = (connections_.size()-1);i>=idx+1;i--)
+        for(int i = (connections_.size()-1);i>=conn_idx+1;i--)
         {
           if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-1-i;
         }
@@ -1558,6 +1563,14 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_fro
   }
 
   return validity;
+}
+
+
+bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker)
+{
+  int conn_idx;
+  findConnection(conf,conn_idx);
+  return isValidFromConf(conf,conn_idx,pos_closest_obs_from_goal,this_checker);
 }
 
 XmlRpc::XmlRpcValue Path::toXmlRpcValue(bool reverse) const
