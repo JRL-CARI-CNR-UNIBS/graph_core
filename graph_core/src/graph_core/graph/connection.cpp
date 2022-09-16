@@ -119,7 +119,7 @@ bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)
   // v1 dot v2 = norm(v1)*norm(v2) if v1 // v2
 
 
-  ROS_INFO_STREAM("scalar: "<<scalar<<" dot: "<<((euclidean_norm_*conn->norm())-toll));
+  //ROS_INFO_STREAM("scalar: "<<scalar<<" dot: "<<((euclidean_norm_*conn->norm())-toll));
 
   assert(std::abs(euclidean_norm_-(getChild()->getConfiguration()-getParent()->getConfiguration()).norm())<1e-06);
 
