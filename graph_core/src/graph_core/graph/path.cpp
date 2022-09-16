@@ -795,17 +795,12 @@ bool Path::removeNode(const NodePtr& node, const int& idx_conn, const std::vecto
   ConnectionPtr conn_parent_node = connections_.at(idx_conn);
   ConnectionPtr conn_node_child  = connections_.at(idx_conn+1);
 
-  //elimina
   bool parallel = conn_parent_node->isParallel(conn_node_child, toll);
   bool parent_cond = ((node->getParentConnectionsSize()+node->getNetParentConnectionsSize()) == 1);
   bool child_cond = ((node->getChildConnectionsSize ()+node->getNetChildConnectionsSize ()) == 1);
 
-  ROS_INFO_STREAM("parallel: "<<parallel<<", parent cond: "<<parent_cond<<", child cond: "<<child_cond);
-  //
-
   if(parallel && parent_cond && child_cond)
   {
-    ROS_INFO("IN_REMOVED");
     assert(not tree_ || node != tree_->getRoot()); //node must have 1 parent (root must have zero) and 1 child (root may have many)
 
     bool is_net = conn_node_child->isNet();
@@ -962,7 +957,6 @@ bool Path::removeNodes(const std::vector<NodePtr> &white_list, std::vector<NodeP
 
       if(removeNode(node,i,void_list,new_conn,toll))
       {
-        ROS_WARN("REMOVED");
         removed = true;
         at_least_one_removed = true;
         deleted_nodes.push_back(node);
