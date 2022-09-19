@@ -196,16 +196,7 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
 
 void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes, std::vector<ConnectionPtr>& connections2here)
 {
-//  long double fcn_time = (ros::WallTime::now()-tic_fcn_call_).toSec();
-//  assert([&]() ->bool{
-//           if(fcn_time>1e-03)
-//           {
-//           ROS_WARN_STREAM("fcn_time "<<fcn_time);
-//             return false;
-//           }
-//           return true;
-//         }());
-
+  ROS_INFO_STREAM("time in: "<<(ros::WallTime::now()-tic_search_).toSec());
   //Depth-first search
   curse_of_dimensionality_++;
 
@@ -218,12 +209,13 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
   if(goal_node == linked_tree_->getRoot() || goal_node == start_node)
   {
     time_tot = (ros::WallTime::now()-tic_tot).toSec();
+    ROS_INFO_STREAM("time return: "<<(ros::WallTime::now()-tic_tot).toSec());
     return;
   }
   else
   {
-    std::vector<ConnectionPtr> all_parent_connections = goal_node->getParentConnections();
-    std::vector<ConnectionPtr> net_parent_connections = goal_node->getNetParentConnections();
+    std::vector<ConnectionPtr> all_parent_connections = goal_node->getParentConnectionsConst();
+    std::vector<ConnectionPtr> net_parent_connections = goal_node->getNetParentConnectionsConst();
     all_parent_connections.insert(all_parent_connections.end(),net_parent_connections.begin(),net_parent_connections.end());
 
     ros::WallTime tic_cycle;
@@ -234,11 +226,16 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
     {
       tic_cycle = ros::WallTime::now();
 
+      if(verbose_)
+        ROS_INFO_STREAM("Available time: "<<max_time_-(ros::WallTime::now()-tic_search_).toSec());
+
       if((ros::WallTime::now()-tic_search_).toSec()>max_time_)
       {
         if(verbose_)
         {
           ROS_INFO_STREAM("Net max time exceeded! Time: "<<(ros::WallTime::now()-tic_search_).toSec()<<" max time: "<<max_time_);
+          ROS_INFO_STREAM("time return: "<<(ros::WallTime::now()-tic_cycle).toSec());
+
           return;
         }
       }
@@ -259,6 +256,7 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
           ROS_INFO("cost up to now %lf, cost to beat %f -> don't follow this branch!",cost2parent,cost_to_beat_);
 
         time_tot += (ros::WallTime::now()-tic_cycle).toSec();
+        ROS_INFO_STREAM("time don't follow branch: "<<(ros::WallTime::now()-tic_cycle).toSec());
 
         continue;
       }
@@ -279,6 +277,7 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
           ROS_INFO("cost heuristic through this node %lf, cost to beat %f -> don't follow this branch!",cost_heuristics,cost_to_beat_);
 
         time_tot += (ros::WallTime::now()-tic_cycle).toSec();
+        ROS_INFO_STREAM("time cost heuristics: "<<(ros::WallTime::now()-tic_cycle).toSec());
 
         continue;
       }
@@ -326,6 +325,7 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
             ROS_INFO_STREAM("parent belongs to black list, skipping..");
 
           time_tot += (ros::WallTime::now()-tic_cycle).toSec();
+          ROS_INFO_STREAM("time black list: "<<(ros::WallTime::now()-tic_cycle).toSec());
 
           continue;
         }
@@ -336,6 +336,7 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
             ROS_INFO_STREAM("avoiding cycles...");
 
           time_tot += (ros::WallTime::now()-tic_cycle).toSec();
+          ROS_INFO_STREAM("time visited nodes: "<<(ros::WallTime::now()-tic_cycle).toSec());
 
           continue;
         }
@@ -351,6 +352,8 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
         time_tot += (ros::WallTime::now()-tic_cycle).toSec();
 
         tic_fcn_call_ = ros::WallTime::now();
+        ROS_INFO_STREAM("time before: "<<(ros::WallTime::now()-tic_search_).toSec()<<" time cycle "<<(ros::WallTime::now()-tic_cycle).toSec());
+
         computeConnectionFromNodeToNode(start_node,parent,cost2parent,black_list,
                                         visited_nodes,connections2parent);
 
