@@ -676,7 +676,7 @@ Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& point, c
   return projection;
 }
 
-Eigen::VectorXd Path::projectOnClosestConnectionKeepingPastPrj(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, int& n_conn, int delta_n_conn)
+Eigen::VectorXd Path::projectKeepingPastPrj(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, int& n_conn, int delta_n_conn)
 {
   int idx;
   Eigen::VectorXd prj;
@@ -719,49 +719,37 @@ Eigen::VectorXd Path::projectOnClosestConnectionKeepingPastPrj(const Eigen::Vect
   return projection;
 }
 
-Eigen::VectorXd Path::projectOnClosestConnectionKeepingCurvilinearAbscissa(const Eigen::VectorXd& point, Eigen::VectorXd &past_prj, double &new_abscissa, double &past_abscissa, int &n_conn, int delta_n_conn)
+Eigen::VectorXd Path::projectKeepingAbscissa(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection)
 {
-  int idx;
-  Eigen::VectorXd prj;
-  Eigen::VectorXd projection;
-  double distance_from_past_abs;
-  double min_distance_from_past_abs = std::numeric_limits<double>::infinity();
+  double distance_on_path;
+  Eigen::VectorXd candidate_projection, projection;
+  double min_distance_on_path = std::numeric_limits<double>::infinity();
 
-  ConnectionPtr conn;
   for(unsigned int i=0;i<connections_.size();i++)
   {
-    conn = connections_.at(i);
-
     double distance;
     bool in_connection;
-    prj = projectOnConnection(point,conn,distance,in_connection);
+    candidate_projection = projectOnConnection(point,connections_.at(i),distance,in_connection);
 
     if(in_connection)
     {
-      if(i>=unsigned(n_conn) && i<=unsigned(n_conn+delta_n_conn))
-      {
-        double abscissa = curvilinearAbscissaOfPointGivenConnection(prj,i);
-        distance_from_past_abs = abscissa-past_abscissa;
+        double abscissa = curvilinearAbscissaOfPointGivenConnection(candidate_projection,i);
+        double past_abscissa = curvilinearAbscissaOfPoint(past_projection);
+        distance_on_path = abscissa-past_abscissa;
 
-        if(abscissa>=past_abscissa && distance_from_past_abs<min_distance_from_past_abs)
+        if(distance_on_path>=0 && distance_on_path<min_distance_on_path)
         {
-          new_abscissa = abscissa;
-          min_distance_from_past_abs = distance_from_past_abs;
-          projection = prj;
-          idx = i;
+          min_distance_on_path = distance_on_path;
+          projection = candidate_projection;
         }
-      }
     }
   }
 
-  if(min_distance_from_past_abs == std::numeric_limits<double>::infinity())
+  if(min_distance_on_path == std::numeric_limits<double>::infinity())
   {
-    new_abscissa = past_abscissa;
-    projection = past_prj;
+    projection = past_projection;
     PATH_COMMENT("projection on path not found");
   }
-  else
-    n_conn = idx;
 
   return projection;
 }

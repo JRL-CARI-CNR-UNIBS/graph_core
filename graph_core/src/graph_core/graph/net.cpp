@@ -229,7 +229,7 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
       if(verbose_)
         ROS_INFO_STREAM("Available time: "<<max_time_-(ros::WallTime::now()-tic_search_).toSec());
 
-      if((ros::WallTime::now()-tic_search_).toSec()>max_time_)
+      if((ros::WallTime::now()-tic_search_).toSec()>0.95*max_time_)
       {
         if(verbose_)
         {
