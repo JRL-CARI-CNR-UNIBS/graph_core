@@ -737,7 +737,7 @@ Eigen::VectorXd Path::projectKeepingAbscissa(const Eigen::VectorXd& point, const
       double past_abscissa = curvilinearAbscissaOfPoint(past_projection);
       distance_on_path = abscissa-past_abscissa;
 
-      if(std::abs(distance_on_path)>=1e-06)
+      if(distance_on_path>=-1e-06)
       {
         metric = 0.5*distance_on_path+0.5*(point-candidate_projection).norm();
 
