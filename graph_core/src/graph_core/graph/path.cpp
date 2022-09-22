@@ -735,17 +735,20 @@ Eigen::VectorXd Path::projectKeepingAbscissa(const Eigen::VectorXd& point, const
     {
       double abscissa = curvilinearAbscissaOfPointGivenConnection(candidate_projection,i);
       double past_abscissa = curvilinearAbscissaOfPoint(past_projection);
-      distance_on_path = std::abs(abscissa-past_abscissa);
+      distance_on_path = abscissa-past_abscissa;
 
-      metric = 0.5*distance_on_path+0.5*(point-candidate_projection).norm();
-
-      if(verbose)
-        ROS_INFO("current abscissa %f, past abscissa %f, diff %f, min diff %f",abscissa,past_abscissa,distance_on_path,min_metric);
-
-      if(metric<min_metric)
+      if(std::abs(distance_on_path)>=1e-06)
       {
-        min_metric = metric;
-        projection = candidate_projection;
+        metric = 0.5*distance_on_path+0.5*(point-candidate_projection).norm();
+
+        if(verbose)
+          ROS_INFO("current abscissa %f, past abscissa %f, diff_abs %f, metric %f, min metric %f",abscissa,past_abscissa,distance_on_path,metric,min_metric);
+
+        if(metric<min_metric)
+        {
+          min_metric = metric;
+          projection = candidate_projection;
+        }
       }
     }
   }
