@@ -528,7 +528,7 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
     return conn;
   }
 
- // Check for connections
+  // Check for connections
   Eigen::VectorXd parent;
   Eigen::VectorXd child;
 
@@ -638,7 +638,7 @@ Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const Co
       in_conn = true;
     }
 
-    if(verbose)
+    if(verbose && in_conn) //if(verbose)
       ROS_INFO_STREAM("in_conn: "<<in_conn<<" dist: "<<distance<<" s: "<<s<<" point_length: "<<point_length<<" conn_length: "<<conn_length<< " projection: "<<projection.transpose()<<" parent: "<<parent.transpose()<<" child: "<<child.transpose());
 
     return projection;
@@ -719,36 +719,47 @@ Eigen::VectorXd Path::projectKeepingPastPrj(const Eigen::VectorXd& point, const 
   return projection;
 }
 
-Eigen::VectorXd Path::projectKeepingAbscissa(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection)
+Eigen::VectorXd Path::projectKeepingAbscissa(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection, const bool& verbose)
 {
-  double distance_on_path;
+  double distance_on_path, metric;
   Eigen::VectorXd candidate_projection, projection;
-  double min_distance_on_path = std::numeric_limits<double>::infinity();
+  double min_metric = std::numeric_limits<double>::infinity();
 
   for(unsigned int i=0;i<connections_.size();i++)
   {
     double distance;
     bool in_connection;
-    candidate_projection = projectOnConnection(point,connections_.at(i),distance,in_connection);
+    candidate_projection = projectOnConnection(point,connections_.at(i),distance,in_connection, verbose);
 
     if(in_connection)
     {
-        double abscissa = curvilinearAbscissaOfPointGivenConnection(candidate_projection,i);
-        double past_abscissa = curvilinearAbscissaOfPoint(past_projection);
-        distance_on_path = abscissa-past_abscissa;
+      double abscissa = curvilinearAbscissaOfPointGivenConnection(candidate_projection,i);
+      double past_abscissa = curvilinearAbscissaOfPoint(past_projection);
+      distance_on_path = std::abs(abscissa-past_abscissa);
 
-        if(distance_on_path>=0 && distance_on_path<min_distance_on_path)
-        {
-          min_distance_on_path = distance_on_path;
-          projection = candidate_projection;
-        }
+      metric = 0.5*distance_on_path+0.5*(point-candidate_projection).norm();
+
+      if(verbose)
+        ROS_INFO("current abscissa %f, past abscissa %f, diff %f, min diff %f",abscissa,past_abscissa,distance_on_path,min_metric);
+
+      if(metric<min_metric)
+      {
+        min_metric = metric;
+        projection = candidate_projection;
+      }
     }
   }
 
-  if(min_distance_on_path == std::numeric_limits<double>::infinity())
+  if(min_metric == std::numeric_limits<double>::infinity())
   {
     projection = past_projection;
-    PATH_COMMENT("projection on path not found");
+    if(verbose)
+      ROS_INFO("projection on path not found");
+  }
+  else
+  {
+    if(verbose)
+      ROS_INFO_STREAM("chosen projection "<<projection.transpose()<<" min diff "<<min_metric);
   }
 
   return projection;

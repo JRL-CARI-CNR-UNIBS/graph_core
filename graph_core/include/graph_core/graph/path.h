@@ -190,7 +190,7 @@ public:
   Eigen::VectorXd projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool &in_conn, const bool verbose = false);
   Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point, const bool verbose = false);
   Eigen::VectorXd projectKeepingPastPrj(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, int &n_conn, int delta_n_conn = 1);
-  Eigen::VectorXd projectKeepingAbscissa(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj);
+  Eigen::VectorXd projectKeepingAbscissa(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, const bool& verbose = false);
 
   // return true if improve
   bool warp(const double& min_dist = 0.1, const double& max_time = std::numeric_limits<double>::infinity());
