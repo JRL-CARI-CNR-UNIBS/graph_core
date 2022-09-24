@@ -574,77 +574,6 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
   return nullptr;
 }
 
-Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool& in_conn, const bool verbose)
-{
-  Eigen::VectorXd parent = conn->getParent()->getConfiguration();
-  Eigen::VectorXd child  = conn->getChild() ->getConfiguration();
-
-  if(point == parent)
-  {
-    if(verbose)
-      ROS_INFO("POINT == PARENT");
-
-    in_conn = true;
-    distance = 0.0;
-    return parent;
-  }
-  else if(point == child)
-  {
-    if(verbose)
-      ROS_INFO("POINT == CHILD");
-
-    in_conn = true;
-    distance = 0.0;
-    return child;
-  }
-  else
-  {
-    Eigen::VectorXd conn_vector  = child-parent;
-    Eigen::VectorXd point_vector = point-parent;
-
-    double conn_length = (conn_vector).norm();
-    assert(conn_length>0.0);
-
-    double point_length = (point_vector).norm();
-    assert(point_length>0);
-
-    Eigen::VectorXd conn_versor = conn_vector/conn_length;
-    double s = point_vector.dot(conn_versor);
-
-    Eigen::VectorXd projection = parent + s*conn_versor;
-
-    distance = (point-projection).norm();
-    assert(not std::isnan(distance));
-    assert((point-projection).dot(conn_vector)<TOLERANCE);
-
-    ((s>=0.0) && (s<=conn_length))? (in_conn = true):
-                                    (in_conn = false);
-
-    if((conn == connections_.front()) && (s<=0.0))  //if the point is before the start it is projected on the start
-    {
-      if(verbose)
-        ROS_INFO("CONN == CONNECTIONS.front()");
-
-      projection = parent; //the start
-      in_conn = true;
-    }
-
-    if((conn == connections_.back()) && (s>=conn_length))  //if the point is before the start it is projected on the start
-    {
-      if(verbose)
-        ROS_INFO("CONN == CONNECTIONS.back()");
-
-      projection = child;  //the goal
-      in_conn = true;
-    }
-
-    if(verbose)
-      ROS_INFO_STREAM("in_conn: "<<in_conn<<" dist: "<<distance<<" s: "<<s<<" point_length: "<<point_length<<" conn_length: "<<conn_length<< " projection: "<<projection.transpose()<<" parent: "<<parent.transpose()<<" child: "<<child.transpose());
-
-    return projection;
-  }
-}
-
 Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& point, const bool verbose)
 {
   Eigen::VectorXd pr;
@@ -655,7 +584,7 @@ Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& point, c
   {
     double distance;
     bool in_connection;
-    pr = projectOnConnection(point,conn,distance,in_connection,verbose);
+    pr = conn->projectOnConnection(point,distance,in_connection,verbose);
 
     if(in_connection)
     {
@@ -672,49 +601,6 @@ Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& point, c
     projection = findCloserNode(point)->getConfiguration();
     PATH_COMMENT("projection on path not found");
   }
-
-  return projection;
-}
-
-Eigen::VectorXd Path::projectKeepingPastPrj(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, int& n_conn, int delta_n_conn)
-{
-  int idx;
-  Eigen::VectorXd prj;
-  Eigen::VectorXd projection;
-  double distance_from_past_prj;
-  double min_distance_from_past_prj = std::numeric_limits<double>::infinity();
-
-  ConnectionPtr conn;
-  for(unsigned int i=0;i<connections_.size();i++)
-  {
-    conn = connections_.at(i);
-
-    double distance;
-    bool in_connection;
-    prj = projectOnConnection(point,conn,distance,in_connection);
-
-    if(in_connection)
-    {
-      distance_from_past_prj = (prj-past_prj).norm();
-      if(distance_from_past_prj<min_distance_from_past_prj)
-      {
-        if(i>=unsigned(n_conn) && i<=unsigned(n_conn+delta_n_conn))
-        {
-          min_distance_from_past_prj = distance_from_past_prj;
-          projection = prj;
-          idx = i;
-        }
-      }
-    }
-  }
-
-  if(min_distance_from_past_prj == std::numeric_limits<double>::infinity())
-  {
-    projection = past_prj;
-    PATH_COMMENT("projection on path not found");
-  }
-  else
-    n_conn = idx;
 
   return projection;
 }
@@ -737,7 +623,7 @@ Eigen::VectorXd Path::projectKeepingAbscissa(const Eigen::VectorXd& point, const
 
   for(unsigned int i=0;i<connections_.size();i++)
   {
-    candidate_projection = projectOnConnection(point,connections_.at(i),distance,in_connection,verbose);
+    candidate_projection = connections_.at(i)->projectOnConnection(point,distance,in_connection,verbose);
 
     if(in_connection)
     {

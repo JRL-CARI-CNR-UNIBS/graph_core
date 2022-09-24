@@ -92,6 +92,60 @@ void Connection::remove()
     ROS_FATAL("child already destroied");
 }
 
+
+Eigen::VectorXd Connection::projectOnConnection(const Eigen::VectorXd& point, double& distance, bool& in_conn, const bool& verbose)
+{
+  Eigen::VectorXd parent = getParent()->getConfiguration();
+  Eigen::VectorXd child  = getChild() ->getConfiguration();
+
+  if(point == parent)
+  {
+    if(verbose)
+      ROS_INFO("POINT == PARENT");
+
+    in_conn = true;
+    distance = 0.0;
+    return parent;
+  }
+  else if(point == child)
+  {
+    if(verbose)
+      ROS_INFO("POINT == CHILD");
+
+    in_conn = true;
+    distance = 0.0;
+    return child;
+  }
+  else
+  {
+    Eigen::VectorXd conn_vector  = child-parent;
+    Eigen::VectorXd point_vector = point-parent;
+
+    double conn_length = (conn_vector).norm();
+    assert(conn_length>0.0);
+
+    double point_length = (point_vector).norm();
+    assert(point_length>0);
+
+    Eigen::VectorXd conn_versor = conn_vector/conn_length;
+    double s = point_vector.dot(conn_versor);
+
+    Eigen::VectorXd projection = parent + s*conn_versor;
+
+    distance = (point-projection).norm();
+    assert(not std::isnan(distance));
+    assert((point-projection).dot(conn_vector)<TOLERANCE);
+
+    ((s>=0.0) && (s<=conn_length))? (in_conn = true):
+                                    (in_conn = false);
+
+    if(verbose)
+      ROS_INFO_STREAM("in_conn: "<<in_conn<<" dist: "<<distance<<" s: "<<s<<" point_length: "<<point_length<<" conn_length: "<<euclidean_norm_<< " projection: "<<projection.transpose()<<" parent: "<<parent.transpose()<<" child: "<<child.transpose());
+
+    return projection;
+  }
+}
+
 void Connection::flip()
 {
   remove(); // remove connection from parent and child

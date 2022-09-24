@@ -187,9 +187,7 @@ public:
   bool isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker = nullptr);
   bool isValidFromConf(const Eigen::VectorXd &conf, const int &conn_idx, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker = nullptr);
   bool isValidFromConn(const ConnectionPtr &this_conn, const CollisionCheckerPtr &this_checker = nullptr);
-  Eigen::VectorXd projectOnConnection(const Eigen::VectorXd& point, const ConnectionPtr &conn, double& distance, bool &in_conn, const bool verbose = false);
   Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point, const bool verbose = false);
-  Eigen::VectorXd projectKeepingPastPrj(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, int &n_conn, int delta_n_conn = 1);
   Eigen::VectorXd projectKeepingAbscissa(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, const double &weight = 0.5, const bool& verbose = false);
 
   // return true if improve

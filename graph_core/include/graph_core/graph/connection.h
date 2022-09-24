@@ -100,6 +100,8 @@ public:
   bool convertToNetConnection();
   void changeConnectionType();
   bool isParallel(const ConnectionPtr& conn, const double& toll = 1e-06);
+  Eigen::VectorXd projectOnConnection(const Eigen::VectorXd& point, double& distance, bool& in_conn, const bool& verbose = false);
+
 
   ~Connection();
   friend std::ostream& operator<<(std::ostream& os, const Connection& connection);
