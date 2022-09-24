@@ -719,11 +719,19 @@ Eigen::VectorXd Path::projectKeepingPastPrj(const Eigen::VectorXd& point, const 
   return projection;
 }
 
-Eigen::VectorXd Path::projectKeepingAbscissa(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection, const bool& verbose)
+Eigen::VectorXd Path::projectKeepingAbscissa(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection, const double& weight, const bool& verbose)
 {
+  double w;
   bool in_connection;
   Eigen::VectorXd candidate_projection, projection;
   double distance_on_path, metric, abscissa, past_abscissa, distance;
+
+  if(weight>1)
+    w = 1;
+  else if(weight<0)
+    w = 0;
+  else
+    w = weight;
 
   double min_metric = std::numeric_limits<double>::infinity();
 
@@ -736,7 +744,7 @@ Eigen::VectorXd Path::projectKeepingAbscissa(const Eigen::VectorXd& point, const
       abscissa = curvilinearAbscissaOfPointGivenConnection(candidate_projection,i);
       past_abscissa = curvilinearAbscissaOfPoint(past_projection);
       distance_on_path = std::abs(abscissa-past_abscissa);
-      metric = 0.5*distance_on_path+0.5*(point-candidate_projection).norm();
+      metric = w*distance_on_path+(1-w)*(point-candidate_projection).norm();
 
       if(verbose)
         ROS_INFO("current abscissa %f, past abscissa %f, diff_abs %f, metric %f, min metric %f",abscissa,past_abscissa,distance_on_path,metric,min_metric);
