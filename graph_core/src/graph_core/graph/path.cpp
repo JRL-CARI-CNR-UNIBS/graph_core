@@ -638,7 +638,7 @@ Eigen::VectorXd Path::projectOnConnection(const Eigen::VectorXd& point, const Co
       in_conn = true;
     }
 
-    if(verbose && in_conn) //if(verbose)
+    if(verbose)
       ROS_INFO_STREAM("in_conn: "<<in_conn<<" dist: "<<distance<<" s: "<<s<<" point_length: "<<point_length<<" conn_length: "<<conn_length<< " projection: "<<projection.transpose()<<" parent: "<<parent.transpose()<<" child: "<<child.transpose());
 
     return projection;
@@ -721,35 +721,31 @@ Eigen::VectorXd Path::projectKeepingPastPrj(const Eigen::VectorXd& point, const 
 
 Eigen::VectorXd Path::projectKeepingAbscissa(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection, const bool& verbose)
 {
-  double distance_on_path, metric;
+  bool in_connection;
   Eigen::VectorXd candidate_projection, projection;
+  double distance_on_path, metric, abscissa, past_abscissa, distance;
+
   double min_metric = std::numeric_limits<double>::infinity();
 
   for(unsigned int i=0;i<connections_.size();i++)
   {
-    double distance;
-    bool in_connection;
-    candidate_projection = projectOnConnection(point,connections_.at(i),distance,in_connection, verbose);
+    candidate_projection = projectOnConnection(point,connections_.at(i),distance,in_connection,verbose);
 
     if(in_connection)
     {
-      double abscissa = curvilinearAbscissaOfPointGivenConnection(candidate_projection,i);
-      double past_abscissa = curvilinearAbscissaOfPoint(past_projection);
-      distance_on_path = abscissa-past_abscissa;
+      abscissa = curvilinearAbscissaOfPointGivenConnection(candidate_projection,i);
+      past_abscissa = curvilinearAbscissaOfPoint(past_projection);
+      distance_on_path = std::abs(abscissa-past_abscissa);
+      metric = 0.5*distance_on_path+0.5*(point-candidate_projection).norm();
 
-      if(distance_on_path>=-1e-06)
-      {
-        metric = 0.5*distance_on_path+0.5*(point-candidate_projection).norm();
-
-        if(verbose)
-          ROS_INFO("current abscissa %f, past abscissa %f, diff_abs %f, metric %f, min metric %f",abscissa,past_abscissa,distance_on_path,metric,min_metric);
+      if(verbose)
+        ROS_INFO("current abscissa %f, past abscissa %f, diff_abs %f, metric %f, min metric %f",abscissa,past_abscissa,distance_on_path,metric,min_metric);
 
         if(metric<min_metric)
         {
           min_metric = metric;
           projection = candidate_projection;
         }
-      }
     }
   }
 
