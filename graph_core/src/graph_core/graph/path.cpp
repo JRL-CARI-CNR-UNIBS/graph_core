@@ -635,19 +635,28 @@ Eigen::VectorXd Path::projectKeepingAbscissa(const Eigen::VectorXd& point, const
       if(verbose)
         ROS_INFO("current abscissa %f, past abscissa %f, diff_abs %f, metric %f, min metric %f",abscissa,past_abscissa,distance_on_path,metric,min_metric);
 
-        if(metric<min_metric)
-        {
-          min_metric = metric;
-          projection = candidate_projection;
-        }
+      if(metric<min_metric)
+      {
+        min_metric = metric;
+        projection = candidate_projection;
+      }
     }
   }
 
   if(min_metric == std::numeric_limits<double>::infinity())
   {
-    projection = past_projection;
+    Eigen::VectorXd closest_node = findCloserNode(point)->getConfiguration();
+
+    double dist_past_prj     = (past_projection-point).norm();
+    double dist_closest_node = (closest_node-point   ).norm();
+
+    if(dist_past_prj<dist_closest_node)
+      projection = past_projection;
+    else
+      projection = closest_node;
+
     if(verbose)
-      ROS_INFO("projection on path not found");
+      ROS_INFO_STREAM("projection on path not found, chosen projection "<<projection.transpose());
   }
   else
   {
