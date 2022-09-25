@@ -189,6 +189,8 @@ public:
   bool isValidFromConn(const ConnectionPtr &this_conn, const CollisionCheckerPtr &this_checker = nullptr);
   Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point, const bool verbose = false);
   Eigen::VectorXd projectKeepingAbscissa(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, const double &weight = 0.5, const bool& verbose = false);
+  Eigen::VectorXd projectOnPath(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection, const bool& verbose = false);
+
 
   // return true if improve
   bool warp(const double& min_dist = 0.1, const double& max_time = std::numeric_limits<double>::infinity());

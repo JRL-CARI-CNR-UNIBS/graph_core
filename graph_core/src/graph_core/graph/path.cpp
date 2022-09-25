@@ -155,10 +155,11 @@ double Path::length()
 Eigen::VectorXd Path::pointOnCurvilinearAbscissa(const double& abscissa)
 {
   assert(connections_.size() > 0);
-  if (abscissa <= 0)
+  if (abscissa <= 0.0)
     return connections_.at(0)->getParent()->getConfiguration();
-  double euclidean_norm = 0;
-  for (const ConnectionPtr& conn : connections_)
+
+  double euclidean_norm = 0.0;
+  for(const ConnectionPtr& conn : connections_)
   {
     if ((euclidean_norm + conn->norm()) > abscissa)
     {
@@ -666,6 +667,53 @@ Eigen::VectorXd Path::projectKeepingAbscissa(const Eigen::VectorXd& point, const
 
   return projection;
 }
+
+Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection, const bool& verbose)
+{
+  Eigen::VectorXd candidate_projection, projection;
+  double abscissa, candidate_abscissa, candidate_distance, min_distance, ds, tmp_ds;
+
+  bool last_run = false;
+
+  tmp_ds = length()/1000.0;
+  (tmp_ds<0.01)? (ds = tmp_ds):
+                 (ds = 0.001);
+
+  candidate_abscissa = curvilinearAbscissaOfPoint(past_projection);
+  min_distance = std::numeric_limits<double>::infinity();
+
+  while(candidate_abscissa<=1)
+  {
+    candidate_projection = pointOnCurvilinearAbscissa(candidate_abscissa);
+    candidate_distance = (candidate_projection-point).norm();
+
+    if(verbose)
+      ROS_INFO_STREAM("s "<<candidate_abscissa<<" ds "<<ds<<"distance "<<candidate_distance<<" min distance "<<min_distance);
+
+    if(candidate_distance<min_distance)
+    {
+      min_distance = candidate_distance;
+      projection = candidate_projection;
+      abscissa = candidate_abscissa;
+    }
+
+    if(last_run)
+      break;
+
+    candidate_abscissa = candidate_abscissa+ds;
+    if(candidate_abscissa >1)
+    {
+      candidate_abscissa = 1;
+      last_run = true;
+    }
+  }
+
+  if(verbose)
+    ROS_INFO_STREAM("abscissa "<<abscissa<< " projection "<<projection.transpose());
+
+  return projection;
+}
+
 
 bool Path::removeNodes(const double &toll)
 {
