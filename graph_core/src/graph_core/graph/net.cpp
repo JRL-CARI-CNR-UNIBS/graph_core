@@ -235,9 +235,8 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
         {
           ROS_INFO_STREAM("Net max time exceeded! Time: "<<(ros::WallTime::now()-tic_search_).toSec()<<" max time: "<<max_time_);
           ROS_INFO_STREAM("time return: "<<(ros::WallTime::now()-tic_cycle).toSec());
-
-          return;
         }
+        return;
       }
 
       parent = conn2parent->getParent();
