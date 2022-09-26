@@ -158,16 +158,18 @@ Eigen::VectorXd Path::pointOnCurvilinearAbscissa(const double& abscissa)
   if (abscissa <= 0.0)
     return connections_.at(0)->getParent()->getConfiguration();
 
+  double point = abscissa*length();
   double euclidean_norm = 0.0;
   for(const ConnectionPtr& conn : connections_)
   {
-    if ((euclidean_norm + conn->norm()) > abscissa)
+    if((euclidean_norm + conn->norm()) > point)
     {
-      double ratio = (abscissa - euclidean_norm) / conn->norm();
-      return conn->getParent()->getConfiguration() + ratio * (conn->getChild()->getConfiguration() - conn->getParent()->getConfiguration());
+      double ratio = (point - euclidean_norm)/conn->norm();
+      assert(ratio>=0 && ratio<=1);
+
+      return conn->getParent()->getConfiguration()+ratio*(conn->getChild()->getConfiguration()-conn->getParent()->getConfiguration());
     }
     euclidean_norm += conn->norm();
-
   }
   return goal_node_->getConfiguration();
 }
@@ -668,15 +670,24 @@ Eigen::VectorXd Path::projectKeepingAbscissa(const Eigen::VectorXd& point, const
   return projection;
 }
 
+Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const bool& verbose)
+{
+  Eigen::VectorXd past_projection = start_node_->getConfiguration();
+  return projectOnPath(point,past_projection,verbose);
+}
+
 Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection, const bool& verbose)
 {
-  Eigen::VectorXd candidate_projection, projection;
+  Eigen::VectorXd candidate_projection, projection, precise_projection;
   double abscissa, candidate_abscissa, candidate_distance, min_distance, ds, tmp_ds;
 
   bool last_run = false;
 
+  if(verbose)
+    ROS_INFO_STREAM("path "<<*this);
+
   tmp_ds = length()/1000.0;
-  (tmp_ds<0.01)? (ds = tmp_ds):
+  (tmp_ds<0.001)? (ds = tmp_ds):
                  (ds = 0.001);
 
   candidate_abscissa = curvilinearAbscissaOfPoint(past_projection);
@@ -688,7 +699,7 @@ Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::V
     candidate_distance = (candidate_projection-point).norm();
 
     if(verbose)
-      ROS_INFO_STREAM("s "<<candidate_abscissa<<" ds "<<ds<<"distance "<<candidate_distance<<" min distance "<<min_distance);
+      ROS_INFO_STREAM("dist from past projection "<<(candidate_projection-past_projection).norm()<<" s "<<candidate_abscissa<<" ds "<<ds<<" distance "<<candidate_distance<<" min distance "<<min_distance);
 
     if(candidate_distance<min_distance)
     {
@@ -711,7 +722,16 @@ Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::V
   if(verbose)
     ROS_INFO_STREAM("abscissa "<<abscissa<< " projection "<<projection.transpose());
 
-  return projection;
+  ConnectionPtr conn = findConnection(projection);
+  assert(conn != nullptr);
+
+  bool in_conn;
+  double distance;
+  precise_projection = conn->projectOnConnection(point,distance,in_conn,verbose);
+  if(not in_conn)
+    precise_projection = projection;
+
+  return precise_projection;
 }
 
 

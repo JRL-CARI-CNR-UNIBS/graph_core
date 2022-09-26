@@ -101,7 +101,6 @@ int Display::displayNode(const NodePtr &n,
   state_->setJointGroupPositions(group_name_,n->getConfiguration());
   tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),marker.pose);
 
-
   marker.header.frame_id=planning_scene_->getRobotModel()->getRootLink()->getName();
   marker.header.stamp=ros::Time::now();
   marker.action = visualization_msgs::Marker::ADD;
