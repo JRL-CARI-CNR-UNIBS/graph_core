@@ -154,9 +154,18 @@ double Path::length()
 
 Eigen::VectorXd Path::pointOnCurvilinearAbscissa(const double& abscissa)
 {
+  ConnectionPtr conn;
+  return pointOnCurvilinearAbscissa(abscissa,conn);
+}
+
+Eigen::VectorXd Path::pointOnCurvilinearAbscissa(const double& abscissa, ConnectionPtr& connection)
+{
   assert(connections_.size() > 0);
   if (abscissa <= 0.0)
-    return connections_.at(0)->getParent()->getConfiguration();
+  {
+    connection = connections_.front();
+    return connection->getParent()->getConfiguration();
+  }
 
   double point = abscissa*length();
   double euclidean_norm = 0.0;
@@ -167,10 +176,13 @@ Eigen::VectorXd Path::pointOnCurvilinearAbscissa(const double& abscissa)
       double ratio = (point - euclidean_norm)/conn->norm();
       assert(ratio>=0 && ratio<=1);
 
+      connection = conn;
       return conn->getParent()->getConfiguration()+ratio*(conn->getChild()->getConfiguration()-conn->getParent()->getConfiguration());
     }
     euclidean_norm += conn->norm();
   }
+
+  connection = connections_.back();
   return goal_node_->getConfiguration();
 }
 
@@ -678,6 +690,7 @@ Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const bool& ve
 
 Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection, const bool& verbose)
 {
+  ConnectionPtr candidate_connection, connection;
   Eigen::VectorXd candidate_projection, projection, precise_projection;
   double abscissa, candidate_abscissa, candidate_distance, min_distance, ds, tmp_ds;
 
@@ -688,14 +701,14 @@ Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::V
 
   tmp_ds = length()/1000.0;
   (tmp_ds<0.001)? (ds = tmp_ds):
-                 (ds = 0.001);
+                  (ds = 0.001);
 
   candidate_abscissa = curvilinearAbscissaOfPoint(past_projection);
   min_distance = std::numeric_limits<double>::infinity();
 
   while(candidate_abscissa<=1)
   {
-    candidate_projection = pointOnCurvilinearAbscissa(candidate_abscissa);
+    candidate_projection = pointOnCurvilinearAbscissa(candidate_abscissa,candidate_connection);
     candidate_distance = (candidate_projection-point).norm();
 
     if(verbose)
@@ -706,6 +719,7 @@ Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::V
       min_distance = candidate_distance;
       projection = candidate_projection;
       abscissa = candidate_abscissa;
+      connection = candidate_connection;
     }
 
     if(last_run)
@@ -722,14 +736,18 @@ Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::V
   if(verbose)
     ROS_INFO_STREAM("abscissa "<<abscissa<< " projection "<<projection.transpose());
 
-  ConnectionPtr conn = findConnection(projection);
-  assert(conn != nullptr);
+  if(verbose)
+    ROS_INFO_STREAM("projection with conn "<<*connection);
 
   bool in_conn;
   double distance;
-  precise_projection = conn->projectOnConnection(point,distance,in_conn,verbose);
+  precise_projection = connection->projectOnConnection(point,distance,in_conn,verbose);
   if(not in_conn)
+  {
     precise_projection = projection;
+    if(verbose)
+      ROS_INFO("keep approximated projection");
+  }
 
   return precise_projection;
 }

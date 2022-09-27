@@ -107,6 +107,7 @@ public:
   bool resample(const double& distance);
   double computeEuclideanNorm();
   Eigen::VectorXd pointOnCurvilinearAbscissa(const double& abscissa);
+  Eigen::VectorXd pointOnCurvilinearAbscissa(const double& abscissa, ConnectionPtr &connection);
   double curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf);
   double curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf, int& idx);
   double curvilinearAbscissaOfPointGivenConnection(const Eigen::VectorXd& conf,const int& conn_idx);
