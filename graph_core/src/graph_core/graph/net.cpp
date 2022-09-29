@@ -195,6 +195,7 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
 
 void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes, std::vector<ConnectionPtr>& connections2here)
 {
+  ros::WallTime time_black_list_check, time_visited_list_check;
   ros::WallTime now = ros::WallTime::now();
   ros::WallTime tic_tot = now;
 
@@ -332,6 +333,7 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
       }
       else
       {
+        time_black_list_check = ros::WallTime::now();
         if(std::find(black_list.begin(),black_list.end(),parent)<black_list.end())
         {
           now = ros::WallTime::now();
@@ -340,11 +342,16 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
           if(verbose_)
           {
             ROS_INFO_STREAM("parent belongs to black list, skipping..");
-            ROS_INFO_STREAM("time black list: "<<(now-tic_cycle).toSec());
+            ROS_INFO_STREAM("time black list: "<<(now-tic_cycle).toSec()<<" check: "<<(now-time_black_list_check).toSec());
           }
           continue;
         }
 
+        now = ros::WallTime::now();
+        if(verbose_)
+          ROS_INFO_STREAM("time black list check: "<<(now-time_black_list_check).toSec());
+
+        time_visited_list_check = ros::WallTime::now();
         if(std::find(visited_nodes.begin(),visited_nodes.end(),parent)<visited_nodes.end())
         {
           now = ros::WallTime::now();
@@ -353,13 +360,17 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
           if(verbose_)
           {
             ROS_INFO_STREAM("avoiding cycles...");
-            ROS_INFO_STREAM("time visited nodes: "<<(now-tic_cycle).toSec());
+            ROS_INFO_STREAM("time visited nodes: "<<(now-tic_cycle).toSec()<<" check: "<<(now-time_visited_list_check).toSec());
           }
 
           continue;
         }
         else
           visited_nodes.push_back(parent);
+
+        now = ros::WallTime::now();
+        if(verbose_)
+          ROS_INFO_STREAM("time visited list check: "<<(now-time_visited_list_check).toSec());
 
         std::vector<ConnectionPtr> connections2parent = connections2here;
         connections2parent.push_back(conn2parent);
