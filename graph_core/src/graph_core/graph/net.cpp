@@ -221,19 +221,21 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
     ros::WallTime tic_cycle;
     time_tot = (ros::WallTime::now()-tic_tot).toSec();
 
+    double time2now;
     double cost2parent;
     for(const ConnectionPtr& conn2parent:all_parent_connections)
     {
       tic_cycle = ros::WallTime::now();
+      time2now = (ros::WallTime::now()-tic_search_).toSec();
 
       if(verbose_)
-        ROS_INFO_STREAM("Available time: "<<max_time_-(ros::WallTime::now()-tic_search_).toSec());
+        ROS_INFO_STREAM("Available time: "<<max_time_-time2now);
 
-      if((ros::WallTime::now()-tic_search_).toSec()>0.95*max_time_)
+      if(time2now>0.9*max_time_)
       {
         if(verbose_)
         {
-          ROS_INFO_STREAM("Net max time exceeded! Time: "<<(ros::WallTime::now()-tic_search_).toSec()<<" max time: "<<max_time_);
+          ROS_INFO_STREAM("Net max time exceeded! Time: "<<time2now<<" max time: "<<max_time_);
           ROS_INFO_STREAM("time return: "<<(ros::WallTime::now()-tic_cycle).toSec());
         }
         return;
