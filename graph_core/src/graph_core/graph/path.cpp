@@ -692,16 +692,14 @@ Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::V
 {
   ConnectionPtr candidate_connection, connection;
   Eigen::VectorXd candidate_projection, projection, precise_projection;
-  double abscissa, candidate_abscissa, candidate_distance, min_distance, ds, tmp_ds;
+  double abscissa, candidate_abscissa, candidate_distance, min_distance, ds;
 
   bool last_run = false;
 
   if(verbose)
     ROS_INFO_STREAM("path "<<*this);
 
-  tmp_ds = length()/1000.0;
-  (tmp_ds<0.001)? (ds = tmp_ds):
-                  (ds = 0.001);
+  ds = 0.001;
 
   candidate_abscissa = curvilinearAbscissaOfPoint(past_projection);
   min_distance = std::numeric_limits<double>::infinity();
@@ -726,7 +724,7 @@ Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::V
       break;
 
     candidate_abscissa = candidate_abscissa+ds;
-    if(candidate_abscissa >1)
+    if(candidate_abscissa>1)
     {
       candidate_abscissa = 1;
       last_run = true;
@@ -734,10 +732,18 @@ Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::V
   }
 
   if(verbose)
+  {
     ROS_INFO_STREAM("abscissa "<<abscissa<< " projection "<<projection.transpose());
-
-  if(verbose)
     ROS_INFO_STREAM("projection with conn "<<*connection);
+  }
+
+  if(connection->norm()<1e-03)
+  {
+    if(verbose)
+      ROS_INFO_STREAM("Connection too short, keep approximated projection "<<connection->norm());
+
+    return projection;
+  }
 
   bool in_conn;
   double distance;
