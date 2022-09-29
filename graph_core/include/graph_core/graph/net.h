@@ -47,7 +47,6 @@ protected:
   bool search_every_solution_;
   bool search_in_tree_;
   int curse_of_dimensionality_;
-  ros::WallTime tic_fcn_call_;
   ros::WallTime tic_search_;
   double max_time_;
   std::vector<double> time_vector_;
