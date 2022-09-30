@@ -233,7 +233,7 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
         if(verbose_)
         {
           now = ros::WallTime::now();
-          ROS_INFO_STREAM("Net max time exceeded! Time: "<<(now-tic_search_).toSec()<<" max time: "<<max_time_);
+          ROS_INFO_STREAM("Net max time exceeded! Time: "<<time2now<<" max time: "<<max_time_);
           ROS_INFO_STREAM("time return: "<<(now-tic_cycle).toSec());
         }
         return;
@@ -299,12 +299,13 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
         //When the start node is reached, a solution is found -> insert into the map
 
         connections2parent_.push_back(conn2parent);
+        std::vector<ConnectionPtr> connections2start = connections2parent_;
+
+        std::reverse(connections2start.begin(),connections2start.end());
 
         std::pair<double,std::vector<ConnectionPtr>> pair;
         pair.first = cost2parent;
-        pair.second = connections2parent_;
-
-        std::reverse(pair.second.begin(),pair.second.end());
+        pair.second = connections2start;
 
         if(not search_every_solution_) //update cost_to_beat_ -> search only for better solutions than this one
           cost_to_beat_ = cost2parent;
