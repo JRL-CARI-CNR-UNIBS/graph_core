@@ -307,6 +307,29 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
         pair.first = cost2parent;
         pair.second = connections2start;
 
+
+//        //eliminaaa
+
+//        NodePtr child = nullptr;
+//        for(const ConnectionPtr& connection : connections2start)
+//        {
+//          if(child)
+//          {
+//            assert(child->getParentConnectionsSize() == 1);
+
+//            if(child != connection->getParent())
+//            {
+//              for(const ConnectionPtr& c : connections2start)
+//                ROS_WARN_STREAM(*c);
+
+//              throw std::runtime_error("NETTTT parent of a connection is different from the child of the previous connection!");
+//            }
+//          }
+//          child = connection->getChild();
+//        }
+
+//        // ///////
+
         if(not search_every_solution_) //update cost_to_beat_ -> search only for better solutions than this one
           cost_to_beat_ = cost2parent;
 
