@@ -42,20 +42,21 @@ class Net: public std::enable_shared_from_this<Net>
 protected:
   TreePtr linked_tree_;
   std::multimap<double,std::vector<ConnectionPtr>> map_;
+  std::vector<NodePtr> black_list_;
+  std::vector<NodePtr> visited_nodes_;
+  std::vector<ConnectionPtr> connections2parent_;
   double cost_to_beat_;
   bool verbose_;
   bool search_every_solution_;
   bool search_in_tree_;
   int curse_of_dimensionality_;
-  ros::WallTime tic_fcn_call_;
   ros::WallTime tic_search_;
   double max_time_;
   std::vector<double> time_vector_;
 
-  void computeConnectionFromNodeToNode(const NodePtr &start_node, const NodePtr &goal_node, std::vector<NodePtr>& visited_nodes);
-  void computeConnectionFromNodeToNode(const NodePtr &start_node, const NodePtr &goal_node, const std::vector<NodePtr> &black_list, std::vector<NodePtr>& visited_nodes);
-  void computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here, const double& cost2beat, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes);
-  void computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here, const std::vector<NodePtr> &black_list, std::vector<NodePtr> &visited_nodes, std::vector<ConnectionPtr>& connections2here);
+  void computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node);
+  void computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here, const double& cost2beat);
+  void computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here);
   bool purgeSuccessors(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);  //VEDI CON MANUEL
 
 public:
