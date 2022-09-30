@@ -298,8 +298,8 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
       {
         //When the start node is reached, a solution is found -> insert into the map
 
-        connections2parent_.push_back(conn2parent);
         std::vector<ConnectionPtr> connections2start = connections2parent_;
+        connections2start.push_back(conn2parent);
 
         std::reverse(connections2start.begin(),connections2start.end());
 
