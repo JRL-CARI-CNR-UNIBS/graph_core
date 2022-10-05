@@ -1392,6 +1392,9 @@ TreePtr Tree::fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
 
 bool Tree::changeRoot(const NodePtr& node)
 {
+  if(root_ == node)
+    return true;
+
   std::vector<NodePtr>::iterator it;
   if (not isInTree(node,it))
     return false;
