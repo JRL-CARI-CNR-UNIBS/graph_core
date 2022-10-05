@@ -40,8 +40,9 @@ public:
   /* Dummy MAB that select arm with probability weighted by reward^2 of each arm */
   int selectNextArm()
   {
+    ROS_ERROR_ONCE("ok");
     int iarm = std::uniform_int_distribution<int>(0,n_goals_-1)(gen_);
-    double sum=0;
+    double sum = 0.0;
     for (unsigned int idx=0;idx<n_goals_;idx++)
       sum += expected_reward_[idx]*expected_reward_[idx];
 
@@ -49,19 +50,21 @@ public:
     for(int idx=0; idx<n_goals_; idx++)
     {
       if(rnd < expected_reward_[idx]*expected_reward_[idx])
-        return iarm;
+        return idx;
       rnd -= expected_reward_[idx]*expected_reward_[idx];
     }
+    ROS_ERROR("should not be here");
     return iarm;
   }
 
   /* Dummy MAB that updates the reward as average of past rewards*/
   void updateState(const int& i_goal, const double& reward)
-  {
-    expected_reward_[i_goal] *=  pull_counter_[i_goal];
-    expected_reward_[i_goal] +=  reward;
+  {   
+    ROS_ERROR_ONCE("ok");
+    //expected_reward_[i_goal] *=  pull_counter_[i_goal];
+    //expected_reward_[i_goal] +=  reward;
     pull_counter_[i_goal]++;
-    expected_reward_[i_goal] /=  pull_counter_[i_goal];
+    //expected_reward_[i_goal] /=  pull_counter_[i_goal];
   }
 
   std::string toString()

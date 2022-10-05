@@ -54,6 +54,19 @@ public:
 
   virtual int selectNextArm() = 0;
 
+  bool reinitAvgReward(std::vector<double> rewards)
+  {
+    if (rewards.size() != n_goals_)
+    {
+      ROS_FATAL("Wrong dize of vector rewards.");
+      return false;
+    }
+    expected_reward_ = rewards;
+    std::fill(pull_counter_.begin(), pull_counter_.end(), 1);
+
+    return true;
+  }
+
   virtual void updateState(const int& i_goal, const double& reward)
   {
     pull_counter_[i_goal]+=1;
@@ -61,6 +74,24 @@ public:
   }
 
   virtual std::string toString() = 0;
+
+  virtual void print()
+  {
+    std::cout << toString().c_str() << "\n";
+    std::cout << "Number of arms: " << n_goals_ << "\n";
+    std::cout << "Rewards: ";
+    for (unsigned int idx=0;idx<n_goals_;idx++)
+    {
+      std::cout << expected_reward_[idx] << ", ";
+    }
+    std::cout << "\n";
+    std::cout << "Pull counters: ";
+    for (unsigned int idx=0;idx<n_goals_;idx++)
+    {
+      std::cout << pull_counter_[idx] << ", ";
+    }
+    std::cout << "\n";
+  }
 
 protected:
   std::vector<int> pull_counter_;
