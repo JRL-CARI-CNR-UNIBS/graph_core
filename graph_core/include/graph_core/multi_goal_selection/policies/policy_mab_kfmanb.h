@@ -28,7 +28,7 @@ public:
   {
     pull_counter_ = std::vector<int>(n_goals_, 0);
     expected_reward_ = std::vector<double>(n_goals_, 0.0);
-    sigma_arms_2_ = std::vector<double>(n_goals_, 0.3*0.3);
+    sigma_arms_2_ = std::vector<double>(n_goals_, 0.2*0.2);
     sampled_rewards_ = std::vector<double>(n_goals_, 0.0);
 
     double tmp;
@@ -48,8 +48,14 @@ public:
 
     ROS_WARN("KFMANB initialized with sigma_obs=%f, "
              "sigma_tr=%f, "
-             "eta=%f, ",
-             std::sqrt(sigma_obs_2_), std::sqrt(sigma_tr_2_), eta_);
+             "eta=%f, "
+             "reward_max=%f, "
+             "sigma_max=%f, ",
+             std::sqrt(sigma_obs_2_),
+             std::sqrt(sigma_tr_2_),
+             eta_,
+             vectorMax(expected_reward_),
+             std::sqrt(vectorMax(sigma_arms_2_) ));
 
   }
 
