@@ -58,13 +58,22 @@ public:
   {
     if (rewards.size() != n_goals_)
     {
-      ROS_FATAL("Wrong dize of vector rewards.");
+      ROS_FATAL("Wrong size of vector rewards.");
       return false;
     }
-    expected_reward_ = rewards;
+    initial_reward_ = rewards;
+    expected_reward_ = initial_reward_;
+    for (unsigned int idx=0;idx<expected_reward_.size();idx++)
+      expected_reward_[idx] += 0.3;
+
     std::fill(pull_counter_.begin(), pull_counter_.end(), 1);
 
     return true;
+  }
+
+  virtual void updateState(const int& i_goal, const double& reward, const double& variance)
+  {
+    updateState(i_goal, reward);
   }
 
   virtual void updateState(const int& i_goal, const double& reward)
@@ -96,6 +105,8 @@ public:
 protected:
   std::vector<int> pull_counter_;
   std::vector<double> expected_reward_;
+  std::vector<double> initial_reward_;
+
 
 };
 typedef std::shared_ptr<PolicyMAB> PolicyMABPtr;

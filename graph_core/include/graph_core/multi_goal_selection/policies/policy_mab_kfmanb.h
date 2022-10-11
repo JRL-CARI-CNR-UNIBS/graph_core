@@ -1,7 +1,7 @@
 #pragma once
 
 #include <graph_core/multi_goal_selection/policies/policy_mab.h>
-//#include <std_msgs/Float64.h>
+#include <std_msgs/Float64MultiArray.h>
 
 
 namespace multi_goal_selection
@@ -11,11 +11,16 @@ class PolicyMABKFMANB : public PolicyMAB
 {
 
 protected:
+  bool sigma_obs_dyn_=false;
+  double sigma_gain_=1.0;
   double sigma_obs_2_;
   double sigma_tr_2_;
   double eta_ = 1.0;
   std::vector<double> sigma_arms_2_;
   std::vector<double> sampled_rewards_;
+
+  ros::Publisher kf_error_pub_;
+
 
 
   //ros::Publisher eps_pub_ = nh_.advertise<std_msgs::Float64>("eps_greedy", 1000);
@@ -24,12 +29,15 @@ protected:
   //std_msgs::Float64 msg_;
 
 public:
+
   PolicyMABKFMANB(const std::string& name, const int& n_goals) : PolicyMAB(name, n_goals)
   {
     pull_counter_ = std::vector<int>(n_goals_, 0);
     expected_reward_ = std::vector<double>(n_goals_, 0.0);
     sigma_arms_2_ = std::vector<double>(n_goals_, 0.2*0.2);
     sampled_rewards_ = std::vector<double>(n_goals_, 0.0);
+
+    kf_error_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("/kf_error", 100);
 
     double tmp;
     if (!nh_.getParam("sigma_obs", tmp))
@@ -45,6 +53,18 @@ public:
       ROS_ERROR("%s/sigma_tr is not set. Default: %f",nh_.getNamespace().c_str(),tmp);
     }
     sigma_tr_2_ = tmp*tmp;
+
+    if (!nh_.getParam("sigma_obs_dyn", sigma_obs_dyn_))
+    {
+      ROS_ERROR("%s/sigma_obs_dyn is not set. Default: false",nh_.getNamespace().c_str());
+    }
+    if (sigma_obs_dyn_)
+    {
+      if (!nh_.getParam("sigma_gain", sigma_gain_))
+      {
+        ROS_ERROR("%s/sigma_gain is not set. Default: %f",nh_.getNamespace().c_str(),sigma_gain_);
+      }
+    }
 
     ROS_WARN("KFMANB initialized with sigma_obs=%f, "
              "sigma_tr=%f, "
@@ -70,8 +90,24 @@ public:
     return vectorMaxIndex(sampled_rewards_);
   }
 
+  virtual void updateState(const int& i_goal, const double& reward, const double& variance)
+  {
+    if (sigma_obs_dyn_)
+      sigma_obs_2_ = sigma_gain_*variance;
+    updateState(i_goal, reward);
+  }
+
   virtual void updateState(const int& i_goal, const double& reward)
   {
+
+    std_msgs::Float64MultiArray kf_err_msg;
+    for (unsigned int idx=0;idx<expected_reward_.size();idx++)
+    {
+      kf_err_msg.data.push_back((expected_reward_[idx]-initial_reward_[idx]));
+    }
+
+    kf_error_pub_.publish(kf_err_msg);
+
     eta_ = std::max(1e-10,0.9*eta_+0.1*std::abs(reward)); // see McConachie and Berenson, TASE 2018
     double sigma_eta_2 = sigma_tr_2_*eta_*eta_;
 
@@ -91,6 +127,7 @@ public:
       }
     }
     pull_counter_[i_goal]++;
+
   }
 
   virtual std::string toString()
