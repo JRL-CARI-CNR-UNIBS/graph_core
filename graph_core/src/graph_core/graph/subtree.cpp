@@ -115,7 +115,7 @@ void Subtree::addNode(const NodePtr& node, const bool& check_if_present)
   parent_tree_->addNode(node,check_if_present);
 }
 
-void Subtree::hideFromSubtree(NodePtr& node)
+void Subtree::hideFromSubtree(const NodePtr& node)
 {
   assert(node);
   std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
