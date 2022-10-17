@@ -87,6 +87,7 @@ public:
     return true;
   }
 
+  void hideFromSubtree(NodePtr& node);
   void purgeThisNode(NodePtr& node, unsigned int& removed_nodes) override;
   void addNode(const NodePtr& node, const bool& check_if_present = true);
   void removeNode(const std::vector<NodePtr>::iterator& it) override;

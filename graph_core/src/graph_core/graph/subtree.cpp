@@ -115,6 +115,24 @@ void Subtree::addNode(const NodePtr& node, const bool& check_if_present)
   parent_tree_->addNode(node,check_if_present);
 }
 
+void Subtree::hideFromSubtree(NodePtr& node)
+{
+  assert(node);
+  std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
+  if(it<nodes_.end())
+  {
+    std::vector<NodePtr> successors = node->getChildren();
+    for (NodePtr& n : successors)
+    {
+      assert(n.get()!=node.get());
+      hideFromSubtree(n);
+    }
+
+    nodes_.erase(it);
+  }
+}
+
+
 void Subtree::removeNode(const std::vector<NodePtr>::iterator& it)
 {
   parent_tree_->removeNode(*it);  //do not switch
