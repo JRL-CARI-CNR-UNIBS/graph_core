@@ -133,6 +133,9 @@ std::multimap<double,std::vector<ConnectionPtr>>& Net::getConnectionBetweenNodes
   curse_of_dimensionality_ = 0;
   search_in_tree_ = search_in_tree;
 
+  if(max_time_<=0.0)
+    return map_;
+
   tic_search_ = ros::WallTime::now();
   computeConnectionFromNodeToNode(start_node,goal_node,cost2here,cost2beat);
 
@@ -162,6 +165,9 @@ std::multimap<double,std::vector<ConnectionPtr>>& Net::getConnectionToNode(const
 
   time_vector_.clear();
   curse_of_dimensionality_ = 0;
+
+  if(max_time_<=0.0)
+    return map_;
 
   tic_search_ = ros::WallTime::now();
   computeConnectionFromNodeToNode(linked_tree_->getRoot(),node,cost2here,cost2beat);
