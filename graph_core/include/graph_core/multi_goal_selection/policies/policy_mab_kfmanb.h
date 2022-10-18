@@ -43,30 +43,30 @@ public:
     if (!nh_.getParam("sigma_obs", tmp))
     {
       tmp = 0.01;
-      ROS_ERROR("%s/sigma_obs is not set. Default: %f",nh_.getNamespace().c_str(),tmp);
+      ROS_DEBUG("%s/sigma_obs is not set. Default: %f",nh_.getNamespace().c_str(),tmp);
     }
     sigma_obs_2_ = tmp*tmp;
 
     if (!nh_.getParam("sigma_tr", tmp))
     {
       tmp = 0.1;
-      ROS_ERROR("%s/sigma_tr is not set. Default: %f",nh_.getNamespace().c_str(),tmp);
+      ROS_DEBUG("%s/sigma_tr is not set. Default: %f",nh_.getNamespace().c_str(),tmp);
     }
     sigma_tr_2_ = tmp*tmp;
 
     if (!nh_.getParam("sigma_obs_dyn", sigma_obs_dyn_))
     {
-      ROS_ERROR("%s/sigma_obs_dyn is not set. Default: false",nh_.getNamespace().c_str());
+      ROS_DEBUG("%s/sigma_obs_dyn is not set. Default: false",nh_.getNamespace().c_str());
     }
     if (sigma_obs_dyn_)
     {
       if (!nh_.getParam("sigma_gain", sigma_gain_))
       {
-        ROS_ERROR("%s/sigma_gain is not set. Default: %f",nh_.getNamespace().c_str(),sigma_gain_);
+        ROS_DEBUG("%s/sigma_gain is not set. Default: %f",nh_.getNamespace().c_str(),sigma_gain_);
       }
     }
 
-    ROS_WARN("KFMANB initialized with sigma_obs=%f, "
+    ROS_DEBUG("KFMANB initialized with sigma_obs=%f, "
              "sigma_tr=%f, "
              "eta=%f, "
              "reward_max=%f, "
@@ -86,7 +86,7 @@ public:
       sampled_rewards_[idx] = std::normal_distribution<>(expected_reward_[idx], std::sqrt(sigma_arms_2_[idx]))(gen_) ;
     }
 
-    ROS_WARN_ONCE("first reward id = %d, val = %f", vectorMaxIndex(sampled_rewards_), sampled_rewards_[vectorMaxIndex(sampled_rewards_)]);
+    ROS_DEBUG_ONCE("first reward id = %d, val = %f", vectorMaxIndex(sampled_rewards_), sampled_rewards_[vectorMaxIndex(sampled_rewards_)]);
     return vectorMaxIndex(sampled_rewards_);
   }
 
