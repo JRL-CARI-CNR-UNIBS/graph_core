@@ -11,4 +11,4 @@ copy [launch/multiple_pipeline.launch.xml](launch/dirrt_planning_pipeline.launch
 - in `{your_package}`_moveit_config/launch_move_group.launch, set the argument `pipeline` equal to
   - `ompl` to use OMPL library
   - `dirrt` to use this library
-  - `mulitple` to use both (available from Noetic)
+  - `multiple` to use both (available from Noetic)
