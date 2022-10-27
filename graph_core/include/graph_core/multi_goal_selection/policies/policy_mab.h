@@ -63,8 +63,9 @@ public:
     }
     initial_reward_ = rewards;
     expected_reward_ = initial_reward_;
-    for (unsigned int idx=0;idx<expected_reward_.size();idx++)
-      expected_reward_[idx] += 0.3;
+    // dEBUG
+    //for (unsigned int idx=0;idx<expected_reward_.size();idx++)
+    //  expected_reward_[idx] += 0.3;
 
     std::fill(pull_counter_.begin(), pull_counter_.end(), 1);
 
