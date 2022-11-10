@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
 
@@ -47,34 +47,35 @@ Display::Display(const planning_scene::PlanningSceneConstPtr planning_scene,
   tree_marker_scale_.resize(3,DEFAULT_TREE_SIZE);
   marker_id_=0;
   state_=std::make_shared<moveit::core::RobotState>(planning_scene_->getCurrentState());
-  marker_pub_ = nh_.advertise<visualization_msgs::Marker>("/marker_visualization_topic", 1000);
-  for (int idx=0;idx<4;idx++)
-    clearMarkers();
+  marker_pub_ = nh_.advertise<visualization_msgs::Marker>("/marker_visualization_topic", 1000000);
 }
 
 void Display::clearMarkers(const std::string& ns)
 {
   visualization_msgs::Marker marker;
   marker.action = visualization_msgs::Marker::DELETEALL;
+
   marker.header.stamp=ros::Time::now();
+  marker.header.frame_id = planning_scene_->getRobotModel()->getRootLink()->getName();
 
   marker.ns = ns;
   marker.id= marker_id_++;
 
+  marker_id_ = 0;
   marker_pub_.publish(marker);
-  ros::Duration(DISPLAY_TIME).sleep();
 }
 void Display::clearMarker(const int& id,const std::string& ns)
 {
   visualization_msgs::Marker marker;
   marker.action = visualization_msgs::Marker::DELETE;
+
   marker.header.stamp=ros::Time::now();
+  marker.header.frame_id = planning_scene_->getRobotModel()->getRootLink()->getName();
 
   marker.ns = ns;
   marker.id= id;
 
   marker_pub_.publish(marker);
-  ros::Duration(DISPLAY_TIME).sleep();
 }
 
 int Display::displayNode(const NodePtr &n,
@@ -116,7 +117,6 @@ int Display::displayNode(const NodePtr &n,
   marker.color.a = marker_color.at(3);
 
   marker_pub_.publish(marker);
-  ros::Duration(DISPLAY_TIME).sleep();
   return marker.id;
 }
 
@@ -180,7 +180,6 @@ int Display::displayConnection(const ConnectionPtr& conn,
   }
 
   marker_pub_.publish(marker);
-  ros::Duration(DISPLAY_TIME).sleep();
   return marker.id;
 }
 
@@ -251,7 +250,6 @@ int Display::displayPath(const PathPtr &path,
   }
 
   marker_pub_.publish(marker);
-  ros::Duration(DISPLAY_TIME).sleep();
   return marker.id;
 }
 
@@ -334,12 +332,16 @@ std::vector<int> Display::displayPathAndWaypoints(const PathPtr &path,
       state_->setJointGroupPositions(group_name_,conf1);
       tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
       marker.points.push_back(pose.position);
-      if(i==1) marker_wp.points.push_back(pose.position);
+
+      if(i==1)
+        marker_wp.points.push_back(pose.position);
 
       state_->setJointGroupPositions(group_name_,conf2);
       tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
       marker.points.push_back(pose.position);
-      if(i==SUBDIVISION_FACTOR) marker_wp.points.push_back(pose.position);
+
+      if(i==SUBDIVISION_FACTOR)
+        marker_wp.points.push_back(pose.position);
 
       conf1 = conf2;
     }
@@ -348,7 +350,7 @@ std::vector<int> Display::displayPathAndWaypoints(const PathPtr &path,
 
   marker_pub_.publish(marker);
   marker_pub_.publish(marker_wp);
-  ros::Duration(DISPLAY_TIME).sleep();
+
   return ids;
 }
 int Display::displaySubtree(const SubtreePtr &subtree,
@@ -384,9 +386,7 @@ int Display::displaySubtree(const SubtreePtr &subtree,
   displayTreeNode(subtree->getRoot(),subtree,marker.points,true);
 
   marker_pub_.publish(marker);
-  ros::Duration(DISPLAY_TIME).sleep();
   return marker.id;
-
 }
 
 int Display::displayTree(const TreePtr &tree,
@@ -422,7 +422,6 @@ int Display::displayTree(const TreePtr &tree,
   displayTreeNode(tree->getRoot(),tree,marker.points,false);
 
   marker_pub_.publish(marker);
-  ros::Duration(DISPLAY_TIME).sleep();
   return marker.id;
 
 }
@@ -498,7 +497,6 @@ int Display::displayNet(const NetPtr &net,
   displayNetNode(net->getTree()->getRoot(),net,marker.points);
 
   marker_pub_.publish(marker);
-  ros::Duration(DISPLAY_TIME).sleep();
   return marker.id;
 
 }
