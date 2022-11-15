@@ -962,6 +962,54 @@ bool Path::removeNodes(const std::vector<NodePtr> &white_list, std::vector<NodeP
   return at_least_one_removed;
 }
 
+int Path::interpolate(const double& max_distance)
+{
+  int nodes_added = 0;
+  bool is_a_new_node, node_added;
+  std::vector<ConnectionPtr> connections;
+  int initial_size = connections_.size();
+
+  do
+  {
+    node_added = false;
+    connections = connections_;
+    for(ConnectionPtr& c:connections)
+    {
+      double length = c->norm();
+      if(length>max_distance)
+      {
+        is_a_new_node = false;
+        Eigen::VectorXd conf = c->getChild()->getConfiguration()+(c->getParent()->getConfiguration()-c->getChild()->getConfiguration())*(max_distance/length);
+        addNodeAtCurrentConfig(conf,c,true,is_a_new_node);
+
+        if(is_a_new_node)
+        {
+          c->remove();
+          nodes_added++;
+          node_added = true;
+        }
+      }
+    }
+  }while(node_added);
+
+  assert([&]() ->bool{
+           if(nodes_added == 0)
+           return true;
+           else
+           {
+             if((connections_.size()-initial_size) == nodes_added)
+             return true;
+             else
+             {
+               ROS_INFO_STREAM("\nconnections_ "<<connections_.size()<<"\initial size "<<initial_size<<"\nnodes_added "<<nodes_added);
+               return false;
+             }
+           }
+         }());
+
+  return nodes_added;
+}
+
 NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr &conn, const bool &rewire)
 {
   bool is_a_new_node;
