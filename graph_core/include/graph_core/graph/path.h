@@ -81,6 +81,8 @@ public:
   NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr &conn, const bool &rewire);
   NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, const bool& rewire);
 
+  int interpolate(const double &max_distance);
+
   //Remove unnecessary nodes
   bool removeNode(const NodePtr& node, const std::vector<NodePtr> &white_list);
   bool removeNode(const NodePtr& node, const std::vector<NodePtr> &white_list, ConnectionPtr &new_conn);
