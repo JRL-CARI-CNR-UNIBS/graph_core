@@ -318,6 +318,8 @@ bool MultigoalSolver::update(PathPtr& solution)
   }
 
 
+//  ROS_INFO("update probabilities");
+
   if (goal_probabilities_.size()==1)
     goal_probabilities_.at(0)=1.0;
   else

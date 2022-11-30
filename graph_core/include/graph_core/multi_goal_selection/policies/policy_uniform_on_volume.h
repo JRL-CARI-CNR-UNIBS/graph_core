@@ -44,13 +44,21 @@ public:
 
   int selectNextArm()
   {
-    double rnd = std::uniform_real_distribution<double>(0.0,volume_factors_sums_.back())(gen_);
-    for (unsigned int idx_goal=0;idx_goal<n_goals_;idx_goal++)
+    if (best_cost_squared_!=std::numeric_limits<double>::infinity())
     {
-      if (rnd<=volume_factors_sums_.at(idx_goal))
+      double rnd = std::uniform_real_distribution<double>(0.0,volume_factors_sums_.back())(gen_);
+      for (unsigned int idx_goal=0;idx_goal<n_goals_;idx_goal++)
       {
-        return idx_goal;
+        if (rnd<=volume_factors_sums_.at(idx_goal))
+        {
+          return idx_goal;
+        }
       }
+    }
+    else
+    {
+      return std::uniform_int_distribution<int>(0,n_goals_-1)(gen_);
+      ROS_WARN_THROTTLE(0.1,"No solution found up to now. Using uniform on goals.");
     }
     ROS_ERROR("Error in arm selection.");
     return -1;

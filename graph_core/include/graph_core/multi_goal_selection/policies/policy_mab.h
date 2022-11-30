@@ -54,6 +54,29 @@ public:
 
   virtual int selectNextArm() = 0;
 
+  virtual bool reinitRewards(std::vector<double> rewards, std::vector<double> std_devs)
+  {
+    if (rewards.size() != n_goals_)
+    {
+      ROS_FATAL("Wrong size of vector rewards.");
+      return false;
+    }
+    initial_reward_ = rewards;
+    expected_reward_ = initial_reward_;
+    // dEBUG
+    //for (unsigned int idx=0;idx<expected_reward_.size();idx++)
+    //  expected_reward_[idx] += 0.3;
+
+    std::fill(pull_counter_.begin(), pull_counter_.end(), 1);
+
+    return true;
+  }
+
+  virtual void updateState(const int& i_goal, const double& reward, const double& variance)
+  {
+    updateState(i_goal, reward);
+  }
+
   virtual void updateState(const int& i_goal, const double& reward)
   {
     pull_counter_[i_goal]+=1;
@@ -62,9 +85,33 @@ public:
 
   virtual std::string toString() = 0;
 
+  virtual void print()
+  {
+    std::cout << toString().c_str() << "\n";
+    std::cout << "Number of arms: " << n_goals_ << "\n";
+    std::cout << "Rewards: ";
+    for (unsigned int idx=0;idx<n_goals_;idx++)
+    {
+      std::cout << expected_reward_[idx] << ", ";
+    }
+    std::cout << "\n";
+    std::cout << "Pull counters: ";
+    for (unsigned int idx=0;idx<n_goals_;idx++)
+    {
+      std::cout << pull_counter_[idx] << ", ";
+    }
+    std::cout << "\n";
+  }
+
+  std::vector<double> getExpectedRewards(){return expected_reward_;}
+
+  std::vector<int> getPullCounters(){return pull_counter_;}
+
 protected:
   std::vector<int> pull_counter_;
   std::vector<double> expected_reward_;
+  std::vector<double> initial_reward_;
+
 
 };
 typedef std::shared_ptr<PolicyMAB> PolicyMABPtr;
