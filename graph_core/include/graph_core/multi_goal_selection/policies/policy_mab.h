@@ -54,7 +54,7 @@ public:
 
   virtual int selectNextArm() = 0;
 
-  bool reinitAvgReward(std::vector<double> rewards)
+  virtual bool reinitRewards(std::vector<double> rewards, std::vector<double> std_devs)
   {
     if (rewards.size() != n_goals_)
     {
@@ -102,6 +102,10 @@ public:
     }
     std::cout << "\n";
   }
+
+  std::vector<double> getExpectedRewards(){return expected_reward_;}
+
+  std::vector<int> getPullCounters(){return pull_counter_;}
 
 protected:
   std::vector<int> pull_counter_;

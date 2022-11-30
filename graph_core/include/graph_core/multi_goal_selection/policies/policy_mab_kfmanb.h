@@ -90,6 +90,30 @@ public:
     return vectorMaxIndex(sampled_rewards_);
   }
 
+  bool reinitRewards(std::vector<double> rewards, std::vector<double> std_devs)
+  {
+    if (!multi_goal_selection::PolicyMAB::reinitRewards(rewards, std_devs))
+    {
+      return false;
+    }
+
+    if (std_devs.size() != n_goals_)
+    {
+      ROS_FATAL("Wrong size of vector std_devs.");
+      return false;
+    }
+
+    /*
+    for (int idx=0;idx<sigma_arms_2_.size();idx++)
+    {
+      sigma_arms_2_[idx] = std_devs[idx]*std_devs[idx];
+    }
+    */
+
+    return true;
+
+  }
+
   virtual void updateState(const int& i_goal, const double& reward, const double& variance)
   {
     if (sigma_obs_dyn_)
