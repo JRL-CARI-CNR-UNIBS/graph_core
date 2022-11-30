@@ -41,6 +41,7 @@ protected:
   robot_state::RobotStatePtr state_;
   std::string group_name_;
 
+  const moveit::core::JointModelGroup* jmg_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -53,6 +54,7 @@ public:
   {
 
     state_ = std::make_shared<robot_state::RobotState>(planning_scene_->getCurrentState());
+    jmg_ = state_->getJointModelGroup(group_name_);
     if (!planning_scene_)
       ROS_ERROR("invalid planning scene");
   }
@@ -75,7 +77,7 @@ public:
   {
     *state_ = planning_scene_->getCurrentState();
     state_->setJointGroupPositions(group_name_, configuration);
-    if (!state_->satisfiesBounds())
+    if (!state_->satisfiesBounds(jmg_))
     {
       ROS_DEBUG("Out of bound");
       return false;

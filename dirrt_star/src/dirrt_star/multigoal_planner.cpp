@@ -244,13 +244,39 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
   start_state.update();
   start_state.updateCollisionBodyTransforms();
 
-  if (!start_state.satisfiesBounds())
+  const moveit::core::JointModelGroup* jmg = start_state.getJointModelGroup(group_);
+  if (!start_state.satisfiesBounds(jmg))
   {
+
+    std::vector<const moveit::core::JointModel*> joint_models= jmg->getJointModels();
+    for (const moveit::core::JointModel*& jm: joint_models)
+    {
+      if (!start_state.satisfiesPositionBounds(jm))
+      {
+         ROS_ERROR("joint %s is out of bound, actual position=%f",jm->getName().c_str(),*start_state.getJointPositions(jm->getName()));
+         std::vector<moveit::core::VariableBounds> bound=jm->getVariableBounds();
+
+         for (const moveit::core::VariableBounds& b: bound)
+         {
+           ROS_ERROR("joint %s has bound pos = [%f, %f]",jm->getName().c_str(),b.min_position_,b.max_position_);
+         }
+      }
+      if (!start_state.satisfiesVelocityBounds(jm))
+      {
+         ROS_ERROR("joint %s is out of bound, actual velocity=%f",jm->getName().c_str(),*start_state.getJointVelocities(jm->getName()));
+         std::vector<moveit::core::VariableBounds> bound=jm->getVariableBounds();
+         for (const moveit::core::VariableBounds& b: bound)
+         {
+           ROS_ERROR("joint %s has bound vel = [%f, %f]",jm->getName().c_str(),b.min_position_,b.max_position_,b.min_velocity_,b.max_velocity_);
+         }
+      }
+    }
     ROS_FATAL("Start point is  Out of bound");
     res.error_code_.val=moveit_msgs::MoveItErrorCodes::START_STATE_IN_COLLISION;
     m_is_running=false;
     return false;
   }
+
   Eigen::VectorXd start_conf;
   start_state.copyJointGroupPositions(group_,start_conf);
 
