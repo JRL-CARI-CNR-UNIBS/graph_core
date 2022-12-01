@@ -41,7 +41,8 @@ namespace pathplan
 #define DEFAULT_NODE_SIZE 0.02
 #define DEFAULT_CONNECTION_SIZE 0.005
 #define DEFAULT_TREE_SIZE 0.005
-#define SUBDIVISION_FACTOR 30
+#define MAX_LENGTH 0.1
+
 class Display;
 typedef std::shared_ptr<Display> DisplayPtr;
 class Display: public std::enable_shared_from_this<Display>

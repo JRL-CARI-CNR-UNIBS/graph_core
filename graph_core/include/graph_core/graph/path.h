@@ -81,7 +81,7 @@ public:
   NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr &conn, const bool &rewire);
   NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, const bool& rewire);
 
-  int interpolate(const double &max_distance);
+  int resample(const double &max_distance);
 
   //Remove unnecessary nodes
   bool removeNode(const NodePtr& node, const std::vector<NodePtr> &white_list);
@@ -106,7 +106,6 @@ public:
   PathPtr getSubpathToNode(const NodePtr& node);
   PathPtr getSubpathFromNode(const Eigen::VectorXd& conf);
   PathPtr getSubpathToNode(const Eigen::VectorXd& conf);
-  bool resample(const double& distance);
   double computeEuclideanNorm();
   Eigen::VectorXd pointOnCurvilinearAbscissa(const double& abscissa);
   Eigen::VectorXd pointOnCurvilinearAbscissa(const double& abscissa, ConnectionPtr &connection);
@@ -144,6 +143,11 @@ public:
     return checker_;
   }
 
+  MetricsPtr getMetrics()
+  {
+    return metrics_;
+  }
+
   unsigned int getConnectionsSize()
   {
     return connections_.size();
@@ -177,7 +181,6 @@ public:
   }
 
   PathPtr clone();
-  double length();
   bool onLine(double toll = 1e-06);
   void setConnections(const std::vector<ConnectionPtr>& conn);
   bool splitConnection(const ConnectionPtr& conn1, const ConnectionPtr& conn2, const std::vector<ConnectionPtr>::iterator &it);

@@ -157,15 +157,14 @@ int Display::displayConnection(const ConnectionPtr& conn,
   Eigen::VectorXd child = conn->getChild()->getConfiguration();
 
   double length = (parent-child).norm();
-  double step = length/SUBDIVISION_FACTOR;
 
   Eigen::VectorXd v = (child-parent)/length;
   Eigen::VectorXd conf1 = parent;
   Eigen::VectorXd conf2;
 
-  for(unsigned int i=1;i<=SUBDIVISION_FACTOR; i++)
+  for(unsigned int i=1;i<=std::floor(length/MAX_LENGTH); i++)
   {
-    conf2 = parent + i*step*v;
+    conf2 = parent + i*MAX_LENGTH*v;
 
     geometry_msgs::Pose pose;
     state_->setJointGroupPositions(group_name_,conf1);
@@ -177,6 +176,18 @@ int Display::displayConnection(const ConnectionPtr& conn,
     marker.points.push_back(pose.position);
 
     conf1 = conf2;
+  }
+
+  if(conf1 != child)
+  {
+    geometry_msgs::Pose pose;
+    state_->setJointGroupPositions(group_name_,conf1);
+    tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+    marker.points.push_back(pose.position);
+
+    state_->setJointGroupPositions(group_name_,child);
+    tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+    marker.points.push_back(pose.position);
   }
 
   marker_pub_.publish(marker);
@@ -225,17 +236,16 @@ int Display::displayPath(const PathPtr &path,
     Eigen::VectorXd child = conn->getChild()->getConfiguration();
 
     double length = (parent-child).norm();
-    double step = length/SUBDIVISION_FACTOR;
 
     Eigen::VectorXd v = (child-parent)/length;
     Eigen::VectorXd conf1 = parent;
     Eigen::VectorXd conf2;
+    geometry_msgs::Pose pose;
 
-    for(unsigned int i=1;i<=SUBDIVISION_FACTOR; i++)
+    for(unsigned int i=1;i<=std::floor(length/MAX_LENGTH); i++)
     {
-      conf2 = parent + i*step*v;
+      conf2 = parent + i*MAX_LENGTH*v;
 
-      geometry_msgs::Pose pose;
       state_->setJointGroupPositions(group_name_,conf1);
       tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
       marker.points.push_back(pose.position);
@@ -247,6 +257,16 @@ int Display::displayPath(const PathPtr &path,
       conf1 = conf2;
     }
 
+    if(conf1 != child)
+    {
+      state_->setJointGroupPositions(group_name_,conf1);
+      tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+      marker.points.push_back(pose.position);
+
+      state_->setJointGroupPositions(group_name_,child);
+      tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+      marker.points.push_back(pose.position);
+    }
   }
 
   marker_pub_.publish(marker);
@@ -316,36 +336,48 @@ std::vector<int> Display::displayPathAndWaypoints(const PathPtr &path,
     Eigen::VectorXd parent = conn->getParent()->getConfiguration();
     Eigen::VectorXd child = conn->getChild()->getConfiguration();
 
+    //Waypoints
+    geometry_msgs::Pose pose;
+    state_->setJointGroupPositions(group_name_,parent);
+    tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+    marker_wp.points.push_back(pose.position);
+
+    state_->setJointGroupPositions(group_name_,child);
+    tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+    marker_wp.points.push_back(pose.position);
+
+    //Connections
     double length = (parent-child).norm();
-    double step = length/SUBDIVISION_FACTOR;
 
     Eigen::VectorXd v = (child-parent)/length;
     Eigen::VectorXd conf1 = parent;
     Eigen::VectorXd conf2;
 
-
-    for(unsigned int i=1;i<=SUBDIVISION_FACTOR; i++)
+    for(unsigned int i=1;i<=std::floor(length/MAX_LENGTH); i++)
     {
-      conf2 = parent + i*step*v;
+      conf2 = parent + i*MAX_LENGTH*v;
 
-      geometry_msgs::Pose pose;
       state_->setJointGroupPositions(group_name_,conf1);
       tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
       marker.points.push_back(pose.position);
-
-      if(i==1)
-        marker_wp.points.push_back(pose.position);
 
       state_->setJointGroupPositions(group_name_,conf2);
       tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
       marker.points.push_back(pose.position);
 
-      if(i==SUBDIVISION_FACTOR)
-        marker_wp.points.push_back(pose.position);
-
       conf1 = conf2;
     }
 
+    if(conf1 != child)
+    {
+      state_->setJointGroupPositions(group_name_,conf1);
+      tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+      marker.points.push_back(pose.position);
+
+      state_->setJointGroupPositions(group_name_,child);
+      tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
+      marker.points.push_back(pose.position);
+    }
   }
 
   marker_pub_.publish(marker);
@@ -512,9 +544,9 @@ void Display::displayNetNode(const NodePtr &n,
   if(connections.empty())
     return;
 
+  geometry_msgs::Pose pose;
   for(const ConnectionPtr& conn: connections)
   {
-    geometry_msgs::Pose pose;
     state_->setJointGroupPositions(group_name_,conn->getParent()->getConfiguration());
     tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
     points.push_back(pose.position);

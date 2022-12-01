@@ -143,15 +143,6 @@ double Path::computeEuclideanNorm()
   return euclidean_norm;
 }
 
-double Path::length()
-{
-  double length = 0.0;
-  for(const ConnectionPtr &c:connections_)
-    length+=c->norm();
-
-  return length;
-}
-
 Eigen::VectorXd Path::pointOnCurvilinearAbscissa(const double& abscissa)
 {
   ConnectionPtr conn;
@@ -167,7 +158,7 @@ Eigen::VectorXd Path::pointOnCurvilinearAbscissa(const double& abscissa, Connect
     return connection->getParent()->getConfiguration();
   }
 
-  double point = abscissa*length();
+  double point = abscissa*computeEuclideanNorm();
   double euclidean_norm = 0.0;
   for(const ConnectionPtr& conn : connections_)
   {
@@ -438,23 +429,6 @@ bool Path::warp(const double &min_dist, const double &max_time)
   });
 }
 
-bool Path::resample(const double &distance)
-{
-  bool resampled = false;
-  unsigned int ic = 0;
-  while (ic < connections_.size())
-  {
-    if (connections_.at(ic)->norm() <= distance)
-      continue;
-
-    ROS_ERROR("still unimplemented");
-    resampled = true;
-  }
-
-  return resampled;
-
-}
-
 std::vector<NodePtr> Path::getNodes() const
 {
   std::vector<NodePtr> nodes;
@@ -569,21 +543,23 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
     }
   }
 
-  ROS_ERROR("Connection not found");
-  ROS_INFO_STREAM("conf: "<<configuration.transpose());
-
-  for(unsigned int i=0; i<connections_.size(); i++)
+  if(verbose)
   {
-    parent = connections_.at(i)->getParent()->getConfiguration();
-    child =  connections_.at(i)->getChild()->getConfiguration();
+    ROS_ERROR("Connection not found");
+    ROS_INFO_STREAM("conf: "<<configuration.transpose());
 
-    dist  = (parent-child).norm();
-    distP = (parent-configuration).norm();
-    distC = (configuration-child).norm();
+    for(unsigned int i=0; i<connections_.size(); i++)
+    {
+      parent = connections_.at(i)->getParent()->getConfiguration();
+      child =  connections_.at(i)->getChild()->getConfiguration();
 
-    double err = std::abs(dist-distP-distC);
+      dist  = (parent-child).norm();
+      distP = (parent-configuration).norm();
+      distC = (configuration-child).norm();
 
-    ROS_INFO("conn n %d, length %f, dist from parent %f, dist from child %f, error %f",i,dist,distP,distC,err);
+      double err = std::abs(dist-distP-distC);
+      ROS_INFO("conn n %d, length %f, dist from parent %f, dist from child %f, error %f",i,dist,distP,distC,err);
+    }
   }
 
   return nullptr;
@@ -853,7 +829,7 @@ bool Path::removeNode(const NodePtr& node, const std::vector<NodePtr> &white_lis
 
   if(idx<0)
   {
-    ROS_ERROR("Node does not belong to the path");
+    //ROS_ERROR("Node does not belong to the path");
     return false;
   }
 
@@ -962,7 +938,7 @@ bool Path::removeNodes(const std::vector<NodePtr> &white_list, std::vector<NodeP
   return at_least_one_removed;
 }
 
-int Path::interpolate(const double& max_distance)
+int Path::resample(const double& max_distance)
 {
   int nodes_added = 0;
   bool is_a_new_node, node_added;
