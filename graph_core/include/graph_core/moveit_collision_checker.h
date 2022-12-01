@@ -84,7 +84,7 @@ public:
     }
     state_->update();
     state_->updateCollisionBodyTransforms();
-    return planning_scene_->isStateValid(*state_,group_name_);
+    return !planning_scene_->isStateColliding(*state_,group_name_);
 
   }
 
