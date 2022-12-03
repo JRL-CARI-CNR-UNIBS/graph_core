@@ -37,6 +37,8 @@ namespace pathplan
 
 class ParallelMoveitCollisionChecker: public MoveitCollisionChecker
 {
+#define GROUP_SIZE 10
+
 protected:
   int threads_num_;
   int thread_iter_=0;
@@ -54,7 +56,7 @@ protected:
   void queueUp(const Eigen::VectorXd &q);
   bool checkAllQueues();
   void collisionThread(int thread_idx);
-  bool asyncSetPlanningSceneMsg(const planning_scene::PlanningScenePtr &planning_scene, const moveit_msgs::PlanningScene& msg);
+  bool asyncSetPlanningSceneMsg(const moveit_msgs::PlanningScene& msg, const int &idx);
 
   void queueConnection(const Eigen::VectorXd& configuration1,
                        const Eigen::VectorXd& configuration2);

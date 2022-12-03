@@ -157,9 +157,22 @@ ParallelMoveitCollisionChecker::~ParallelMoveitCollisionChecker()
   ROS_DEBUG("collision threads closed");
 }
 
-bool ParallelMoveitCollisionChecker::asyncSetPlanningSceneMsg(const planning_scene::PlanningScenePtr &planning_scene, const moveit_msgs::PlanningScene& msg)
+bool ParallelMoveitCollisionChecker::asyncSetPlanningSceneMsg(const moveit_msgs::PlanningScene& msg, const int& idx)
 {
-  return planning_scene->usePlanningSceneMsg(msg);
+  bool res = true;
+  for(unsigned int i=idx;i<GROUP_SIZE;i++)
+  {
+    if(i == threads_num_)
+      break;
+
+    if(not planning_scenes_[i]->usePlanningSceneMsg(msg))
+    {
+      ROS_ERROR_THROTTLE(1,"unable to upload scene");
+      res = false;
+    }
+  }
+
+  return res;
 }
 
 void ParallelMoveitCollisionChecker::setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg)
@@ -177,28 +190,49 @@ void ParallelMoveitCollisionChecker::setPlanningSceneMsg(const moveit_msgs::Plan
   double time1 = (ros::WallTime::now()-tic).toSec();
   tic = ros::WallTime::now();
 
+  if(verbose_)
+  {
+    if(not msg.is_diff)
+      throw std::runtime_error("not diff");
+  }
+
   if (!planning_scene_->usePlanningSceneMsg(msg))
   {
     ROS_ERROR_THROTTLE(1,"unable to upload scene");
   }
   double time2 = (ros::WallTime::now()-tic).toSec();
+  tic = ros::WallTime::now();
 
   if(verbose_)
     ROS_INFO("---------INIT---------");
 
+  int n_groups = std::floor(threads_num_/GROUP_SIZE);
+  if(threads_num_%GROUP_SIZE == 0  && n_groups != 0)
+    n_groups -=1;
+
   std::vector<double> time_vectors;
-  //  std::vector<std::shared_future<bool>> futures;
-  tic = ros::WallTime::now();
-  for (int idx=0;idx<threads_num_;idx++)
+
+  int group_start = 0;
+  std::vector<std::shared_future<bool>> futures;
+  for (int idx=0;idx<n_groups;idx++)
   {
     ros::WallTime tic2 = ros::WallTime::now();
-    planning_scenes_[idx]->usePlanningSceneMsg(msg);
 
-    //    futures.push_back(std::async(std::launch::async,&ParallelMoveitCollisionChecker::asyncSetPlanningSceneMsg,
-    //                                 this,planning_scenes_.at(idx),msg));
-
+    futures.push_back(std::async(std::launch::async,&ParallelMoveitCollisionChecker::asyncSetPlanningSceneMsg,this,msg,group_start));
+    group_start = group_start+GROUP_SIZE;
 
     time_vectors.push_back((ros::WallTime::now()-tic2).toSec());
+  }
+
+  for(int idx=group_start;idx<threads_num_;idx++)
+  {
+    planning_scenes_[idx]->usePlanningSceneMsg(msg);
+  }
+
+  for (int idx=0;idx<n_groups;idx++)
+  {
+    if(!futures.at(idx).get())
+      ROS_ERROR_THROTTLE(1,"unable to upload scene");
   }
   double time3 = (ros::WallTime::now()-tic).toSec();
 
@@ -209,14 +243,6 @@ void ParallelMoveitCollisionChecker::setPlanningSceneMsg(const moveit_msgs::Plan
 
     ROS_INFO("---------FINISH---------");
   }
-
-  tic = ros::WallTime::now();
-
-  //  for (int idx=0;idx<threads_num_;idx++)
-  //  {
-  //    if(!futures.at(idx).get())
-  //      ROS_ERROR_THROTTLE(1,"unable to upload scene");
-  //  }
 
   if(verbose_)
     ROS_BOLDCYAN_STREAM("time1 "<<time1<<" time2 "<<time2<<" time3 "<<time3<<" time tot "<<(ros::WallTime::now()-tic1).toSec());
