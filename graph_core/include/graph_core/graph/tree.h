@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/util.h>
 #include <graph_core/collision_checker.h>
-#include <graph_core/sampler.h>
+#include <graph_core/informed_sampler.h>
 #include <graph_core/metrics.h>
 
 namespace pathplan

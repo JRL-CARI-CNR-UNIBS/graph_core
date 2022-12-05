@@ -41,12 +41,18 @@ class CollisionChecker
 {
 protected:
   double min_distance_ = 0.01;
+  bool verbose_ = false;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   CollisionChecker(const double& min_distance = 0.01):
     min_distance_(min_distance)
   {
 
+  }
+
+  void setVerbose(const bool& verbose)
+  {
+    verbose_ = verbose;
   }
 
   virtual void setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg){}

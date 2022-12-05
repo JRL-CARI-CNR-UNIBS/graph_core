@@ -1,4 +1,3 @@
-#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -27,3 +26,99 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
+#include <graph_core/informed_sampler.h>
+
+namespace pathplan
+{
+
+
+Eigen::VectorXd InformedSampler::sample()
+{
+  if (inf_cost_)
+  {
+    return center_bound_ + Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(bound_width_);
+  }
+  else
+  {
+    Eigen::VectorXd ball(ndof_);
+    for (int iter = 0; iter < 100; iter++)
+    {
+      ball.setRandom();
+      ball *= std::pow(ud_(gen_), 1.0 / (double)ndof_) / ball.norm();
+
+      Eigen::VectorXd q = rot_matrix_ * ellipse_axis_.asDiagonal() * ball + ellipse_center_;
+
+      bool in_of_bounds = true;
+      for (unsigned int iax = 0; iax < ndof_; iax++)
+      {
+        if (q(iax) > upper_bound_(iax) || q(iax) < lower_bound_(iax))
+        {
+          in_of_bounds = false;
+          break;
+        }
+      }
+      if (in_of_bounds)
+        return q;
+    }
+    ROS_DEBUG_THROTTLE(0.1, "unable to find a feasible point in the ellipse");
+    return center_bound_ + Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(bound_width_);
+  }
+}
+
+bool InformedSampler::inBounds(const Eigen::VectorXd& q)
+{
+  for (unsigned int iax = 0; iax < ndof_; iax++)
+  {
+    if (q(iax) > upper_bound_(iax) || q(iax) < lower_bound_(iax))
+    {
+      return false;
+    }
+  }
+  if (inf_cost_)
+    return true;
+  else
+    return ((q - start_configuration_).norm() + (q - stop_configuration_).norm()) < cost_;
+
+}
+
+void InformedSampler::setCost(const double &cost)
+{
+  cost_ = cost;
+  inf_cost_ = cost_ >= std::numeric_limits<double>::infinity();
+
+  if (cost_ < focii_distance_)
+  {
+//    ROS_WARN("cost is %f, focci distance is %f", cost_, focii_distance_);
+    cost_ = focii_distance_;
+    min_radius_ = 0.0;
+  }
+  else
+  {
+    min_radius_ = 0.5 * std::sqrt(std::pow(cost, 2) - std::pow(focii_distance_, 2));
+  }
+  max_radius_ = 0.5 * cost;
+  ellipse_axis_.setConstant(min_radius_);
+  ellipse_axis_(0) = max_radius_;
+
+  if (inf_cost_)
+  {
+    specific_volume_=std::tgamma(ndof_*0.5+1)/std::pow(M_PI,ndof_*0.5);  // inverse of the volume of unit ball
+
+    for (unsigned int idx=0;idx<ndof_;idx++)
+    {
+      specific_volume_*=(upper_bound_(idx)-lower_bound_(idx));
+    }
+  }
+  else
+    specific_volume_=max_radius_*std::pow(min_radius_,ndof_-1);
+
+  if (specific_volume_>0.0)
+    specific_volume_=std::pow(specific_volume_,1./ndof_);
+}
+
+double InformedSampler::getSpecificVolume()
+{
+  return specific_volume_;
+}
+
+}

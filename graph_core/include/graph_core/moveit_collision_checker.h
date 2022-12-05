@@ -51,7 +51,6 @@ public:
     group_name_(group_name),
     planning_scene_(planning_scene)
   {
-
     state_ = std::make_shared<robot_state::RobotState>(planning_scene_->getCurrentState());
     if (!planning_scene_)
       ROS_ERROR("invalid planning scene");
@@ -59,11 +58,14 @@ public:
 
   virtual void setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg)
   {
-    if (!planning_scene_->setPlanningSceneMsg(msg))
-    {
+    ros::WallTime tic = ros::WallTime::now();
+    if (!planning_scene_->usePlanningSceneMsg(msg))
       ROS_ERROR_THROTTLE(1,"unable to upload scene");
-    }
+
+    if(verbose_)
+      ROS_INFO_STREAM("time update pln scn "<<(ros::WallTime::now()-tic).toSec());
   }
+
 
   virtual CollisionCheckerPtr clone()
   {
@@ -81,7 +83,6 @@ public:
       return false;
     }
     state_->update();
-    state_->updateCollisionBodyTransforms();
     return planning_scene_->isStateValid(*state_,group_name_);
   }
 

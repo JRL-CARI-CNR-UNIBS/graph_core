@@ -61,7 +61,6 @@ ParallelMoveitCollisionChecker::ParallelMoveitCollisionChecker(const planning_sc
   req_.verbose=false;
   req_.contacts=false;
   req_.cost=false;
-
 }
 
 void ParallelMoveitCollisionChecker::resetQueue()
@@ -85,7 +84,6 @@ void ParallelMoveitCollisionChecker::queueUp(const Eigen::VectorXd &q)
     std::vector<double> conf(q.size());
     for (unsigned idx=0;idx<q.size();idx++)
       conf.at(idx)=q(idx);
-
 
     queues_.at(thread_iter_).push_back(conf);
     thread_iter_ ++;
@@ -136,7 +134,6 @@ void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
       stop_check_=true;
       break;
     }
-    //    state->updateCollisionBodyTransforms();
 
     if (!planning_scenes_.at(thread_idx)->isStateValid(*state,group_name_))
     {
@@ -144,21 +141,6 @@ void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
       stop_check_=true;
       break;
     }
-
-    //    if (!planning_scenes_.at(thread_idx)->isStateFeasible(*state))
-    //    {
-    //      at_least_a_collision_=true;
-    //      stop_check_=true;
-    //      break;
-    //    }
-    //    planning_scenes_.at(thread_idx)->checkCollision(req_,res_);
-    //    if (res_.collision)
-    //    {
-    //      at_least_a_collision_=true;
-    //      stop_check_=true;
-    //      break;
-    //    }
-
   }
 }
 
@@ -175,13 +157,41 @@ ParallelMoveitCollisionChecker::~ParallelMoveitCollisionChecker()
   ROS_DEBUG("collision threads closed");
 }
 
-bool ParallelMoveitCollisionChecker::asyncSetPlanningSceneMsg(const planning_scene::PlanningScenePtr &planning_scene, const moveit_msgs::PlanningScene& msg)
+bool ParallelMoveitCollisionChecker::asyncSetPlanningSceneMsg(const moveit_msgs::PlanningScene& msg, const int& idx)
 {
-  return planning_scene->setPlanningSceneMsg(msg);
+  bool res = true;
+  for(unsigned int i=idx;i<(idx+GROUP_SIZE);i++)
+  {
+    if(i == threads_num_)
+      break;
+
+    if(not planning_scenes_[i]->usePlanningSceneMsg(msg))
+    {
+      ROS_ERROR_THROTTLE(1,"unable to upload scene");
+      res = false;
+    }
+  }
+
+  return res;
+}
+
+bool ParallelMoveitCollisionChecker::asyncSetPlanningScene(const planning_scene::PlanningScenePtr& scene, const int& idx)
+{
+  for(unsigned int i=idx;i<(idx+GROUP_SIZE);i++)
+  {
+    if(i == threads_num_)
+      break;
+
+    planning_scenes_[i]=planning_scene::PlanningScene::clone(scene);
+  }
+
+  return true;
 }
 
 void ParallelMoveitCollisionChecker::setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg)
 {
+  ros::WallTime tic = ros::WallTime::now();
+  ros::WallTime tic1 = ros::WallTime::now();
   stop_check_=true;
 
   for (int idx=0;idx<threads_num_;idx++)
@@ -190,23 +200,73 @@ void ParallelMoveitCollisionChecker::setPlanningSceneMsg(const moveit_msgs::Plan
       threads_.at(idx).join();
   }
 
-  if (!planning_scene_->setPlanningSceneMsg(msg))
+  double time1 = (ros::WallTime::now()-tic).toSec();
+  tic = ros::WallTime::now();
+
+  if(verbose_) //elimina
+  {
+    if(not msg.is_diff)
+      throw std::runtime_error("not diff");
+  }
+
+  if (!planning_scene_->usePlanningSceneMsg(msg))
   {
     ROS_ERROR_THROTTLE(1,"unable to upload scene");
   }
+  double time2 = (ros::WallTime::now()-tic).toSec();
+  tic = ros::WallTime::now();
 
+  if(verbose_)
+    ROS_INFO("---------INIT---------");
+
+  int n_groups = std::floor(threads_num_/GROUP_SIZE);
+  if(threads_num_%GROUP_SIZE == 0 && n_groups != 0)
+    n_groups = n_groups-1;
+
+  std::vector<double> time_vectors;
+
+  int group_start = 0;
   std::vector<std::shared_future<bool>> futures;
-  for (int idx=0;idx<threads_num_;idx++)
+  for (int idx=0;idx<n_groups;idx++)
   {
-    futures.push_back(std::async(std::launch::async,&ParallelMoveitCollisionChecker::asyncSetPlanningSceneMsg,
-                                 this,planning_scenes_.at(idx),msg));
+    ros::WallTime tic2 = ros::WallTime::now();
+
+    futures.push_back(std::async(std::launch::async,&ParallelMoveitCollisionChecker::asyncSetPlanningSceneMsg,this,msg,group_start));
+    group_start = group_start+GROUP_SIZE;
+
+    time_vectors.push_back((ros::WallTime::now()-tic2).toSec());
   }
 
-  for (int idx=0;idx<threads_num_;idx++)
+  for(int idx=group_start;idx<threads_num_;idx++)
   {
+    ros::WallTime tic2 = ros::WallTime::now();
+    planning_scenes_[idx]->usePlanningSceneMsg(msg);
+
+    time_vectors.push_back((ros::WallTime::now()-tic2).toSec());
+  }
+
+  for (int idx=0;idx<n_groups;idx++)
+  {
+    ros::WallTime tic2 = ros::WallTime::now();
+
     if(!futures.at(idx).get())
       ROS_ERROR_THROTTLE(1,"unable to upload scene");
+
+    time_vectors.push_back((ros::WallTime::now()-tic2).toSec());
+
   }
+  double time3 = (ros::WallTime::now()-tic).toSec();
+
+  if(verbose_)
+  {
+    for(const double& d:time_vectors)
+      ROS_INFO_STREAM("time cycle "<<d);
+
+    ROS_INFO("---------FINISH---------");
+  }
+
+  if(verbose_)
+    ROS_BOLDCYAN_STREAM("time1 "<<time1<<" time2 "<<time2<<" time3 "<<time3<<" time tot "<<(ros::WallTime::now()-tic1).toSec());
 }
 
 void ParallelMoveitCollisionChecker::setPlanningScene(planning_scene::PlanningScenePtr &planning_scene)
@@ -219,20 +279,37 @@ void ParallelMoveitCollisionChecker::setPlanningScene(planning_scene::PlanningSc
       threads_.at(idx).join();
   }
   planning_scene_ = planning_scene;
-  for (int idx=0;idx<threads_num_;idx++)
+
+  int n_groups = std::floor(threads_num_/GROUP_SIZE);
+  if(threads_num_%GROUP_SIZE == 0 && n_groups != 0)
+    n_groups = n_groups-1;
+
+  int group_start = 0;
+  std::vector<std::shared_future<bool>> futures;
+  for (int idx=0;idx<n_groups;idx++)
   {
-    planning_scenes_.at(idx)=planning_scene::PlanningScene::clone(planning_scene_);
+    futures.push_back(std::async(std::launch::async,&ParallelMoveitCollisionChecker::asyncSetPlanningScene,this,planning_scene,group_start));
+    group_start = group_start+GROUP_SIZE;
+  }
+
+  for(int idx=group_start;idx<threads_num_;idx++)
+  {
+    planning_scenes_[idx]=planning_scene::PlanningScene::clone(planning_scene);
+  }
+
+  for (int idx=0;idx<n_groups;idx++)
+  {
+    if(!futures.at(idx).get())
+      ROS_ERROR_THROTTLE(1,"unable to upload scene");
   }
 }
 
 void ParallelMoveitCollisionChecker::queueConnection(const Eigen::VectorXd& configuration1,
                                                      const Eigen::VectorXd& configuration2)
 {
-
   double distance = (configuration2 - configuration1).norm();
   if (distance < min_distance_)
     return;
-
 
   Eigen::VectorXd conf(configuration1.size());
   double n = 2;

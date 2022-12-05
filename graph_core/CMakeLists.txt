@@ -32,7 +32,7 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/metrics.cpp
   src/${PROJECT_NAME}/goal_cost_function.cpp
   src/${PROJECT_NAME}/time_metrics.cpp
-  src/${PROJECT_NAME}/sampler.cpp
+  src/${PROJECT_NAME}/informed_sampler.cpp
   src/${PROJECT_NAME}/local_informed_sampler.cpp
   src/${PROJECT_NAME}/tube_informed_sampler.cpp
   src/${PROJECT_NAME}/time_sampler.cpp
