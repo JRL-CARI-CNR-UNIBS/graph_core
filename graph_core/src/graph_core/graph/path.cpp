@@ -535,7 +535,7 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
     if(verbose)
       ROS_INFO("dist %f, distP %f, distC %f, diff %f",dist,distP,distC,std::abs(dist-distP-distC));
 
-    if(std::abs(dist-distP-distC)<TOLERANCE)
+    if(std::abs(dist-distP-distC)<1e-10)
     {
       conn = connections_.at(i);
       idx = i;
@@ -863,7 +863,10 @@ bool Path::splitConnection(const ConnectionPtr& conn1, const ConnectionPtr& conn
   if(it<connections_.end())
     return splitConnection(conn1,conn2,it);
   else
+  {
+    ROS_BOLDRED_STREAM("it not found"); //elimina
     return false;
+  }
 }
 
 bool Path::restoreConnection(const ConnectionPtr& conn, const NodePtr& node2remove)

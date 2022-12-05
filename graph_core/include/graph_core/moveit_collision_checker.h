@@ -82,8 +82,7 @@ public:
       ROS_DEBUG("Out of bound");
       return false;
     }
-    state_->update();  //Serve @Manuel?
-    state_->updateCollisionBodyTransforms();
+    state_->update();
     return planning_scene_->isStateValid(*state_,group_name_);
   }
 

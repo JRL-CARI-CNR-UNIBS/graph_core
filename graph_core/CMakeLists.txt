@@ -39,7 +39,7 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/avoidance_probabilistic_time_metrics.cpp
   src/${PROJECT_NAME}/occupancy_metrics.cpp
   src/${PROJECT_NAME}/time_metrics.cpp
-  src/${PROJECT_NAME}/sampler.cpp
+  src/${PROJECT_NAME}/informed_sampler.cpp
   src/${PROJECT_NAME}/local_informed_sampler.cpp
   src/${PROJECT_NAME}/tube_informed_sampler.cpp
   src/${PROJECT_NAME}/time_sampler.cpp

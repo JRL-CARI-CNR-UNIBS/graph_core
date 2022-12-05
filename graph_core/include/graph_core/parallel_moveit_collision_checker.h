@@ -57,6 +57,8 @@ protected:
   bool checkAllQueues();
   void collisionThread(int thread_idx);
   bool asyncSetPlanningSceneMsg(const moveit_msgs::PlanningScene& msg, const int &idx);
+  bool asyncSetPlanningScene(const planning_scene::PlanningScenePtr& scene, const int& idx);
+
 
   void queueConnection(const Eigen::VectorXd& configuration1,
                        const Eigen::VectorXd& configuration2);
