@@ -160,7 +160,7 @@ ParallelMoveitCollisionChecker::~ParallelMoveitCollisionChecker()
 bool ParallelMoveitCollisionChecker::asyncSetPlanningSceneMsg(const moveit_msgs::PlanningScene& msg, const int& idx)
 {
   bool res = true;
-  for(unsigned int i=idx;i<GROUP_SIZE;i++)
+  for(unsigned int i=idx;i<(idx+GROUP_SIZE);i++)
   {
     if(i == threads_num_)
       break;
@@ -190,7 +190,7 @@ void ParallelMoveitCollisionChecker::setPlanningSceneMsg(const moveit_msgs::Plan
   double time1 = (ros::WallTime::now()-tic).toSec();
   tic = ros::WallTime::now();
 
-  if(verbose_)
+  if(verbose_) //elimina
   {
     if(not msg.is_diff)
       throw std::runtime_error("not diff");
@@ -207,8 +207,8 @@ void ParallelMoveitCollisionChecker::setPlanningSceneMsg(const moveit_msgs::Plan
     ROS_INFO("---------INIT---------");
 
   int n_groups = std::floor(threads_num_/GROUP_SIZE);
-  if(threads_num_%GROUP_SIZE == 0  && n_groups != 0)
-    n_groups -=1;
+  if(threads_num_%GROUP_SIZE == 0 && n_groups != 0)
+    n_groups = n_groups-1;
 
   std::vector<double> time_vectors;
 
