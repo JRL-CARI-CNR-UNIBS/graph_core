@@ -2,12 +2,13 @@ This package provides a ROS/C++ library with advanced path planners for robot ma
 
 ## Index
 
-1. Installation
-2. Configuration
-3. Concept
-4. Acknowledgments
+1. [Installation] (#installation)
+2. Configuration] (#configuration)
+3. [Concept] (#concept)
+4. [References] (#references)
+5. [Acknowledgments] (#ack)
 
-## Installation
+## Installation <a name="installation"></a>
 
 The software can be installed using rosinstall files.
 
@@ -33,11 +34,11 @@ cd ~/catkin_ws
 wstool update -t src
 rosdep install --from-paths src --ignore-src -r -y
 ```
-## Configuration
+## Configuration <a name="configuration"></a>
 
 See [readme](dirrt_star/readme.md) in dirrt_star.
 
-## Concept
+## Concept <a name="concept"></a>
 
 The repository contains two main packages:
 
@@ -105,6 +106,36 @@ All metrics are defined in graph_core and are derived from the class metrics.
 Goal cost functions are terminal goals assigned only to the goal configurations.
 All cost functions are defined in graph_core and are derived from the class goal_cost_function.
 
-## Ack
+## References <a name="references"></a>
+
+If you wish to use this code please cite one of the following publications:
+
+- for asymptotically optimal path planners:
+```
+@article{faroni2022accelerating,
+  title={Accelerating sampling-based optimal path planning via adaptive informed sampling},
+  author={Faroni, Marco and Pedrocchi, Nicola and Beschi, Manuel},
+  journal={arXiv preprint arXiv:2208.09318},
+  year={2022}
+}
+```
+Available at https://arxiv.org/pdf/2208.09318.pdf
+
+- human-aware path planning:
+```
+@article{faroni2022safety,
+  title={Safety-aware time-optimal motion planning with uncertain human state estimation},
+  author={Faroni, Marco and Beschi, Manuel and Pedrocchi, Nicola},
+  journal={IEEE Robotics and Automation Letters},
+  volume={7},
+  number={4},
+  pages={12219--12226},
+  year={2022},
+  publisher={IEEE}
+}
+```
+Available at https://arxiv.org/pdf/2210.11655.pdf
+
+## Ack <a name="ack"></a>
 
 This work was partially supported by ShareWork project (H2020, European Commission – G.A.820807) and Pickplace project (H2020, European Commission – G.A.780488).
