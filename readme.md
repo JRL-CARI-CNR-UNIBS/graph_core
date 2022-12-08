@@ -2,11 +2,11 @@ This package provides a ROS/C++ library with advanced path planners for robot ma
 
 ## Index
 
-1. [Installation] (#installation)
-2. [Configuration] (#configuration)
-3. [Concept] (#concept)
-4. [References] (#references)
-5. [Acknowledgments] (#ack)
+1. [Installation](#installation)
+2. [Configuration](#configuration)
+3. [Concept](#concept)
+4. [References](#references)
+5. [Acknowledgments](#ack)
 
 ## Installation <a name="installation"></a>
 
