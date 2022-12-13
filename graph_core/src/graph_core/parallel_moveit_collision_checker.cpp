@@ -190,8 +190,6 @@ bool ParallelMoveitCollisionChecker::asyncSetPlanningScene(const planning_scene:
 
 void ParallelMoveitCollisionChecker::setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg)
 {
-  ros::WallTime tic = ros::WallTime::now();
-  ros::WallTime tic1 = ros::WallTime::now();
   stop_check_=true;
 
   for (int idx=0;idx<threads_num_;idx++)
@@ -200,73 +198,33 @@ void ParallelMoveitCollisionChecker::setPlanningSceneMsg(const moveit_msgs::Plan
       threads_.at(idx).join();
   }
 
-  double time1 = (ros::WallTime::now()-tic).toSec();
-  tic = ros::WallTime::now();
-
-  if(verbose_) //elimina
-  {
-    if(not msg.is_diff)
-      throw std::runtime_error("not diff");
-  }
-
   if (!planning_scene_->usePlanningSceneMsg(msg))
   {
     ROS_ERROR_THROTTLE(1,"unable to upload scene");
   }
-  double time2 = (ros::WallTime::now()-tic).toSec();
-  tic = ros::WallTime::now();
-
-  if(verbose_)
-    ROS_INFO("---------INIT---------");
 
   int n_groups = std::floor(threads_num_/GROUP_SIZE);
   if(threads_num_%GROUP_SIZE == 0 && n_groups != 0)
     n_groups = n_groups-1;
 
-  std::vector<double> time_vectors;
-
   int group_start = 0;
   std::vector<std::shared_future<bool>> futures;
   for (int idx=0;idx<n_groups;idx++)
   {
-    ros::WallTime tic2 = ros::WallTime::now();
-
     futures.push_back(std::async(std::launch::async,&ParallelMoveitCollisionChecker::asyncSetPlanningSceneMsg,this,msg,group_start));
     group_start = group_start+GROUP_SIZE;
-
-    time_vectors.push_back((ros::WallTime::now()-tic2).toSec());
   }
 
   for(int idx=group_start;idx<threads_num_;idx++)
   {
-    ros::WallTime tic2 = ros::WallTime::now();
     planning_scenes_[idx]->usePlanningSceneMsg(msg);
-
-    time_vectors.push_back((ros::WallTime::now()-tic2).toSec());
   }
 
   for (int idx=0;idx<n_groups;idx++)
   {
-    ros::WallTime tic2 = ros::WallTime::now();
-
     if(!futures.at(idx).get())
       ROS_ERROR_THROTTLE(1,"unable to upload scene");
-
-    time_vectors.push_back((ros::WallTime::now()-tic2).toSec());
-
   }
-  double time3 = (ros::WallTime::now()-tic).toSec();
-
-  if(verbose_)
-  {
-    for(const double& d:time_vectors)
-      ROS_INFO_STREAM("time cycle "<<d);
-
-    ROS_INFO("---------FINISH---------");
-  }
-
-  if(verbose_)
-    ROS_BOLDCYAN_STREAM("time1 "<<time1<<" time2 "<<time2<<" time3 "<<time3<<" time tot "<<(ros::WallTime::now()-tic1).toSec());
 }
 
 void ParallelMoveitCollisionChecker::setPlanningScene(planning_scene::PlanningScenePtr &planning_scene)
