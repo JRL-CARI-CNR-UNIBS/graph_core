@@ -42,6 +42,9 @@ protected:
   std::string group_name_;
 
   const moveit::core::JointModelGroup* jmg_;
+  std::vector<std::string> joint_names_;
+  std::vector<const moveit::core::JointModel*> joint_models_;
+  std::vector<const moveit::core::JointModel*> mimic_joint_models_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -55,6 +58,11 @@ public:
 
     state_ = std::make_shared<robot_state::RobotState>(planning_scene_->getCurrentState());
     jmg_ = state_->getJointModelGroup(group_name_);
+    joint_names_=jmg_->getActiveJointModelNames();
+    joint_models_=jmg_->getActiveJointModels();
+    mimic_joint_models_=jmg_->getMimicJointModels();
+
+
     if (!planning_scene_)
       ROS_ERROR("invalid planning scene");
   }
@@ -76,7 +84,11 @@ public:
   virtual bool check(const Eigen::VectorXd& configuration)
   {
     *state_ = planning_scene_->getCurrentState();
-    state_->setJointGroupPositions(group_name_, configuration);
+
+    for (size_t ij=0;ij<joint_names_.size();ij++)
+      state_->setJointPositions(joint_models_.at(ij),&configuration(ij));
+
+
     if (!state_->satisfiesBounds(jmg_))
     {
       ROS_DEBUG("Out of bound");
