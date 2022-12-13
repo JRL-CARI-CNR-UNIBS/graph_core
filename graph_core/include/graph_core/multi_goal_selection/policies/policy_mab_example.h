@@ -43,7 +43,7 @@ public:
     ROS_ERROR_ONCE("ok");
     int iarm = std::uniform_int_distribution<int>(0,n_goals_-1)(gen_);
     double sum = 0.0;
-    for (unsigned int idx=0;idx<n_goals_;idx++)
+    for (int idx=0;idx<n_goals_;idx++)
       sum += expected_reward_[idx]*expected_reward_[idx];
 
     double rnd = std::uniform_real_distribution<double>(0.0,sum)(gen_);

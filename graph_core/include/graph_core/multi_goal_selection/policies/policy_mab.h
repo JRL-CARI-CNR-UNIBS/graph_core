@@ -90,13 +90,13 @@ public:
     std::cout << toString().c_str() << "\n";
     std::cout << "Number of arms: " << n_goals_ << "\n";
     std::cout << "Rewards: ";
-    for (unsigned int idx=0;idx<n_goals_;idx++)
+    for (int idx=0;idx<n_goals_;idx++)
     {
       std::cout << expected_reward_[idx] << ", ";
     }
     std::cout << "\n";
     std::cout << "Pull counters: ";
-    for (unsigned int idx=0;idx<n_goals_;idx++)
+    for (int idx=0;idx<n_goals_;idx++)
     {
       std::cout << pull_counter_[idx] << ", ";
     }
