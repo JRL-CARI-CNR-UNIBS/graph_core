@@ -58,14 +58,9 @@ public:
 
   virtual void setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg)
   {
-    ros::WallTime tic = ros::WallTime::now();
     if (!planning_scene_->usePlanningSceneMsg(msg))
       ROS_ERROR_THROTTLE(1,"unable to upload scene");
-
-    if(verbose_)
-      ROS_INFO_STREAM("time update pln scn "<<(ros::WallTime::now()-tic).toSec());
   }
-
 
   virtual CollisionCheckerPtr clone()
   {

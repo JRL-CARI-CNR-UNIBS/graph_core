@@ -863,10 +863,7 @@ bool Path::splitConnection(const ConnectionPtr& conn1, const ConnectionPtr& conn
   if(it<connections_.end())
     return splitConnection(conn1,conn2,it);
   else
-  {
-    ROS_BOLDRED_STREAM("it not found"); //elimina
     return false;
-  }
 }
 
 bool Path::restoreConnection(const ConnectionPtr& conn, const NodePtr& node2remove)
