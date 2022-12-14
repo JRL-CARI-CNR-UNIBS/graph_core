@@ -176,11 +176,15 @@ int Display::displayConnection(const ConnectionPtr& conn,
     conf2 = parent + i*step*v;
 
     geometry_msgs::Pose pose;
-    state_->setJointGroupPositions(group_name_,conf1);
+    //state_->setJointGroupPositions(group_name_,conf1);
+    for (size_t ij=0;ij<joint_names_.size();ij++)
+      state_->setJointPositions(joint_models_.at(ij),&conf1(ij));
     tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
     marker.points.push_back(pose.position);
 
-    state_->setJointGroupPositions(group_name_,conf2);
+    //state_->setJointGroupPositions(group_name_,conf2);
+    for (size_t ij=0;ij<joint_names_.size();ij++)
+      state_->setJointPositions(joint_models_.at(ij),&conf2(ij));
     tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
     marker.points.push_back(pose.position);
 
@@ -245,11 +249,15 @@ int Display::displayPath(const PathPtr &path,
       conf2 = parent + i*step*v;
 
       geometry_msgs::Pose pose;
-      state_->setJointGroupPositions(group_name_,conf1);
+      //state_->setJointGroupPositions(group_name_,conf1);
+      for (size_t ij=0;ij<joint_names_.size();ij++)
+        state_->setJointPositions(joint_models_.at(ij),&conf1(ij));
       tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
       marker.points.push_back(pose.position);
 
-      state_->setJointGroupPositions(group_name_,conf2);
+      //state_->setJointGroupPositions(group_name_,conf2);
+      for (size_t ij=0;ij<joint_names_.size();ij++)
+        state_->setJointPositions(joint_models_.at(ij),&conf2(ij));
       tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
       marker.points.push_back(pose.position);
 
@@ -339,12 +347,16 @@ std::vector<int> Display::displayPathAndWaypoints(const PathPtr &path,
       conf2 = parent + i*step*v;
 
       geometry_msgs::Pose pose;
-      state_->setJointGroupPositions(group_name_,conf1);
+      //state_->setJointGroupPositions(group_name_,conf1);
+      for (size_t ij=0;ij<joint_names_.size();ij++)
+        state_->setJointPositions(joint_models_.at(ij),&conf1(ij));
       tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
       marker.points.push_back(pose.position);
       if(i==1) marker_wp.points.push_back(pose.position);
 
-      state_->setJointGroupPositions(group_name_,conf2);
+      //state_->setJointGroupPositions(group_name_,conf2);
+      for (size_t ij=0;ij<joint_names_.size();ij++)
+        state_->setJointPositions(joint_models_.at(ij),&conf2(ij));
       tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
       marker.points.push_back(pose.position);
       if(i==SUBDIVISION_FACTOR) marker_wp.points.push_back(pose.position);
@@ -461,11 +473,15 @@ void Display::displayTreeNode(const NodePtr &n,
     if(add_points)
     {
       geometry_msgs::Pose pose;
-      state_->setJointGroupPositions(group_name_,conn->getParent()->getConfiguration());
+      //state_->setJointGroupPositions(group_name_,conn->getParent()->getConfiguration());
+      for (size_t ij=0;ij<joint_names_.size();ij++)
+        state_->setJointPositions(joint_models_.at(ij),&conn->getParent()->getConfiguration()(ij));
       tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
       points.push_back(pose.position);
 
-      state_->setJointGroupPositions(group_name_,conn->getChild()->getConfiguration());
+//      state_->setJointGroupPositions(group_name_,conn->getChild()->getConfiguration());
+      for (size_t ij=0;ij<joint_names_.size();ij++)
+        state_->setJointPositions(joint_models_.at(ij),&conn->getChild()->getConfiguration()(ij));
       tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
       points.push_back(pose.position);
 
@@ -527,11 +543,15 @@ void Display::displayNetNode(const NodePtr &n,
   for (const ConnectionPtr& conn: connections)
   {
     geometry_msgs::Pose pose;
-    state_->setJointGroupPositions(group_name_,conn->getParent()->getConfiguration());
+//    state_->setJointGroupPositions(group_name_,conn->getParent()->getConfiguration());
+    for (size_t ij=0;ij<joint_names_.size();ij++)
+      state_->setJointPositions(joint_models_.at(ij),&conn->getParent()->getConfiguration()(ij));
     tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
     points.push_back(pose.position);
 
-    state_->setJointGroupPositions(group_name_,conn->getChild()->getConfiguration());
+//    state_->setJointGroupPositions(group_name_,conn->getChild()->getConfiguration());
+    for (size_t ij=0;ij<joint_names_.size();ij++)
+      state_->setJointPositions(joint_models_.at(ij),&conn->getChild()->getConfiguration()(ij));
     tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
     points.push_back(pose.position);
 
