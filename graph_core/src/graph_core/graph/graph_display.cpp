@@ -47,7 +47,7 @@ Display::Display(const planning_scene::PlanningSceneConstPtr planning_scene,
   tree_marker_scale_.resize(3,DEFAULT_TREE_SIZE);
   marker_id_=0;
   state_=std::make_shared<moveit::core::RobotState>(planning_scene_->getCurrentState());
-  marker_pub_ = nh_.advertise<visualization_msgs::Marker>("/marker_visualization_topic", 1000);
+  marker_pub_ = nh_.advertise<visualization_msgs::Marker>("/marker_visualization_topic", 1000,true);
   for (int idx=0;idx<4;idx++)
     clearMarkers();
 }
