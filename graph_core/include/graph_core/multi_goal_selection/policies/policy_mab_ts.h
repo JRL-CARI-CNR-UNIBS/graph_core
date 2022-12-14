@@ -38,7 +38,7 @@ public:
   
   virtual int selectNextArm()
   {
-    for(unsigned int idx=0; idx<n_goals_; idx++)
+    for(int idx=0; idx<n_goals_; idx++)
     {
       thetas_[idx] = beta_distribution<double>(alphas_[idx], betas_[idx])(gen_) ;
     }

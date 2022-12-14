@@ -81,7 +81,7 @@ public:
 
   virtual int selectNextArm()
   {
-    for(unsigned int idx=0; idx<n_goals_; idx++)
+    for(int idx=0; idx<n_goals_; idx++)
     {
       sampled_rewards_[idx] = std::normal_distribution<>(expected_reward_[idx], std::sqrt(sigma_arms_2_[idx]))(gen_) ;
     }
@@ -135,7 +135,7 @@ public:
     eta_ = std::max(1e-10,0.9*eta_+0.1*std::abs(reward)); // see McConachie and Berenson, TASE 2018
     double sigma_eta_2 = sigma_tr_2_*eta_*eta_;
 
-    for (unsigned int idx=0;idx<n_goals_;idx++)
+    for (int idx=0;idx<n_goals_;idx++)
     {
       if (idx==i_goal)
       {

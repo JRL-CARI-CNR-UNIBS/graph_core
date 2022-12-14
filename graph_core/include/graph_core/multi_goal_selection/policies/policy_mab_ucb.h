@@ -31,7 +31,7 @@ public:
 
     double max_expectation=-std::numeric_limits<double>::infinity();
     unsigned int i_goal_best=0;
-    for(unsigned int i_goal=0; i_goal<n_goals_; i_goal++)
+    for(int i_goal=0; i_goal<n_goals_; i_goal++)
     {
       if(pull_counter_[i_goal]==0)
         return i_goal;
