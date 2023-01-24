@@ -31,6 +31,7 @@ include_directories(
   )
 add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/metrics.cpp
+  src/${PROJECT_NAME}/length_penalty_metrics.cpp
   src/${PROJECT_NAME}/goal_cost_function.cpp
   src/${PROJECT_NAME}/avoidance_goal_cost_function.cpp
   src/${PROJECT_NAME}/avoidance_metrics.cpp

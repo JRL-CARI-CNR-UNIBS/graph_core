@@ -1,4 +1,3 @@
-#pragma once
 /*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
@@ -26,35 +25,60 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/graph/node.h>
+#include <graph_core/length_penalty_metrics.h>
+
+
 namespace pathplan
 {
-class Metrics;
-typedef std::shared_ptr<Metrics> MetricsPtr;
 
-
-// Euclidean metrics
-class Metrics
+LengthPenaltyMetrics::LengthPenaltyMetrics():
+  Metrics()
 {
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Metrics();
+  obstacles_position_.clear();
+}
 
-  virtual double cost(const NodePtr& node1,
-                      const NodePtr& node2);
+LengthPenaltyMetrics::LengthPenaltyMetrics(const std::vector<Eigen::Vector3d>& obstacles_position):
+  obstacles_position_(obstacles_position),
+  Metrics()
+{
+}
 
-  virtual double cost(const Eigen::VectorXd& configuration1,
-                      const Eigen::VectorXd& configuration2);
+double LengthPenaltyMetrics::cost(const NodePtr& node1,
+                                  const NodePtr& node2)
+{
+  return LengthPenaltyMetrics::cost(node1->getConfiguration(),node2->getConfiguration());
+}
+
+double LengthPenaltyMetrics::cost(const Eigen::VectorXd& configuration1,
+                                  const Eigen::VectorXd& configuration2)
+{
+  double lambda = getLambda(configuration1, configuration2);
+  return (Metrics::cost(configuration1, configuration2))*lambda;
+}
+
+double LengthPenaltyMetrics::utopia(const NodePtr& node1,
+                                    const NodePtr& node2)
+{
+  return LengthPenaltyMetrics::utopia(node1->getConfiguration(), node2->getConfiguration());
+}
 
 
-  virtual double utopia(const NodePtr& node1,
-                        const NodePtr& node2);
+double LengthPenaltyMetrics::utopia(const Eigen::VectorXd& configuration1,
+                                    const Eigen::VectorXd& configuration2)
+{
+  return Metrics::utopia(configuration1, configuration2);
+}
 
-  virtual double utopia(const Eigen::VectorXd& configuration1,
-                        const Eigen::VectorXd& configuration2);
+double LengthPenaltyMetrics::getLambda(const Eigen::VectorXd& configuration1,  //DA FARE
+                                       const Eigen::VectorXd& configuration2)
+{
+  ROS_ERROR("TO BE IMPLEMENTED");
+  return 0;
+}
 
-  virtual MetricsPtr clone();
-
-};
+MetricsPtr LengthPenaltyMetrics::clone()
+{
+  return std::make_shared<LengthPenaltyMetrics>();
+}
 
 }
