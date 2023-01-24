@@ -521,7 +521,7 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
   Eigen::VectorXd parent;
   Eigen::VectorXd child;
 
-  double dist, distP, distC;
+  double dist, distP, distC, err;
 
   for(unsigned int i=0; i<connections_.size(); i++)
   {
@@ -532,10 +532,12 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
     distP = (parent-configuration).norm();
     distC = (configuration-child) .norm();
 
-    if(verbose)
-      ROS_INFO("dist %f, distP %f, distC %f, diff %f",dist,distP,distC,std::abs(dist-distP-distC));
+    err  = std::abs(dist-distP-distC);
 
-    if(std::abs(dist-distP-distC)<1e-10)
+    if(verbose)
+      ROS_INFO("dist %f, distP %f, distC %f, err %lf",dist,distP,distC,err);
+
+    if(err<1e-10)
     {
       conn = connections_.at(i);
       idx = i;
@@ -557,8 +559,8 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& id
       distP = (parent-configuration).norm();
       distC = (configuration-child).norm();
 
-      double err = std::abs(dist-distP-distC);
-      ROS_INFO("conn n %d, length %f, dist from parent %f, dist from child %f, error %f",i,dist,distP,distC,err);
+      err = std::abs(dist-distP-distC);
+      ROS_INFO("conn n %d, length %f, dist from parent %f, dist from child %f, error %lf",i,dist,distP,distC,err);
     }
   }
 
@@ -940,33 +942,62 @@ bool Path::removeNodes(const std::vector<NodePtr> &white_list, std::vector<NodeP
 
 int Path::resample(const double& max_distance)
 {
-  int nodes_added = 0;
-  bool is_a_new_node, node_added;
-  std::vector<ConnectionPtr> connections;
-  int initial_size = connections_.size();
+  //  int nodes_added = 0;
+  //  bool is_a_new_node, node_added;
+  //  std::vector<ConnectionPtr> connections;
+  //  int initial_size = connections_.size();
 
-  do
+  //  do
+  //  {
+  //    node_added = false;
+  //    connections = connections_;
+  //    for(ConnectionPtr& c:connections)
+  //    {
+  //      double length = c->norm();
+  //      if(length>max_distance)
+  //      {
+  //        is_a_new_node = false;
+  //        Eigen::VectorXd conf = c->getChild()->getConfiguration()+(c->getParent()->getConfiguration()-c->getChild()->getConfiguration())*(max_distance/length);
+  //        addNodeAtCurrentConfig(conf,c,true,is_a_new_node);
+
+  //        if(is_a_new_node)
+  //        {
+  //          c->remove();
+  //          nodes_added++;
+  //          node_added = true;
+  //        }
+  //      }
+  //    }
+  //  }while(node_added);
+
+  unsigned int pos = 0;
+  unsigned int nodes_added = 0;
+  unsigned int initial_size = connections_.size();
+
+  double length;
+  bool is_a_new_node;
+  ConnectionPtr conn;
+  Eigen::VectorXd conf;
+
+  while(pos<connections_.size())
   {
-    node_added = false;
-    connections = connections_;
-    for(ConnectionPtr& c:connections)
-    {
-      double length = c->norm();
-      if(length>max_distance)
-      {
-        is_a_new_node = false;
-        Eigen::VectorXd conf = c->getChild()->getConfiguration()+(c->getParent()->getConfiguration()-c->getChild()->getConfiguration())*(max_distance/length);
-        addNodeAtCurrentConfig(conf,c,true,is_a_new_node);
+    conn = connections_.at(pos);
+    length = conn->norm();
 
-        if(is_a_new_node)
-        {
-          c->remove();
-          nodes_added++;
-          node_added = true;
-        }
+    if(length>max_distance)
+    {
+      is_a_new_node = false;
+      conf = conn->getChild()->getConfiguration()+(conn->getParent()->getConfiguration()-conn->getChild()->getConfiguration())*(max_distance/length);
+      addNodeAtCurrentConfig(conf,conn,true,is_a_new_node);
+
+      if(is_a_new_node)
+      {
+        conn->remove();
+        nodes_added++;
       }
     }
-  }while(node_added);
+    pos++;
+  }
 
   assert([&]() ->bool{
            if(nodes_added == 0)
@@ -1001,13 +1032,6 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, const
 NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr& conn, const bool& rewire, bool& is_a_new_node)
 {
   is_a_new_node = false;
-
-  //  if(rewire && !tree_)
-  //  {
-  //    ROS_ERROR("Tree not set, the new node can't be added to the path");
-  //    assert(0);
-  //    return nullptr;
-  //  }
 
   if(conn)
   {
