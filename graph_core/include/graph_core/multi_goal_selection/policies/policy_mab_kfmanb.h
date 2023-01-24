@@ -86,7 +86,19 @@ public:
       sampled_rewards_[idx] = std::normal_distribution<>(expected_reward_[idx], std::sqrt(sigma_arms_2_[idx]))(gen_) ;
     }
 
-    ROS_DEBUG_ONCE("first reward id = %d, val = %f", vectorMaxIndex(sampled_rewards_), sampled_rewards_[vectorMaxIndex(sampled_rewards_)]);
+    /*
+    ROS_INFO("\nexp reward = ");
+    for(int idx=0; idx<n_goals_; idx++)
+    {
+      std::cout << expected_reward_[idx] << "+" << std::sqrt(sigma_arms_2_[idx]) << ", ";
+    }
+    ROS_INFO("\nsampled rewards = ");
+    for(int idx=0; idx<n_goals_; idx++)
+    {
+      std::cout << sampled_rewards_[idx] << ", ";
+    }
+    ROS_INFO("best = %d, val = %f", vectorMaxIndex(sampled_rewards_), sampled_rewards_[vectorMaxIndex(sampled_rewards_)]);
+    */
     return vectorMaxIndex(sampled_rewards_);
   }
 
