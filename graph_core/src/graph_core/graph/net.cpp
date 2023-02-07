@@ -277,7 +277,7 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
                return true;
              }());
 
-      double cost_heuristics = cost2parent+(parent->getConfiguration()-start_node->getConfiguration()).norm();
+      double cost_heuristics = cost2parent+metrics_->utopia(parent->getConfiguration(),start_node->getConfiguration());
       if(cost_heuristics>=cost_to_beat_ || std::abs(cost_heuristics-cost_to_beat_)<=NET_ERROR_TOLERANCE )
       {
         now = ros::WallTime::now();
@@ -367,9 +367,6 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
         now = ros::WallTime::now();
         if(verbose_)
           ROS_INFO_STREAM("time visited list check: "<<(now-time_visited_list_check).toSec());
-
-        //        std::vector<ConnectionPtr> connections2parent = connections2here_;
-        //        connections2parent.push_back(conn2parent);
 
         connections2parent_.push_back(conn2parent);
 
