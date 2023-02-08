@@ -32,26 +32,67 @@ namespace pathplan
 
 Connection::Connection(const NodePtr& parent, const NodePtr& child, const bool is_net):
   parent_(parent),
-  child_(child),
-  is_net_(is_net)
+  child_(child)
 {
   euclidean_norm_ = (child->getConfiguration() - parent->getConfiguration()).norm();
+  flags_ = {false, is_net, false}; //valid, is_net, recently_checked
+
+  assert(number_reserved_flags_ == flags_.size());
+}
+
+unsigned int Connection::setFlag(const bool flag)
+{
+  unsigned int idx = flags_.size();
+  setFlag(flag,idx);
+
+  return idx;
+}
+
+bool Connection::setFlag(const int& idx, const bool flag)
+{
+  if(idx == flags_.size()) //new flag to add
+    flags_.push_back(flag);
+  else if(idx<flags_.size())  //overwrite an already existing flag
+  {
+    if(idx<number_reserved_flags_)
+    {
+      ROS_ERROR("can't overwrite a default flag");
+      return false;
+    }
+    else
+      flags_[idx] = flag;
+  }
+  else  //the flag should already exist or you should ask to create a flag at idx = flags_.size()
+  {
+    ROS_ERROR_STREAM("flags size "<<flags_.size()<<" and you want to set a flag in position "<<idx);
+    return false;
+  }
+
+  return true;
+}
+
+bool Connection::getFlag(const int& idx, const bool default_value)
+{
+  if(idx<flags_.size())
+    return flags_[idx];
+  else
+    return default_value;  //if the value has not been set, return the default value
 }
 
 void Connection::add(const bool is_net)
 {
   assert((is_net && getChild()->getParentConnectionsSize()== 1) || ((not is_net) && getChild()->getParentConnectionsSize() == 0));
 
-  is_net_ = is_net;
+  flags_[idx_net_] = is_net;
   add();
 }
 
 void Connection::add()
 {
-  assert(not valid_);
-  valid_ = true;
+  assert(not flags_[idx_net_]);
+  flags_[idx_valid_] = true;
 
-  if(is_net_)
+  if(flags_[idx_net_])
   {
     getParent()->addNetChildConnection(pointer());
     getChild()->addNetParentConnection(pointer());
@@ -64,16 +105,16 @@ void Connection::add()
 }
 void Connection::remove()
 {
-  if (!valid_)
+  if (!flags_[idx_valid_])
   {
     //ROS_ERROR("not valid");
     return;
   }
 
-  valid_ = false;
+  flags_[idx_valid_] = false;
   if(not (parent_.expired()))
   {
-    if(is_net_)
+    if(flags_[idx_net_])
       getParent()->removeNetChildConnection(pointer());
     else
       getParent()->removeChildConnection(pointer());
@@ -83,7 +124,7 @@ void Connection::remove()
 
   if(child_)
   {
-    if(is_net_)
+    if(flags_[idx_net_])
       getChild()->removeNetParentConnection(pointer());
     else
       getChild()->removeParentConnection(pointer());
@@ -168,7 +209,7 @@ bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)
   }
   // v1 dot v2 = norm(v1)*norm(v2)*cos(angle)
   double scalar= std::abs((getChild()->getConfiguration()-getParent()->getConfiguration()).dot(
-        conn->getChild()->getConfiguration()-conn->getParent()->getConfiguration()));
+                            conn->getChild()->getConfiguration()-conn->getParent()->getConfiguration()));
 
   // v1 dot v2 = norm(v1)*norm(v2) if v1 // v2
 
@@ -182,10 +223,10 @@ bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)
 
 bool Connection::convertToConnection()
 {
-  if(is_net_)
+  if(flags_[idx_net_])
   {
     remove();
-    is_net_ = false;
+    flags_[idx_net_] = false;
     add();
     return true;
   }
@@ -194,10 +235,10 @@ bool Connection::convertToConnection()
 
 bool Connection::convertToNetConnection()
 {
-  if(not is_net_)
+  if(not flags_[idx_net_])
   {
     remove();
-    is_net_ = true;
+    flags_[idx_net_] = true;
     add();
     return true;
   }
@@ -212,22 +253,23 @@ void Connection::changeConnectionType()
 
 std::ostream& operator<<(std::ostream& os, const Connection& connection)
 {
-//  os << connection.parent_->getConfiguration().transpose() << " -->" << std::endl;
-//  os << "-->" << connection.child_->getConfiguration().transpose() << std::endl;
+  //  os << connection.parent_->getConfiguration().transpose() << " -->" << std::endl;
+  //  os << "-->" << connection.child_->getConfiguration().transpose() << std::endl;
 
   assert(connection.getParent() != nullptr);
   assert(connection.getChild() != nullptr);
 
+
   os << connection.getParent()->getConfiguration().transpose()
      <<" ("
-     <<connection.getParent()
-     << ") --> "
-     << connection.getChild()->getConfiguration().transpose()
-     <<" ("
-     <<connection.getChild()
-     << ")"
-     << " | cost: " << connection.cost_
-     << " | net: "<<connection.is_net_;
+    <<connection.getParent()
+   << ") --> "
+   << connection.getChild()->getConfiguration().transpose()
+   <<" ("
+  <<connection.getChild()
+  << ")"
+  << " | cost: " << connection.cost_
+  << " | net: "<<connection.flags_[Connection::idx_net_];
 
   return os;
 }

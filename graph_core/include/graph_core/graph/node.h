@@ -37,17 +37,35 @@ typedef std::vector<ConnectionWeakPtr> WeakPtrVector;
 
 class Node: public std::enable_shared_from_this<Node>
 {
+  /**
+   * Add here your reserved flags.
+   * Increment number_reserved_flags_ accordingly!
+   * Initialize flags_ in the constructor accordingly!
+   * If you need to modify or read these flags externally, implement getter and setter functions!
+   */
+
+  //NO DEFAULT FLAGS FOR NOW
+
+  static const unsigned int number_reserved_flags_ = 0;
+
 protected:
   Eigen::VectorXd configuration_;
   unsigned int ndof_;
-  bool analyzed_;
-  bool non_optimal_;
+//  bool analyzed_;
+//  bool non_optimal_;
 
   std::vector<ConnectionWeakPtr> parent_connections_;     //Weak ptr to avoid pointers cycles
   std::vector<ConnectionWeakPtr> net_parent_connections_; //Weak ptr to avoid pointers cycles
 
   std::vector<ConnectionPtr> child_connections_;
   std::vector<ConnectionPtr> net_child_connections_;
+
+  /**
+   * @brief flags_ is a vector of flags.You can add new flags specific to your algorithm using function setFlag and passing the vector-index to store the flag.
+   * getReservedFlagsNumber allows you to know how many positions are reserved for the defaults. setFlag doesn't allow you to overwrite these positions.
+   * To overwrite them, you should use the flag-specific function.
+   */
+  std::vector<bool> flags_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -56,10 +74,36 @@ public:
   {
     return shared_from_this();
   }
-  void setAnalyzed(const bool& analyzed);
-  bool getAnalyzed();
-  void setNonOptimal(const bool& nonOptimal);
-  bool getNonOptimal();
+//  void setAnalyzed(const bool& analyzed);
+//  bool getAnalyzed();
+//  void setNonOptimal(const bool& nonOptimal);
+//  bool getNonOptimal();
+
+  /**
+   * @brief setFlag sets your custome flag. Use this function only if the flag was not created before because it creates a new one flag in flags_ vector
+   * @param flag the NEW flag to set
+   * @return the index of the flag in flags_ vector to use when you want to change the value
+   */
+  unsigned int setFlag(const bool flag);
+
+  /**
+   * @brief setFlag sets the custom flag at index idx. The flag should be already present in the flags_ vector.
+   * If not, it add the new flag if and only if the index idx is equal to flags_ size
+   * @param idx the index of the flag
+   * @param flag the value of the flag
+   * @return true if the flag is set correctly, flase otherwise
+   */
+  bool setFlag(const int& idx, const bool flag);
+
+  /**
+   * @brief getFlag returns the value of the flag at position idx. It returns the value if the flag exists, otherwise return the default value.
+   * @param idx the index of the flag you are asking for.
+   * @param default_value the default value returned if the flag doesn't exist.
+   * @return the flag if it exists, the default value otherwise.
+   */
+  bool getFlag(const int& idx, const bool default_value);
+
+
   void addParentConnection(const ConnectionPtr& connection);
   void addChildConnection(const ConnectionPtr& connection);
   void addNetParentConnection(const ConnectionPtr& connection);
@@ -110,6 +154,12 @@ public:
   friend std::ostream& operator<<(std::ostream& os, const Node& path);
 
   static NodePtr fromXmlRpcValue(const XmlRpc::XmlRpcValue& x);
+
+  /**
+   * @brief getReservedFlagsNumber tells you how many positions are occupied by the defaults. Use this to know where you can sve your new flags.
+   * @return the first free position in flags_ vector, so the idx next to the defaults.
+   */
+  static unsigned int getReservedFlagsNumber();
 };
 
 std::ostream& operator<<(std::ostream& os, const Node& node);

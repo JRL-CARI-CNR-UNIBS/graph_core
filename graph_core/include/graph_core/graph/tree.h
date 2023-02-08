@@ -253,6 +253,11 @@ public:
     checker_ = checker;
   }
 
+  void setMetrics(const MetricsPtr& metrics)
+  {
+    metrics_ = metrics;
+  }
+
   XmlRpc::XmlRpcValue toXmlRpcValue() const;
   friend std::ostream& operator<<(std::ostream& os, const Tree& tree);
 

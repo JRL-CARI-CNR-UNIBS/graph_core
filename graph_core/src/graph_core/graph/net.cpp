@@ -29,83 +29,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
-
-bool Net::purgeSuccessors(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes)
+Net::Net(const TreePtr& tree)
 {
-  if (std::find(white_list.begin(), white_list.end(), node) != white_list.end())
-  {
-    ROS_INFO_STREAM("Node in white list: "<<*node);
-    return false;
-  }
-  assert(node);
+  verbose_ = false;
+  search_every_solution_ = true;
 
-  bool purged;
-  bool disconnect = true;
-  do
-  {
-    purged = false;
+  time_ = 0.0;  //setting time_ to 0, by default connections cost is not re-evaluated
 
-    std::vector<NodePtr> successors = node->getChildren();
-    successors.insert(successors.end(),node->getNetChildrenConst().begin(),node->getNetChildrenConst().end());
-
-    for (NodePtr& n : successors)
-    {
-      assert(n.get()!=node.get());
-
-      if((n->getNetParentConnectionsSize())>0 || n == linked_tree_->getRoot())
-        continue;
-      else
-      {
-        if(not purgeSuccessors(n,white_list,removed_nodes))
-          disconnect = false;
-        else
-          purged = true;
-      }
-    }
-  }while(purged);
-
-  if(disconnect)
-  {
-    ConnectionPtr conn2convert;
-    std::vector<NodePtr> children = node->getChildren();
-    for(NodePtr& successor2save: children)
-    {
-      assert(successor2save->getNetParentConnectionsSize()>0);
-      assert(successor2save->getParentConnectionsSize() == 1);
-      assert(successor2save->parentConnection(0)->getParent() == node);
-
-      conn2convert = successor2save->netParentConnection(0); //the successor2save must be still part of the tree, so you convert one of its net parent connection into a parent connection
-      assert(conn2convert->isNet());
-      conn2convert->convertToConnection();
-
-      assert(successor2save->getParentConnectionsSize() == 1);
-    }
-
-    linked_tree_->purgeThisNode(node,removed_nodes);
-  }
-
-  return disconnect;
-}
-
-bool Net::purgeFromHere(ConnectionPtr& conn2node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes)
-{
-  NodePtr node = conn2node->getChild();
-
-  if((node->getNetParentConnectionsSize())>0 || node == linked_tree_->getRoot())
-  {
-    if(not conn2node->isNet())
-    {
-      ConnectionPtr conn2convert = node->netParentConnection(0);
-      assert(conn2convert->isNet());
-      conn2convert->convertToConnection();
-      removed_nodes = 0;
-    }
-
-    conn2node->remove();
-    return false;
-  }
-  else
-    return purgeSuccessors(node,white_list,removed_nodes);
+  setTree(tree);
+  setMetrics(tree->getMetrics());
 }
 
 std::multimap<double,std::vector<ConnectionPtr>>& Net::getConnectionBetweenNodes(const NodePtr &start_node, const NodePtr& goal_node, const std::vector<NodePtr>& black_list, const double& max_time)
@@ -252,6 +184,9 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
         if(not linked_tree_->isInTree(parent))
           continue;
       }
+
+      if(conn2parent->getTimeCostUpdate()<time_) //if time_ has been set and the cost of the connection has been updated before time_, update it
+        conn2parent->setCost(metrics_->cost(conn2parent->getParent(),conn2parent->getChild()));
 
       cost2parent = cost2here+conn2parent->getCost();
 

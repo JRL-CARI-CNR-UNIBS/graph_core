@@ -34,26 +34,69 @@ Node::Node(const Eigen::VectorXd &configuration)
 {
   configuration_ = configuration;
   ndof_ = configuration_.size();
-  analyzed_ = 0;
-  non_optimal_ = 0;
+
+  //insert the defaults in flags_
+
+//  analyzed_ = 0;
+//  non_optimal_ = 0;
 }
 
-void Node::setAnalyzed(const bool &analyzed)
+//void Node::setAnalyzed(const bool &analyzed)
+//{
+//  analyzed_ = analyzed;
+//}
+//bool Node::getAnalyzed()
+//{
+//  return analyzed_;
+//}
+
+//void Node::setNonOptimal(const bool &nonOptimal)
+//{
+//  non_optimal_ = nonOptimal;
+//}
+//bool Node::getNonOptimal()
+//{
+//  return non_optimal_;
+//}
+
+
+unsigned int Node::setFlag(const bool flag)
 {
-  analyzed_ = analyzed;
-}
-bool Node::getAnalyzed()
-{
-  return analyzed_;
+  unsigned int idx = flags_.size();
+  setFlag(flag,idx);
+
+  return idx;
 }
 
-void Node::setNonOptimal(const bool &nonOptimal)
+bool Node::setFlag(const int& idx, const bool flag)
 {
-  non_optimal_ = nonOptimal;
+  if(idx == flags_.size()) //new flag to add
+    flags_.push_back(flag);
+  else if(idx<flags_.size())  //overwrite an already existing flag
+  {
+    if(idx<number_reserved_flags_)
+    {
+      ROS_ERROR("can't overwrite a default flag");
+      return false;
+    }
+    else
+      flags_[idx] = flag;
+  }
+  else  //the flag should already exist or you should ask to create a flag at idx = flags_.size()
+  {
+    ROS_ERROR_STREAM("flags size "<<flags_.size()<<" and you want to set a flag in position "<<idx);
+    return false;
+  }
+
+  return true;
 }
-bool Node::getNonOptimal()
+
+bool Node::getFlag(const int& idx, const bool default_value)
 {
-  return non_optimal_;
+  if(idx<flags_.size())
+    return flags_[idx];
+  else
+    return default_value;  //if the value has not been set, return the default value
 }
 
 void Node::addParentConnection(const ConnectionPtr &connection)
@@ -432,6 +475,11 @@ NodePtr Node::fromXmlRpcValue(const XmlRpc::XmlRpcValue& x)
     conf(idx)=x[idx];
   }
   return std::make_shared<Node>(conf);
+}
+
+unsigned int Node::getReservedFlagsNumber()
+{
+  return number_reserved_flags_;
 }
 
 std::ostream& operator<<(std::ostream& os, const Node& node)

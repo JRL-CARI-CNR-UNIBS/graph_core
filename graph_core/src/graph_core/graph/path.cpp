@@ -43,22 +43,22 @@ Path::Path(std::vector<ConnectionPtr> connections,
 
   cost_ = 0;
 
-  NodePtr child = nullptr;
+  NodePtr previous_child = nullptr;
   for (const ConnectionPtr& conn : connections_)
   {
     cost_ += conn->getCost();
     change_warp_.push_back(true);
 
-    if(child)
+    if(previous_child)
     {
-      if(child != conn->getParent())
+      if(previous_child != conn->getParent())
       {
         for(const ConnectionPtr& c : connections_)
           ROS_WARN_STREAM(*c);
         throw std::runtime_error("parent of a connection is different from the child of the previous connection!");
       }
     }
-    child = conn->getChild();
+    previous_child = conn->getChild();
   }
   change_warp_.at(0) = false;
 }
@@ -114,7 +114,8 @@ PathPtr Path::clone()
     child = std::make_shared<Node>(wp.at(i));
 
     conn = std::make_shared<Connection>(parent,child);
-    conn->setCost(connections_.at(i-1)->getCost());
+    conn->setCost(connections_.at(i-1)->getCost());  //update also the internal time of the cloned connection
+    conn->setTimeCostUpdate(connections_.at(i-1)->getTimeCostUpdate());  //set the internal time to the value of the original connection
     conn->add();
 
     assert(child->getParentConnectionsSize()    == 1);
@@ -778,6 +779,7 @@ bool Path::removeNode(const NodePtr& node, const int& idx_conn, const std::vecto
     new_conn = std::make_shared<pathplan::Connection>(conn_parent_node->getParent(),conn_node_child->getChild(),is_net);
     double cost = conn_parent_node->getCost()+conn_node_child->getCost();
     new_conn->setCost(cost);
+    new_conn->setTimeCostUpdate(std::min(conn_parent_node->getTimeCostUpdate(),conn_node_child->getTimeCostUpdate())); //consider the min between the two internal times
     new_conn->add();
 
     node->disconnect();
@@ -942,34 +944,6 @@ bool Path::removeNodes(const std::vector<NodePtr> &white_list, std::vector<NodeP
 
 int Path::resample(const double& max_distance)
 {
-  //  int nodes_added = 0;
-  //  bool is_a_new_node, node_added;
-  //  std::vector<ConnectionPtr> connections;
-  //  int initial_size = connections_.size();
-
-  //  do
-  //  {
-  //    node_added = false;
-  //    connections = connections_;
-  //    for(ConnectionPtr& c:connections)
-  //    {
-  //      double length = c->norm();
-  //      if(length>max_distance)
-  //      {
-  //        is_a_new_node = false;
-  //        Eigen::VectorXd conf = c->getChild()->getConfiguration()+(c->getParent()->getConfiguration()-c->getChild()->getConfiguration())*(max_distance/length);
-  //        addNodeAtCurrentConfig(conf,c,true,is_a_new_node);
-
-  //        if(is_a_new_node)
-  //        {
-  //          c->remove();
-  //          nodes_added++;
-  //          node_added = true;
-  //        }
-  //      }
-  //    }
-  //  }while(node_added);
-
   unsigned int pos = 0;
   unsigned int nodes_added = 0;
   unsigned int initial_size = connections_.size();
@@ -1090,8 +1064,8 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
         }
         else
         {
-          cost_parent = metrics_->cost(parent->getConfiguration(), actual_node->getConfiguration());
-          cost_child  = conn->getCost() - cost_parent;
+          cost_parent = metrics_->cost(parent     ->getConfiguration(), actual_node->getConfiguration());
+          cost_child  = metrics_->cost(actual_node->getConfiguration(), child      ->getConfiguration());; //conn->getCost() - cost_parent;
         }
 
         if(tree_)

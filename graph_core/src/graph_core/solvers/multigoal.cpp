@@ -400,6 +400,7 @@ bool MultigoalSolver::update(PathPtr& solution)
 
             NodePtr parent=new_goal_node->getParents().at(0);
             double cost_to_parent=new_goal_node->parentConnection(0)->getCost();
+            double time_cost = new_goal_node->parentConnection(0)->getTimeCostUpdate();
             new_goal_node->disconnect();
 
             //goal_trees_.at(igoal)->keepOnlyThisBranch(goal_trees_.at(igoal)->getConnectionToNode(parent));
@@ -411,6 +412,7 @@ bool MultigoalSolver::update(PathPtr& solution)
             ConnectionPtr conn_to_goal_parent=std::make_shared<Connection>(new_start_node,parent);
             conn_to_goal_parent->add();
             conn_to_goal_parent->setCost(cost_to_parent);
+            conn_to_goal_parent->setTimeCostUpdate(time_cost);
             start_tree_->addNode(parent,false);
             for (ConnectionPtr& conn: connections)
               start_tree_->addNode(conn->getChild(),false);
