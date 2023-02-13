@@ -39,20 +39,22 @@ class Node: public std::enable_shared_from_this<Node>
 {
   /**
    * Add here your reserved flags.
+   * Example:
+   * const static unsigned int idx_your_custom_flag1_ = 0;
+   * const static unsigned int idx_your_custom_flag2_ = 1;
+   *
    * Increment number_reserved_flags_ accordingly!
    * Initialize flags_ in the constructor accordingly!
    * If you need to modify or read these flags externally, implement getter and setter functions!
    */
 
-  //NO DEFAULT FLAGS FOR NOW
+  //NO DEFAULT FLAGS SO FAR
 
   static const unsigned int number_reserved_flags_ = 0;
 
 protected:
   Eigen::VectorXd configuration_;
   unsigned int ndof_;
-//  bool analyzed_;
-//  bool non_optimal_;
 
   std::vector<ConnectionWeakPtr> parent_connections_;     //Weak ptr to avoid pointers cycles
   std::vector<ConnectionWeakPtr> net_parent_connections_; //Weak ptr to avoid pointers cycles
@@ -63,7 +65,7 @@ protected:
   /**
    * @brief flags_ is a vector of flags.You can add new flags specific to your algorithm using function setFlag and passing the vector-index to store the flag.
    * getReservedFlagsNumber allows you to know how many positions are reserved for the defaults. setFlag doesn't allow you to overwrite these positions.
-   * To overwrite them, you should use the flag-specific function.
+   * To overwrite them, you should use the flag-specific functions.
    */
   std::vector<bool> flags_;
 
@@ -74,10 +76,6 @@ public:
   {
     return shared_from_this();
   }
-//  void setAnalyzed(const bool& analyzed);
-//  bool getAnalyzed();
-//  void setNonOptimal(const bool& nonOptimal);
-//  bool getNonOptimal();
 
   /**
    * @brief setFlag sets your custome flag. Use this function only if the flag was not created before because it creates a new one flag in flags_ vector
@@ -102,7 +100,6 @@ public:
    * @return the flag if it exists, the default value otherwise.
    */
   bool getFlag(const int& idx, const bool default_value);
-
 
   void addParentConnection(const ConnectionPtr& connection);
   void addChildConnection(const ConnectionPtr& connection);

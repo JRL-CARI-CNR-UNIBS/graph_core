@@ -89,7 +89,7 @@ void Connection::add(const bool is_net)
 
 void Connection::add()
 {
-  assert(not flags_[idx_net_]);
+  assert(not flags_[idx_valid_]);
   flags_[idx_valid_] = true;
 
   if(flags_[idx_net_])

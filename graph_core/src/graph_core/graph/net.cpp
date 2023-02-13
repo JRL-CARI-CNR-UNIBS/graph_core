@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
 
@@ -34,10 +34,10 @@ Net::Net(const TreePtr& tree)
   verbose_ = false;
   search_every_solution_ = true;
 
-  time_ = 0.0;  //setting time_ to 0, by default connections cost is not re-evaluated
-
   setTree(tree);
   setMetrics(tree->getMetrics());
+
+  cost_evaluation_condition_ = nullptr;
 }
 
 std::multimap<double,std::vector<ConnectionPtr>>& Net::getConnectionBetweenNodes(const NodePtr &start_node, const NodePtr& goal_node, const std::vector<NodePtr>& black_list, const double& max_time)
@@ -185,7 +185,7 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
           continue;
       }
 
-      if(conn2parent->getTimeCostUpdate()<time_) //if time_ has been set and the cost of the connection has been updated before time_, update it
+      if(cost_evaluation_condition_ && (*cost_evaluation_condition_)(conn2parent)) //if a condition exists and it is met, re-evaluate the connection cost
         conn2parent->setCost(metrics_->cost(conn2parent->getParent(),conn2parent->getChild()));
 
       cost2parent = cost2here+conn2parent->getCost();

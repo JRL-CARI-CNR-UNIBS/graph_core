@@ -1450,6 +1450,15 @@ bool Path::isValid(const CollisionCheckerPtr &this_checker)
   else
     computeCost();
 
+  assert([&]() ->bool{
+           if(valid && cost_ == std::numeric_limits<double>::infinity())
+           {
+             return false;
+           }
+
+           return true;
+         }());
+
   return valid;
 }
 
@@ -1460,8 +1469,6 @@ bool Path::isValidFromConn(const ConnectionPtr& this_conn, const CollisionChecke
     checker = this_checker;
 
   bool valid = true;
-  Eigen::VectorXd parent;
-  Eigen::VectorXd child;
   double cost;
   bool from_here = false;
 
@@ -1479,10 +1486,7 @@ bool Path::isValidFromConn(const ConnectionPtr& this_conn, const CollisionChecke
       }
       else
       {
-        parent = conn->getParent()->getConfiguration();
-        child = conn->getChild()->getConfiguration();
-
-        cost = metrics_->cost(parent,child);
+        cost = metrics_->cost(conn->getParent()->getConfiguration(),conn->getChild()->getConfiguration());
         conn->setCost(cost);
       }
     }
@@ -1524,7 +1528,8 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const int& conn_idx, int
     {
       for(int i = (connections_.size()-1);i>=conn_idx;i--)
       {
-        if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-1-i;
+        if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity())
+          pos_closest_obs_from_goal = connections_.size()-1-i;
       }
     }
   }
@@ -1538,7 +1543,8 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const int& conn_idx, int
       {
         for(int i = (connections_.size()-1);i>=conn_idx+1;i--)
         {
-          if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-1-i;
+          if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity())
+            pos_closest_obs_from_goal = connections_.size()-1-i;
         }
       }
     }
@@ -1557,15 +1563,20 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const int& conn_idx, int
       conn->setCost(std::numeric_limits<double>::infinity());
       pos_closest_obs_from_goal = connections_.size()-1-conn_idx;
     }
-
-    if(conn_idx<connections_.size()-1)  //also if the checker has failed, this check is important to update the cost of all the connections
+    else
     {
-      if(!isValidFromConn(connections_.at(conn_idx+1),checker))
+      conn->setCost(metrics_->cost(conn->getParent()->getConfiguration(),conn->getChild()->getConfiguration()));
+    }
+
+    if(conn_idx<connections_.size()-1)  //even if the checker has failed, this check is important to update the cost of all the connections
+    {
+      if(not isValidFromConn(connections_.at(conn_idx+1),checker))
       {
         validity = false;
         for(int i = (connections_.size()-1);i>=conn_idx+1;i--)
         {
-          if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-1-i;
+          if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity())
+            pos_closest_obs_from_goal = connections_.size()-1-i;
         }
       }
     }

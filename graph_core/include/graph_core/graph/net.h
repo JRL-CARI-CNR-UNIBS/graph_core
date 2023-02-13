@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/util.h>
 #include <graph_core/graph/subtree.h>
+#include <functional>
 
 namespace pathplan
 {
@@ -50,6 +51,12 @@ protected:
   std::vector<NodePtr> visited_nodes_;
   std::vector<ConnectionPtr> connections2parent_;
   std::multimap<double,std::vector<ConnectionPtr>> map_;
+
+  /**
+   * @brief cost_evaluation_condition_ is a pointer to a function which return true if net should re-evaluate connection cost, false otherwise.
+   * You can set this condition using costReEvaluationCondition. By default, it is a nullptr;
+   */
+  std::shared_ptr<std::function<bool (const ConnectionPtr& connection)>> cost_evaluation_condition_;
 
   double time_;
   double max_time_;
@@ -93,9 +100,9 @@ public:
     search_every_solution_ = search_every_solution;
   }
 
-  void reEvaluateCostOlderThan(const double& time)
+  void setCostEvaluationCondition(const std::shared_ptr<std::function<bool (const ConnectionPtr& connection)>>& condition)
   {
-    time_ = time;
+    cost_evaluation_condition_ = condition;
   }
 
   std::multimap<double,std::vector<ConnectionPtr>>& getConnectionToNode(const NodePtr& node, const std::vector<NodePtr>& black_list = {}, const double& max_time = std::numeric_limits<double>::infinity());

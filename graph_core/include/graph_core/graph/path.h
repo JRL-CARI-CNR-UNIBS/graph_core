@@ -148,6 +148,11 @@ public:
     return metrics_;
   }
 
+  void setMetrics(const MetricsPtr& metrics)
+  {
+    metrics_ = metrics;
+  }
+
   unsigned int getConnectionsSize()
   {
     return connections_.size();

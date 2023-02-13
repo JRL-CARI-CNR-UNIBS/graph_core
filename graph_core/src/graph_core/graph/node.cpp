@@ -35,30 +35,8 @@ Node::Node(const Eigen::VectorXd &configuration)
   configuration_ = configuration;
   ndof_ = configuration_.size();
 
-  //insert the defaults in flags_
-
-//  analyzed_ = 0;
-//  non_optimal_ = 0;
+  // insert the defaults in flags_
 }
-
-//void Node::setAnalyzed(const bool &analyzed)
-//{
-//  analyzed_ = analyzed;
-//}
-//bool Node::getAnalyzed()
-//{
-//  return analyzed_;
-//}
-
-//void Node::setNonOptimal(const bool &nonOptimal)
-//{
-//  non_optimal_ = nonOptimal;
-//}
-//bool Node::getNonOptimal()
-//{
-//  return non_optimal_;
-//}
-
 
 unsigned int Node::setFlag(const bool flag)
 {

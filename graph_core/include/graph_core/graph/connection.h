@@ -93,6 +93,7 @@ public:
     cost_ = cost;
     time_cost_update_ = ros::WallTime::now().toSec();
   }
+
   const double& getCost()
   {
     return cost_;

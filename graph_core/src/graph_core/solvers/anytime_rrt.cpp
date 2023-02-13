@@ -144,13 +144,10 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   if(goal_node_ != goal_node)
   {
     //Rewire the tree goal (set goal_node)
-    NodePtr last_node = solution_->getConnections().back()->getParent();
-    double  last_cost = solution_->getConnections().back()->getCost();
-
     goal_node->disconnect();
 
-    ConnectionPtr conn = std::make_shared<Connection>(last_node, goal_node);
-    conn->setCost(last_cost);
+    ConnectionPtr conn = std::make_shared<Connection>(solution_->getConnections().back()->getParent(), goal_node);
+    conn->setCost(solution_->getConnections().back()->getCost());
     conn->setTimeCostUpdate(solution_->getConnections().back()->getTimeCostUpdate());
     conn->add();
 
