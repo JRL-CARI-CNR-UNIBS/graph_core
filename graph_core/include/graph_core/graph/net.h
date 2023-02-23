@@ -38,7 +38,7 @@ typedef std::shared_ptr<Net> NetPtr;
 class Net: public std::enable_shared_from_this<Net>
 {
 
-#define NET_ERROR_TOLERANCE 1e-12
+#define NET_ERROR_TOLERANCE 1e-06
 
 protected:
   TreePtr linked_tree_;

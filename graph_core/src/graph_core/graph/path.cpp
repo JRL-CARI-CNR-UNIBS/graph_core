@@ -262,7 +262,7 @@ double Path::getCostFromConf(const Eigen::VectorXd &conf)
     if(conf == this_conn->getParent()->getConfiguration())
       cost += this_conn->getCost();
     else if (conf == this_conn->getChild()->getConfiguration())
-      cost += 0;
+      cost += 0.0;
     else
     {
       if(this_conn->getCost() == std::numeric_limits<double>::infinity())

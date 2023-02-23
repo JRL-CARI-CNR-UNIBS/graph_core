@@ -37,21 +37,6 @@ typedef std::vector<ConnectionWeakPtr> WeakPtrVector;
 
 class Node: public std::enable_shared_from_this<Node>
 {
-  /**
-   * Add here your reserved flags.
-   * Example:
-   * const static unsigned int idx_your_custom_flag1_ = 0;
-   * const static unsigned int idx_your_custom_flag2_ = 1;
-   *
-   * Increment number_reserved_flags_ accordingly!
-   * Initialize flags_ in the constructor accordingly!
-   * If you need to modify or read these flags externally, implement getter and setter functions!
-   */
-
-  //NO DEFAULT FLAGS SO FAR
-
-  static const unsigned int number_reserved_flags_ = 0;
-
 protected:
   Eigen::VectorXd configuration_;
   unsigned int ndof_;
@@ -76,6 +61,21 @@ public:
   {
     return shared_from_this();
   }
+
+  /**
+   * Add here your reserved flags.
+   * Example:
+   * const static unsigned int idx_your_custom_flag1_ = 0;
+   * const static unsigned int idx_your_custom_flag2_ = 1;
+   *
+   * Increment number_reserved_flags_ accordingly!
+   * Initialize flags_ in the constructor accordingly!
+   * If you need to modify or read these flags externally, implement getter and setter functions!
+   */
+
+  //NO DEFAULT FLAGS SO FAR
+
+  static constexpr unsigned int number_reserved_flags_ = 0;
 
   /**
    * @brief setFlag sets your custome flag. Use this function only if the flag was not created before because it creates a new one flag in flags_ vector

@@ -30,20 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/graph/node.h>
 namespace pathplan
 {
+
 class Connection : public std::enable_shared_from_this<Connection>
 {
-  /**
-   * Add here your reserved flags.
-   * Increment number_reserved_flags_ accordingly!
-   * Initialize flags_ in the constructor accordingly!
-   * If you need to modify or read these flags externally, implement getter and setter functions!
-   */
-  const static unsigned int idx_valid_ = 0;
-  const static unsigned int idx_net_ = 1;
-  const static unsigned int idx_recently_checked_ = 2;
-
-  static const unsigned int number_reserved_flags_ = 3;
-
 protected:
   NodeWeakPtr parent_;
   NodePtr child_;
@@ -61,6 +50,20 @@ protected:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+  /**
+   * Add here your reserved flags.
+   * Increment number_reserved_flags_ accordingly!
+   * Initialize flags_ in the constructor accordingly!
+   * If you need to modify or read these flags externally, implement getter and setter functions!
+   * If you want, print your flag when << operator is called on a connection
+   */
+  static constexpr unsigned int idx_valid_ = 0;
+  static constexpr unsigned int idx_net_ = 1;
+  static constexpr unsigned int idx_recently_checked_ = 2;
+
+  static constexpr unsigned int number_reserved_flags_ = 3;
+
   Connection(const NodePtr& parent, const NodePtr& child, const bool is_net = false);
 
   ConnectionPtr pointer()
@@ -68,12 +71,12 @@ public:
     return shared_from_this();
   }
 
-  bool isNet()
+  bool isNet() const
   {
     return flags_[idx_net_];
   }
 
-  bool isRecentlyChecked()
+  bool isRecentlyChecked() const
   {
     return flags_[idx_recently_checked_];
   }
@@ -83,7 +86,7 @@ public:
     flags_[idx_recently_checked_] = checked;
   }
 
-  bool isValid()
+  bool isValid() const
   {
     return flags_[idx_valid_];
   }
@@ -94,12 +97,12 @@ public:
     time_cost_update_ = ros::WallTime::now().toSec();
   }
 
-  const double& getCost()
+  const double& getCost() const
   {
     return cost_;
   }
 
-  const double& getTimeCostUpdate()
+  const double& getTimeCostUpdate() const
   {
     return time_cost_update_;
   }
@@ -109,7 +112,7 @@ public:
     time_cost_update_ = time;
   }
 
-  double norm()
+  double norm() const
   {
     return euclidean_norm_;
   }

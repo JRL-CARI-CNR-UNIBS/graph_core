@@ -253,23 +253,19 @@ void Connection::changeConnectionType()
 
 std::ostream& operator<<(std::ostream& os, const Connection& connection)
 {
-  //  os << connection.parent_->getConfiguration().transpose() << " -->" << std::endl;
-  //  os << "-->" << connection.child_->getConfiguration().transpose() << std::endl;
-
-  assert(connection.getParent() != nullptr);
+  assert(connection.getParent()!= nullptr);
   assert(connection.getChild() != nullptr);
 
+  os << connection.getParent()->getConfiguration().transpose()<<" ("<<
+        connection.getParent()<<") --> "<<connection.getChild()->getConfiguration().transpose()<<
+        " ("<<connection.getChild()<<")"<<" | norm: "<<connection.euclidean_norm_<<" | cost: "<<connection.cost_<<
+        " | net: "<<connection.isNet()<<" | r.c.: "<<connection.isRecentlyChecked();
 
-  os << connection.getParent()->getConfiguration().transpose()
-     <<" ("
-    <<connection.getParent()
-   << ") --> "
-   << connection.getChild()->getConfiguration().transpose()
-   <<" ("
-  <<connection.getChild()
-  << ")"
-  << " | cost: " << connection.cost_
-  << " | net: "<<connection.flags_[Connection::idx_net_];
+  if(connection.flags_.size()>Connection::getReservedFlagsNumber())
+  {
+    for(unsigned int i=Connection::getReservedFlagsNumber();i<connection.flags_.size();i++)
+      os<<" | flag"<<(i-Connection::getReservedFlagsNumber())<<": "<<connection.flags_[i];
+  }
 
   return os;
 }
