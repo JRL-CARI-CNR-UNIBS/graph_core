@@ -46,7 +46,6 @@ protected:
                                       const double& cost,
                                       const std::vector<NodePtr> &black_list,
                                       const bool node_check = false);
-
 public:
 
   Subtree(const TreePtr& parent_tree,
@@ -88,6 +87,7 @@ public:
   }
 
   void hideFromSubtree(const NodePtr &node);
+  void hideInvalidBranches(const NodePtr& node);
   void purgeThisNode(NodePtr& node, unsigned int& removed_nodes) override;
   void addNode(const NodePtr& node, const bool& check_if_present = true);
   void removeNode(const std::vector<NodePtr>::iterator& it) override;

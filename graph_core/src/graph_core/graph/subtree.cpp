@@ -104,7 +104,7 @@ void Subtree::populateSubtreeInsideEllipsoid(const NodePtr& root, const Eigen::V
     ROS_WARN("Root of subtree is not inside the ellipsoid!");
     ROS_INFO_STREAM("Root:\n "<<*root<<"\nFocus1: "<<focus1.transpose()<<"\nFocus2: "<<focus1.transpose()<<"\nCost: "<<cost);
 
-    populateTreeFromNode(root,black_list, node_check);
+    populateTreeFromNode(root,black_list,node_check);
   }
 }
 
@@ -122,16 +122,36 @@ void Subtree::hideFromSubtree(const NodePtr& node)
   if(it<nodes_.end())
   {
     std::vector<NodePtr> successors = node->getChildren();
-    for (NodePtr& n : successors)
+    for(NodePtr& n : successors)
     {
       assert(n.get()!=node.get());
       hideFromSubtree(n);
     }
 
-    nodes_.erase(it);
+    if(node != root_)
+      nodes_.erase(it);
   }
 }
 
+void Subtree::hideInvalidBranches(const NodePtr& node)
+{
+  assert(node);
+  std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
+  if(it<nodes_.end())
+  {
+    for(ConnectionPtr& c : node->getChildConnections())
+    {
+      assert(c->getChild().get()!=node.get());
+      if(c->getCost() == std::numeric_limits<double>::infinity())
+        hideFromSubtree(c->getChild());
+      else
+        hideInvalidBranches(c->getChild());
+    }
+
+    if(node != root_)
+      nodes_.erase(it);
+  }
+}
 
 void Subtree::removeNode(const std::vector<NodePtr>::iterator& it)
 {
