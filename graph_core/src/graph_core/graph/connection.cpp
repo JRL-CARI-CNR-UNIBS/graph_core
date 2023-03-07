@@ -103,36 +103,34 @@ void Connection::add()
     getChild()->addParentConnection(pointer());
   }
 }
+
 void Connection::remove()
 {
   if (!flags_[idx_valid_])
-  {
-    //ROS_ERROR("not valid");
     return;
-  }
 
   flags_[idx_valid_] = false;
-  if(not (parent_.expired()))
-  {
-    if(flags_[idx_net_])
-      getParent()->removeNetChildConnection(pointer());
-    else
-      getParent()->removeChildConnection(pointer());
-  }
-  else
-    ROS_FATAL("parent already destroied");
-
   if(child_)
   {
     if(flags_[idx_net_])
-      getChild()->removeNetParentConnection(pointer());
+      getChild()->removeNetParentConnection(pointer()); //notifies the connection's parent too
     else
-      getChild()->removeParentConnection(pointer());
+      getChild()->removeParentConnection(pointer());    //notifies the connection's parent too
   }
-  else
+  else //if the connection can't be removed by the child node, try using the parent node
+  {
     ROS_FATAL("child already destroied");
+    if(not (parent_.expired()))
+    {
+      if(flags_[idx_net_])
+        getParent()->removeNetChildConnection(pointer());
+      else
+        getParent()->removeChildConnection(pointer());
+    }
+    else
+      ROS_FATAL("parent already destroied");
+  }
 }
-
 
 Eigen::VectorXd Connection::projectOnConnection(const Eigen::VectorXd& point, double& distance, bool& in_conn, const bool& verbose)
 {

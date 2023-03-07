@@ -33,6 +33,8 @@ namespace pathplan
 
 class Connection : public std::enable_shared_from_this<Connection>
 {
+  friend class Node;
+
 protected:
   NodeWeakPtr parent_;
   NodePtr child_;
@@ -118,7 +120,7 @@ public:
   }
   NodePtr getParent() const
   {
-    assert(not parent_.expired());
+//    assert(not parent_.expired());
     return parent_.lock();
   }
   NodePtr getChild() const
@@ -150,14 +152,59 @@ public:
    */
   bool getFlag(const int& idx, const bool default_value);
 
+  /**
+   * @brief add should be called immediatly after the connection object is created to notify the nodes that a new connection connects them
+   */
   void add();
+  /**
+   * @brief add as previous
+   * @param is_net allows to define if the connection is of type net or not. By default, it is not net
+   */
   void add(const bool is_net);
+
+  /**
+   * @brief remove makes the connection invalid and notifies its parent and child
+   */
   void remove();
+
+  /**
+   * @brief flip reverses the direction of the connection
+   */
   void flip();
+
+  /**
+   * @brief convertToConnection transforms a net connection into a standard connection, if it is net connection
+   * @return true if successful
+   */
   bool convertToConnection();
+
+  /**
+   * @brief convertToNetConnection transforms a connection into a net connection, if it is a standard connection
+   * @return true if successful
+   */
   bool convertToNetConnection();
+
+  /**
+   * @brief changeConnectionType calls convertToNetConnection or convertToConnection based on the connection type
+   */
   void changeConnectionType();
+
+  /**
+   * @brief isParallel checks if the two connections are parallel
+   * @param conn is the input connection. The function check if this connection is parallel to conn
+   * @param toll is the error tolerance
+   * @return true if parallel
+   */
   bool isParallel(const ConnectionPtr& conn, const double& toll = 1e-06);
+
+  /**
+   * @brief projectOnConnection projects a point on this connection
+   * @param point is the point to be projected
+   * @param distance is the distance between the projected point and point
+   * @param in_conn is true if the projection is between connection's parent and child, false if the projected point is on extending of the connection
+   * @param verbose set the verbosity
+   * @return the projected point
+   */
   Eigen::VectorXd projectOnConnection(const Eigen::VectorXd& point, double& distance, bool& in_conn, const bool& verbose = false);
 
   /**

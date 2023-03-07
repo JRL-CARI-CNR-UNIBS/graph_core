@@ -37,6 +37,8 @@ typedef std::vector<ConnectionWeakPtr> WeakPtrVector;
 
 class Node: public std::enable_shared_from_this<Node>
 {
+  friend class Connection;
+
 protected:
   Eigen::VectorXd configuration_;
   unsigned int ndof_;
@@ -53,6 +55,11 @@ protected:
    * To overwrite them, you should use the flag-specific functions.
    */
   std::vector<bool> flags_;
+
+  void addParentConnection(const ConnectionPtr& connection);
+  void addChildConnection(const ConnectionPtr& connection);
+  void addNetParentConnection(const ConnectionPtr& connection);
+  void addNetChildConnection(const ConnectionPtr& connection);
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -101,10 +108,12 @@ public:
    */
   bool getFlag(const int& idx, const bool default_value);
 
-  void addParentConnection(const ConnectionPtr& connection);
-  void addChildConnection(const ConnectionPtr& connection);
-  void addNetParentConnection(const ConnectionPtr& connection);
-  void addNetChildConnection(const ConnectionPtr& connection);
+
+  /**
+   * @brief get parent/net_parent or child/net_child connections vector or nodes
+   * @return
+   */
+
   const int getParentConnectionsSize() const;
   const int getNetParentConnectionsSize() const;
   const int getChildConnectionsSize() const;
@@ -130,15 +139,29 @@ public:
   const std::vector<ConnectionPtr> getChildConnectionsConst() const;
   const std::vector<ConnectionPtr> getNetChildConnectionsConst() const;
 
+  /**
+   * @brief disconnect the nodes from parent and/or child connections
+   */
   void disconnect();
   void disconnectChildConnections();
   void disconnectParentConnections();
   void disconnectNetParentConnections();
   void disconnectNetChildConnections();
+
+  /**
+   * @brief remove a specific parent/child connection
+   * @param connection to remove
+   */
   void removeParentConnection(const ConnectionPtr& connection);
   void removeChildConnection(const ConnectionPtr& connection);
   void removeNetParentConnection(const ConnectionPtr& connection);
   void removeNetChildConnection(const ConnectionPtr& connection);
+
+  /**
+   * @brief switchParentConnection trasformes a parent net connection of the node into a standard parent connection
+   * @param net_connection is the net connection to transform
+   * @return true if successful
+   */
   bool switchParentConnection(const ConnectionPtr& net_connection);
 
   const Eigen::VectorXd& getConfiguration()

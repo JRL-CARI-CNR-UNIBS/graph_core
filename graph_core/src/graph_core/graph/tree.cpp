@@ -452,6 +452,7 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const std::vector<NodePtr>
       if (!checker_->checkPath(n->getConfiguration(), node->getConfiguration()))
         continue;
 
+      assert(node->parentConnection(0)->isValid());
       node->parentConnection(0)->remove();
 
       ConnectionPtr conn = std::make_shared<Connection>(n, node);
@@ -487,7 +488,9 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const std::vector<NodePtr>
       if (!checker_->checkPath(node->getConfiguration(), n->getConfiguration()))
         continue;
 
+      assert(n->parentConnection(0)->isValid());
       n->parentConnection(0)->remove();
+
       ConnectionPtr conn = std::make_shared<Connection>(node, n);
       conn->setCost(cost_node_to_near);
       conn->add();

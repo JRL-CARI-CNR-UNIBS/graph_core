@@ -105,64 +105,145 @@ void Node::addNetChildConnection(const ConnectionPtr &connection)
 
 void Node::removeParentConnection(const ConnectionPtr &connection)
 {
-  std::vector<ConnectionWeakPtr>::iterator it =
+  std::vector<ConnectionWeakPtr>::iterator it_conn =
       std::find_if(parent_connections_.begin(), parent_connections_.end(),
                    [&connection](const ConnectionWeakPtr& conn){return connection == conn.lock();});
 
-  if (it == parent_connections_.end())
+  if (it_conn == parent_connections_.end())
   {
     ROS_FATAL("connection is not in the parent vector");
-    //    throw std::invalid_argument("connection is not in the parent vector");
   }
   else
   {
-    parent_connections_.erase(it);
+    ConnectionPtr conn = (*it_conn).lock();
+
+    //Remove connection from this node's parent connections vector
+    parent_connections_.erase(it_conn);
+
+    //Set connection as not valid
+    conn->flags_[Connection::idx_valid_] = false;
+
+    //Remove connection from parent's child_connections vector
+    NodePtr parent = conn->getParent();
+    if(parent)
+    {
+      std::vector<ConnectionPtr>::iterator it_parent = std::find(parent->child_connections_.begin(),parent->child_connections_.end(),conn);
+
+      if(it_parent == parent->child_connections_.end())
+      {
+        ROS_FATAL("connection is not in the child vector");
+      }
+      else
+      {
+        parent->child_connections_.erase(it_parent);
+      }
+    }
   }
 }
 
 void Node::removeNetParentConnection(const ConnectionPtr &connection)
 {
-  std::vector<ConnectionWeakPtr>::iterator it =
+  std::vector<ConnectionWeakPtr>::iterator it_conn =
       std::find_if(net_parent_connections_.begin(), net_parent_connections_.end(),
                    [&connection](const ConnectionWeakPtr& conn){return connection == conn.lock();});
 
-  if (it == net_parent_connections_.end())
+  if (it_conn == net_parent_connections_.end())
   {
     ROS_FATAL("connection is not in the net parent vector");
   }
   else
   {
-    net_parent_connections_.erase(it);
+    ConnectionPtr conn = (*it_conn).lock();
+
+    //Remove connection from this node's net parent connections vector
+    net_parent_connections_.erase(it_conn);
+
+    //Set connection as not valid
+    conn->flags_[Connection::idx_valid_] = false;
+
+    //Remove connection from parent's net child connections vector
+    NodePtr parent = conn->getParent();
+    if(parent)
+    {
+      std::vector<ConnectionPtr>::iterator it_parent = std::find(parent->net_child_connections_.begin(),parent->net_child_connections_.end(),conn);
+
+      if(it_parent == parent->net_child_connections_.end())
+      {
+        ROS_FATAL("connection is not in the net child vector");
+      }
+      else
+      {
+        parent->net_child_connections_.erase(it_parent);
+      }
+    }
   }
 }
 
 void Node::removeChildConnection(const ConnectionPtr &connection)
 {
-  std::vector<ConnectionPtr>::iterator it = std::find(child_connections_.begin(),child_connections_.end(),connection);
+  std::vector<ConnectionPtr>::iterator it_conn = std::find(child_connections_.begin(),child_connections_.end(),connection);
 
-  if (it == child_connections_.end())
+  if (it_conn == child_connections_.end())
   {
     ROS_FATAL("connection is not in the child vector");
-    //  throw std::invalid_argument("connection is not in the child vector");
   }
   else
   {
-    child_connections_.erase(it);
+    ConnectionPtr conn = *it_conn;
+
+    //Remove connection from child's parent connections vector
+    NodePtr child = conn->getChild();
+    std::vector<ConnectionWeakPtr>::iterator it_child = std::find_if(child->parent_connections_.begin(), child->parent_connections_.end(),
+                                                                     [&connection](const ConnectionWeakPtr& conn){return connection == conn.lock();});
+
+    if(it_child == child->parent_connections_.end())
+    {
+      ROS_FATAL("connection is not in the parent vector");
+    }
+    else
+    {
+      child->parent_connections_.erase(it_child);
+    }
+
+    //Remove connection from this node's child connections vector
+    child_connections_.erase(it_conn);
+
+    //Set connection as not valid
+    conn->flags_[Connection::idx_valid_] = false;
   }
 }
 
 void Node::removeNetChildConnection(const ConnectionPtr &connection)
 {
-  std::vector<ConnectionPtr>::iterator it = std::find(net_child_connections_.begin(),net_child_connections_.end(),connection);
+  std::vector<ConnectionPtr>::iterator it_conn = std::find(net_child_connections_.begin(),net_child_connections_.end(),connection);
 
-  if (it == net_child_connections_.end())
+  if (it_conn == net_child_connections_.end())
   {
     ROS_FATAL("connection is not in the child vector");
-    //  throw std::invalid_argument("connection is not in the child vector");
   }
   else
   {
-    net_child_connections_.erase(it);
+    ConnectionPtr conn = *it_conn;
+
+    //Remove connection from child's net parent connections vector
+    NodePtr child = conn->getChild();
+    std::vector<ConnectionWeakPtr>::iterator it_child = std::find_if(child->net_parent_connections_.begin(), child->net_parent_connections_.end(),
+                                                                     [&connection](const ConnectionWeakPtr& conn){return connection == conn.lock();});
+
+    if(it_child == child->net_parent_connections_.end())
+    {
+      ROS_FATAL("connection is not in the net parent vector");
+    }
+    else
+    {
+      child->net_parent_connections_.erase(it_child);
+    }
+
+    //Remove connection from this node's net child connections vector
+    net_child_connections_.erase(it_conn);
+
+    //Set connection as not valid
+    conn->flags_[Connection::idx_valid_] = false;
   }
 }
 
