@@ -34,7 +34,7 @@ public:
   {
     pull_counter_ = std::vector<int>(n_goals_, 0);
     expected_reward_ = std::vector<double>(n_goals_, 0.0);
-    sigma_arms_2_ = std::vector<double>(n_goals_, 0.2*0.2);
+    sigma_arms_2_ = std::vector<double>(n_goals_, 0.0);
     sampled_rewards_ = std::vector<double>(n_goals_, 0.0);
 
     kf_error_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("/kf_error", 100);
@@ -54,6 +54,13 @@ public:
     }
     sigma_tr_2_ = tmp*tmp;
 
+    if (!nh_.getParam("sigma_arms", tmp))
+    {
+      tmp = 0.2;
+      ROS_DEBUG("%s/sigma_arms is not set. Default: %f",nh_.getNamespace().c_str(),tmp);
+    }
+    std::fill(sigma_arms_2_.begin(), sigma_arms_2_.end(), tmp*tmp);
+
     if (!nh_.getParam("sigma_obs_dyn", sigma_obs_dyn_))
     {
       ROS_DEBUG("%s/sigma_obs_dyn is not set. Default: false",nh_.getNamespace().c_str());
@@ -70,13 +77,18 @@ public:
              "sigma_tr=%f, "
              "eta=%f, "
              "reward_max=%f, "
-             "sigma_max=%f, ",
+             "sigma_arm (max)=%f, ",
              std::sqrt(sigma_obs_2_),
              std::sqrt(sigma_tr_2_),
              eta_,
              vectorMax(expected_reward_),
              std::sqrt(vectorMax(sigma_arms_2_) ));
 
+  }
+
+  std::vector<double> getVariance()
+  {
+    return sigma_arms_2_;
   }
 
   virtual int selectNextArm()
@@ -170,8 +182,10 @@ public:
   {
     std::string str="KFMANB Policy with sigma_obs_2 = ";
     str+=std::to_string(sigma_obs_2_);
-    str+=" and sigma_tr_2 = ";
+    str+=", sigma_tr_2 = ";
     str+=std::to_string(sigma_tr_2_);
+    str+=", sigma_arms_2 (max) = ";
+    str+=std::to_string(vectorMax(sigma_arms_2_));
     return str;
   }
 
