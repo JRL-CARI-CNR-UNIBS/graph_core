@@ -105,9 +105,7 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
     return true;
   }
   double old_path_cost = solution_->cost();
-  //double r_rewire = std::min(start_tree_->getMaximumDistance(), r_rewire_factor_ * sampler_->getSpecificVolume() * std::pow(std::log(start_tree_->getNumberOfNodes())/start_tree_->getNumberOfNodes(),1./dof_));
-  double r_rewire = start_tree_->getMaximumDistance();
-  bool improved = start_tree_->rewireToNode(n, r_rewire);
+  bool improved = start_tree_->rewireToNode(n, r_rewire_);
 
   if (improved)
   {

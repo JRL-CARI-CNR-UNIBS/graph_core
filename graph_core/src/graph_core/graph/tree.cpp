@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <graph_core/graph/tree.h>
+#include <fstream>
 
 namespace pathplan
 {
@@ -1046,6 +1047,15 @@ XmlRpc::XmlRpcValue Tree::toXmlRpcValue() const
   tree["nodes"]=nodes;
   tree["connections"]=connections;
   return tree;
+}
+
+
+void Tree::toXmlFile(const std::string& file_name) const
+{
+  std::string xml=toXmlRpcValue().toXml();
+  std::ofstream out(file_name);
+  out << xml;
+  out.close();
 }
 
 std::ostream& operator<<(std::ostream& os, const Tree& tree)

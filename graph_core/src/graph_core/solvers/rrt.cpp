@@ -94,6 +94,21 @@ bool RRT::setProblem(const double &max_time)
 
   best_utopia_ = goal_cost_+(goal_node_->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
   init_ = true;
+
+  if (start_tree_->isInTree(goal_node_))
+  {
+    solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
+    solution_->setTree(start_tree_);
+
+    path_cost_ = solution_->cost();
+    sampler_->setCost(path_cost_);
+    start_tree_->addNode(goal_node_);
+
+    solved_ = true;
+    cost_=path_cost_+goal_cost_;
+    return true;
+  }
+
   NodePtr new_node;
 
   if(start_tree_->connectToNode(goal_node_, new_node,max_time))  //for direct connection to goal

@@ -202,6 +202,7 @@ public:
   bool getUseKdTree(){return use_kdtree_;}
 
   XmlRpc::XmlRpcValue toXmlRpcValue() const;
+  void toXmlFile(const std::string& file_name) const;
   friend std::ostream& operator<<(std::ostream& os, const Tree& tree);
 
   static TreePtr fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
