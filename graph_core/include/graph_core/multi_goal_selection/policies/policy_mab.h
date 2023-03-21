@@ -105,6 +105,12 @@ public:
 
   std::vector<double> getExpectedRewards(){return expected_reward_;}
 
+  virtual std::vector<double> getVariance()
+  {
+    std::cout << "NOT IMPLEMENTED" << std::endl;
+  }
+
+
   std::vector<int> getPullCounters(){return pull_counter_;}
 
 protected:
