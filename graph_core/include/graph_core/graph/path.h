@@ -202,6 +202,7 @@ public:
   Eigen::VectorXd projectKeepingAbscissa(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, const double &weight = 0.5, const bool& verbose = false);
   Eigen::VectorXd projectOnPath(const Eigen::VectorXd& point, const bool& verbose = false);
   Eigen::VectorXd projectOnPath(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection, const bool& verbose = false);
+  Eigen::VectorXd projectOnPath(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection, ConnectionPtr &conn, const bool& verbose = false);
 
 
   // return true if improve

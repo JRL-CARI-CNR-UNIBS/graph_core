@@ -37,13 +37,6 @@ bool RRTStar::addStartTree(const TreePtr &start_tree, const double &max_time)
   return setProblem(max_time);
 }
 
-bool RRTStar::addGoal(const NodePtr &goal_node, const double &max_time)
-{
-  solved_ = false;
-  goal_node_ = goal_node;
-
-  return setProblem(max_time);
-}
 bool RRTStar::config(const ros::NodeHandle& nh)
 {
   RRT::config(nh);
@@ -58,7 +51,7 @@ bool RRTStar::config(const ros::NodeHandle& nh)
 
 bool RRTStar::update(PathPtr& solution)
 {
-  PATH_COMMENT("RRT*::update");
+//  PATH_COMMENT("RRT*::update");
 
   return update(sampler_->sample(), solution);
 }
@@ -68,7 +61,11 @@ bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
   PATH_COMMENT("RRT*::update");
 
   if (!init_)
+  {
+    PATH_COMMENT("RRT* -> not init");
+
     return false;
+  }
   if (cost_ <= utopia_tolerance_ * best_utopia_)
   {
     PATH_COMMENT("RRT*:: Solution already optimal");
@@ -77,9 +74,9 @@ bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
     return true;
   }
 
-  if(solution_ == nullptr)
+  if(not solved_)
   {
-//    ROS_INFO("RRT*:: SOLVING");
+    PATH_COMMENT("RRT* -> solving");
     NodePtr new_node;
     if(start_tree_->rewire(configuration,r_rewire_,new_node))
     {
@@ -111,7 +108,7 @@ bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
   }
   else
   {
-//    ROS_INFO("RRT*::IMPROVING");
+    PATH_COMMENT("RRT* -> improving");
     bool improved = start_tree_->rewire(configuration, r_rewire_);
     if(improved)
     {
@@ -146,7 +143,7 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
 
   if(solution_ == nullptr)
   {
-    ROS_INFO("RRT*:: SOLVING");
+    ROS_INFO("RRT* -> solving");
     NodePtr new_node;
     if(start_tree_->rewireToNode(n,r_rewire_,new_node))
     {
@@ -178,6 +175,8 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
   }
   else
   {
+    PATH_COMMENT("RRT* -> improving");
+
     //double r_rewire = std::min(start_tree_->getMaximumDistance(), r_rewire_factor_ * sampler_->getSpecificVolume() * std::pow(std::log(start_tree_->getNumberOfNodes())/start_tree_->getNumberOfNodes(),1./dof_));
     bool improved = start_tree_->rewireToNode(n, r_rewire_);
 

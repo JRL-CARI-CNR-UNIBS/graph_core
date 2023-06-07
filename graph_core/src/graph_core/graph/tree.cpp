@@ -755,6 +755,13 @@ bool Tree::rewireWithPathCheck(const Eigen::VectorXd &configuration, std::vector
   return rewireWithPathCheck(configuration,checked_connections,r_rewire,white_list,new_node);
 }
 
+bool Tree::rewireWithPathCheck(const Eigen::VectorXd &configuration, std::vector<ConnectionPtr> &checked_connections, double r_rewire)
+{
+  NodePtr new_node;
+  std::vector<NodePtr> white_list;
+  return rewireWithPathCheck(configuration,checked_connections,r_rewire,white_list,new_node);
+}
+
 bool Tree::rewire(const Eigen::VectorXd &configuration, double r_rewire, NodePtr& new_node)
 {
   if (!extend(configuration, new_node))

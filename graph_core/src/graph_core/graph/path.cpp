@@ -669,7 +669,14 @@ Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const bool& ve
 
 Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection, const bool& verbose)
 {
+  ConnectionPtr conn;
+  return projectOnPath(point,past_projection,conn,verbose);
+}
+
+Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection, ConnectionPtr& conn, const bool& verbose)
+{
   ConnectionPtr candidate_connection, connection;
+  conn = nullptr;
   Eigen::VectorXd candidate_projection, projection, precise_projection;
   double abscissa, candidate_abscissa, candidate_distance, min_distance, ds;
 
@@ -715,6 +722,8 @@ Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::V
     ROS_INFO_STREAM("abscissa "<<abscissa<< " projection "<<projection.transpose());
     ROS_INFO_STREAM("projection with conn "<<*connection);
   }
+
+  conn = connection;
 
   if(connection->norm()<1e-03)
   {
@@ -961,7 +970,7 @@ int Path::resample(const double& max_distance)
     if(length>max_distance)
     {
       is_a_new_node = false;
-      conf = conn->getChild()->getConfiguration()+(conn->getParent()->getConfiguration()-conn->getChild()->getConfiguration())*(max_distance/length);
+      conf = conn->getParent()->getConfiguration()+(conn->getChild()->getConfiguration()-conn->getParent()->getConfiguration())*(max_distance/length);
       addNodeAtCurrentConfig(conf,conn,true,is_a_new_node);
 
       if(is_a_new_node)

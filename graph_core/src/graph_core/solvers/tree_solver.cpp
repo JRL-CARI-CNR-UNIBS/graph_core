@@ -88,7 +88,10 @@ bool TreeSolver::config(const ros::NodeHandle& nh)
 bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const double& max_time)
 {
   ros::WallTime tic = ros::WallTime::now();
-  if(max_time <=0.0) return false;
+  if(max_time <=0.0)
+  {
+    return false;
+  }
 
   for (unsigned int iter = 0; iter < max_iter; iter++)
   {
@@ -105,15 +108,23 @@ bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const do
 
   return false;
 }
-
-bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node, const ros::NodeHandle& nh, PathPtr &solution, const double &max_time, const unsigned int max_iter)
+bool TreeSolver::computePath(const Eigen::VectorXd& start_conf, const Eigen::VectorXd& goal_conf, const ros::NodeHandle& nh, PathPtr &solution, const double &max_time, const unsigned int &max_iter)
 {
+  NodePtr start_node = std::make_shared<Node>(start_conf);
+  NodePtr goal_node  = std::make_shared<Node>(goal_conf);
+
+  return computePath(start_node,goal_node,nh,solution,max_time,max_iter);
+}
+
+bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node, const ros::NodeHandle& nh, PathPtr &solution, const double &max_time, const unsigned int &max_iter)
+{
+  resetProblem();
   config(nh);
   addStart(start_node);
   addGoal(goal_node);
 
   ros::WallTime tic = ros::WallTime::now();
-  if (!solve(solution, max_iter, max_time))
+  if(!solve(solution, max_iter, max_time))
   {
     ROS_INFO_STREAM("No solutions found. Time: "<<(ros::WallTime::now()-tic).toSec()<<", max time: "<<max_time);
     return false;
@@ -123,13 +134,28 @@ bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node
 
 bool TreeSolver::setSolution(const PathPtr &solution, const bool& solved)
 {
+//  solution_->setTree(start_tree_);   //SE SOLUTION HA IL SUO TREE ED E' DIVERSO?
+  if(not solution ->getTree())
+    return false;
+
+  resetProblem();
+
   solution_ = solution;
-  solution_->setTree(start_tree_);   //SE SOLUTION HA IL SUO TREE ED E' DIVERSO?
+  start_tree_ = solution_->getTree();
+
+  goal_node_ = solution_->getGoalNode();
+  goal_cost_ = goal_cost_fcn_->cost(goal_node_);
+
+  best_utopia_ = goal_cost_+(goal_node_->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
 
   path_cost_ = solution->cost();
   cost_ = path_cost_+goal_cost_;
 
+  sampler_->setCost(path_cost_);
+
+  init_ = true;
   solved_=solved;
+
   if (solved_)
     clean();
   return true;
