@@ -216,7 +216,7 @@ bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)
 
   assert(std::abs(euclidean_norm_-(getChild()->getConfiguration()-getParent()->getConfiguration()).norm())<1e-06);
 
-  return (scalar>(euclidean_norm_*conn->norm())-toll);
+  return (std::abs(scalar-(euclidean_norm_*conn->norm()))<toll);
 }
 
 bool Connection::convertToConnection()
