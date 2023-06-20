@@ -196,8 +196,6 @@ void MultigoalPlanner::setSampler(pathplan::SamplerPtr& sampler,
 bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
 {
 
-  ros::Time tstart=ros::Time::now();
-
   std::vector<const moveit::core::AttachedBody*> attached_body;
   planning_scene_->getCurrentState().getAttachedBodies(attached_body);
 
