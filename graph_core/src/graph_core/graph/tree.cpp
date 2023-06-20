@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <graph_core/graph/tree.h>
+#include <fstream>
 
 namespace pathplan
 {
@@ -149,6 +150,9 @@ bool Tree::extend(const Eigen::VectorXd &configuration, NodePtr &new_node, Conne
 bool Tree::extendToNode(const NodePtr& node,
                         NodePtr& new_node)
 {
+  if (isInTree(node))
+    return true;
+
   NodePtr closest_node;
   Eigen::VectorXd next_configuration;
   if (!tryExtend(node->getConfiguration(),
@@ -163,6 +167,7 @@ bool Tree::extendToNode(const NodePtr& node,
   {
     attached = true;
     new_node = node;
+    addNode(node);
   }
   else
   {
@@ -1046,6 +1051,15 @@ XmlRpc::XmlRpcValue Tree::toXmlRpcValue() const
   tree["nodes"]=nodes;
   tree["connections"]=connections;
   return tree;
+}
+
+
+void Tree::toXmlFile(const std::string& file_name) const
+{
+  std::string xml=toXmlRpcValue().toXml();
+  std::ofstream out(file_name);
+  out << xml;
+  out.close();
 }
 
 std::ostream& operator<<(std::ostream& os, const Tree& tree)
