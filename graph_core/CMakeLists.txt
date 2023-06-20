@@ -66,7 +66,6 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/solvers/rrt.cpp
   src/${PROJECT_NAME}/solvers/anytime_rrt.cpp
   src/${PROJECT_NAME}/solvers/path_solver.cpp
-
   src/${PROJECT_NAME}/datastructure/kdtree.cpp
   src/${PROJECT_NAME}/datastructure/vector.cpp
 

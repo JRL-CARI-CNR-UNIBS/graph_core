@@ -196,6 +196,20 @@ void MultigoalPlanner::setSampler(pathplan::SamplerPtr& sampler,
 bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& res )
 {
 
+  ros::Time tstart=ros::Time::now();
+
+  std::vector<const moveit::core::AttachedBody*> attached_body;
+  planning_scene_->getCurrentState().getAttachedBodies(attached_body);
+
+  if (attached_body.size()>0)
+  {
+    ROS_DEBUG("number of attached objects = %zu", attached_body.size());
+    for (const moveit::core::AttachedBody* obj:  attached_body)
+    {
+      ROS_DEBUG("attached object =%s to link=%s", obj->getName().c_str(),obj->getAttachedLinkName().c_str());
+    }
+  }
+
 
   ros::WallDuration max_planning_time=ros::WallDuration(request_.allowed_planning_time);
   ros::WallTime start_time = ros::WallTime::now();
@@ -231,7 +245,9 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
   }
 
   planning_scene::PlanningScenePtr ptr=planning_scene::PlanningScene::clone(planning_scene_);
+
   checker=std::make_shared<pathplan::ParallelMoveitCollisionChecker>(ptr,group_,collision_thread_,collision_distance_);
+
 
 
   moveit::core::RobotState start_state(robot_model_);
@@ -267,7 +283,7 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
          std::vector<moveit::core::VariableBounds> bound=jm->getVariableBounds();
          for (const moveit::core::VariableBounds& b: bound)
          {
-           ROS_ERROR("joint %s has bound vel = [%f, %f]",jm->getName().c_str(),b.min_position_,b.max_position_,b.min_velocity_,b.max_velocity_);
+           ROS_ERROR("joint %s has bound pos=[%f, %f], vel = [%f, %f]",jm->getName().c_str(),b.min_position_,b.max_position_,b.min_velocity_,b.max_velocity_);
          }
       }
     }
@@ -526,8 +542,6 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
 
   res.error_code_.val=moveit_msgs::MoveItErrorCodes::SUCCESS;
   m_is_running=false;
-  COMMENT("ok");
-
 
   return true;
 }
