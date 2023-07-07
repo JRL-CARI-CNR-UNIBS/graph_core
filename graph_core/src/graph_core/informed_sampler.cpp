@@ -31,10 +31,47 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
+Eigen::MatrixXd InformedSampler::computeRotationMatrix(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2)
+{
+  assert(x1.size() == x2.size());
+  unsigned int dof = x1.size();
+  Eigen::MatrixXd rot_matrix(dof, dof);
+  rot_matrix.setIdentity();
+  Eigen::VectorXd main_versor = (x1 - x2) / (x1 - x2).norm();
+
+  bool is_standard_base = false;
+  for (unsigned int ic = 0; ic < rot_matrix.cols(); ic++)
+  {
+    if (std::abs(main_versor.dot(rot_matrix.col(ic))) > 0.999)
+    {
+      is_standard_base = true;
+      // rot_matrix is already orthonormal, put this direction as first
+      Eigen::VectorXd tmp = rot_matrix.col(ic);
+      rot_matrix.col(ic) = rot_matrix.col(0);
+      rot_matrix.col(0) = tmp;
+      break;
+    }
+  }
+
+  if (!is_standard_base)
+  {
+    rot_matrix.col(0) = main_versor;
+    // orthonormalization
+    for (unsigned int ic = 1; ic < rot_matrix.cols(); ic++)
+    {
+      for (unsigned int il = 0; il < ic; il++)
+      {
+        rot_matrix.col(ic) -= (rot_matrix.col(ic).dot(rot_matrix.col(il))) * rot_matrix.col(il);
+      }
+      rot_matrix.col(ic) /= rot_matrix.col(ic).norm();
+    }
+  }
+  return rot_matrix;
+}
 
 Eigen::VectorXd InformedSampler::sample()
 {
-  if (inf_cost_)
+  if(inf_cost_)
   {
     return center_bound_ + Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(bound_width_);
   }
@@ -46,7 +83,8 @@ Eigen::VectorXd InformedSampler::sample()
       ball.setRandom();
       ball *= std::pow(ud_(gen_), 1.0 / (double)ndof_) / ball.norm();
 
-      Eigen::VectorXd q = rot_matrix_ * ellipse_axis_.asDiagonal() * ball + ellipse_center_;
+      Eigen::VectorXd q = (rot_matrix_ * ellipse_axis_.asDiagonal() * ball) + ellipse_center_; //q_scaled
+      q = q.cwiseProduct(inv_scale_); //q = q_scaled/scale
 
       bool in_of_bounds = true;
       for (unsigned int iax = 0; iax < ndof_; iax++)
@@ -77,7 +115,7 @@ bool InformedSampler::inBounds(const Eigen::VectorXd& q)
   if (inf_cost_)
     return true;
   else
-    return ((q - start_configuration_).norm() + (q - stop_configuration_).norm()) < cost_;
+    return ((q.cwiseProduct(scale_) - scaled_start_configuration_).norm() + (q.cwiseProduct(scale_)  - scaled_stop_configuration_).norm()) < cost_;
 
 }
 
@@ -94,9 +132,9 @@ void InformedSampler::setCost(const double &cost)
   }
   else
   {
-    min_radius_ = 0.5 * std::sqrt(std::pow(cost, 2) - std::pow(focii_distance_, 2));
+    min_radius_ = 0.5 * std::sqrt(std::pow(cost_, 2) - std::pow(focii_distance_, 2));
   }
-  max_radius_ = 0.5 * cost;
+  max_radius_ = 0.5 * cost_;
   ellipse_axis_.setConstant(min_radius_);
   ellipse_axis_(0) = max_radius_;
 
