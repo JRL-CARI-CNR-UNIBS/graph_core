@@ -97,8 +97,8 @@ Subtree::Subtree(const TreePtr& parent_tree,
 
 void Subtree::populateSubtreeInsideEllipsoid(const NodePtr& root, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost, const std::vector<NodePtr> &black_list, const bool node_check)
 {
-  if(((root->getConfiguration()-focus1).norm()+(root->getConfiguration()-focus2).norm())<cost)
-    populateTreeFromNode(root,focus1,focus2,cost,black_list, node_check);
+  if((metrics_->utopia(root->getConfiguration(),focus1)+metrics_->utopia(root->getConfiguration(),focus2))<cost)
+    populateTreeFromNode(root,focus1,focus2,cost,black_list,node_check);
   else
   {
     ROS_WARN("Root of subtree is not inside the ellipsoid!");
@@ -107,7 +107,6 @@ void Subtree::populateSubtreeInsideEllipsoid(const NodePtr& root, const Eigen::V
     populateTreeFromNode(root,black_list,node_check);
   }
 }
-
 
 void Subtree::addNode(const NodePtr& node, const bool& check_if_present)
 {
@@ -193,8 +192,6 @@ void Subtree::purgeThisNode(NodePtr& node, unsigned int& removed_nodes)
     }
   }
 }
-
-
 
 SubtreePtr Subtree::createSubtree(const TreePtr& parent_tree,
                                   const NodePtr& root)

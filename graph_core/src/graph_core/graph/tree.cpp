@@ -1224,7 +1224,8 @@ void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focu
     }
     else
     {
-      if(((n->getConfiguration() - focus1).norm() + (n->getConfiguration() - focus2).norm()) < cost)
+
+      if((metrics_->utopia(n->getConfiguration(),focus1) + metrics_->utopia(n->getConfiguration(),focus2)) < cost)
       {
         if(node_check)
         {
