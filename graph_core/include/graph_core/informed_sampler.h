@@ -42,8 +42,6 @@ class InformedSampler: public std::enable_shared_from_this<InformedSampler>
 protected:
   Eigen::VectorXd start_configuration_;
   Eigen::VectorXd stop_configuration_;
-  Eigen::VectorXd scaled_start_configuration_;
-  Eigen::VectorXd scaled_stop_configuration_;
   Eigen::VectorXd scale_;
   Eigen::VectorXd inv_scale_;
   Eigen::VectorXd lower_bound_;
@@ -68,54 +66,7 @@ protected:
   std::uniform_real_distribution<double> ud_;
 
   Eigen::MatrixXd computeRotationMatrix(const Eigen::VectorXd& x1, const Eigen::VectorXd&  x2);
-
-  virtual void init()
-  {
-    if(cost_ < 0.0)
-      throw std::invalid_argument("cost should be >= 0");
-
-    ndof_ = lower_bound_.rows();
-
-    if(start_configuration_.rows() != ndof_)
-      throw std::invalid_argument("start configuration should have the same size of ndof");
-    if(stop_configuration_.rows() != ndof_)
-      throw std::invalid_argument("stop configuration should have the same size of ndof");
-    if(upper_bound_.rows() != ndof_)
-      throw std::invalid_argument("upper bound should have the same size of ndof");
-    if(lower_bound_.rows() != ndof_)
-      throw std::invalid_argument("lower bound should have the same size of ndof");
-    if(scale_.rows() != ndof_)
-      throw std::invalid_argument("scale should have the same size of ndof");
-
-    ud_ = std::uniform_real_distribution<double>(0, 1);
-
-    inv_scale_=scale_.cwiseInverse();
-
-    scaled_start_configuration_ = start_configuration_.cwiseProduct(scale_);
-    scaled_stop_configuration_  = stop_configuration_ .cwiseProduct(scale_);
-
-    ellipse_center_ = 0.5 * (scaled_start_configuration_ + scaled_stop_configuration_);
-    focii_distance_ = (scaled_start_configuration_ - scaled_stop_configuration_).norm();
-    center_bound_ = 0.5 * (lower_bound_ + upper_bound_);
-    bound_width_ = 0.5 * (lower_bound_ - upper_bound_);
-    ellipse_axis_.resize(ndof_);
-
-    rot_matrix_ = computeRotationMatrix(scaled_start_configuration_, scaled_stop_configuration_);
-
-    ROS_DEBUG_STREAM("rot_matrix_:\n" << rot_matrix_);
-    ROS_DEBUG_STREAM("ellipse center" << ellipse_center_.transpose());
-    ROS_DEBUG_STREAM("focii_distance_" << focii_distance_);
-    ROS_DEBUG_STREAM("center_bound_" << center_bound_.transpose());
-    ROS_DEBUG_STREAM("bound_width_" << bound_width_.transpose());
-
-    if (cost_ < std::numeric_limits<double>::infinity())
-    {
-      inf_cost_ = false;
-      setCost(cost_);
-    }
-    else
-      inf_cost_ = true;
-  }
+  virtual void init();
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -175,13 +126,11 @@ public:
 
   virtual void sampleImproved(){}
 
-  const Eigen::VectorXd& getLB(){return lower_bound_;}
-  const Eigen::VectorXd& getUB(){return upper_bound_;}
+  const Eigen::VectorXd& getLB(){return lower_bound_.cwiseProduct(inv_scale_);}
+  const Eigen::VectorXd& getUB(){return upper_bound_.cwiseProduct(inv_scale_);}
 
-  const Eigen::VectorXd& getStartConf(){return start_configuration_;}
-  const Eigen::VectorXd& getStopConf(){return stop_configuration_;}
-  const Eigen::VectorXd& getScaledStartConf(){return scaled_start_configuration_;}
-  const Eigen::VectorXd& getScaledStopConf(){return scaled_stop_configuration_;}
+  const Eigen::VectorXd& getStartConf(){return start_configuration_.cwiseProduct(inv_scale_);}
+  const Eigen::VectorXd& getStopConf(){return stop_configuration_.cwiseProduct(inv_scale_);}
 
   const unsigned int& getDimension()const {return ndof_;}
 };
