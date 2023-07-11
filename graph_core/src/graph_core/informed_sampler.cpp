@@ -84,6 +84,10 @@ Eigen::VectorXd InformedSampler::sample()
       ball *= std::pow(ud_(gen_), 1.0 / (double)ndof_) / ball.norm();
 
       Eigen::VectorXd q = (rot_matrix_ * ellipse_axis_.asDiagonal() * ball) + ellipse_center_; //q_scaled
+
+      if (not((q - scaled_start_configuration_).norm() + (q  - scaled_stop_configuration_).norm()) < cost_) //ELIMINA
+        throw std::runtime_error("err");
+
       q = q.cwiseProduct(inv_scale_); //q = q_scaled/scale
 
       bool in_of_bounds = true;
@@ -98,7 +102,9 @@ Eigen::VectorXd InformedSampler::sample()
       if (in_of_bounds)
         return q;
     }
-    ROS_DEBUG_THROTTLE(0.1, "unable to find a feasible point in the ellipse");
+    //    ROS_DEBUG_THROTTLE(0.1, "unable to find a feasible point in the ellipse");
+    ROS_WARN("unable to find a feasible point in the ellipse");
+
     return center_bound_ + Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(bound_width_);
   }
 }
@@ -126,7 +132,7 @@ void InformedSampler::setCost(const double &cost)
 
   if (cost_ < focii_distance_)
   {
-//    ROS_WARN("cost is %f, focci distance is %f", cost_, focii_distance_);
+    //    ROS_WARN("cost is %f, focci distance is %f", cost_, focii_distance_);
     cost_ = focii_distance_;
     min_radius_ = 0.0;
   }

@@ -74,20 +74,20 @@ protected:
     if(cost_ < 0.0)
       throw std::invalid_argument("cost should be >= 0");
 
+    ndof_ = lower_bound_.rows();
+
     if(start_configuration_.rows() != ndof_)
-      throw std::invalid_argument("start_configuration_ should have the same size of ndof");
+      throw std::invalid_argument("start configuration should have the same size of ndof");
     if(stop_configuration_.rows() != ndof_)
-      throw std::invalid_argument("stop_configuration_ should have the same size of ndof");
+      throw std::invalid_argument("stop configuration should have the same size of ndof");
     if(upper_bound_.rows() != ndof_)
-      throw std::invalid_argument("upper_bound_ should have the same size of ndof");
+      throw std::invalid_argument("upper bound should have the same size of ndof");
     if(lower_bound_.rows() != ndof_)
-      throw std::invalid_argument("lower_bound_ should have the same size of ndof");
+      throw std::invalid_argument("lower bound should have the same size of ndof");
     if(scale_.rows() != ndof_)
       throw std::invalid_argument("scale should have the same size of ndof");
 
     ud_ = std::uniform_real_distribution<double>(0, 1);
-
-    ndof_ = lower_bound_.rows();
 
     inv_scale_=scale_.cwiseInverse();
 
