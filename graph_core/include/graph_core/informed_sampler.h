@@ -126,11 +126,11 @@ public:
 
   virtual void sampleImproved(){}
 
-  const Eigen::VectorXd& getLB(){return lower_bound_.cwiseProduct(inv_scale_);}
-  const Eigen::VectorXd& getUB(){return upper_bound_.cwiseProduct(inv_scale_);}
+  const Eigen::VectorXd getLB(){return lower_bound_.cwiseProduct(inv_scale_);}
+  const Eigen::VectorXd getUB(){return upper_bound_.cwiseProduct(inv_scale_);}
 
-  const Eigen::VectorXd& getStartConf(){return start_configuration_.cwiseProduct(inv_scale_);}
-  const Eigen::VectorXd& getStopConf(){return stop_configuration_.cwiseProduct(inv_scale_);}
+  const Eigen::VectorXd getStartConf(){return start_configuration_.cwiseProduct(inv_scale_);}
+  const Eigen::VectorXd getStopConf(){return stop_configuration_.cwiseProduct(inv_scale_);}
 
   const unsigned int& getDimension()const {return ndof_;}
 };
