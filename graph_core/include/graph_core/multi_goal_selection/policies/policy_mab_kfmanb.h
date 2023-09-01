@@ -121,7 +121,7 @@ public:
       return false;
     }
 
-    if (std_devs.size() != n_goals_)
+    if (std_devs.size() != (std::size_t)n_goals_)
     {
       ROS_FATAL("Wrong size of vector std_devs.");
       return false;

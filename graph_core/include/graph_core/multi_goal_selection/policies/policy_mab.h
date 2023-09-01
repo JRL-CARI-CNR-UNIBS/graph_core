@@ -56,7 +56,7 @@ public:
 
   virtual bool reinitRewards(std::vector<double> rewards, std::vector<double> std_devs)
   {
-    if (rewards.size() != n_goals_)
+    if (rewards.size() != (std::size_t)n_goals_)
     {
       ROS_FATAL("Wrong size of vector rewards.");
       return false;
@@ -108,6 +108,7 @@ public:
   virtual std::vector<double> getVariance()
   {
     std::cout << "NOT IMPLEMENTED" << std::endl;
+    return std::vector<double>(0);
   }
 
 
