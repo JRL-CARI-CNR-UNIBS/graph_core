@@ -126,7 +126,9 @@ void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
 
     for (size_t ij=0;ij<joint_names_.size();ij++)
     {
-      state_->setJointPositions(joint_models_.at(ij),&configuration.at(ij));
+      // state_->setJointPositions(joint_models_.at(ij),&configuration.at(ij));
+      state->setJointPositions(joint_models_.at(ij),&configuration.at(ij));
+
     }
 
 
@@ -137,7 +139,7 @@ void ParallelMoveitCollisionChecker::collisionThread(int thread_idx)
       stop_check_=true;
       break;
     }
-    //    state->updateCollisionBodyTransforms();
+    state->updateCollisionBodyTransforms();
 
     if (planning_scenes_.at(thread_idx)->isStateColliding(*state,group_name_))
     {
