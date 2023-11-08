@@ -27,9 +27,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <graph_core/metrics.h>
-#include <rosdyn_core/primitives.h>
+//#include <rosdyn_core/primitives.h>
 #include <visualization_msgs/MarkerArray.h>
-#include <eigen_conversions/eigen_msg.h>
+//#include <eigen_conversions/eigen_msg.h>
 
 namespace pathplan
 {

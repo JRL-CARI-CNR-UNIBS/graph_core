@@ -33,8 +33,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/solvers/multigoal.h>
 #include <graph_core/solvers/path_solver.h>
 #include <graph_core/metrics.h>
-#include <graph_core/avoidance_goal_cost_function.h>
-#include <graph_core/avoidance_metrics.h>
 #include <graph_core/parallel_moveit_collision_checker.h>
 #include <graph_core/tube_informed_sampler.h>
 #include <rosparam_utilities/rosparam_utilities.h>
@@ -98,8 +96,6 @@ protected:
   double display_tree_period_=1.0;
 
   pathplan::MetricsPtr metrics_;
-  pathplan::AvoidanceMetricsPtr avoidance_metrics_;
-  pathplan::AvoidanceGoalCostFunctionPtr m_avoidance_goal_cost_fcn;
   pathplan::CollisionCheckerPtr checker;
   pathplan::NodePtr m_start_node;
   ros::Subscriber m_centroid_sub;

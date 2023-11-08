@@ -113,12 +113,12 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
     ROS_DEBUG("use_avoidance_path is not set, default=false");
     use_avoidance_metrics_=false;
   }
-  if (use_avoidance_metrics_)
-  {
-    avoidance_metrics_=std::make_shared<pathplan::AvoidanceMetrics>(m_nh);
-    metrics_=avoidance_metrics_;
-  }
-  else
+//  if (use_avoidance_metrics_)
+//  {
+//    avoidance_metrics_=std::make_shared<pathplan::AvoidanceMetrics>(m_nh);
+//    metrics_=avoidance_metrics_;
+//  }
+//  else
     metrics_=std::make_shared<pathplan::Metrics>();
 
   if (!m_nh.getParam("use_avoidance_goal",use_avoidance_goal_))
@@ -132,10 +132,10 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
     use_avoidance_goal_=false;
   }
 
-  if (use_avoidance_goal_)
-  {
-    m_avoidance_goal_cost_fcn=std::make_shared<pathplan::AvoidanceGoalCostFunction>(m_nh);
-  }
+//  if (use_avoidance_goal_)
+//  {
+//    m_avoidance_goal_cost_fcn=std::make_shared<pathplan::AvoidanceGoalCostFunction>(m_nh);
+//  }
 
 
   std::string detector_topic;
@@ -323,8 +323,8 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
     m_is_running=false;
     return false;
   }
-  if (use_avoidance_goal_)
-    solver->setGoalCostFunction(m_avoidance_goal_cost_fcn);
+//  if (use_avoidance_goal_)
+//    solver->setGoalCostFunction(m_avoidance_goal_cost_fcn);
   solver->addStart(m_start_node);
 
   m_queue.callAvailable();
@@ -572,23 +572,23 @@ void MultigoalPlanner::centroidCb(const geometry_msgs::PoseArrayConstPtr& msg)
 
   if (!use_avoidance_goal_ && !use_avoidance_metrics_)
     return;
-  if (use_avoidance_goal_)
-    m_avoidance_goal_cost_fcn->cleanPoints();
-  if (use_avoidance_metrics_)
-    avoidance_metrics_->cleanPoints();
+//  if (use_avoidance_goal_)
+//    m_avoidance_goal_cost_fcn->cleanPoints();
+//  if (use_avoidance_metrics_)
+//    avoidance_metrics_->cleanPoints();
   Eigen::Vector3d point;
   for (const geometry_msgs::Pose& p: msg->poses)
   {
     point(0)=p.position.x;
     point(1)=p.position.y;
     point(2)=p.position.z;
-    if (use_avoidance_goal_)
-      m_avoidance_goal_cost_fcn->addPoint(point);
+//    if (use_avoidance_goal_)
+//      m_avoidance_goal_cost_fcn->addPoint(point);
     //    ros::Duration(0.1).sleep();
-    if (use_avoidance_metrics_)
-      avoidance_metrics_->addPoint(point);
+//    if (use_avoidance_metrics_)
+//      avoidance_metrics_->addPoint(point);
   }
-  m_avoidance_goal_cost_fcn->publishPoints();
+//  m_avoidance_goal_cost_fcn->publishPoints();
 }
 
 
