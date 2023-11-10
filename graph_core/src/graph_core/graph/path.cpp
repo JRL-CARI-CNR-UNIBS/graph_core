@@ -43,22 +43,22 @@ Path::Path(std::vector<ConnectionPtr> connections,
 
   cost_ = 0;
 
-  NodePtr child = nullptr;
+  NodePtr previous_child = nullptr;
   for (const ConnectionPtr& conn : connections_)
   {
     cost_ += conn->getCost();
     change_warp_.push_back(true);
 
-    if(child)
+    if(previous_child)
     {
-      if(child != conn->getParent())
+      if(previous_child != conn->getParent())
       {
         for(const ConnectionPtr& c : connections_)
           ROS_WARN_STREAM(*c);
         throw std::runtime_error("parent of a connection is different from the child of the previous connection!");
       }
     }
-    child = conn->getChild();
+    previous_child = conn->getChild();
   }
   change_warp_.at(0) = false;
 }
@@ -114,7 +114,8 @@ PathPtr Path::clone()
     child = std::make_shared<Node>(wp.at(i));
 
     conn = std::make_shared<Connection>(parent,child);
-    conn->setCost(connections_.at(i-1)->getCost());
+    conn->setCost(connections_.at(i-1)->getCost());  //update also the internal time of the cloned connection
+    conn->setTimeCostUpdate(connections_.at(i-1)->getTimeCostUpdate());  //set the internal time to the value of the original connection
     conn->add();
 
     assert(child->getParentConnectionsSize()    == 1);
@@ -261,7 +262,7 @@ double Path::getCostFromConf(const Eigen::VectorXd &conf)
     if(conf == this_conn->getParent()->getConfiguration())
       cost += this_conn->getCost();
     else if (conf == this_conn->getChild()->getConfiguration())
-      cost += 0;
+      cost += 0.0;
     else
     {
       if(this_conn->getCost() == std::numeric_limits<double>::infinity())
@@ -668,7 +669,14 @@ Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const bool& ve
 
 Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection, const bool& verbose)
 {
+  ConnectionPtr conn;
+  return projectOnPath(point,past_projection,conn,verbose);
+}
+
+Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection, ConnectionPtr& conn, const bool& verbose)
+{
   ConnectionPtr candidate_connection, connection;
+  conn = nullptr;
   Eigen::VectorXd candidate_projection, projection, precise_projection;
   double abscissa, candidate_abscissa, candidate_distance, min_distance, ds;
 
@@ -714,6 +722,8 @@ Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::V
     ROS_INFO_STREAM("abscissa "<<abscissa<< " projection "<<projection.transpose());
     ROS_INFO_STREAM("projection with conn "<<*connection);
   }
+
+  conn = connection;
 
   if(connection->norm()<1e-03)
   {
@@ -778,6 +788,7 @@ bool Path::removeNode(const NodePtr& node, const int& idx_conn, const std::vecto
     new_conn = std::make_shared<pathplan::Connection>(conn_parent_node->getParent(),conn_node_child->getChild(),is_net);
     double cost = conn_parent_node->getCost()+conn_node_child->getCost();
     new_conn->setCost(cost);
+    new_conn->setTimeCostUpdate(std::min(conn_parent_node->getTimeCostUpdate(),conn_node_child->getTimeCostUpdate())); //consider the min between the two internal times
     new_conn->add();
 
     node->disconnect();
@@ -942,34 +953,6 @@ bool Path::removeNodes(const std::vector<NodePtr> &white_list, std::vector<NodeP
 
 int Path::resample(const double& max_distance)
 {
-  //  int nodes_added = 0;
-  //  bool is_a_new_node, node_added;
-  //  std::vector<ConnectionPtr> connections;
-  //  int initial_size = connections_.size();
-
-  //  do
-  //  {
-  //    node_added = false;
-  //    connections = connections_;
-  //    for(ConnectionPtr& c:connections)
-  //    {
-  //      double length = c->norm();
-  //      if(length>max_distance)
-  //      {
-  //        is_a_new_node = false;
-  //        Eigen::VectorXd conf = c->getChild()->getConfiguration()+(c->getParent()->getConfiguration()-c->getChild()->getConfiguration())*(max_distance/length);
-  //        addNodeAtCurrentConfig(conf,c,true,is_a_new_node);
-
-  //        if(is_a_new_node)
-  //        {
-  //          c->remove();
-  //          nodes_added++;
-  //          node_added = true;
-  //        }
-  //      }
-  //    }
-  //  }while(node_added);
-
   unsigned int pos = 0;
   unsigned int nodes_added = 0;
   unsigned int initial_size = connections_.size();
@@ -987,7 +970,7 @@ int Path::resample(const double& max_distance)
     if(length>max_distance)
     {
       is_a_new_node = false;
-      conf = conn->getChild()->getConfiguration()+(conn->getParent()->getConfiguration()-conn->getChild()->getConfiguration())*(max_distance/length);
+      conf = conn->getParent()->getConfiguration()+(conn->getChild()->getConfiguration()-conn->getParent()->getConfiguration())*(max_distance/length);
       addNodeAtCurrentConfig(conf,conn,true,is_a_new_node);
 
       if(is_a_new_node)
@@ -1090,8 +1073,8 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
         }
         else
         {
-          cost_parent = metrics_->cost(parent->getConfiguration(), actual_node->getConfiguration());
-          cost_child  = conn->getCost() - cost_parent;
+          cost_parent = metrics_->cost(parent     ->getConfiguration(), actual_node->getConfiguration());
+          cost_child  = metrics_->cost(actual_node->getConfiguration(), child      ->getConfiguration());; //conn->getCost() - cost_parent;
         }
 
         if(tree_)
@@ -1476,6 +1459,15 @@ bool Path::isValid(const CollisionCheckerPtr &this_checker)
   else
     computeCost();
 
+  assert([&]() ->bool{
+           if(valid && cost_ == std::numeric_limits<double>::infinity())
+           {
+             return false;
+           }
+
+           return true;
+         }());
+
   return valid;
 }
 
@@ -1486,8 +1478,6 @@ bool Path::isValidFromConn(const ConnectionPtr& this_conn, const CollisionChecke
     checker = this_checker;
 
   bool valid = true;
-  Eigen::VectorXd parent;
-  Eigen::VectorXd child;
   double cost;
   bool from_here = false;
 
@@ -1505,10 +1495,7 @@ bool Path::isValidFromConn(const ConnectionPtr& this_conn, const CollisionChecke
       }
       else
       {
-        parent = conn->getParent()->getConfiguration();
-        child = conn->getChild()->getConfiguration();
-
-        cost = metrics_->cost(parent,child);
+        cost = metrics_->cost(conn->getParent()->getConfiguration(),conn->getChild()->getConfiguration());
         conn->setCost(cost);
       }
     }
@@ -1550,7 +1537,8 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const int& conn_idx, int
     {
       for(int i = (connections_.size()-1);i>=conn_idx;i--)
       {
-        if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-1-i;
+        if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity())
+          pos_closest_obs_from_goal = connections_.size()-1-i;
       }
     }
   }
@@ -1564,7 +1552,8 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const int& conn_idx, int
       {
         for(int i = (connections_.size()-1);i>=conn_idx+1;i--)
         {
-          if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-1-i;
+          if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity())
+            pos_closest_obs_from_goal = connections_.size()-1-i;
         }
       }
     }
@@ -1583,15 +1572,20 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const int& conn_idx, int
       conn->setCost(std::numeric_limits<double>::infinity());
       pos_closest_obs_from_goal = connections_.size()-1-conn_idx;
     }
-
-    if(conn_idx<connections_.size()-1)  //also if the checker has failed, this check is important to update the cost of all the connections
+    else
     {
-      if(!isValidFromConn(connections_.at(conn_idx+1),checker))
+      conn->setCost(metrics_->cost(conn->getParent()->getConfiguration(),conn->getChild()->getConfiguration()));
+    }
+
+    if(conn_idx<connections_.size()-1)  //even if the checker has failed, this check is important to update the cost of all the connections
+    {
+      if(not isValidFromConn(connections_.at(conn_idx+1),checker))
       {
         validity = false;
         for(int i = (connections_.size()-1);i>=conn_idx+1;i--)
         {
-          if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity()) pos_closest_obs_from_goal = connections_.size()-1-i;
+          if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity())
+            pos_closest_obs_from_goal = connections_.size()-1-i;
         }
       }
     }

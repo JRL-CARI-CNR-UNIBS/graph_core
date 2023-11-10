@@ -191,6 +191,10 @@ public:
                            const std::vector<NodePtr> &white_list,
                            NodePtr& new_node);
 
+  bool rewireWithPathCheck(const Eigen::VectorXd& configuration,
+                           std::vector<ConnectionPtr> &checked_connections,
+                           double r_rewire);
+
   bool rewire(const Eigen::VectorXd& configuration,
               double r_rewire,
               NodePtr& new_node);
@@ -251,6 +255,11 @@ public:
   void setChecker(const CollisionCheckerPtr& checker)
   {
     checker_ = checker;
+  }
+
+  void setMetrics(const MetricsPtr& metrics)
+  {
+    metrics_ = metrics;
   }
 
   XmlRpc::XmlRpcValue toXmlRpcValue() const;

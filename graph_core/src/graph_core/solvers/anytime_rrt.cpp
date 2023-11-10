@@ -144,13 +144,11 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   if(goal_node_ != goal_node)
   {
     //Rewire the tree goal (set goal_node)
-    NodePtr last_node = solution_->getConnections().back()->getParent();
-    double  last_cost = solution_->getConnections().back()->getCost();
-
     goal_node->disconnect();
 
-    ConnectionPtr conn = std::make_shared<Connection>(last_node, goal_node);
-    conn->setCost(last_cost);
+    ConnectionPtr conn = std::make_shared<Connection>(solution_->getConnections().back()->getParent(), goal_node);
+    conn->setCost(solution_->getConnections().back()->getCost());
+    conn->setTimeCostUpdate(solution_->getConnections().back()->getTimeCostUpdate());
     conn->add();
 
     start_tree_->removeNode(goal_node_);
@@ -168,7 +166,6 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     NodePtr root = start_tree_->getRoot();  //tmp_start_node
 
     std::vector<NodePtr> root_children;
-    std::vector<double> root2children_cost;
 
     ConnectionPtr conn_root_child_on_path = start_tree_->getConnectionToNode(goal_node_).front();
     NodePtr root_child_on_path = conn_root_child_on_path->getChild();
@@ -183,7 +180,6 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
       if(conn2child->getChild() != root_child_on_path)
       {
         root_children.push_back(conn2child->getChild());
-        root2children_cost.push_back(conn2child->getCost());
       }
     }
 
@@ -193,7 +189,8 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     for(unsigned int i=0; i<root_children.size(); i++)
     {
       ConnectionPtr conn = std::make_shared<Connection>(start_node,root_children.at(i));  //the parent of start_node is the node on the path, the others are children
-      conn->setCost(root2children_cost.at(i));
+      conn->setCost(root_children.at(i)->getParentConnections().front()->getCost());
+      conn->setTimeCostUpdate(root_children.at(i)->getParentConnections().front()->getTimeCostUpdate());
       conn->add();
     }
 

@@ -37,17 +37,29 @@ typedef std::vector<ConnectionWeakPtr> WeakPtrVector;
 
 class Node: public std::enable_shared_from_this<Node>
 {
+  friend class Connection;
+
 protected:
   Eigen::VectorXd configuration_;
   unsigned int ndof_;
-  bool analyzed_;
-  bool non_optimal_;
 
   std::vector<ConnectionWeakPtr> parent_connections_;     //Weak ptr to avoid pointers cycles
   std::vector<ConnectionWeakPtr> net_parent_connections_; //Weak ptr to avoid pointers cycles
 
   std::vector<ConnectionPtr> child_connections_;
   std::vector<ConnectionPtr> net_child_connections_;
+
+  /**
+   * @brief flags_ is a vector of flags.You can add new flags specific to your algorithm using function setFlag and passing the vector-index to store the flag.
+   * getReservedFlagsNumber allows you to know how many positions are reserved for the defaults. setFlag doesn't allow you to overwrite these positions.
+   * To overwrite them, you should use the flag-specific functions.
+   */
+  std::vector<bool> flags_;
+
+  void addParentConnection(const ConnectionPtr& connection);
+  void addChildConnection(const ConnectionPtr& connection);
+  void addNetParentConnection(const ConnectionPtr& connection);
+  void addNetChildConnection(const ConnectionPtr& connection);
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -56,14 +68,52 @@ public:
   {
     return shared_from_this();
   }
-  void setAnalyzed(const bool& analyzed);
-  bool getAnalyzed();
-  void setNonOptimal(const bool& nonOptimal);
-  bool getNonOptimal();
-  void addParentConnection(const ConnectionPtr& connection);
-  void addChildConnection(const ConnectionPtr& connection);
-  void addNetParentConnection(const ConnectionPtr& connection);
-  void addNetChildConnection(const ConnectionPtr& connection);
+
+  /**
+   * Add here your reserved flags.
+   * Example:
+   * const static unsigned int idx_your_custom_flag1_ = 0;
+   * const static unsigned int idx_your_custom_flag2_ = 1;
+   *
+   * Increment number_reserved_flags_ accordingly!
+   * Initialize flags_ in the constructor accordingly!
+   * If you need to modify or read these flags externally, implement getter and setter functions!
+   */
+
+  //NO DEFAULT FLAGS SO FAR
+
+  static constexpr unsigned int number_reserved_flags_ = 0;
+
+  /**
+   * @brief setFlag sets your custome flag. Use this function only if the flag was not created before because it creates a new one flag in flags_ vector
+   * @param flag the NEW flag to set
+   * @return the index of the flag in flags_ vector to use when you want to change the value
+   */
+  unsigned int setFlag(const bool flag);
+
+  /**
+   * @brief setFlag sets the custom flag at index idx. The flag should be already present in the flags_ vector.
+   * If not, it add the new flag if and only if the index idx is equal to flags_ size
+   * @param idx the index of the flag
+   * @param flag the value of the flag
+   * @return true if the flag is set correctly, flase otherwise
+   */
+  bool setFlag(const int& idx, const bool flag);
+
+  /**
+   * @brief getFlag returns the value of the flag at position idx. It returns the value if the flag exists, otherwise return the default value.
+   * @param idx the index of the flag you are asking for.
+   * @param default_value the default value returned if the flag doesn't exist.
+   * @return the flag if it exists, the default value otherwise.
+   */
+  bool getFlag(const int& idx, const bool default_value);
+
+
+  /**
+   * @brief get parent/net_parent or child/net_child connections vector or nodes
+   * @return
+   */
+
   const int getParentConnectionsSize() const;
   const int getNetParentConnectionsSize() const;
   const int getChildConnectionsSize() const;
@@ -89,15 +139,29 @@ public:
   const std::vector<ConnectionPtr> getChildConnectionsConst() const;
   const std::vector<ConnectionPtr> getNetChildConnectionsConst() const;
 
+  /**
+   * @brief disconnect the nodes from parent and/or child connections
+   */
   void disconnect();
   void disconnectChildConnections();
   void disconnectParentConnections();
   void disconnectNetParentConnections();
   void disconnectNetChildConnections();
+
+  /**
+   * @brief remove a specific parent/child connection
+   * @param connection to remove
+   */
   void removeParentConnection(const ConnectionPtr& connection);
   void removeChildConnection(const ConnectionPtr& connection);
   void removeNetParentConnection(const ConnectionPtr& connection);
   void removeNetChildConnection(const ConnectionPtr& connection);
+
+  /**
+   * @brief switchParentConnection trasformes a parent net connection of the node into a standard parent connection
+   * @param net_connection is the net connection to transform
+   * @return true if successful
+   */
   bool switchParentConnection(const ConnectionPtr& net_connection);
 
   const Eigen::VectorXd& getConfiguration()
@@ -110,6 +174,12 @@ public:
   friend std::ostream& operator<<(std::ostream& os, const Node& path);
 
   static NodePtr fromXmlRpcValue(const XmlRpc::XmlRpcValue& x);
+
+  /**
+   * @brief getReservedFlagsNumber tells you how many positions are occupied by the defaults. Use this to know where you can sve your new flags.
+   * @return the first free position in flags_ vector, so the idx next to the defaults.
+   */
+  static unsigned int getReservedFlagsNumber();
 };
 
 std::ostream& operator<<(std::ostream& os, const Node& node);

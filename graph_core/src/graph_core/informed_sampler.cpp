@@ -31,10 +31,98 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
+void InformedSampler::init()
+{
+  if(cost_ < 0.0)
+    throw std::invalid_argument("cost should be >= 0");
+
+  ndof_ = lower_bound_.rows();
+
+  if(start_configuration_.rows() != ndof_)
+    throw std::invalid_argument("start configuration should have the same size of ndof");
+  if(stop_configuration_.rows() != ndof_)
+    throw std::invalid_argument("stop configuration should have the same size of ndof");
+  if(upper_bound_.rows() != ndof_)
+    throw std::invalid_argument("upper bound should have the same size of ndof");
+  if(lower_bound_.rows() != ndof_)
+    throw std::invalid_argument("lower bound should have the same size of ndof");
+  if(scale_.rows() != ndof_)
+    throw std::invalid_argument("scale should have the same size of ndof");
+
+  ud_ = std::uniform_real_distribution<double>(0, 1);
+
+  inv_scale_=scale_.cwiseInverse();
+
+  start_configuration_ = start_configuration_.cwiseProduct(scale_);
+  stop_configuration_  = stop_configuration_ .cwiseProduct(scale_);
+
+  lower_bound_ = lower_bound_.cwiseProduct(scale_);
+  upper_bound_ = upper_bound_.cwiseProduct(scale_);
+
+  ellipse_center_ = 0.5 * (start_configuration_ + stop_configuration_);
+  focii_distance_ = (start_configuration_ - stop_configuration_).norm();
+  center_bound_ = 0.5 * (lower_bound_ + upper_bound_);
+  bound_width_ = 0.5 * (lower_bound_ - upper_bound_);
+  ellipse_axis_.resize(ndof_);
+
+  rot_matrix_ = computeRotationMatrix(start_configuration_, stop_configuration_);
+
+  ROS_DEBUG_STREAM("rot_matrix_:\n" << rot_matrix_);
+  ROS_DEBUG_STREAM("ellipse center" << ellipse_center_.transpose());
+  ROS_DEBUG_STREAM("focii_distance_" << focii_distance_);
+  ROS_DEBUG_STREAM("center_bound_" << center_bound_.transpose());
+  ROS_DEBUG_STREAM("bound_width_" << bound_width_.transpose());
+
+  if (cost_ < std::numeric_limits<double>::infinity())
+  {
+    inf_cost_ = false;
+    setCost(cost_);
+  }
+  else
+    inf_cost_ = true;
+}
+
+Eigen::MatrixXd InformedSampler::computeRotationMatrix(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2)
+{
+  assert(x1.size() == x2.size());
+  unsigned int dof = x1.size();
+  Eigen::MatrixXd rot_matrix(dof, dof);
+  rot_matrix.setIdentity();
+  Eigen::VectorXd main_versor = (x1 - x2) / (x1 - x2).norm();
+
+  bool is_standard_base = false;
+  for (unsigned int ic = 0; ic < rot_matrix.cols(); ic++)
+  {
+    if (std::abs(main_versor.dot(rot_matrix.col(ic))) > 0.999)
+    {
+      is_standard_base = true;
+      // rot_matrix is already orthonormal, put this direction as first
+      Eigen::VectorXd tmp = rot_matrix.col(ic);
+      rot_matrix.col(ic) = rot_matrix.col(0);
+      rot_matrix.col(0) = tmp;
+      break;
+    }
+  }
+
+  if (!is_standard_base)
+  {
+    rot_matrix.col(0) = main_versor;
+    // orthonormalization
+    for (unsigned int ic = 1; ic < rot_matrix.cols(); ic++)
+    {
+      for (unsigned int il = 0; il < ic; il++)
+      {
+        rot_matrix.col(ic) -= (rot_matrix.col(ic).dot(rot_matrix.col(il))) * rot_matrix.col(il);
+      }
+      rot_matrix.col(ic) /= rot_matrix.col(ic).norm();
+    }
+  }
+  return rot_matrix;
+}
 
 Eigen::VectorXd InformedSampler::sample()
 {
-  if (inf_cost_)
+  if(inf_cost_)
   {
     return center_bound_ + Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(bound_width_);
   }
@@ -46,7 +134,7 @@ Eigen::VectorXd InformedSampler::sample()
       ball.setRandom();
       ball *= std::pow(ud_(gen_), 1.0 / (double)ndof_) / ball.norm();
 
-      Eigen::VectorXd q = rot_matrix_ * ellipse_axis_.asDiagonal() * ball + ellipse_center_;
+      Eigen::VectorXd q = (rot_matrix_ * ellipse_axis_.asDiagonal() * ball) + ellipse_center_; //q_scaled
 
       bool in_of_bounds = true;
       for (unsigned int iax = 0; iax < ndof_; iax++)
@@ -57,19 +145,22 @@ Eigen::VectorXd InformedSampler::sample()
           break;
         }
       }
-      if (in_of_bounds)
-        return q;
+
+      if(in_of_bounds)
+        return q.cwiseProduct(inv_scale_); //q = q_scaled/scale
     }
-    ROS_DEBUG_THROTTLE(0.1, "unable to find a feasible point in the ellipse");
+    //    ROS_DEBUG_THROTTLE(0.1, "unable to find a feasible point in the ellipse");
+
     return center_bound_ + Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(bound_width_);
   }
 }
 
 bool InformedSampler::inBounds(const Eigen::VectorXd& q)
 {
+  Eigen::VectorXd q_scaled = q.cwiseProduct(scale_);
   for (unsigned int iax = 0; iax < ndof_; iax++)
   {
-    if (q(iax) > upper_bound_(iax) || q(iax) < lower_bound_(iax))
+    if (q_scaled(iax) > upper_bound_(iax) || q_scaled(iax) < lower_bound_(iax))
     {
       return false;
     }
@@ -77,7 +168,7 @@ bool InformedSampler::inBounds(const Eigen::VectorXd& q)
   if (inf_cost_)
     return true;
   else
-    return ((q - start_configuration_).norm() + (q - stop_configuration_).norm()) < cost_;
+    return ((q_scaled - start_configuration_).norm() + (q_scaled  - stop_configuration_).norm()) < cost_;
 
 }
 
@@ -88,15 +179,15 @@ void InformedSampler::setCost(const double &cost)
 
   if (cost_ < focii_distance_)
   {
-//    ROS_WARN("cost is %f, focci distance is %f", cost_, focii_distance_);
+    //    ROS_WARN("cost is %f, focci distance is %f", cost_, focii_distance_);
     cost_ = focii_distance_;
     min_radius_ = 0.0;
   }
   else
   {
-    min_radius_ = 0.5 * std::sqrt(std::pow(cost, 2) - std::pow(focii_distance_, 2));
+    min_radius_ = 0.5 * std::sqrt(std::pow(cost_, 2) - std::pow(focii_distance_, 2));
   }
-  max_radius_ = 0.5 * cost;
+  max_radius_ = 0.5 * cost_;
   ellipse_axis_.setConstant(min_radius_);
   ellipse_axis_(0) = max_radius_;
 

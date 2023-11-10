@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/util.h>
 #include <graph_core/graph/subtree.h>
+#include <functional>
 
 namespace pathplan
 {
@@ -37,46 +38,51 @@ typedef std::shared_ptr<Net> NetPtr;
 class Net: public std::enable_shared_from_this<Net>
 {
 
-#define NET_ERROR_TOLERANCE 1e-12
+#define NET_ERROR_TOLERANCE 1e-06
 
 protected:
   TreePtr linked_tree_;
-  std::multimap<double,std::vector<ConnectionPtr>> map_;
+  MetricsPtr metrics_;
+
+  ros::WallTime tic_search_;
+
+  std::vector<double> time_vector_;
   std::vector<NodePtr> black_list_;
   std::vector<NodePtr> visited_nodes_;
   std::vector<ConnectionPtr> connections2parent_;
-  double cost_to_beat_;
-  bool verbose_;
-  bool search_every_solution_;
-  bool search_in_tree_;
-  int curse_of_dimensionality_;
-  ros::WallTime tic_search_;
+  std::multimap<double,std::vector<ConnectionPtr>> map_;
+
+  /**
+   * @brief cost_evaluation_condition_ is a pointer to a function which return true if net should re-evaluate connection cost, false otherwise.
+   * You can set this condition using costReEvaluationCondition. By default, it is a nullptr;
+   */
+  std::shared_ptr<std::function<bool (const ConnectionPtr& connection)>> cost_evaluation_condition_;
+
+  double time_;
   double max_time_;
-  std::vector<double> time_vector_;
+  double cost_to_beat_;
+
+  bool verbose_;
+  bool search_in_tree_;
+  bool search_every_solution_;
+
+  int curse_of_dimensionality_;
 
   void computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node);
-  void computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here, const double& cost2beat);
   void computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here);
-  bool purgeSuccessors(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);  //VEDI CON MANUEL
+  void computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here, const double& cost2beat);
 
 public:
-  Net(const TreePtr& tree)
-  {
-    verbose_ = false;
-    search_every_solution_ = true;
-    setTree(tree);
-  }
+  Net(const TreePtr& tree);
 
   void setTree(const TreePtr& tree)
   {
-//    if(tree->isSubtree())
-//    {
-//      SubtreePtr subtree = std::static_pointer_cast<Subtree>(tree);
-//      linked_tree_ = subtree->getParentTree();
-//    }
-//    else
-//      linked_tree_ = tree;
     linked_tree_ = tree;
+  }
+
+  void setMetrics(const MetricsPtr metrics)
+  {
+    metrics_ = metrics;
   }
 
   TreePtr getTree()
@@ -94,7 +100,10 @@ public:
     search_every_solution_ = search_every_solution;
   }
 
-  bool purgeFromHere(ConnectionPtr& conn2node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes); //VEDI CON MANUEL
+  void setCostEvaluationCondition(const std::shared_ptr<std::function<bool (const ConnectionPtr& connection)>>& condition)
+  {
+    cost_evaluation_condition_ = condition;
+  }
 
   std::multimap<double,std::vector<ConnectionPtr>>& getConnectionToNode(const NodePtr& node, const std::vector<NodePtr>& black_list = {}, const double& max_time = std::numeric_limits<double>::infinity());
   std::multimap<double,std::vector<ConnectionPtr>>& getConnectionToNode(const NodePtr& node, const double& cost2beat, const std::vector<NodePtr>& black_list = {}, const double& max_time = std::numeric_limits<double>::infinity());

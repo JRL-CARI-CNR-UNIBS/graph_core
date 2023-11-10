@@ -452,6 +452,7 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const std::vector<NodePtr>
       if (!checker_->checkPath(n->getConfiguration(), node->getConfiguration()))
         continue;
 
+      assert(node->parentConnection(0)->isValid());
       node->parentConnection(0)->remove();
 
       ConnectionPtr conn = std::make_shared<Connection>(n, node);
@@ -487,7 +488,9 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const std::vector<NodePtr>
       if (!checker_->checkPath(node->getConfiguration(), n->getConfiguration()))
         continue;
 
+      assert(n->parentConnection(0)->isValid());
       n->parentConnection(0)->remove();
+
       ConnectionPtr conn = std::make_shared<Connection>(node, n);
       conn->setCost(cost_node_to_near);
       conn->add();
@@ -748,6 +751,13 @@ bool Tree::rewireWithPathCheck(const Eigen::VectorXd &configuration, std::vector
 
 bool Tree::rewireWithPathCheck(const Eigen::VectorXd &configuration, std::vector<ConnectionPtr> &checked_connections, double r_rewire, NodePtr& new_node)
 {
+  std::vector<NodePtr> white_list;
+  return rewireWithPathCheck(configuration,checked_connections,r_rewire,white_list,new_node);
+}
+
+bool Tree::rewireWithPathCheck(const Eigen::VectorXd &configuration, std::vector<ConnectionPtr> &checked_connections, double r_rewire)
+{
+  NodePtr new_node;
   std::vector<NodePtr> white_list;
   return rewireWithPathCheck(configuration,checked_connections,r_rewire,white_list,new_node);
 }
@@ -1214,7 +1224,8 @@ void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focu
     }
     else
     {
-      if(((n->getConfiguration() - focus1).norm() + (n->getConfiguration() - focus2).norm()) < cost)
+
+      if((metrics_->utopia(n->getConfiguration(),focus1) + metrics_->utopia(n->getConfiguration(),focus2)) < cost)
       {
         if(node_check)
         {

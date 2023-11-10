@@ -38,7 +38,6 @@ class RRTStar: public RRT
 {
 protected:
   double r_rewire_;
-  //virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity()); //max_time not used
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -48,7 +47,6 @@ public:
     RRT(metrics, checker, sampler) {}
 
   virtual bool config(const ros::NodeHandle& nh) override;
-  virtual bool addGoal(const NodePtr &goal_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
   virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity()) override;
   virtual bool update(PathPtr& solution) override;
   virtual bool solve(PathPtr &solution, const unsigned int& max_iter=100, const double &max_time = std::numeric_limits<double>::infinity()) override;

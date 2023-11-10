@@ -48,10 +48,10 @@ public:
 
 
   virtual double utopia(const NodePtr& node1,
-                      const NodePtr& node2);
+                        const NodePtr& node2);
 
   virtual double utopia(const Eigen::VectorXd& configuration1,
-                      const Eigen::VectorXd& configuration2);
+                        const Eigen::VectorXd& configuration2);
 
   virtual MetricsPtr clone();
 

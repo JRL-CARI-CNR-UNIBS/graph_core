@@ -42,6 +42,8 @@ class InformedSampler: public std::enable_shared_from_this<InformedSampler>
 protected:
   Eigen::VectorXd start_configuration_;
   Eigen::VectorXd stop_configuration_;
+  Eigen::VectorXd scale_;
+  Eigen::VectorXd inv_scale_;
   Eigen::VectorXd lower_bound_;
   Eigen::VectorXd upper_bound_;
   Eigen::VectorXd center_bound_;
@@ -63,6 +65,8 @@ protected:
   std::mt19937 gen_;
   std::uniform_real_distribution<double> ud_;
 
+  Eigen::MatrixXd computeRotationMatrix(const Eigen::VectorXd& x1, const Eigen::VectorXd&  x2);
+  virtual void init();
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -78,35 +82,36 @@ public:
     cost_(cost),
     gen_{rd_()}//gen_(time(0))
   {
-    ud_ = std::uniform_real_distribution<double>(0, 1);
+    scale_.setOnes(lower_bound_.rows(),1);
 
-    ndof_ = lower_bound_.rows();
-    ellipse_center_ = 0.5 * (start_configuration_ + stop_configuration_);
-    focii_distance_ = (start_configuration_ - stop_configuration_).norm();
-    center_bound_ = 0.5 * (lower_bound_ + upper_bound_);
-    bound_width_ = 0.5 * (lower_bound_ - upper_bound_);
-    ellipse_axis_.resize(ndof_);
+    init();
+  }
 
-    rot_matrix_ = computeRotationMatrix(start_configuration_, stop_configuration_);
-
-    ROS_DEBUG_STREAM("rot_matrix_:\n" << rot_matrix_);
-    ROS_DEBUG_STREAM("ellipse center" << ellipse_center_.transpose());
-    ROS_DEBUG_STREAM("focii_distance_" << focii_distance_);
-    ROS_DEBUG_STREAM("center_bound_" << center_bound_.transpose());
-    ROS_DEBUG_STREAM("bound_width_" << bound_width_.transpose());
-
-
-    if (cost_ < std::numeric_limits<double>::infinity())
-    {
-      inf_cost_ = false;
-      setCost(cost);
-    }
-    else
-      inf_cost_ = true;
+  InformedSampler(const Eigen::VectorXd& start_configuration,
+                  const Eigen::VectorXd& stop_configuration,
+                  const Eigen::VectorXd& lower_bound,
+                  const Eigen::VectorXd& upper_bound,
+                  const Eigen::VectorXd& scale,
+                  const double& cost):
+    start_configuration_(start_configuration),
+    stop_configuration_(stop_configuration),
+    lower_bound_(lower_bound),
+    upper_bound_(upper_bound),
+    scale_(scale),
+    cost_(cost),
+    gen_{rd_()}//gen_(time(0))
+  {
+    init();
   }
 
   virtual Eigen::VectorXd sample();
   void setCost(const double& cost);
+
+  void setScale(const Eigen::VectorXd& scale)
+  {
+    scale_ = scale;
+    init();
+  }
 
   virtual bool inBounds(const Eigen::VectorXd& q);
   virtual bool collapse()
@@ -121,11 +126,11 @@ public:
 
   virtual void sampleImproved(){}
 
-  const Eigen::VectorXd& getLB(){return lower_bound_;}
-  const Eigen::VectorXd& getUB(){return upper_bound_;}
+  const Eigen::VectorXd getLB(){return lower_bound_.cwiseProduct(inv_scale_);}
+  const Eigen::VectorXd getUB(){return upper_bound_.cwiseProduct(inv_scale_);}
 
-  const Eigen::VectorXd& getStartConf(){return start_configuration_;}
-  const Eigen::VectorXd& getStopConf(){return stop_configuration_;}
+  const Eigen::VectorXd getStartConf(){return start_configuration_.cwiseProduct(inv_scale_);}
+  const Eigen::VectorXd getStopConf(){return stop_configuration_.cwiseProduct(inv_scale_);}
 
   const unsigned int& getDimension()const {return ndof_;}
 };

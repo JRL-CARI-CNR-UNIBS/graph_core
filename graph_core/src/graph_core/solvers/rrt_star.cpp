@@ -37,18 +37,11 @@ bool RRTStar::addStartTree(const TreePtr &start_tree, const double &max_time)
   return setProblem(max_time);
 }
 
-bool RRTStar::addGoal(const NodePtr &goal_node, const double &max_time)
-{
-  solved_ = false;
-  goal_node_ = goal_node;
-
-  return setProblem(max_time);
-}
 bool RRTStar::config(const ros::NodeHandle& nh)
 {
   RRT::config(nh);
   solved_ = false;
-  if (!nh.getParam("rewire_radius",max_distance_))
+  if (!nh.getParam("rewire_radius",r_rewire_))
   {
     ROS_DEBUG("%s/rewire_radius is not set. using 2.0*max_distance",nh.getNamespace().c_str());
     r_rewire_=2.0*max_distance_;
@@ -58,7 +51,7 @@ bool RRTStar::config(const ros::NodeHandle& nh)
 
 bool RRTStar::update(PathPtr& solution)
 {
-  PATH_COMMENT("RRT*::update");
+//  PATH_COMMENT("RRT*::update");
 
   return update(sampler_->sample(), solution);
 }
@@ -68,32 +61,70 @@ bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
   PATH_COMMENT("RRT*::update");
 
   if (!init_)
+  {
+    PATH_COMMENT("RRT* -> not init");
+
     return false;
+  }
   if (cost_ <= utopia_tolerance_ * best_utopia_)
   {
-    //ROS_INFO("Already optimal");
+    PATH_COMMENT("RRT*:: Solution already optimal");
     solution=solution_;
     completed_=true;
     return true;
   }
 
-  double old_path_cost = solution_->cost();
-
-  bool improved = start_tree_->rewire(configuration, r_rewire_);
-  if (improved)
+  if(not solved_)
   {
-    if (start_tree_->costToNode(goal_node_) >= (old_path_cost - 1e-8))
-      return false;
+    PATH_COMMENT("RRT* -> solving");
+    NodePtr new_node;
+    if(start_tree_->rewire(configuration,r_rewire_,new_node))
+    {
+      if((new_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
+      {
+        if(checker_->checkPath(new_node->getConfiguration(), goal_node_->getConfiguration()))
+        {
+          ConnectionPtr conn = std::make_shared<Connection>(new_node, goal_node_);
+          conn->setCost(metrics_->cost(new_node, goal_node_));
+          conn->add();
 
-    solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
-    solution_->setTree(start_tree_);
+          solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
+          solution_->setTree(start_tree_);
+          solution = solution_;
 
-    path_cost_ = solution_->cost();
-    cost_ = path_cost_+goal_cost_;
-    sampler_->setCost(path_cost_);
+          start_tree_->addNode(goal_node_);
+
+          path_cost_ = solution_->cost();
+          cost_=path_cost_+goal_cost_;
+          sampler_->setCost(path_cost_);
+
+          solved_ = true;
+
+          return true;
+        }
+      }
+    }
+    return false;
   }
-  solution = solution_;
-  return improved;
+  else
+  {
+    PATH_COMMENT("RRT* -> improving");
+    bool improved = start_tree_->rewire(configuration, r_rewire_);
+    if(improved)
+    {
+      if (start_tree_->costToNode(goal_node_) >= (solution_->cost() - 1e-8))
+        return false;
+
+      solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
+      solution_->setTree(start_tree_);
+
+      path_cost_ = solution_->cost();
+      cost_ = path_cost_+goal_cost_;
+      sampler_->setCost(path_cost_);
+    }
+    solution = solution_;
+    return improved;
+  }
 }
 
 
@@ -109,43 +140,79 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
     solution=solution_;
     return true;
   }
-  double old_path_cost = solution_->cost();
-  //double r_rewire = std::min(start_tree_->getMaximumDistance(), r_rewire_factor_ * sampler_->getSpecificVolume() * std::pow(std::log(start_tree_->getNumberOfNodes())/start_tree_->getNumberOfNodes(),1./dof_));
-  double r_rewire = start_tree_->getMaximumDistance();
-  bool improved = start_tree_->rewireToNode(n, r_rewire);
 
-  if (improved)
+  if(solution_ == nullptr)
   {
-    if (start_tree_->costToNode(goal_node_) >= (old_path_cost - 1e-8))
-      return false;
+    ROS_INFO("RRT* -> solving");
+    NodePtr new_node;
+    if(start_tree_->rewireToNode(n,r_rewire_,new_node))
+    {
+      if((new_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
+      {
+        if(checker_->checkPath(new_node->getConfiguration(), goal_node_->getConfiguration()))
+        {
+          ConnectionPtr conn = std::make_shared<Connection>(new_node, goal_node_);
+          conn->setCost(metrics_->cost(new_node, goal_node_));
+          conn->add();
 
-    solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
-    solution_->setTree(start_tree_);
+          solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
+          solution_->setTree(start_tree_);
+          solution = solution_;
 
-    path_cost_ = solution_->cost();
-    cost_ = path_cost_+goal_cost_;
-    sampler_->setCost(path_cost_);
+          start_tree_->addNode(goal_node_);
+
+          path_cost_ = solution_->cost();
+          cost_=path_cost_+goal_cost_;
+          sampler_->setCost(path_cost_);
+
+          solved_ = true;
+
+          return true;
+        }
+      }
+    }
+    return false;
   }
-  solution = solution_;
-  return improved;
+  else
+  {
+    PATH_COMMENT("RRT* -> improving");
+
+    //double r_rewire = std::min(start_tree_->getMaximumDistance(), r_rewire_factor_ * sampler_->getSpecificVolume() * std::pow(std::log(start_tree_->getNumberOfNodes())/start_tree_->getNumberOfNodes(),1./dof_));
+    bool improved = start_tree_->rewireToNode(n, r_rewire_);
+
+    if (improved)
+    {
+      if (start_tree_->costToNode(goal_node_) >= (solution_->cost() - 1e-8))
+        return false;
+
+      solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
+      solution_->setTree(start_tree_);
+
+      path_cost_ = solution_->cost();
+      cost_ = path_cost_+goal_cost_;
+      sampler_->setCost(path_cost_);
+    }
+    solution = solution_;
+    return improved;
+  }
 }
 
 bool RRTStar::solve(PathPtr &solution, const unsigned int& max_iter, const double &max_time)
 {
   ros::WallTime tic = ros::WallTime::now();
-  bool improved = false;
+  bool solved = false;
   for (unsigned int iter = 0; iter < max_iter; iter++)
   {
-    if (update(solution))
+    if(update(solution))
     {
-      ROS_DEBUG("Improved in %u iterations", iter);
-      solved_ = true;
-      improved = true;
+      ROS_DEBUG("Improved or solved in %u iterations", iter);
+      solved_ = true;  //if solution_ was set externally, solved_ was altready true -> use solved to know if solve() completed successfully
+      solved = true;
     }
     if((ros::WallTime::now()-tic).toSec()>=0.98*max_time)
       break;
   }
-  return improved;
+  return solved;
 }
 
 TreeSolverPtr RRTStar::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler)

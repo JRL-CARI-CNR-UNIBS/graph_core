@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
 All rights reserved.
 
@@ -29,83 +29,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
-
-bool Net::purgeSuccessors(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes)
+Net::Net(const TreePtr& tree)
 {
-  if (std::find(white_list.begin(), white_list.end(), node) != white_list.end())
-  {
-    ROS_INFO_STREAM("Node in white list: "<<*node);
-    return false;
-  }
-  assert(node);
+  verbose_ = false;
+  search_every_solution_ = true;
 
-  bool purged;
-  bool disconnect = true;
-  do
-  {
-    purged = false;
+  setTree(tree);
+  setMetrics(tree->getMetrics());
 
-    std::vector<NodePtr> successors = node->getChildren();
-    successors.insert(successors.end(),node->getNetChildrenConst().begin(),node->getNetChildrenConst().end());
-
-    for (NodePtr& n : successors)
-    {
-      assert(n.get()!=node.get());
-
-      if((n->getNetParentConnectionsSize())>0 || n == linked_tree_->getRoot())
-        continue;
-      else
-      {
-        if(not purgeSuccessors(n,white_list,removed_nodes))
-          disconnect = false;
-        else
-          purged = true;
-      }
-    }
-  }while(purged);
-
-  if(disconnect)
-  {
-    ConnectionPtr conn2convert;
-    std::vector<NodePtr> children = node->getChildren();
-    for(NodePtr& successor2save: children)
-    {
-      assert(successor2save->getNetParentConnectionsSize()>0);
-      assert(successor2save->getParentConnectionsSize() == 1);
-      assert(successor2save->parentConnection(0)->getParent() == node);
-
-      conn2convert = successor2save->netParentConnection(0); //the successor2save must be still part of the tree, so you convert one of its net parent connection into a parent connection
-      assert(conn2convert->isNet());
-      conn2convert->convertToConnection();
-
-      assert(successor2save->getParentConnectionsSize() == 1);
-    }
-
-    linked_tree_->purgeThisNode(node,removed_nodes);
-  }
-
-  return disconnect;
-}
-
-bool Net::purgeFromHere(ConnectionPtr& conn2node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes)
-{
-  NodePtr node = conn2node->getChild();
-
-  if((node->getNetParentConnectionsSize())>0 || node == linked_tree_->getRoot())
-  {
-    if(not conn2node->isNet())
-    {
-      ConnectionPtr conn2convert = node->netParentConnection(0);
-      assert(conn2convert->isNet());
-      conn2convert->convertToConnection();
-      removed_nodes = 0;
-    }
-
-    conn2node->remove();
-    return false;
-  }
-  else
-    return purgeSuccessors(node,white_list,removed_nodes);
+  cost_evaluation_condition_ = nullptr;
 }
 
 std::multimap<double,std::vector<ConnectionPtr>>& Net::getConnectionBetweenNodes(const NodePtr &start_node, const NodePtr& goal_node, const std::vector<NodePtr>& black_list, const double& max_time)
@@ -253,6 +185,9 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
           continue;
       }
 
+      if(cost_evaluation_condition_ && (*cost_evaluation_condition_)(conn2parent)) //if a condition exists and it is met, re-evaluate the connection cost
+        conn2parent->setCost(metrics_->cost(conn2parent->getParent(),conn2parent->getChild()));
+
       cost2parent = cost2here+conn2parent->getCost();
 
       if(cost2parent == std::numeric_limits<double>::infinity() || cost2parent>=cost_to_beat_ || std::abs(cost2parent-cost_to_beat_)<=NET_ERROR_TOLERANCE) //NET_ERROR_TOLERANCE to cope with machine errors
@@ -277,7 +212,7 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
                return true;
              }());
 
-      double cost_heuristics = cost2parent+(parent->getConfiguration()-start_node->getConfiguration()).norm();
+      double cost_heuristics = cost2parent+metrics_->utopia(parent->getConfiguration(),start_node->getConfiguration());
       if(cost_heuristics>=cost_to_beat_ || std::abs(cost_heuristics-cost_to_beat_)<=NET_ERROR_TOLERANCE )
       {
         now = ros::WallTime::now();
@@ -367,9 +302,6 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
         now = ros::WallTime::now();
         if(verbose_)
           ROS_INFO_STREAM("time visited list check: "<<(now-time_visited_list_check).toSec());
-
-        //        std::vector<ConnectionPtr> connections2parent = connections2here_;
-        //        connections2parent.push_back(conn2parent);
 
         connections2parent_.push_back(conn2parent);
 
