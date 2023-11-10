@@ -123,7 +123,7 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
 
 
   InformedSamplerPtr sampler = std::make_shared<InformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler_->getLB(),sampler_->getUB());
-  TubeInformedSamplerPtr tube_sampler = std::make_shared<TubeInformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler_,metrics_);
+  TubeInformedSamplerPtr tube_sampler = std::make_shared<TubeInformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler,metrics_);
   tube_sampler->setLocalBias(local_bias_);
   tube_sampler->setRadius(tube_radius_);
   if (solution)
