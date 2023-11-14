@@ -340,6 +340,7 @@ bool MultigoalSolver::update(PathPtr& solution)
     else if (ud_(gen_)>goal_probabilities_.at(igoal))
       continue;
 
+    ROS_INFO_THROTTLE(60,"goal %u cost=%f",igoal, costs_.at(igoal));
     were_goals_sampled_.at(igoal) = true;
 
     NodePtr new_start_node, new_goal_node;
