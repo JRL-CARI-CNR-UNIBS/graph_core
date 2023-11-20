@@ -63,6 +63,7 @@ protected:
   bool informed_=true;
   bool warp_=false;
   bool first_warp_=false;
+  bool use_kdtree_=true;
 
   NodePtr goal_node_;                                          // if multigoal, it is related the best goal
   double path_cost_;                                           // if multigoal, it is related the best goal
@@ -97,6 +98,8 @@ public:
   virtual bool update(PathPtr& solution) = 0;
   virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution){return false;}
   virtual bool update(const NodePtr& n, PathPtr& solution){return false;}
+
+  virtual bool initGoalSelector(){return false;}
 
   virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100, const double &max_time = std::numeric_limits<double>::infinity());
   virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;
@@ -157,6 +160,11 @@ public:
   TreePtr getStartTree() const
   {
     return start_tree_;
+  }
+
+  virtual std::vector<TreePtr> getGoalTrees()
+  {
+    ROS_DEBUG("virtual fcn");
   }
 
   PathPtr getSolution() const

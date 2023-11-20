@@ -108,6 +108,7 @@ bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iterat
   {
     if (solved_)
     {
+      //ROS_FATAL("solved in %u iterations", iter);
       return true;
     }
     step(solution);

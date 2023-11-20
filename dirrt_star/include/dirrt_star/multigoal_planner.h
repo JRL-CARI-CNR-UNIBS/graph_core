@@ -40,6 +40,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rosparam_utilities/rosparam_utilities.h>
 #include <geometry_msgs/PoseArray.h>
 #include <ros/callback_queue.h>
+#include <std_msgs/Float64MultiArray.h>
+
 
 #include <graph_core/graph/graph_display.h>
 
@@ -91,20 +93,25 @@ protected:
   Eigen::VectorXd m_ub;
   Eigen::VectorXd m_max_speed_;
   std::string group_;
-  std::string tool_frame;
-  bool display_flag=false;;
+  bool display_flag_=false;
+  bool display_tree_=false;
+  double display_tree_period_=1.0;
 
   pathplan::MetricsPtr metrics_;
   pathplan::AvoidanceMetricsPtr avoidance_metrics_;
   pathplan::AvoidanceGoalCostFunctionPtr m_avoidance_goal_cost_fcn;
   pathplan::CollisionCheckerPtr checker;
-
+  pathplan::NodePtr m_start_node;
   ros::Subscriber m_centroid_sub;
+  ros::Publisher m_solver_performance;
 
   double collision_distance_=0.04;
   double collision_thread_=5;
   bool m_is_running=false;
   bool m_stop=false;
+
+  virtual void setSampler(pathplan::SamplerPtr& sampler,
+                          pathplan::TreeSolverPtr& solver);
 
 
 };

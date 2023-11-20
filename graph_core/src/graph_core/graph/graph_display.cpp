@@ -42,12 +42,19 @@ Display::Display(const planning_scene::PlanningSceneConstPtr planning_scene,
   if (last_link.empty())
     last_link_=planning_scene->getRobotModel()->getJointModelGroup(group_name)->getLinkModelNames().back();
 
+
+
   node_marker_scale_.resize(3,DEFAULT_NODE_SIZE);
   connection_marker_scale_.resize(3,DEFAULT_CONNECTION_SIZE);
   tree_marker_scale_.resize(3,DEFAULT_TREE_SIZE);
   marker_id_=0;
   state_=std::make_shared<moveit::core::RobotState>(planning_scene_->getCurrentState());
-  marker_pub_ = nh_.advertise<visualization_msgs::Marker>("/marker_visualization_topic", 1000000);
+  jmg_ = state_->getJointModelGroup(group_name_);
+  joint_names_=jmg_->getActiveJointModelNames();
+  joint_models_=jmg_->getActiveJointModels();
+  marker_pub_ = nh_.advertise<visualization_msgs::Marker>("/marker_visualization_topic", 1000,true);
+  for (int idx=0;idx<4;idx++)
+    clearMarkers();
 }
 
 void Display::clearMarkers(const std::string& ns)
@@ -99,7 +106,9 @@ int Display::displayNode(const NodePtr &n,
   marker.type = visualization_msgs::Marker::SPHERE;
 
   marker.ns = ns;
-  state_->setJointGroupPositions(group_name_,n->getConfiguration());
+
+  for (size_t ij=0;ij<joint_names_.size();ij++)
+    state_->setJointPositions(joint_models_.at(ij),&n->getConfiguration()(ij));
   tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),marker.pose);
 
   marker.header.frame_id=planning_scene_->getRobotModel()->getRootLink()->getName();
@@ -167,11 +176,15 @@ int Display::displayConnection(const ConnectionPtr& conn,
     conf2 = parent + i*MAX_LENGTH*v;
 
     geometry_msgs::Pose pose;
-    state_->setJointGroupPositions(group_name_,conf1);
+    //state_->setJointGroupPositions(group_name_,conf1);
+    for (size_t ij=0;ij<joint_names_.size();ij++)
+      state_->setJointPositions(joint_models_.at(ij),&conf1(ij));
     tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
     marker.points.push_back(pose.position);
 
-    state_->setJointGroupPositions(group_name_,conf2);
+    //state_->setJointGroupPositions(group_name_,conf2);
+    for (size_t ij=0;ij<joint_names_.size();ij++)
+      state_->setJointPositions(joint_models_.at(ij),&conf2(ij));
     tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
     marker.points.push_back(pose.position);
 
@@ -246,11 +259,17 @@ int Display::displayPath(const PathPtr &path,
     {
       conf2 = parent + i*MAX_LENGTH*v;
 
-      state_->setJointGroupPositions(group_name_,conf1);
+      geometry_msgs::Pose pose;
+      //state_->setJointGroupPositions(group_name_,conf1);
+      for (size_t ij=0;ij<joint_names_.size();ij++)
+        state_->setJointPositions(joint_models_.at(ij),&conf1(ij));
+
       tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
       marker.points.push_back(pose.position);
 
-      state_->setJointGroupPositions(group_name_,conf2);
+      //state_->setJointGroupPositions(group_name_,conf2);
+      for (size_t ij=0;ij<joint_names_.size();ij++)
+        state_->setJointPositions(joint_models_.at(ij),&conf2(ij));
       tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
       marker.points.push_back(pose.position);
 
@@ -357,11 +376,17 @@ std::vector<int> Display::displayPathAndWaypoints(const PathPtr &path,
     {
       conf2 = parent + i*MAX_LENGTH*v;
 
-      state_->setJointGroupPositions(group_name_,conf1);
+      geometry_msgs::Pose pose;
+      //state_->setJointGroupPositions(group_name_,conf1);
+      for (size_t ij=0;ij<joint_names_.size();ij++)
+        state_->setJointPositions(joint_models_.at(ij),&conf1(ij));
+
       tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
       marker.points.push_back(pose.position);
 
-      state_->setJointGroupPositions(group_name_,conf2);
+      //state_->setJointGroupPositions(group_name_,conf2);
+      for (size_t ij=0;ij<joint_names_.size();ij++)
+        state_->setJointPositions(joint_models_.at(ij),&conf2(ij));
       tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
       marker.points.push_back(pose.position);
 
@@ -483,11 +508,15 @@ void Display::displayTreeNode(const NodePtr &n,
     if(add_points)
     {
       geometry_msgs::Pose pose;
-      state_->setJointGroupPositions(group_name_,conn->getParent()->getConfiguration());
+      //state_->setJointGroupPositions(group_name_,conn->getParent()->getConfiguration());
+      for (size_t ij=0;ij<joint_names_.size();ij++)
+        state_->setJointPositions(joint_models_.at(ij),&conn->getParent()->getConfiguration()(ij));
       tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
       points.push_back(pose.position);
 
-      state_->setJointGroupPositions(group_name_,conn->getChild()->getConfiguration());
+//      state_->setJointGroupPositions(group_name_,conn->getChild()->getConfiguration());
+      for (size_t ij=0;ij<joint_names_.size();ij++)
+        state_->setJointPositions(joint_models_.at(ij),&conn->getChild()->getConfiguration()(ij));
       tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
       points.push_back(pose.position);
 
@@ -547,11 +576,15 @@ void Display::displayNetNode(const NodePtr &n,
   geometry_msgs::Pose pose;
   for(const ConnectionPtr& conn: connections)
   {
-    state_->setJointGroupPositions(group_name_,conn->getParent()->getConfiguration());
+    geometry_msgs::Pose pose;
+    for (size_t ij=0;ij<joint_names_.size();ij++)
+      state_->setJointPositions(joint_models_.at(ij),&conn->getParent()->getConfiguration()(ij));
+
     tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
     points.push_back(pose.position);
 
-    state_->setJointGroupPositions(group_name_,conn->getChild()->getConfiguration());
+    for (size_t ij=0;ij<joint_names_.size();ij++)
+      state_->setJointPositions(joint_models_.at(ij),&conn->getChild()->getConfiguration()(ij));
     tf::poseEigenToMsg(state_->getGlobalLinkTransform(last_link_),pose);
     points.push_back(pose.position);
 

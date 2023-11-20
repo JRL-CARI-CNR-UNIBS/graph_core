@@ -55,6 +55,7 @@
   <build_export_depend>sensor_msgs</build_export_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
+  <depend>rosparam_utilities</depend>
 
 
 <depend>subscription_notifier</depend>

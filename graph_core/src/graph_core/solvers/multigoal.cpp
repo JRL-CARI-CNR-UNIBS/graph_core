@@ -40,7 +40,7 @@ bool MultigoalSolver::addStart(const NodePtr& start_node, const double &max_time
     ROS_ERROR("Solver is not configured.");
     return false;
   }
-  start_tree_ = std::make_shared<Tree>(start_node, max_distance_, checker_, metrics_);
+  start_tree_ = std::make_shared<Tree>(start_node, max_distance_, checker_, metrics_,use_kdtree_);
   solved_ = false;
 
   setProblem(max_time);
@@ -116,11 +116,14 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
   else
   {
     path_cost=cost = std::numeric_limits<double>::infinity();
-    goal_tree = std::make_shared<Tree>(goal_node, max_distance_, checker_, metrics_);
+    goal_tree = std::make_shared<Tree>(goal_node, max_distance_, checker_, metrics_,use_kdtree_);
     status=GoalStatus::search;
   }
 
-  TubeInformedSamplerPtr tube_sampler = std::make_shared<TubeInformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler_->getLB(),sampler_->getUB(),path_cost_+goal_cost_-goal_cost);
+
+
+  InformedSamplerPtr sampler = std::make_shared<InformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler_->getLB(),sampler_->getUB());
+  TubeInformedSamplerPtr tube_sampler = std::make_shared<TubeInformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler_,metrics_);
   tube_sampler->setLocalBias(local_bias_);
   tube_sampler->setRadius(tube_radius_);
   if (solution)
@@ -134,7 +137,10 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
   utopias_.push_back(utopia);
   solutions_.push_back(solution);
   tube_samplers_.push_back(tube_sampler);
+  samplers_.push_back(sampler);
   status_.push_back(status);
+  were_goals_sampled_.push_back(false);
+  goal_probabilities_.push_back(1.0);
 
   if (isBestSolution(goal_nodes_.size()-1))
     ROS_DEBUG_STREAM("Goal "<<goal_node->getConfiguration().transpose() << " is the best one with a cost = "  << cost);
@@ -170,9 +176,14 @@ bool MultigoalSolver::isBestSolution(const int &index)
     if (status_.at(igoal)==GoalStatus::done)
       continue;
     if (mixed_strategy_)
+    {
       tube_samplers_.at(igoal)->setCost(path_cost_+goal_cost_-goal_costs_.at(igoal));
+      samplers_.at(igoal)->setCost(path_cost_+goal_cost_-goal_costs_.at(igoal));
+    }
     else if (informed_)
-      sampler_->setCost(path_cost_+goal_cost_-goal_costs_.at(igoal));
+    {
+      samplers_.at(igoal)->setCost(path_cost_+goal_cost_-goal_costs_.at(igoal));
+    }
   }
 
   if ((cost_<0.9999*cost_at_last_clean) || start_tree_->needCleaning())
@@ -190,6 +201,8 @@ void MultigoalSolver::resetProblem()
   goal_trees_.clear();
   path_costs_.clear();
   utopias_.clear();
+  were_goals_sampled_.clear();
+  goal_probabilities_.clear();
   solutions_.clear();
   tube_samplers_.clear();
   status_.clear();
@@ -212,7 +225,7 @@ bool MultigoalSolver::config(const ros::NodeHandle& nh)
   if (not TreeSolver::config(nh))
     return false;
 
-  if (!nh.getParam("rewire_radius",max_distance_))
+  if (!nh.getParam("rewire_radius",r_rewire_))
   {
     ROS_DEBUG("%s/rewire_radius is not set. using 2.0*max_distance",nh.getNamespace().c_str());
     r_rewire_=2.0*max_distance_;
@@ -268,7 +281,7 @@ bool MultigoalSolver::config(const ros::NodeHandle& nh)
   if (!nh.getParam("forgetting_factor",forgetting_factor_))
   {
     ROS_WARN("%s/forgetting_factor is not set. using 0.01",nh.getNamespace().c_str());
-    tube_radius_=0.3;
+    forgetting_factor_=0.01;
   }
   if (forgetting_factor_<=0)
   {
@@ -277,6 +290,14 @@ bool MultigoalSolver::config(const ros::NodeHandle& nh)
   }
 
   configured_=true;
+  return true;
+}
+
+bool MultigoalSolver::initGoalSelector()
+{
+  goal_manager_ = std::make_shared<multi_goal_selection::GoalSelectionManager>(nh_.getNamespace(), goal_nodes_.size(),sampler_->getDimension());
+  if (goal_manager_->isWarmStartSet())
+    goal_manager_->warmStart(costs_,utopias_,cost_);
   return true;
 }
 
@@ -297,34 +318,48 @@ bool MultigoalSolver::update(PathPtr& solution)
   }
 
 
+//  ROS_INFO("update probabilities");
+
+  if (goal_probabilities_.size()==1)
+    goal_probabilities_.at(0)=1.0;
+  else
+    goal_probabilities_ = goal_manager_->calculateProbabilities(were_goals_sampled_,costs_,utopias_,cost_);
+
+  std::fill(were_goals_sampled_.begin(), were_goals_sampled_.end(), false);
+
   bool global_improvement=false;
   double old_cost=cost_;
 
-
   for (unsigned int igoal=0;igoal<goal_nodes_.size();igoal++)
   {
+    if (utopias_.at(igoal)>cost_)
+      continue;
+    if (goal_probabilities_.at(igoal)<=0.0)
+      continue;
+    else if (goal_probabilities_.at(igoal)>=1.0);
+    else if (ud_(gen_)>goal_probabilities_.at(igoal))
+      continue;
+
+    were_goals_sampled_.at(igoal) = true;
+
     NodePtr new_start_node, new_goal_node;
     bool add_to_start, add_to_goal;
     Eigen::VectorXd configuration;
     if (mixed_strategy_)
       configuration = tube_samplers_.at(igoal)->sample();
     else
-      configuration = sampler_->sample();
+      configuration = samplers_.at(igoal)->sample();
     bool is_goal_biased=ud_(gen_)<goal_bias_;
 
-    double prob=1.0;
-    double min_prob=0.2;
-    if ((costs_.at(igoal)-cost_)>2.0*cost_)
-    {
-      prob=min_prob;
-    }
-    else
-    {
-      prob=1.0-(1.0-min_prob)*((costs_.at(igoal)-cost_))/(2.0*cost_);
-    }
-    if (ud_(gen_)>prob)
-      continue;
     bool improved=false;
+
+    if (costs_.at(igoal)<utopias_.at(igoal))
+    {
+      ROS_ERROR("GOAL %d, COST %f, UTOPIA %f",igoal,costs_.at(igoal),utopias_.at(igoal));
+      solved_=false;
+      return false;
+    }
+
     switch (status_.at(igoal))
     {
 
@@ -348,25 +383,24 @@ bool MultigoalSolver::update(PathPtr& solution)
         }
         else // not is_goal_bias, add a new random node
         {
-          ROS_INFO_THROTTLE(0.1,"nodes size =%u",start_tree_->getNumberOfNodes());
           if (extend_)
             add_to_start = start_tree_->extend(configuration, new_start_node);
           else
             add_to_start = start_tree_->connect(configuration, new_start_node);
-//          if (add_to_start) // if a new node is added, check if it near to the goal
-//          {
-//            if (metrics_->utopia(new_start_node,goal_nodes_.at(igoal))<50)
-//            {
-//              // if yes, try to extend to the goal
-//              ROS_INFO_THROTTLE(0.1,"try connect the goal");
-//              add_to_start = start_tree_->extendToNode(goal_nodes_.at(igoal), new_start_node);
-//              if (new_start_node==goal_nodes_.at(igoal)) // a solution is found
-//              {
-//                improved=true;
-//                goal_trees_.at(igoal)->cleanTree();
-//              }
-//            }
-//          }
+          if (add_to_start) // if a new node is added, check if it near to the goal
+          {
+            if (metrics_->utopia(new_start_node,goal_nodes_.at(igoal))<max_distance_)
+            {
+              // if yes, try to extend to the goal
+              ROS_INFO_THROTTLE(0.1,"try connect the goal");
+              add_to_start = start_tree_->extendToNode(goal_nodes_.at(igoal), new_start_node);
+              if (new_start_node==goal_nodes_.at(igoal)) // a solution is found
+              {
+                improved=true;
+                goal_trees_.at(igoal)->cleanTree();
+              }
+            }
+          }
         }
       }
       else  // birectional
@@ -390,14 +424,15 @@ bool MultigoalSolver::update(PathPtr& solution)
           add_to_start = extend_? start_tree_->extend(configuration, new_start_node):
                                   start_tree_->connect(configuration, new_start_node);
 
+          add_to_start = add_to_start?(configuration-new_start_node->getConfiguration()).norm()<1e-6: false;
 
           add_to_goal = extend_? goal_trees_.at(igoal)->extend(configuration, new_goal_node):
                                  goal_trees_.at(igoal)->connect(configuration, new_goal_node);
 
+          add_to_goal = add_to_goal?(configuration-new_goal_node->getConfiguration()).norm()<1e-6: false;
 
           if (add_to_start && add_to_goal) // a solution is found
           {
-
             NodePtr parent=new_goal_node->getParents().at(0);
             double cost_to_parent=new_goal_node->parentConnection(0)->getCost();
             double time_cost = new_goal_node->parentConnection(0)->getTimeCostUpdate();
@@ -427,13 +462,11 @@ bool MultigoalSolver::update(PathPtr& solution)
         solutions_.at(igoal)->setTree(start_tree_);
 
         double cost_1=solutions_.at(igoal)->cost();
+
         if (first_warp_)
         {
           ros::WallTime twarp=ros::WallTime::now();
-          for (int iwarp=0;iwarp<10;iwarp++)
-          {
-            solutions_.at(igoal)->warp();
-          }
+          solutions_.at(igoal)->warp();
           ROS_DEBUG("warp: cost from %f to %f in %f second",cost_1,solutions_.at(igoal)->cost(),(ros::WallTime::now()-twarp).toSec());
 
           double cost_0=solutions_.at(igoal)->cost();
@@ -489,10 +522,9 @@ bool MultigoalSolver::update(PathPtr& solution)
         if (warp_)
         {
           ros::WallTime twarp=ros::WallTime::now();
-          for (int iwarp=0;iwarp<10;iwarp++)
-          {
-            solutions_.at(igoal)->warp();
-          }
+
+          solutions_.at(igoal)->warp();
+
           ROS_DEBUG("warp: cost from %f to %f in %f second",cost_1,solutions_.at(igoal)->cost(),(ros::WallTime::now()-twarp).toSec());
 
           double cost_0=solutions_.at(igoal)->cost();
@@ -645,6 +677,11 @@ TreeSolverPtr MultigoalSolver::clone(const MetricsPtr& metrics, const CollisionC
   new_solver->config(nh_);
   return new_solver;
 
+}
+
+std::vector<TreePtr> MultigoalSolver::getGoalTrees()
+{
+  return goal_trees_;
 }
 
 }  // namespace pathplan

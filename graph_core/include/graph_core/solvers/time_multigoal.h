@@ -27,55 +27,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #pragma once
-#include <graph_core/solvers/tree_solver.h>
-#include <graph_core/solvers/rrt_star.h>
+#include <graph_core/solvers/multigoal.h>
 #include <graph_core/time_sampler.h>
+
 namespace pathplan
 {
 
 
 
-class TimeMultigoalSolver: public TreeSolver
+class TimeMultigoalSolver: public MultigoalSolver
 {
 protected:
-  enum GoalStatus { search, refine, done, discard};
-  std::vector<NodePtr> goal_nodes_;
-  std::vector<TreePtr> goal_trees_;
-  std::vector<double> path_costs_;
-  std::vector<double> goal_costs_;
-  std::vector<double> costs_;
-  std::vector<double> utopias_;
-  std::vector<PathPtr> solutions_;
-  std::vector<TimeBasedInformedSamplerPtr> time_samplers_;
-  std::vector<GoalStatus> status_;
   TimeBasedInformedSamplerPtr time_based_sampler_;
-  std::random_device rd_;
-  std::mt19937 gen_;
-  std::uniform_real_distribution<double> ud_;
 
-  double cost_at_last_clean=std::numeric_limits<double>::infinity();
-  double best_utopia_=std::numeric_limits<double>::infinity();
-  int best_goal_index=-1;
-  double max_distance_=1.0;
-  double utopia_tolerance=1.003;
-  double r_rewire_;
-  bool extend_ = false;
-  virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity());
-  virtual void clean(){}
-
-  bool isBestSolution(const int& index);
-
-  virtual void printMyself(std::ostream& os) const;
 public:
 
   TimeMultigoalSolver(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
              const SamplerPtr& sampler,
              const Eigen::VectorXd& max_speed):
-    TreeSolver(metrics, checker, sampler),
-    gen_(time(0))
+    MultigoalSolver(metrics, checker, sampler)
   {
-    ud_ = std::uniform_real_distribution<double>(0, 1);
     time_based_sampler_ =  std::make_shared<TimeBasedInformedSampler>(sampler->getStartConf(),
                                                                       sampler->getStopConf(),
                                                                       sampler->getLB(),
@@ -84,20 +56,10 @@ public:
                                                                       sampler->getCost());
   }
 
-  virtual bool config(const ros::NodeHandle& nh);
-  virtual bool update(PathPtr& solution);
-
-  virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity());
-  virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity());
-  virtual void resetProblem();
-  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler);
-
-
-  void cleanTree();
-
+  bool addGoal(const NodePtr &goal_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
 };
 
-typedef std::shared_ptr<TreeSolver> TreeSolverPtr;
+typedef std::shared_ptr<TimeMultigoalSolver> TimeMultigoalSolverPtr;
 
 
 }  // namespace pathplan

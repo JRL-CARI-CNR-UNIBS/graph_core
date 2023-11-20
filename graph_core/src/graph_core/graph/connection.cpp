@@ -32,7 +32,7 @@ namespace pathplan
 
 Connection::Connection(const NodePtr& parent, const NodePtr& child, const bool is_net):
   parent_(parent),
-  child_(child)
+  child_(child),
 {
   euclidean_norm_ = (child->getConfiguration() - parent->getConfiguration()).norm();
   flags_ = {false, is_net, false}; //valid, is_net, recently_checked
@@ -77,6 +77,9 @@ bool Connection::getFlag(const int& idx, const bool default_value)
     return flags_[idx];
   else
     return default_value;  //if the value has not been set, return the default value
+=======
+  likelihood_=1.0;
+>>>>>>> master
 }
 
 void Connection::add(const bool is_net)

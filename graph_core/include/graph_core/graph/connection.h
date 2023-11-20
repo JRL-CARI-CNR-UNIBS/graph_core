@@ -41,6 +41,7 @@ protected:
   double cost_;
   double euclidean_norm_;
   double time_cost_update_;
+  double likelihood_;
 
   /**
    * @brief flags_ is a vector of flags. By default, the first three positions are reserved for valid flag, net flag and recently checked flag.
@@ -143,6 +144,10 @@ public:
    * @return true if the flag is set correctly, flase otherwise
    */
   bool setFlag(const int& idx, const bool flag);
+
+  void setLikelihood(const double& likelihood){likelihood_=likelihood;}
+
+  virtual ConnectionPtr clone();
 
   /**
    * @brief getFlag returns the value of the flag at position idx. It returns the value if the flag exists, otherwise return the default value.

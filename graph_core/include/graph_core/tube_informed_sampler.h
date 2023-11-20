@@ -39,9 +39,12 @@ class TubeInformedSampler: public InformedSampler
 protected:
   std::vector<Eigen::VectorXd>  path_;
   std::vector<double> partial_length_;
+  std::vector<double> partial_cost_;
   double radius_;
   double length_;
   double local_bias_=0.8;
+  SamplerPtr sampler_;
+  MetricsPtr metrics_;
 
   bool couldImprove(const Eigen::VectorXd &q);
 
@@ -50,13 +53,14 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   TubeInformedSampler(const Eigen::VectorXd& start_configuration,
                       const Eigen::VectorXd& stop_configuration,
-                      const Eigen::VectorXd& lower_bound,
-                      const Eigen::VectorXd& upper_bound,
-                      const double& cost = std::numeric_limits<double>::infinity()):
-    InformedSampler(start_configuration,stop_configuration,lower_bound,upper_bound,cost)
+                      const SamplerPtr& sampler,
+                      const MetricsPtr& metrics):
+    InformedSampler(start_configuration,stop_configuration,sampler->getLB(),sampler->getUB(),sampler->cost())
   {
     length_ = 0;
     radius_=0;
+    sampler_=sampler;
+    metrics_=metrics;
   }
 
   bool setPath(const pathplan::PathPtr& path);
@@ -66,6 +70,7 @@ public:
   bool setLocalBias(const double& local_bias);
   Eigen::VectorXd pointOnCurvilinearAbscissa(const double& abscissa);
   virtual Eigen::VectorXd sample();
+
 };
 
 

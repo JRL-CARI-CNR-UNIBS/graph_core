@@ -59,6 +59,10 @@ protected:
   ros::NodeHandle nh_;
   moveit::core::RobotStatePtr state_;
 
+  const moveit::core::JointModelGroup* jmg_;
+  std::vector<std::string> joint_names_;
+  std::vector<const moveit::core::JointModel*> joint_models_;
+
   void displayTreeNode(const NodePtr& n,
                        const TreePtr& tree,
                        std::vector<geometry_msgs::Point> &points,

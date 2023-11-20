@@ -29,6 +29,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 #include <graph_core/solvers/tree_solver.h>
 #include <graph_core/tube_informed_sampler.h>
+#include <graph_core/multi_goal_selection/goal_selection_manager.h>
+#include <graph_core/time_metrics.h>
+#include <graph_core/time_sampler.h>
+
 namespace pathplan
 {
 
@@ -42,12 +46,15 @@ protected:
   std::vector<NodePtr> goal_nodes_;
   std::vector<double> costs_;
   std::vector<double> utopias_;
+  std::vector<double> goal_probabilities_;
+  std::vector<bool> were_goals_sampled_;
   std::vector<PathPtr> solutions_;
   std::vector<double> goal_costs_;
   std::vector<double> path_costs_;
 
   std::vector<TreePtr> goal_trees_;
   std::vector<TubeInformedSamplerPtr> tube_samplers_;
+  std::vector<InformedSamplerPtr> samplers_;
   std::vector<GoalStatus> status_;
 
   std::random_device rd_;
@@ -68,6 +75,8 @@ protected:
   virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity()) override;
   bool isBestSolution(const int& index);
 
+  multi_goal_selection::GoalSelectionManagerPtr goal_manager_;
+
   virtual void printMyself(std::ostream& os) const override;
 public:
 
@@ -81,6 +90,7 @@ public:
   }
 
   virtual bool config(const ros::NodeHandle& nh) override;
+  virtual bool initGoalSelector() ;
   virtual bool update(PathPtr& solution) override;
 
   virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
@@ -89,6 +99,7 @@ public:
   virtual void resetProblem() override;
   virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler) override;
 
+  std::vector<TreePtr> getGoalTrees();
 
   void cleanTree();
 

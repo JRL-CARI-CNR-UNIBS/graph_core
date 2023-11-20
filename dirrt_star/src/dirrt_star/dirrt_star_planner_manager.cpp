@@ -33,6 +33,33 @@ PLUGINLIB_EXPORT_CLASS(pathplan::dirrt_star::PathPlanerManager, planning_interfa
 namespace pathplan {
 namespace dirrt_star {
 
+XmlRpc::XmlRpcValue inheritConfig(ros::NodeHandle& nh,const std::string& config_name)
+{
+  XmlRpc::XmlRpcValue config;
+  if (not  nh.getParam(config_name,config))
+  {
+    throw std::invalid_argument(config_name+" does not exist");
+  }
+
+  if (not config.hasMember("inherit_from"))
+    return config;
+
+  XmlRpc::XmlRpcValue parent_config=inheritConfig(nh,config["inherit_from"]);
+
+  for (XmlRpc::XmlRpcValue::ValueStruct::const_iterator it=parent_config.begin();it!=parent_config.end();it++)
+  {
+    std::string key=it->first;
+    if (not config.hasMember(key))
+    {
+      config[key]=it->second;
+    }
+  }
+
+  nh.setParam(config_name,config);
+
+  return config;
+}
+
 bool PathPlanerManager::initialize(const moveit::core::RobotModelConstPtr& model, const std::string& ns)
 {
   COMMENT("load manager");
@@ -50,7 +77,9 @@ bool PathPlanerManager::initialize(const moveit::core::RobotModelConstPtr& model
   m_nh.getParam("group_names_map",planner_map);
   for (std::pair<std::string,std::string> p: planner_map)
   {
+
     COMMENT("Group name = %s, planner name: %s",p.second.c_str(),p.first.c_str());
+    inheritConfig(m_nh,p.first);
 
     std::string type;
     if (!m_nh.getParam(ns+"/"+p.first+"/type",type))
@@ -69,10 +98,10 @@ bool PathPlanerManager::initialize(const moveit::core::RobotModelConstPtr& model
     {
       ptr= std::make_shared<MultigoalPlanner>(ns+"/"+p.first,p.second,model);
     }
-//    else if (!type.compare("TimeBasedMultigoal"))
-//    {
-//      ptr= std::make_shared<TimeBasedMultiGoalPlanner>(ns+"/"+p.first,p.second,model);
-//    }
+    else if (!type.compare("TimeBasedMultigoal"))
+    {
+      ptr= std::make_shared<TimeBasedMultiGoalPlanner>(ns+"/"+p.first,p.second,model);
+    }
 //    else if (!type.compare("HAMPTimeBasedMultigoal"))
 //    {
 //      ptr= std::make_shared<HAMPTimeBasedMultiGoalPlanner>(ns+"/"+p.first,p.second,model);

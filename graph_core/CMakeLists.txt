@@ -49,6 +49,7 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/narrow_pass_checker.cpp
   src/${PROJECT_NAME}/boxes_checker.cpp
   src/${PROJECT_NAME}/collision_checker.cpp
+  src/${PROJECT_NAME}/multi_goal_selection/goal_selection_manager.cpp
   src/${PROJECT_NAME}/graph/node.cpp
   src/${PROJECT_NAME}/graph/connection.cpp
   src/${PROJECT_NAME}/graph/net.cpp
@@ -57,18 +58,28 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/graph/path.cpp
   src/${PROJECT_NAME}/graph/graph_display.cpp
   src/${PROJECT_NAME}/solvers/multigoal.cpp
-  #src/${PROJECT_NAME}/solvers/time_multigoal.cpp
+  src/${PROJECT_NAME}/solvers/time_multigoal.cpp
   src/${PROJECT_NAME}/solvers/tree_solver.cpp
   src/${PROJECT_NAME}/solvers/birrt.cpp
   src/${PROJECT_NAME}/solvers/rrt_star.cpp
   src/${PROJECT_NAME}/solvers/rrt.cpp
   src/${PROJECT_NAME}/solvers/anytime_rrt.cpp
   src/${PROJECT_NAME}/solvers/path_solver.cpp
+  src/${PROJECT_NAME}/datastructure/kdtree.cpp
+  src/${PROJECT_NAME}/datastructure/vector.cpp
+
   )
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
+)
+
+add_executable(goal_selection_test_node tests/goal_selection_test_node.cpp)
+add_dependencies(goal_selection_test_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(goal_selection_test_node
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
 )
 
 

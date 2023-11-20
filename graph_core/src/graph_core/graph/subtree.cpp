@@ -32,9 +32,10 @@ namespace pathplan
 Subtree::Subtree(const TreePtr& parent_tree,
                  const NodePtr& root):
   Tree(root,parent_tree->getMaximumDistance(),
-       parent_tree->getChecker(),parent_tree->getMetrics()),
+  parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getUseKdTree()),
   parent_tree_(parent_tree)
 {
+  ROS_FATAL("QUI");
   populateTreeFromNode(root);
 }
 
@@ -42,7 +43,7 @@ Subtree::Subtree(const TreePtr& parent_tree,
                  const NodePtr& root,
                  const std::vector<NodePtr>& black_list):
   Tree(root,parent_tree->getMaximumDistance(),
-       parent_tree->getChecker(),parent_tree->getMetrics()),
+       parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getUseKdTree()),
   parent_tree_(parent_tree)
 {
   double cost = std::numeric_limits<double>::infinity();
@@ -59,7 +60,7 @@ Subtree::Subtree(const TreePtr& parent_tree,
                  const Eigen::VectorXd& focus2,
                  const double& cost):
   Tree(root,parent_tree->getMaximumDistance(),
-       parent_tree->getChecker(),parent_tree->getMetrics()),
+  parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getUseKdTree()),
   parent_tree_(parent_tree)
 {
   std::vector<NodePtr> black_list;
@@ -75,8 +76,8 @@ Subtree::Subtree(const TreePtr& parent_tree,
                  const bool node_check):
   parent_tree_(parent_tree),
   Tree(root,parent_tree->getMaximumDistance(),
-       parent_tree->getChecker(),parent_tree->getMetrics())
-
+       parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getUseKdTree()),
+  parent_tree_(parent_tree)
 {
   populateSubtreeInsideEllipsoid(root,focus1,focus2,cost,black_list,node_check);
 }

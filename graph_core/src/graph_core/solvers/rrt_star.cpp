@@ -140,6 +140,9 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
     solution=solution_;
     return true;
   }
+  
+  double old_path_cost = solution_->cost();
+  bool improved = start_tree_->rewireToNode(n, r_rewire_);
 
   if(solution_ == nullptr)
   {

@@ -7,8 +7,7 @@ set(CMAKE_BUILD_TYPE Release)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
-  subscription_notifier rosdyn_core name_sorting
-  rosparam_utilities
+  subscription_notifier rosdyn_core name_sorting rosparam_utilities
 )
 find_package( Eigen3 REQUIRED )
 

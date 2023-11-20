@@ -34,10 +34,10 @@ namespace pathplan
 Eigen::VectorXd TubeInformedSampler::sample()
 {
    if (ud_(gen_)>local_bias_)
-    return InformedSampler::sample();
+    return sampler_->sample();
 
   if (length_<=0)
-    return InformedSampler::sample();
+    return sampler_->sample();
 
   for (int itrial = 0; itrial < 100; itrial++)
   {
@@ -47,12 +47,12 @@ Eigen::VectorXd TubeInformedSampler::sample()
     ball.setRandom();
     ball *= std::pow(ud_(gen_), 1.0 / (double)ndof_) / ball.norm();
     Eigen::VectorXd q = radius_ * ball + center;
-    if (InformedSampler::inBounds(q) && couldImprove(q))
+    if (sampler_->inBounds(q) && couldImprove(q))
     {
       return q;
     }
   }
-  return InformedSampler::sample();
+  return sampler_->sample();
 }
 
 bool TubeInformedSampler::setPath(const PathPtr &path)
@@ -67,9 +67,11 @@ bool TubeInformedSampler::setPath(const std::vector<Eigen::VectorXd>&  path)
 
   path_=path;
   partial_length_.resize(path.size(),0);
+  partial_cost_.resize(path.size(),0);
   for (size_t idx=1;idx<path.size();idx++)
   {
     partial_length_.at(idx)=partial_length_.at(idx-1)+(path.at(idx)-path.at(idx-1)).norm();
+    partial_cost_.at(idx)=partial_cost_.at(idx-1)+metrics_->utopia(path.at(idx-1),path.at(idx));
   }
   length_=partial_length_.back();
   return length_>0;
@@ -131,9 +133,9 @@ bool TubeInformedSampler::couldImprove(const Eigen::VectorXd& q)
 {
   for (size_t idx=1;idx<path_.size()-1;idx++)
   {
-    double delta_length=partial_length_.at(idx+1)-partial_length_.at(idx-1);
-    double test_length=(path_.at(idx+1)-q).norm()+(path_.at(idx-1)-q).norm();
-    if (test_length<delta_length)
+    double delta_cost=partial_cost_.at(idx+1)-partial_cost_.at(idx-1);
+    double test_cost=metrics_->utopia(q,path_.at(idx+1))+metrics_->utopia(path_.at(idx-1),q);
+    if (test_cost<delta_cost)
       return true;
   }
   return false;
