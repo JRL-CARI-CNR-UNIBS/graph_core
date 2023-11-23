@@ -11,14 +11,13 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_ros_planning
   moveit_ros_planning_interface
   roscpp
-  moveit_visual_tools
-  rviz_visual_tools
+  pluginlib
   )
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES graph_core
-  CATKIN_DEPENDS actionlib moveit_core moveit_ros_planning moveit_ros_planning_interface roscpp
+  CATKIN_DEPENDS actionlib moveit_core moveit_ros_planning moveit_ros_planning_interface roscpp pluginlib
   DEPENDS
   )
 include_directories(
@@ -28,11 +27,6 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/metrics.cpp
   src/${PROJECT_NAME}/goal_cost_function.cpp
-  #src/${PROJECT_NAME}/avoidance_goal_cost_function.cpp
-  #src/${PROJECT_NAME}/avoidance_metrics.cpp
-  #src/${PROJECT_NAME}/avoidance_time_metrics.cpp
-  #src/${PROJECT_NAME}/avoidance_probabilistic_time_metrics.cpp
-  #src/${PROJECT_NAME}/occupancy_metrics.cpp
   src/${PROJECT_NAME}/time_metrics.cpp
   src/${PROJECT_NAME}/sampler.cpp
   src/${PROJECT_NAME}/local_informed_sampler.cpp
@@ -51,7 +45,6 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/graph/tree.cpp
   src/${PROJECT_NAME}/graph/subtree.cpp
   src/${PROJECT_NAME}/graph/path.cpp
-  #src/${PROJECT_NAME}/graph/graph_display.cpp
   src/${PROJECT_NAME}/solvers/multigoal.cpp
   src/${PROJECT_NAME}/solvers/time_multigoal.cpp
   src/${PROJECT_NAME}/solvers/tree_solver.cpp
