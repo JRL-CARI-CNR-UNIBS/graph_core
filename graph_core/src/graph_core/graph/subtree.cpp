@@ -35,7 +35,6 @@ Subtree::Subtree(const TreePtr& parent_tree,
   parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getUseKdTree()),
   parent_tree_(parent_tree)
 {
-  ROS_FATAL("QUI");
   populateTreeFromNode(root);
 }
 
@@ -74,7 +73,6 @@ Subtree::Subtree(const TreePtr& parent_tree,
                  const double& cost,
                  const std::vector<NodePtr>& black_list,
                  const bool node_check):
-  parent_tree_(parent_tree),
   Tree(root,parent_tree->getMaximumDistance(),
        parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getUseKdTree()),
   parent_tree_(parent_tree)
@@ -118,8 +116,7 @@ void Subtree::addNode(const NodePtr& node, const bool& check_if_present)
 void Subtree::hideFromSubtree(const NodePtr& node)
 {
   assert(node);
-  std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
-  if(it<nodes_.end())
+  if(nodes_->findNode(node))
   {
     std::vector<NodePtr> successors = node->getChildren();
     for(NodePtr& n : successors)
@@ -129,15 +126,14 @@ void Subtree::hideFromSubtree(const NodePtr& node)
     }
 
     if(node != root_)
-      nodes_.erase(it);
+      nodes_->deleteNode(node,false);
   }
 }
 
 void Subtree::hideInvalidBranches(const NodePtr& node)
 {
   assert(node);
-  std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
-  if(it<nodes_.end())
+  if(nodes_->findNode(node))
   {
     for(ConnectionPtr& c : node->getChildConnections())
     {
@@ -149,23 +145,14 @@ void Subtree::hideInvalidBranches(const NodePtr& node)
     }
 
     if(node != root_)
-      nodes_.erase(it);
+      nodes_->deleteNode(node,false);
   }
-}
-
-void Subtree::removeNode(const std::vector<NodePtr>::iterator& it)
-{
-  parent_tree_->removeNode(*it);  //do not switch
-  Tree::removeNode(it);
 }
 
 void Subtree::removeNode(const NodePtr& node)
 {
-  node->disconnect();
-  std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
-
-  if(it<nodes_.end())
-    Subtree::removeNode(it);
+  nodes_->deleteNode(node,true);
+  parent_tree_->removeNode(node);
 }
 
 void Subtree::purgeThisNode(NodePtr& node, unsigned int& removed_nodes)
@@ -176,19 +163,18 @@ void Subtree::purgeThisNode(NodePtr& node, unsigned int& removed_nodes)
   */
 
   assert(node);
-  std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);  //search in the subtree
   node->disconnect();
 
-  if((it<nodes_.end()))
+  if(nodes_->findNode(node))
   {
-    Subtree::removeNode(it);
+    Subtree::removeNode(node);
     removed_nodes++;
   }
   else
   {
-    if(parent_tree_->isInTree(node,it))
+    if(parent_tree_->isInTree(node))
     {
-      parent_tree_->removeNode(it);
+      parent_tree_->removeNode(node);
       removed_nodes++;
     }
   }

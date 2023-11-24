@@ -28,7 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ros_log_color
 {
-<<<<<<< HEAD:graph_core/src/graph_core/log.cpp
 std::ostream& operator<<(std::ostream& os, PRINT_COLOR c)
 {
   switch(c)

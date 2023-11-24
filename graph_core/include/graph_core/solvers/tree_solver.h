@@ -48,7 +48,7 @@ protected:
   ros::NodeHandle nh_;
   MetricsPtr metrics_;
   CollisionCheckerPtr checker_;
-  SamplerPtr sampler_;
+  InformedSamplerPtr sampler_;
   GoalCostFunctionPtr goal_cost_fcn_;
   bool solved_ = false;
   bool completed_=false;
@@ -84,7 +84,7 @@ protected:
 public:
   TreeSolver(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
-             const SamplerPtr& sampler):
+             const InformedSamplerPtr& sampler):
     metrics_(metrics),
     checker_(checker),
     sampler_(sampler)
@@ -109,7 +109,7 @@ public:
   virtual bool computePath(const NodePtr &start_node, const NodePtr &goal_node, const ros::NodeHandle& nh, PathPtr &solution, const double &max_time = std::numeric_limits<double>::infinity(), const unsigned int &max_iter = 10000);
   virtual bool computePath(const Eigen::VectorXd& start_conf, const Eigen::VectorXd& goal_conf, const ros::NodeHandle& nh, PathPtr &solution, const double &max_time = std::numeric_limits<double>::infinity(), const unsigned int &max_iter = 10000);
   virtual void resetProblem()=0;
-  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler) = 0;
+  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const InformedSamplerPtr& sampler) = 0;
 
   virtual bool setSolution(const PathPtr &solution, const bool& solved=false);
 
@@ -177,12 +177,12 @@ public:
     return nh_;
   }
 
-  void setSampler(const SamplerPtr& sampler)
+  void setSampler(const InformedSamplerPtr& sampler)
   {
     sampler_ = sampler;
   }
 
-  SamplerPtr getSampler() const
+  InformedSamplerPtr getSampler() const
   {
     return sampler_;
   }

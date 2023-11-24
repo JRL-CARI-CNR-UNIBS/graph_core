@@ -654,7 +654,7 @@ void MultigoalSolver::cleanTree()
 {
   std::vector<NodePtr> white_list=goal_nodes_;
   white_list.push_back(start_tree_->getRoot());
-  std::vector<SamplerPtr> samplers;
+  std::vector<InformedSamplerPtr> samplers;
   for (unsigned int igoal=0;igoal<goal_nodes_.size();igoal++)
   {
     if ((status_.at(igoal)==GoalStatus::refine)||(status_.at(igoal)==GoalStatus::search))
@@ -671,7 +671,7 @@ void MultigoalSolver::cleanTree()
   start_tree_->purgeNodesOutsideEllipsoids(samplers,white_list);
 }
 
-TreeSolverPtr MultigoalSolver::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler)
+TreeSolverPtr MultigoalSolver::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const InformedSamplerPtr& sampler)
 {
   MultigoalSolverPtr new_solver = std::make_shared<MultigoalSolver>(metrics,checker,sampler);
   new_solver->config(nh_);

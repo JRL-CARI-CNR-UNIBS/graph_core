@@ -51,7 +51,15 @@ protected:
 
   std::vector<bool> change_warp_;
 
+  /**
+   * @brief computeCost computes the cost of the path as the sum of the cost of each connection in connections_
+   */
   void computeCost();
+
+  /**
+   * @brief setChanged changes the value of change_warp_ at a specific index
+   * @param connection_idx is the index of change_warp_ to set
+   */
   void setChanged(const unsigned int& connection_idx);
   bool bisection(const unsigned int& connection_idx,
                  const Eigen::VectorXd& center,

@@ -44,7 +44,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   BiRRT(const MetricsPtr& metrics,
         const CollisionCheckerPtr& checker,
-        const SamplerPtr& sampler):
+        const InformedSamplerPtr& sampler):
     RRT(metrics, checker, sampler) {}
 
   virtual bool config(const ros::NodeHandle& nh);
@@ -53,7 +53,7 @@ public:
   virtual bool update(PathPtr& solution);
   virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution);
   virtual bool update(const NodePtr& n, PathPtr& solution);
-  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler);
+  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const InformedSamplerPtr& sampler);
 
 };
 

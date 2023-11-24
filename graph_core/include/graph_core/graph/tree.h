@@ -44,34 +44,70 @@ class Tree: public std::enable_shared_from_this<Tree>
 {
 protected:
   NodePtr root_;
-  bool use_kdtree_;
-  double max_distance_=1;
   double k_rrt_;
-  unsigned int maximum_nodes_ = 5000; // legare il massimo numero di punti al volume????
-  CollisionCheckerPtr checker_;
+  bool use_kdtree_;
+  double max_distance_ = 1;
+  unsigned int maximum_nodes_ = 5000;
+
   MetricsPtr metrics_;
-
   NearestNeighborsPtr nodes_;
+  CollisionCheckerPtr checker_;
 
+  /**
+   * @brief purgeNodeOutsideEllipsoid checks whether a given node falls within the bounds defined by the sampler. If not, it removes the node and its successors.
+   * @param node The node to be checked for inclusion within the bounds defined by the sampler.
+   * @param sampler It determines whether the node is within the bounds using the inBounds() function.
+   * @param white_list A list of nodes exempt from removal. If a node belongs to this vector, it will not be removed, even if it is outside the bounds. If one of its successors is in the white list, it and its predecessors will also be spared from removal.
+   * @param removed_nodes The number of successfully removed nodes.
+   */
   void purgeNodeOutsideEllipsoid(NodePtr& node,
-                                 const SamplerPtr& sampler,
+                                 const InformedSamplerPtr& sampler,
                                  const std::vector<NodePtr>& white_list,
                                  unsigned int& removed_nodes);
 
+  /**
+   * @brief purgeNodeOutsideEllipsoid checks whether a given node falls within the bounds defined by a set of samplers. If not, it removes the node and its successors.
+   * @param node The node to be checked for inclusion within the bounds defined by the samplers.
+   * @param samplers A vector of samplers which determine whether the node is within the bounds using the inBounds() function.
+   * @param white_list A list of nodes exempt from removal. If a node belongs to this vector, it will not be removed, even if it is outside the bounds. If one of its successors is in the white list, it and its predecessors will also be spared from removal.
+   * @param removed_nodes The number of successfully removed nodes.
+   */
   void purgeNodeOutsideEllipsoids(NodePtr& node,
-                                  const std::vector<SamplerPtr>& samplers,
+                                  const std::vector<InformedSamplerPtr>& samplers,
                                   const std::vector<NodePtr>& white_list,
                                   unsigned int& removed_nodes);
 
-  // add children to the tree. node is not added (throw exception if it is not member of the tree)
-  void populateTreeFromNode(const NodePtr& node, const bool node_check = false);
-  void populateTreeFromNode(const NodePtr& node, const std::vector<NodePtr>& black_list, const bool node_check = false);
-
-  //add children to the tree if they are inside the ellipsoid. node is not added (throw exception if it is not member of the tree)
-  void populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost, const bool node_check = false);
+  /**
+   * @brief populateTreeFromNode adds the successors of a given node to the tree. The specified node, although not added itself, must already belong to the tree (e.g., it serves as the root).
+   * Successors are included only if the following conditions hold:
+   *  1) They do not belong to the black_list.
+   *  2) If node_check is true, they are collision-checked; if in collision, they are excluded.
+   *  3) They satisfy the condition metrics_->utopia(n->getConfiguration(), focus1) + metrics_->utopia(n->getConfiguration(), focus2) < cost, where n is the considered successor.
+   *     In the case of using the Euclidean distance as metrics, this condition ensures that the node belongs to the ellipsoid defined by focus1, focus2 and cost.
+   * @param node The successors of this node are added to the tree.
+   * @param focus1 The first focus of condition 3).
+   * @param focus2 The second focus of condition 3).
+   * @param cost The cost of condition 3).
+   * @param black_list A list of nodes to be excluded from the tree.
+   * @param node_check If true, each successor undergoes a collision check and is added to the tree only if valid.
+   */
   void populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost, const std::vector<NodePtr> &black_list, const bool node_check = false);
+  void populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2, const double& cost, const bool node_check = false);
+  void populateTreeFromNode(const NodePtr& node, const std::vector<NodePtr>& black_list, const bool node_check = false);
+  void populateTreeFromNode(const NodePtr& node, const bool node_check = false);
 
-  //add children to the tree if the cost to the child + the distance to the goal is lower than cost. node is not added (throw exception if it is not member of the tree)
+  /**
+   * @brief populateTreeFromNodeConsideringCost adds the successors of a given node to the tree. The specified node, although not added itself, must already belong to the tree (e.g., it serves as the root).
+   * Successors are included only if the following conditions hold:
+   *  1) They do not belong to the black_list.
+   *  2) If node_check is true, they are collision-checked; if in collision, they are excluded.
+   *  3) If the cost to reach the node n + metrics_->utopia(n->getConfiguration(), goal) < cost, where n is the considered successor.
+   * @param node The successors of this node are added to the tree.
+   * @param goal the goal to reach, considered in condition 3).
+   * @param cost The cost of condition 3)
+   * @param black_list A list of nodes to be excluded from the tree.
+   * @param node_check If true, each successor undergoes a collision check and is added to the tree only if valid.
+   */
   void populateTreeFromNodeConsideringCost(const NodePtr& node, const Eigen::VectorXd& goal, const double& cost, const std::vector<NodePtr> &black_list, const bool node_check = false);
 
 public:
@@ -83,38 +119,57 @@ public:
        const MetricsPtr& metrics,
        const bool& use_kdtree=true);
 
+  /**
+   * @brief isSubtree returs false because it is not a subtree (it is a tree)
+   * @return always false
+   */
   virtual bool isSubtree()
   {
     return false;
   }
 
+  /**
+   * @brief getRoot returns the root node
+   * @return the root node
+   */
   const NodePtr& getRoot()
   {
     return root_;
   }
+
+  /**
+   * @brief getNodes returns a vector containing the nodes of the tree
+   * @return the vector of nodes of the tree
+   */
   std::vector<NodePtr> getNodes()
   {
     return nodes_->getNodes();
   }
 
-  const std::vector<NodePtr>& getNodesConst()
-  {
-    return nodes_;
-  }
+  /**
+   * @brief getLeaves populates the input vector with the leaves of the tree, namely the nodes without successors.
+   * @param leaves The vector to be filled with the tree's leaves.
+   */
+  void getLeaves(std::vector<NodePtr>& leaves);
 
-  void getLeaves(std::vector<NodePtr>& leaves)
-  {
-    std::for_each(nodes_.begin(),nodes_.end(),[&](NodePtr n){
-      assert(((n->getParentConnectionsSize() == 1) && (n!=root_)) || (n == root_));
-
-      if((n!= root_) && (n->getChildConnectionsSize() == 0))
-        leaves.push_back(n);
-    });
-  }
-
+  /**
+   * @brief changeRoot sets the specified node as the root of the tree.
+   * @param node The node to be set as the new root.
+   * @return True if the node is successfully set as the root.
+   */
   bool changeRoot(const NodePtr& node);
 
+  /**
+   * @brief addNode appends a node to the tree if it is not already included. This function adds the input node to the tree's list of nodes without verifying if the node is connected to another tree node. Ensure a proper connection to this node (unless it is the root) before invoking this function.
+   * @param node The node to be added to the tree.
+   * @param check_if_present If true, it checks for the node's existing presence in the tree. If already present, it is not added.
+   */
   virtual void addNode(const NodePtr& node, const bool& check_if_present = true);
+
+  /**
+   * @brief removeNode deletes all connections associated with the node and removes it from the tree's list of nodes.
+   * @param node The node to be removed.
+   */
   virtual void removeNode(const NodePtr& node);
 
   bool tryExtend(const Eigen::VectorXd& configuration,
@@ -241,13 +296,13 @@ public:
     return nodes_->size();
   }
 
-  unsigned int purgeNodesOutsideEllipsoid(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list);
-  unsigned int purgeNodesOutsideEllipsoids(const std::vector<SamplerPtr>& samplers, const std::vector<NodePtr>& white_list);
-  unsigned int purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds = true);
+  unsigned int purgeNodesOutsideEllipsoid(const InformedSamplerPtr& sampler, const std::vector<NodePtr>& white_list);
+  unsigned int purgeNodesOutsideEllipsoids(const std::vector<InformedSamplerPtr>& samplers, const std::vector<NodePtr>& white_list);
+  unsigned int purgeNodes(const InformedSamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds = true);
   virtual void purgeThisNode(NodePtr& node, unsigned int& removed_nodes);
   virtual bool purgeFromHere(NodePtr& node);
   virtual bool purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
-  bool needCleaning(){return nodes_.size()>maximum_nodes_;}
+  bool needCleaning(){return (getNumberOfNodes()>maximum_nodes_);}
 
   bool recheckCollision(); //return true if there are no collisions
   bool recheckCollisionFromNode(NodePtr &n); //return true if there are no collisions

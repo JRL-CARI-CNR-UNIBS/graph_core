@@ -380,7 +380,7 @@ bool AnytimeRRT::update(const NodePtr& n, PathPtr &solution)
   return false;
 }
 
-TreeSolverPtr AnytimeRRT::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler)
+TreeSolverPtr AnytimeRRT::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const InformedSamplerPtr& sampler)
 {
   AnytimeRRTPtr new_solver = std::make_shared<AnytimeRRT>(metrics,checker,sampler);
   new_solver->config(nh_);

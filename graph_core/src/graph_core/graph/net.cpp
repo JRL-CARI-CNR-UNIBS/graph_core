@@ -147,8 +147,8 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
   }
   else
   {
-    std::vector<ConnectionPtr> all_parent_connections = goal_node->getParentConnectionsConst();
-    std::vector<ConnectionPtr> net_parent_connections = goal_node->getNetParentConnectionsConst();
+    std::vector<ConnectionPtr> all_parent_connections = goal_node->getParentConnections();
+    std::vector<ConnectionPtr> net_parent_connections = goal_node->getNetParentConnections();
     all_parent_connections.insert(all_parent_connections.end(),net_parent_connections.begin(),net_parent_connections.end());
 
     ros::WallTime tic_cycle;

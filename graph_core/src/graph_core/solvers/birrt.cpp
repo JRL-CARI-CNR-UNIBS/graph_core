@@ -190,7 +190,7 @@ bool BiRRT::update(const NodePtr& n, PathPtr& solution)
   return false;
 }
 
-TreeSolverPtr BiRRT::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler)
+TreeSolverPtr BiRRT::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const InformedSamplerPtr& sampler)
 {
   BiRRTPtr new_solver = std::make_shared<BiRRT>(metrics,checker,sampler);
   new_solver->config(nh_);

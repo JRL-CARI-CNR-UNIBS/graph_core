@@ -135,7 +135,4 @@ public:
   const unsigned int& getDimension()const {return ndof_;}
 };
 
-
-typedef std::shared_ptr<InformedSampler> SamplerPtr;
-
 }  // namespace pathplan

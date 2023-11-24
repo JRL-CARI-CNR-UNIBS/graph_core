@@ -32,11 +32,12 @@ namespace pathplan
 
 Connection::Connection(const NodePtr& parent, const NodePtr& child, const bool is_net):
   parent_(parent),
-  child_(child),
+  child_(child)
 {
   euclidean_norm_ = (child->getConfiguration() - parent->getConfiguration()).norm();
-  flags_ = {false, is_net, false}; //valid, is_net, recently_checked
+  likelihood_ = 1.0;
 
+  flags_ = {false, is_net, false}; //valid, is_net, recently_checked
   assert(number_reserved_flags_ == flags_.size());
 }
 
@@ -52,6 +53,7 @@ bool Connection::setFlag(const int& idx, const bool flag)
 {
   if(idx == flags_.size()) //new flag to add
     flags_.push_back(flag);
+
   else if(idx<flags_.size())  //overwrite an already existing flag
   {
     if(idx<number_reserved_flags_)
@@ -77,9 +79,6 @@ bool Connection::getFlag(const int& idx, const bool default_value)
     return flags_[idx];
   else
     return default_value;  //if the value has not been set, return the default value
-=======
-  likelihood_=1.0;
->>>>>>> master
 }
 
 void Connection::add(const bool is_net)
@@ -109,7 +108,7 @@ void Connection::add()
 
 void Connection::remove()
 {
-  if (!flags_[idx_valid_])
+  if(not flags_[idx_valid_])
     return;
 
   flags_[idx_valid_] = false;
@@ -143,7 +142,7 @@ Eigen::VectorXd Connection::projectOnConnection(const Eigen::VectorXd& point, do
   if(point == parent)
   {
     if(verbose)
-      ROS_INFO("POINT == PARENT");
+      ROS_INFO("point is parent");
 
     in_conn = true;
     distance = 0.0;
@@ -152,7 +151,7 @@ Eigen::VectorXd Connection::projectOnConnection(const Eigen::VectorXd& point, do
   else if(point == child)
   {
     if(verbose)
-      ROS_INFO("POINT == CHILD");
+      ROS_INFO("point is child");
 
     in_conn = true;
     distance = 0.0;
@@ -196,8 +195,11 @@ void Connection::flip()
   parent_ = tmp;
   add();   // add new connection from new parent and child
 }
+
 Connection::~Connection()
 {
+  if(flags_[idx_valid_])
+    remove();
 }
 
 bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)
@@ -208,16 +210,13 @@ bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)
     assert(0);
     return false;
   }
-  // v1 dot v2 = norm(v1)*norm(v2)*cos(angle)
+  // v1 dot v2 = norm(v1)*norm(v2)*cos(angle) if v1 not // v2
+  // v1 dot v2 = norm(v1)*norm(v2) if v1 // v2
+
   double scalar= std::abs((getChild()->getConfiguration()-getParent()->getConfiguration()).dot(
                             conn->getChild()->getConfiguration()-conn->getParent()->getConfiguration()));
 
-  // v1 dot v2 = norm(v1)*norm(v2) if v1 // v2
-
-
-  //ROS_INFO_STREAM("scalar: "<<scalar<<" dot: "<<((euclidean_norm_*conn->norm())-toll));
-
-  assert(std::abs(euclidean_norm_-(getChild()->getConfiguration()-getParent()->getConfiguration()).norm())<1e-06);
+  assert(std::abs(euclidean_norm_-(getChild()->getConfiguration()-getParent()->getConfiguration()).norm())<TOLERANCE);
 
   return (std::abs(scalar-(euclidean_norm_*conn->norm()))<toll);
 }

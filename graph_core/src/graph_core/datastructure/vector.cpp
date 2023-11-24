@@ -112,6 +112,10 @@ bool Vector::deleteNode(const NodePtr& node,
   delete_nodes_++;
 
   nodes_.erase(it);
+
+  if(disconnect_node)
+    node->disconnect();
+
   return true;
 }
 

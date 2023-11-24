@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(graph_core)
-add_compile_options(-std=c++14 -funroll-loops -Wall -Ofast)
+add_compile_options(-std=c++17 -funroll-loops -Wall -Ofast)
 set(CMAKE_BUILD_TYPE Release)
 #set(CMAKE_BUILD_TYPE Debug)
 
@@ -70,10 +70,7 @@ add_library(${PROJECT_NAME}
 
   )
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+target_link_libraries(${PROJECT_NAME}  ${catkin_LIBRARIES})
 
 add_executable(goal_selection_test_node tests/goal_selection_test_node.cpp)
 add_dependencies(goal_selection_test_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -82,6 +79,12 @@ target_link_libraries(goal_selection_test_node
   ${PROJECT_NAME}
 )
 
+add_executable(prova_graph tests/prova_graph.cpp)
+add_dependencies(prova_graph ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(prova_graph
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
+)
 
 install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

@@ -35,7 +35,7 @@ Node::Node(const Eigen::VectorXd &configuration)
   configuration_ = configuration;
   ndof_ = configuration_.size();
 
-  // insert the defaults in flags_
+  /*insert the defaults in flags_ here*/
 }
 
 unsigned int Node::setFlag(const bool flag)
@@ -193,16 +193,19 @@ void Node::removeChildConnection(const ConnectionPtr &connection)
 
     //Remove connection from child's parent connections vector
     NodePtr child = conn->getChild();
-    std::vector<ConnectionWeakPtr>::iterator it_child = std::find_if(child->parent_connections_.begin(), child->parent_connections_.end(),
-                                                                     [&connection](const ConnectionWeakPtr& conn){return connection == conn.lock();});
+    if(child)
+    {
+      std::vector<ConnectionWeakPtr>::iterator it_child = std::find_if(child->parent_connections_.begin(), child->parent_connections_.end(),
+                                                                       [&connection](const ConnectionWeakPtr& conn){return connection == conn.lock();});
 
-    if(it_child == child->parent_connections_.end())
-    {
-      ROS_FATAL("connection is not in the parent vector");
-    }
-    else
-    {
-      child->parent_connections_.erase(it_child);
+      if(it_child == child->parent_connections_.end())
+      {
+        ROS_FATAL("connection is not in the parent vector");
+      }
+      else
+      {
+        child->parent_connections_.erase(it_child);
+      }
     }
 
     //Remove connection from this node's child connections vector
@@ -227,16 +230,19 @@ void Node::removeNetChildConnection(const ConnectionPtr &connection)
 
     //Remove connection from child's net parent connections vector
     NodePtr child = conn->getChild();
-    std::vector<ConnectionWeakPtr>::iterator it_child = std::find_if(child->net_parent_connections_.begin(), child->net_parent_connections_.end(),
-                                                                     [&connection](const ConnectionWeakPtr& conn){return connection == conn.lock();});
+    if(child)
+    {
+      std::vector<ConnectionWeakPtr>::iterator it_child = std::find_if(child->net_parent_connections_.begin(), child->net_parent_connections_.end(),
+                                                                       [&connection](const ConnectionWeakPtr& conn){return connection == conn.lock();});
 
-    if(it_child == child->net_parent_connections_.end())
-    {
-      ROS_FATAL("connection is not in the net parent vector");
-    }
-    else
-    {
-      child->net_parent_connections_.erase(it_child);
+      if(it_child == child->net_parent_connections_.end())
+      {
+        ROS_FATAL("connection is not in the net parent vector");
+      }
+      else
+      {
+        child->net_parent_connections_.erase(it_child);
+      }
     }
 
     //Remove connection from this node's net child connections vector
@@ -262,8 +268,10 @@ void Node::disconnectParentConnections()
   {
     conn = parent_connections_[i].lock();
     if(conn)
-      if (conn->getParent())
+      if(conn->getParent())
         conn->getParent()->removeChildConnection(conn);
+      else
+        throw std::runtime_error("connection has no parent");
   }
   parent_connections_.clear();
 }
@@ -277,6 +285,8 @@ void Node::disconnectNetParentConnections()
     if (conn)
       if (conn->getParent())
         conn->getParent()->removeNetChildConnection(conn);
+      else
+        throw std::runtime_error("connection has no parent");
   }
   net_parent_connections_.clear();
 }
@@ -288,6 +298,8 @@ void Node::disconnectChildConnections()
     if (conn)
       if (conn->getChild())
         conn->getChild()->removeParentConnection(conn);
+      else
+        throw std::runtime_error("connection has no child");
   }
   child_connections_.clear();
 }
@@ -299,6 +311,8 @@ void Node::disconnectNetChildConnections()
     if (conn)
       if (conn->getChild())
         conn->getChild()->removeNetParentConnection(conn);
+      else
+        throw std::runtime_error("connection has no child");
   }
   net_child_connections_.clear();
 }
@@ -412,25 +426,25 @@ std::vector<ConnectionPtr> Node::getNetChildConnections() const
   return net_child_connections_;
 }
 
-const std::vector<ConnectionPtr> Node::getParentConnectionsConst() const
-{
-  return getParentConnections();
-}
+//const std::vector<ConnectionPtr>& Node::getParentConnectionsConst() const
+//{
+//  return getParentConnections();
+//}
 
-const std::vector<ConnectionPtr> Node::getNetParentConnectionsConst() const
-{
-  return getNetParentConnections();
-}
+//const std::vector<ConnectionPtr>& Node::getNetParentConnectionsConst() const
+//{
+//  return getNetParentConnections();
+//}
 
-const std::vector<ConnectionPtr> Node::getChildConnectionsConst() const
-{
-  return getChildConnections();
-}
+//const std::vector<ConnectionPtr>& Node::getChildConnectionsConst() const
+//{
+//  return getChildConnections();
+//}
 
-const std::vector<ConnectionPtr> Node::getNetChildConnectionsConst() const
-{
-  return getNetChildConnections();
-}
+//const std::vector<ConnectionPtr>& Node::getNetChildConnectionsConst() const
+//{
+//  return getNetChildConnections();
+//}
 
 std::vector<NodePtr> Node::getChildren() const
 {
@@ -446,10 +460,10 @@ std::vector<NodePtr> Node::getChildren() const
   return children;
 }
 
-const std::vector<NodePtr> Node::getChildrenConst() const
-{
-  return getChildren();
-}
+//const std::vector<NodePtr> Node::getChildrenConst() const
+//{
+//  return getChildren();
+//}
 
 std::vector<NodePtr> Node::getNetChildren() const
 {
@@ -465,10 +479,10 @@ std::vector<NodePtr> Node::getNetChildren() const
   return children;
 }
 
-const std::vector<NodePtr> Node::getNetChildrenConst() const
-{
-  return getNetChildren();
-}
+//const std::vector<NodePtr> Node::getNetChildrenConst() const
+//{
+//  return getNetChildren();
+//}
 
 std::vector<NodePtr> Node::getParents() const
 {
@@ -486,10 +500,10 @@ std::vector<NodePtr> Node::getParents() const
   return parents;
 }
 
-const std::vector<NodePtr> Node::getParentsConst() const
-{
-  return getParents();
-}
+//const std::vector<NodePtr> Node::getParentsConst() const
+//{
+//  return getParents();
+//}
 
 std::vector<NodePtr> Node::getNetParents() const
 {
@@ -507,10 +521,10 @@ std::vector<NodePtr> Node::getNetParents() const
   return parents;
 }
 
-const std::vector<NodePtr> Node::getNetParentsConst() const
-{
-  return getNetParents();
-}
+//const std::vector<NodePtr> Node::getNetParentsConst() const
+//{
+//  return getNetParents();
+//}
 
 XmlRpc::XmlRpcValue Node::toXmlRpcValue() const
 {

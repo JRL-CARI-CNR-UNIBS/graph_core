@@ -82,7 +82,7 @@ public:
 
   MultigoalSolver(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
-             const SamplerPtr& sampler):
+             const InformedSamplerPtr& sampler):
     TreeSolver(metrics, checker, sampler),
     gen_(time(0))
   {
@@ -97,7 +97,7 @@ public:
   virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
   virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity()) override;
   virtual void resetProblem() override;
-  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler) override;
+  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const InformedSamplerPtr& sampler) override;
 
   std::vector<TreePtr> getGoalTrees();
 

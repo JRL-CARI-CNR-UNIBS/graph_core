@@ -26,15 +26,15 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <eigen3/Eigen/Core>
+#include <map>
+#include <any>
 #include <ros/ros.h>
+#include <eigen3/Eigen/Core>
 #include <graph_core/util.h>
 #include <graph_core/graph/connection.h>
 
 namespace pathplan
 {
-typedef std::vector<ConnectionWeakPtr> WeakPtrVector;
-
 class Node: public std::enable_shared_from_this<Node>
 {
   friend class Connection;
@@ -56,14 +56,48 @@ protected:
    */
   std::vector<bool> flags_;
 
+  /**
+     * @brief addParentConnection adds a parent connection to the node
+     * @param connection is the parent connection to add (the connection's child should be this node)
+     */
   void addParentConnection(const ConnectionPtr& connection);
+
+  /**
+     * @brief addChildConnection adds a child connection to the node
+     * @param connection is the child connection to add (the connection's parent should be this node)
+     */
   void addChildConnection(const ConnectionPtr& connection);
+
+  /**
+     * @brief addNetParentConnection adds a net parent connection to the node
+     * @param connection is the net parent connection to add (the connection's child should be this node)
+     */
   void addNetParentConnection(const ConnectionPtr& connection);
+
+  /**
+     * @brief addNetChildConnection adds a net child connection to the node
+     * @param connection is the net child connection to add (the connection's parent should be this node)
+     */
   void addNetChildConnection(const ConnectionPtr& connection);
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+  /**
+   * @brief properties_ is a map of generic type objects. Store in properties_ any object you need to customize the node
+   */
+  std::map<std::string, std::vector<std::any>> properties_;
+
+  /**
+   * @brief Node is the constructor
+   * @param configuration is the node's configuration, as an Eigen::VectorXd object
+   */
   Node(const Eigen::VectorXd& configuration);
+
+  /**
+   * @brief pointer returns a std::shared_pointer to this node
+   * @return
+   */
   NodePtr pointer()
   {
     return shared_from_this();
@@ -85,101 +119,237 @@ public:
   static constexpr unsigned int number_reserved_flags_ = 0;
 
   /**
-   * @brief setFlag sets your custome flag. Use this function only if the flag was not created before because it creates a new one flag in flags_ vector
-   * @param flag the NEW flag to set
-   * @return the index of the flag in flags_ vector to use when you want to change the value
-   */
+     * @brief setFlag sets your custome flag. Use this function only if the flag was not created before because it creates a new one flag in flags_ vector
+     * @param flag the NEW flag to set
+     * @return the index of the flag in flags_ vector to use when you want to change the value
+     */
   unsigned int setFlag(const bool flag);
 
   /**
-   * @brief setFlag sets the custom flag at index idx. The flag should be already present in the flags_ vector.
-   * If not, it add the new flag if and only if the index idx is equal to flags_ size
-   * @param idx the index of the flag
-   * @param flag the value of the flag
-   * @return true if the flag is set correctly, flase otherwise
-   */
+     * @brief setFlag sets the custom flag at index idx. The flag should be already present in the flags_ vector.
+     * If not, it add the new flag if and only if the index idx is equal to flags_ size
+     * @param idx the index of the flag
+     * @param flag the value of the flag
+     * @return true if the flag is set correctly, flase otherwise
+     */
   bool setFlag(const int& idx, const bool flag);
 
   /**
-   * @brief getFlag returns the value of the flag at position idx. It returns the value if the flag exists, otherwise return the default value.
-   * @param idx the index of the flag you are asking for.
-   * @param default_value the default value returned if the flag doesn't exist.
-   * @return the flag if it exists, the default value otherwise.
-   */
+     * @brief getFlag returns the value of the flag at position idx. It returns the value if the flag exists, otherwise return the default value.
+     * @param idx the index of the flag you are asking for.
+     * @param default_value the default value returned if the flag doesn't exist.
+     * @return the flag if it exists, the default value otherwise.
+     */
   bool getFlag(const int& idx, const bool default_value);
 
-
   /**
-   * @brief get parent/net_parent or child/net_child connections vector or nodes
-   * @return
-   */
-
+     * @brief getParentConnectionsSize returns the number of parent connections
+     * @return the number of parent connections
+     */
   const int getParentConnectionsSize() const;
-  const int getNetParentConnectionsSize() const;
-  const int getChildConnectionsSize() const;
-  const int getNetChildConnectionsSize() const;
-  ConnectionPtr parentConnection(const int& i) const;
-  ConnectionPtr netParentConnection(const int& i) const;
-  ConnectionPtr childConnection(const int& i) const;
-  ConnectionPtr netChildConnection(const int& i) const;
-  std::vector<NodePtr> getChildren() const;
-  std::vector<NodePtr> getParents() const;
-  std::vector<NodePtr> getNetParents() const;
-  std::vector<NodePtr> getNetChildren() const;
-  const std::vector<NodePtr> getChildrenConst() const;
-  const std::vector<NodePtr> getParentsConst() const;
-  const std::vector<NodePtr> getNetParentsConst() const;
-  const std::vector<NodePtr> getNetChildrenConst() const;
-  std::vector<ConnectionPtr> getParentConnections() const;
-  std::vector<ConnectionPtr> getNetParentConnections() const;
-  std::vector<ConnectionPtr> getChildConnections() const;
-  std::vector<ConnectionPtr> getNetChildConnections() const;
-  const std::vector<ConnectionPtr> getParentConnectionsConst() const;
-  const std::vector<ConnectionPtr> getNetParentConnectionsConst() const;
-  const std::vector<ConnectionPtr> getChildConnectionsConst() const;
-  const std::vector<ConnectionPtr> getNetChildConnectionsConst() const;
 
   /**
-   * @brief disconnect the nodes from parent and/or child connections
-   */
-  void disconnect();
+     * @brief getNetParentConnectionsSize returns the number of net parent connections
+     * @return the number of net parent connections
+     */
+  const int getNetParentConnectionsSize() const;
+
+  /**
+     * @brief getChildConnectionsSize returns the number of child connections
+     * @return the number of net child connections
+     */
+  const int getChildConnectionsSize() const;
+
+  /**
+     * @brief getNetChildConnectionsSize returns the number of net child connections
+     * @return the number of net child connections
+     */
+  const int getNetChildConnectionsSize() const;
+
+  /**
+     * @brief parentConnection returns the i-th parent connection
+     * @param i is the index of the parent connection
+     * @return the i-th parent connection
+     */
+  ConnectionPtr parentConnection(const int& i) const;
+
+  /**
+     * @brief netParentConnection returns the i-th net parent connection
+     * @param i is the index of the net parent connection
+     * @return the i-th net parent connection
+     */
+  ConnectionPtr netParentConnection(const int& i) const;
+
+  /**
+     * @brief childConnection returns the i-th child connection
+     * @param i is the index of the child connection
+     * @return the i-th child connection
+     */
+  ConnectionPtr childConnection(const int& i) const;
+
+  /**
+     * @brief netChildConnection returns the i-th net child connection
+     * @param i is the index of the net child connection
+     * @return the i-th child connection
+     */
+  ConnectionPtr netChildConnection(const int& i) const;
+
+  /**
+     * @brief getChildren returs the vector of child nodes
+     * @return the vector of child nodes
+     */
+  std::vector<NodePtr> getChildren() const;
+
+  /**
+     * @brief getParents returns the vector of parent nodes
+     * @return the vector of parent nodes
+     */
+  std::vector<NodePtr> getParents() const;
+
+  /**
+     * @brief getNetParents returns the vector of parent nodes connected through a net connection
+     * @return the vector of parent nodes connected through a net connection
+     */
+  std::vector<NodePtr> getNetParents() const;
+
+  /**
+     * @brief getNetChildren returns the vector of child nodes connected through a net connection
+     * @return the vector of child nodes connected through a net connection
+     */
+  std::vector<NodePtr> getNetChildren() const;
+
+  //  const std::vector<NodePtr> getChildrenConst() const;
+  //  const std::vector<NodePtr> getParentsConst() const;
+  //  const std::vector<NodePtr> getNetParentsConst() const;
+  //  const std::vector<NodePtr> getNetChildrenConst() const;
+
+  /**
+     * @brief getParentConnections returns the vector of parent connections of the node
+     * @return the vector of parent connections of the node
+     */
+  std::vector<ConnectionPtr> getParentConnections() const;
+
+  /**
+     * @brief getNetParentConnections returns the vector of net parent connections of the node
+     * @return the vector of net parent connections of the node
+     */
+  std::vector<ConnectionPtr> getNetParentConnections() const;
+
+  /**
+     * @brief getChildConnections returns the vector of child connections of the node
+     * @return the vector of parent connections of the node
+     */
+  std::vector<ConnectionPtr> getChildConnections() const;
+
+  /**
+     * @brief getNetChildConnections returns the vector of net child connections of the node
+     * @return the vector of net child connections of the node
+     */
+  std::vector<ConnectionPtr> getNetChildConnections() const;
+
+  //  /**
+  //   * @brief getParentConnectionsConst returns the vector of parent connections of the node
+  //   * @return a const vector of parent connections of the node
+  //   */
+  //  const std::vector<ConnectionPtr>& getParentConnectionsConst() const;
+
+  //  /**
+  //   * @brief getNetParentConnectionsConst returns the vector of net parent connections of the node
+  //   * @return a const vector of net parent connections of the node
+  //   */
+  //  const std::vector<ConnectionPtr>& getNetParentConnectionsConst() const;
+
+  //  /**
+  //   * @brief getChildConnectionsConst returns the vector of child connections of the node
+  //   * @return a const vector of child connections of the node
+  //   */
+  //  const std::vector<ConnectionPtr>& getChildConnectionsConst() const;
+
+  //  /**
+  //   * @brief getNetChildConnectionsConst returns the vector of net child connections of the node
+  //   * @return a const vector of net child connections of the node
+  //   */
+  //  const std::vector<ConnectionPtr>& getNetChildConnectionsConst() const;
+
+  /**
+     * @brief disconnectChildConnections deletes the connections to the children of the node
+     */
   void disconnectChildConnections();
+
+  /**
+     * @brief disconnectParentConnections deletes the connections to the parents of the node
+     */
   void disconnectParentConnections();
+
+  /**
+     * @brief disconnectNetParentConnections deletes the net connections to the parents of the node
+     */
   void disconnectNetParentConnections();
+
+  /**
+     * @brief disconnectNetChildConnections deletes the net connections to the children of the node
+     */
   void disconnectNetChildConnections();
 
   /**
-   * @brief remove a specific parent/child connection
-   * @param connection to remove
-   */
+     * @brief disconnect deletes all the connections of the node
+     */
+  void disconnect();
+
+
+  /**
+     * @brief removeParentConnection deletes the parent connection given as input, if actually a parent connection of the node
+     * @param connection is the parent connection to delete
+     */
   void removeParentConnection(const ConnectionPtr& connection);
+
+  /**
+     * @brief removeChildConnection deletes the child connection given as input, if actually a child connection of the node
+     * @param connection is the child connection to delete
+     */
   void removeChildConnection(const ConnectionPtr& connection);
+
+  /**
+     * @brief removeNetParentConnection deletes the net parent connection given as input, if actually a net parent connection of the node
+     * @param connection is the net parent connection to delete
+     */
   void removeNetParentConnection(const ConnectionPtr& connection);
+
+  /**
+     * @brief removeNetChildConnection deletes the net child connection given as input, if actually a net child connection of the node
+     * @param connection is the net child connection to delete
+     */
   void removeNetChildConnection(const ConnectionPtr& connection);
 
   /**
-   * @brief switchParentConnection trasformes a parent net connection of the node into a standard parent connection
-   * @param net_connection is the net connection to transform
-   * @return true if successful
-   */
+     * @brief switchParentConnection turns a parent net connection of the node into a parent connection
+     * @param net_connection is the net parent connection to turn into a parent connection
+     * @return true if successful, false if the net_connection given as input is not a net connection or not a connection of the node
+     */
   bool switchParentConnection(const ConnectionPtr& net_connection);
 
+  /**
+   * @brief getConfiguration return the configuration of the node
+   * @return the configuration of the node as an Eigen::VectorXd
+   */
   const Eigen::VectorXd& getConfiguration()
   {
     return configuration_;
   }
+
   ~Node();
 
   XmlRpc::XmlRpcValue toXmlRpcValue() const;
-  friend std::ostream& operator<<(std::ostream& os, const Node& path);
 
   static NodePtr fromXmlRpcValue(const XmlRpc::XmlRpcValue& x);
 
   /**
-   * @brief getReservedFlagsNumber tells you how many positions are occupied by the defaults. Use this to know where you can sve your new flags.
-   * @return the first free position in flags_ vector, so the idx next to the defaults.
-   */
+     * @brief getReservedFlagsNumber tells you how many positions are occupied by the defaults. Use this to know where you can save your new flags.
+     * @return the first free position in flags_ vector, so the idx next to the defaults.
+     */
   static unsigned int getReservedFlagsNumber();
+
+  friend std::ostream& operator<<(std::ostream& os, const Node& path);
 };
 
 std::ostream& operator<<(std::ostream& os, const Node& node);

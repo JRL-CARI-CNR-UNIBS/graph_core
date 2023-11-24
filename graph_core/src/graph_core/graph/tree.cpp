@@ -853,32 +853,7 @@ std::vector<ConnectionPtr> Tree::getConnectionToNode(NodePtr node)
 
   while (tmp_node != root_)
   {
-    if (tmp_node->getParentConnectionsSize() != 1)
-    {
-      ROS_ERROR("a tree node should have only a parent");
-      ROS_ERROR_STREAM("node \n" << *tmp_node);
-      ROS_INFO_STREAM("parent conns size: "<<tmp_node->getParentConnectionsSize()); //ELIMINA
-
-      for(const NodePtr& p:tmp_node->getParents())
-        ROS_INFO_STREAM("parent:\n"<<*p);
-
-      ROS_INFO_STREAM("root "<<*root_);
-
-      ROS_INFO_STREAM("root ptr"<<root_);
-      ROS_INFO_STREAM("node ptr"<<tmp_node);
-
-      for(const NodePtr& n:nodes_) //ELIMINA
-      {
-        if(n->getConfiguration() == tmp_node->getConfiguration())
-        {
-          ROS_INFO_STREAM("Node in tree: "<<n<<"\n"<<*n);
-          ROS_INFO_STREAM("Tmp node: "<<tmp_node<<"\n"<<*tmp_node);
-          assert(isInTree(tmp_node));
-        }
-      }
-
-      assert(0);
-    }
+    assert(tmp_node->getParentConnectionsSize() <= 1);
 
     connections.push_back(tmp_node->parentConnection(0));
     tmp_node = tmp_node->parentConnection(0)->getParent();
@@ -967,7 +942,7 @@ bool Tree::isInTree(const NodePtr &node)
   return nodes_->findNode(node);
 }
 
-unsigned int Tree::purgeNodesOutsideEllipsoid(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list)
+unsigned int Tree::purgeNodesOutsideEllipsoid(const InformedSamplerPtr& sampler, const std::vector<NodePtr>& white_list)
 {
   if (nodes_->size() < maximum_nodes_)
     return 0;
@@ -977,7 +952,7 @@ unsigned int Tree::purgeNodesOutsideEllipsoid(const SamplerPtr& sampler, const s
   return removed_nodes;
 }
 
-unsigned int Tree::purgeNodesOutsideEllipsoids(const std::vector<SamplerPtr>& samplers, const std::vector<NodePtr>& white_list)
+unsigned int Tree::purgeNodesOutsideEllipsoids(const std::vector<InformedSamplerPtr>& samplers, const std::vector<NodePtr>& white_list)
 {
   if (nodes_->size() < maximum_nodes_)
     return 0;
@@ -988,20 +963,20 @@ unsigned int Tree::purgeNodesOutsideEllipsoids(const std::vector<SamplerPtr>& sa
 }
 
 void Tree::purgeNodeOutsideEllipsoid(NodePtr& node,
-                                     const SamplerPtr& sampler,
+                                     const InformedSamplerPtr& sampler,
                                      const std::vector<NodePtr>& white_list,
                                      unsigned int& removed_nodes)
 {
   assert(node);
 
   // check if it is in the admissible informed set
-  if (sampler->inBounds(node->getConfiguration()))
+  if(sampler->inBounds(node->getConfiguration()))
   {
     // if node is inside the admissible set, check its successors
     std::vector<NodePtr> successors;
     successors = node->getChildren();
 
-    for (NodePtr& n : successors)
+    for(NodePtr& n : successors)
     {
       assert(n.get()!=node.get());
       purgeNodeOutsideEllipsoid(n,sampler,white_list,removed_nodes);
@@ -1017,9 +992,8 @@ void Tree::purgeNodeOutsideEllipsoid(NodePtr& node,
   return;
 }
 
-
 void Tree::purgeNodeOutsideEllipsoids(NodePtr& node,
-                                      const std::vector<SamplerPtr>& samplers,
+                                      const std::vector<InformedSamplerPtr>& samplers,
                                       const std::vector<NodePtr>& white_list,
                                       unsigned int& removed_nodes)
 {
@@ -1030,7 +1004,7 @@ void Tree::purgeNodeOutsideEllipsoids(NodePtr& node,
 
   // check if it belongs to a admissible informed set or the white list
   bool inbound=std::find(white_list.begin(), white_list.end(), node) != white_list.end();
-  for (const SamplerPtr& sampler: samplers)
+  for (const InformedSamplerPtr& sampler: samplers)
     inbound = inbound || sampler->inBounds(node->getConfiguration());
 
   if (inbound)
@@ -1052,34 +1026,35 @@ void Tree::purgeNodeOutsideEllipsoids(NodePtr& node,
   return;
 }
 
-unsigned int Tree::purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds)
+unsigned int Tree::purgeNodes(const InformedSamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds)
 {
-  if (nodes_.size() < maximum_nodes_)
+  if (nodes_->size() < maximum_nodes_)
     return 0;
-  unsigned int nodes_to_remove = nodes_.size() - maximum_nodes_;
 
+  unsigned int nodes_to_remove = nodes_->size() - maximum_nodes_;
   unsigned int removed_nodes = 0;
   unsigned int idx = 0;
-  while (idx < nodes_.size())
+  std::vector<NodePtr> nodes = nodes_->getNodes();
+  while (idx < nodes_->size())
   {
-    if (std::find(white_list.begin(), white_list.end(), nodes_.at(idx)) != white_list.end())
+    if (std::find(white_list.begin(), white_list.end(), nodes.at(idx)) != white_list.end())
     {
       idx++;
       continue;
     }
-    if (check_bounds && !sampler->inBounds(nodes_.at(idx)->getConfiguration()))
+    if (check_bounds && !sampler->inBounds(nodes.at(idx)->getConfiguration()))
     {
-      purgeFromHere(nodes_.at(idx), white_list, removed_nodes);
+      purgeFromHere(nodes.at(idx), white_list, removed_nodes);
       continue;
     }
 
     if (nodes_to_remove < removed_nodes)
       break;
-    if (nodes_.at(idx)->getChildConnectionsSize() == 0)
+    if (nodes.at(idx)->getChildConnectionsSize() == 0)
     {
       removed_nodes++;
-      nodes_.at(idx)->disconnect();
-      removeNode(nodes_.begin() + idx);
+      nodes.at(idx)->disconnect();
+      removeNode(nodes.at(idx));
       continue;
     }
 
@@ -1131,7 +1106,6 @@ void Tree::purgeThisNode(NodePtr& node, unsigned int& removed_nodes)
     removed_nodes++;
   }
 }
-
 
 void Tree::cleanTree()
 {
@@ -1193,8 +1167,8 @@ void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focu
             continue;
           }
         }
-          nodes_->insert(n);
-          populateTreeFromNode(n,focus1,focus2,cost,white_list);
+        nodes_->insert(n);
+        populateTreeFromNode(n,focus1,focus2,cost,black_list);
       }
     }
   }
@@ -1202,8 +1176,7 @@ void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focu
 
 void Tree::populateTreeFromNodeConsideringCost(const NodePtr& node, const Eigen::VectorXd& goal, const double& cost, const std::vector<NodePtr> &black_list, const bool node_check)
 {
-  std::vector<NodePtr>::iterator it = std::find(nodes_.begin(), nodes_.end(), node);
-  if (it == nodes_.end())
+  if (not nodes_->findNode(node))
   {
     throw std::invalid_argument("node is not member of tree");
   }
@@ -1236,11 +1209,22 @@ void Tree::populateTreeFromNodeConsideringCost(const NodePtr& node, const Eigen:
           if(not checker_->check(child->getConfiguration()))
             continue;
         }
-        nodes_.push_back(child);
+        nodes_->insert(child);
         populateTreeFromNodeConsideringCost(child,goal,cost,black_list,node_check);
       }
     }
   }
+}
+
+void Tree::getLeaves(std::vector<NodePtr>& leaves)
+{
+  std::vector<NodePtr> nodes = getNodes();
+  std::for_each(nodes.begin(),nodes.end(),[&](NodePtr n){
+    assert(((n->getParentConnectionsSize() == 1) && (n!=root_)) || (n == root_));
+
+    if((n!= root_) && (n->getChildConnectionsSize() == 0))
+      leaves.push_back(n);
+  });
 }
 
 XmlRpc::XmlRpcValue Tree::toXmlRpcValue() const

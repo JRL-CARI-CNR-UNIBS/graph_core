@@ -44,7 +44,7 @@ public:
 
   TimeMultigoalSolver(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
-             const SamplerPtr& sampler,
+             const InformedSamplerPtr& sampler,
              const Eigen::VectorXd& max_speed):
     MultigoalSolver(metrics, checker, sampler)
   {

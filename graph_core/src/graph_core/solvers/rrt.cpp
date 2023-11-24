@@ -229,7 +229,7 @@ bool RRT::update(const NodePtr& n, PathPtr &solution)
 
 }
 
-TreeSolverPtr RRT::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler)
+TreeSolverPtr RRT::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const InformedSamplerPtr& sampler)
 {
   RRTPtr new_solver = std::make_shared<RRT>(metrics,checker,sampler);
   new_solver->config(nh_);

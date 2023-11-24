@@ -41,7 +41,7 @@ protected:
   double delta_; //dist_bias and cost_bias update factor
   double cost_impr_;  //cost improvement factor (new cost < (1-cost_impr_)*path_cost_)
   double cost2beat_;
-  SamplerPtr improve_sampler_;
+  InformedSamplerPtr improve_sampler_;
   TreePtr new_tree_;
   NodePtr tmp_goal_node_;
 
@@ -53,7 +53,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   AnytimeRRT(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
-             const SamplerPtr& sampler): RRT(metrics, checker, sampler)
+             const InformedSamplerPtr& sampler): RRT(metrics, checker, sampler)
   {
     setParameters();
   }
@@ -137,7 +137,7 @@ public:
   virtual bool update(const NodePtr& n, PathPtr& solution) override;
   virtual TreeSolverPtr clone(const MetricsPtr& metrics,
                               const CollisionCheckerPtr& checker,
-                              const SamplerPtr& sampler) override;
+                              const InformedSamplerPtr& sampler) override;
 
 };
 

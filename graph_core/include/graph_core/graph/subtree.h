@@ -90,8 +90,7 @@ public:
   void hideFromSubtree(const NodePtr &node);
   void hideInvalidBranches(const NodePtr& node);
   void purgeThisNode(NodePtr& node, unsigned int& removed_nodes) override;
-  void removeNode(const std::vector<NodePtr>::iterator& it) override;
-  void removeNode(const NodePtr& node);
+  void removeNode(const NodePtr& node) override;
 
   virtual void addNode(const NodePtr& node, const bool& check_if_present = true);
 

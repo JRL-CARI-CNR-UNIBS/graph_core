@@ -42,7 +42,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   RRT(const MetricsPtr& metrics,
       const CollisionCheckerPtr& checker,
-      const SamplerPtr& sampler):
+      const InformedSamplerPtr& sampler):
     TreeSolver(metrics, checker, sampler) {}
 
   virtual bool config(const ros::NodeHandle& nh) override;
@@ -54,7 +54,7 @@ public:
   virtual bool update(const NodePtr& n, PathPtr& solution) override;
   virtual bool update(PathPtr& solution) override;
 
-  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler) override;
+  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const InformedSamplerPtr& sampler) override;
 };
 
 }

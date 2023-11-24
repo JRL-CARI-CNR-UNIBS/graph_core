@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+  <node pkg="graph_core"
+        name="prova_graph"
+        type="prova_graph"
+        output="screen"
+        launch-prefix="gdb -ex run --args" >
+  </node>
+
+</launch>

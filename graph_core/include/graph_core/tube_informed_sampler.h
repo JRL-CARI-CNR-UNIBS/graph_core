@@ -43,19 +43,18 @@ protected:
   double radius_;
   double length_;
   double local_bias_=0.8;
-  SamplerPtr sampler_;
+  InformedSamplerPtr sampler_;
   MetricsPtr metrics_;
 
   bool couldImprove(const Eigen::VectorXd &q);
-
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   TubeInformedSampler(const Eigen::VectorXd& start_configuration,
                       const Eigen::VectorXd& stop_configuration,
-                      const SamplerPtr& sampler,
+                      const InformedSamplerPtr& sampler,
                       const MetricsPtr& metrics):
-    InformedSampler(start_configuration,stop_configuration,sampler->getLB(),sampler->getUB(),sampler->cost())
+    InformedSampler(start_configuration,stop_configuration,sampler->getLB(),sampler->getUB(),sampler->getCost())
   {
     length_ = 0;
     radius_=0;
