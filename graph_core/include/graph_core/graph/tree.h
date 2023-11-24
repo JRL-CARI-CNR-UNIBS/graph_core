@@ -172,115 +172,390 @@ public:
    */
   virtual void removeNode(const NodePtr& node);
 
+  /**
+   * @brief tryExtend attempts to extend the tree to the provided configuration.
+   *
+   * This function finds the closest existing node in the tree to the given configuration using findClosestNode function,
+   * and then attempts to extend the tree from that closest node using tryExtendFromNode function.
+   *
+   * tryExtend does not create a new node.
+   *
+   * @param configuration The input configuration to which the function attempts to extend the tree.
+   * @param next_configuration A reference to a VectorXd object where the newly generated configuration will be stored if the extension is successful.
+   * @param closest_node A reference to a pointer to a Node object, pointing to the closest node in the tree.
+   * @return Returns true if the extension is possible, and false otherwise.
+   */
   bool tryExtend(const Eigen::VectorXd& configuration,
                  Eigen::VectorXd& next_configuration,
                  NodePtr& closest_node);
 
+  /**
+   * @brief tryExtendFromNode attempts to extend the tree from a given node to a new configuration.
+   *
+   * This function is responsible for trying to extend the tree from a specified node to the provided configuration by selecting a new configuration
+   * and checking if the extension is valid based on a given tolerance and collision checking.
+   * The new configuration if selected by selectNextConfiguration function. If the distance between the configuration and the closest node is less than max_distance_,
+   * the function returns the input configuration. Otherwise it calculates a new configuration at a distance equal to max_distance_
+   * from the node and in the direction of the input configuration.
+   *
+   * tryExtendFromNode does not create a new node.
+   *
+   * @param configuration The input configuration to which the function attempts to extend the tree.
+   * @param next_configuration A reference to a VectorXd object where the newly generated configuration will be stored if the extension is successful.
+   * @param node A reference to a pointer to a Node object representing the starting point for the extension.
+   * @return Returns true if the extension is possible, and false otherwise.
+   */
   bool tryExtendFromNode(const Eigen::VectorXd& configuration,
                          Eigen::VectorXd& next_configuration,
                          NodePtr& node);
 
-
+  /**
+   * @brief tryExtendWithPathCheck attempts to extend the tree to the provided configuration if the whole path to the new configuration is collision-free.
+   *
+   * This function finds the closest existing node in the tree to the given configuration using findClosestNode function,
+   * and then attempts to extend the tree from that closest node using tryExtendFromNodeWithPathCheck function, which checks if the path to the
+   * closest node found is collision-free.
+   *
+   * tryExtendWithPathCheck does not create a new node.
+   *
+   * @param configuration The input configuration to which the function attempts to extend the tree.
+   * @param next_configuration A reference to a VectorXd object where the newly generated configuration will be stored if the extension is successful.
+   * @param closest_node A reference to a pointer to a Node object representing the starting point for the extension.
+   * @param checked_connections A reference to a vector of ConnectionPtr objects containing the connections checked during the path check.
+   * @return Returns true if the extension is possible and the whole path from the root to the new configuration is collisione-free, and false otherwise.
+   */
   bool tryExtendWithPathCheck(const Eigen::VectorXd& configuration,
                               Eigen::VectorXd& next_configuration,
                               NodePtr& closest_node,
                               std::vector<ConnectionPtr> &checked_connections);
 
+  /**
+   * @brief tryExtendFromNodeWithPathCheck attempts to extend the tree from a given node to the provided configuration if the whole path to the new configuration is collision-free.
+   *
+   * This function is responsible for trying to extend the tree from a specified node by first checking the path to that node using checkPathToNode function.
+   * Note that checkPathToNode checks only connection for which isRecentlyChecked returns false to avoid multiple checks of the same connection.
+   * If the path check is successful, it proceeds to select a new configuration using the selectNextConfiguration method
+   * and checks if the extension is valid based on a given tolerance and collision checking.
+   * If the distance between the configuration and the closest node is less than max_distance_, the function returns the input configuration.
+   * Otherwise it calculates a new configuration at a distance equal to max_distance_ from the node and in the direction of the input configuration.
+   *
+   * tryExtendFromNodeWithPathCheck does not create a new node.
+   *
+   * @param configuration The input configuration to which the function attempts to extend the tree.
+   * @param next_configuration A reference to a VectorXd object where the newly generated configuration will be stored if the extension is successful.
+   * @param node A reference to a pointer to a Node object representing the starting point for the extension.
+   * @param checked_connections A reference to a vector of ConnectionPtr objects containing the connections checked during the path check.
+   * @return Returns true if the extension is possible and the whole path from the root to the new configuration is collisione-free, and false otherwise.
+   */
   bool tryExtendFromNodeWithPathCheck(const Eigen::VectorXd& configuration,
                                       Eigen::VectorXd& next_configuration,
                                       NodePtr& node,
                                       std::vector<ConnectionPtr> &checked_connections);
 
-  /* selectNextConfiguration: compute next_configuration as
-   * next_configuration = configurarion if configuration is close to the node (less than max_distance_)
-   * next_configuration distance is limited to max_distance_ if configuration is far from node
+  /**
+   * @brief selectNextConfiguration selects the final configuration for tree expansion, which will start from the provided node in the direction of the provided configuration.
+   *
+   * The function calculates the distance between the input configuration and the current node's configuration using the norm() method.
+   * If the calculated distance is below a specified tolerance (TOLERANCE), the next configuration is set to the input configuration.
+   * If the distance is less than the maximum allowed distance (max_distance_), the next configuration is set to the input configuration.
+   * Otherwise, the next configuration is determined based on linear interpolation between the current node's configuration and the input configuration.
+   *
+   * @param configuration The input configuration to determine the direction of expansion.
+   * @param next_configuration A reference to a VectorXd object where the selected next configuration will be stored.
+   * @param node A pointer to a Node object representing the starting node in the tree.
+   * @return Returns the distance between the input configuration and the current node's configuration.
    */
   double selectNextConfiguration(const Eigen::VectorXd& configuration,
                                  Eigen::VectorXd& next_configuration,
                                  const NodePtr &node);
 
-  bool extend(const Eigen::VectorXd& configuration,
-              NodePtr& new_node);
 
+  /**
+   * @brief extend extends the tree by attempting to add a new node based on the provided configuration.
+   *
+   * This function tries to extend the tree by finding the closest existing node to the given configuration using the tryExtend method.
+   * If the extension is possible (t\ryExtend returns true), the tree is updated with a new node based on the configuration provided by tryExtend and
+   * a connection is established between the closest existing node and the new node using the extendOnly function.
+   * If the extension is not possible, the tree remains unchanged, and both new_node and connection are set to nullptr.
+   *
+   * @param configuration The input configuration to which the function attempts to extend the tree.
+   * @param new_node A reference to a pointer to a Node object that will be set to the newly created node if the extension is successful.
+   * @param connection A reference to a pointer to a Connection object that will be set to the connection between the existing and new nodes.
+   * @return Returns true if the extension is successful, and false otherwise.
+   */
   bool extend(const Eigen::VectorXd& configuration,
               NodePtr& new_node,
               ConnectionPtr& connection);
+  bool extend(const Eigen::VectorXd& configuration,
+              NodePtr& new_node);
 
-
-  bool extendWithPathCheck(const Eigen::VectorXd& configuration,
-                           NodePtr& new_node,
-                           std::vector<ConnectionPtr> &checked_connections);
-
+  /**
+   * @brief extendWithPathCheck extends the tree by attempting to add a new node based on the provided configuration, if that the whole path to the new selected configuration is collision-free.
+   *
+   * This function tries to extend the tree by finding the closest existing node to the given configuration and checking the whole path
+   * to the configuration using the tryExtendWithPathCheck method.
+   * If the extension is possible (tryExtend returns true), the tree is updated with a new node based on the configuration provided by tryExtendWithPathCheck and
+   * a connection is established between the closest existing node and the new node using the extendOnly function. The flag recentlyChecked of the new connection is set true.
+   * If the extension is not possible, the tree remains unchanged, and both new_node and connection are set to nullptr.
+   *
+   * A version wich does not return the connection pointer is also available.
+   *
+   * @param configuration The input configuration to which the function attempts to extend the tree.
+   * @param new_node A reference to a pointer to a Node object that will be set to the newly created node if the extension is successful.
+   * @param connection A reference to a pointer to a Connection object that will be set to the connection between the existing and new nodes.
+   * @param checked_connections A reference to a vector of ConnectionPtr objects containing the connections checked during the path check.
+   * @return Returns true if the extension is successful, and false otherwise.
+   */
   bool extendWithPathCheck(const Eigen::VectorXd& configuration,
                            NodePtr& new_node,
                            ConnectionPtr& connection,
                            std::vector<ConnectionPtr> &checked_connections);
+  bool extendWithPathCheck(const Eigen::VectorXd& configuration,
+                           NodePtr& new_node,
+                           std::vector<ConnectionPtr> &checked_connections);
 
+  /**
+   * @brief extendOnly extends the tree to a newly created node by establishing a connection with the closest existing node.
+   *
+   * This function extends the tree by creating a connection between the new node and the closest existing node, both provided by input.
+   * The cost of the connection is calculated using the specified metrics, and the new node is added to the tree.
+   *
+   * @param closest_node A reference to a pointer to a Node object representing the closest existing node.
+   * @param new_node A reference to a pointer to a Node object representing the new node.
+   * @param connection A reference to a pointer to a Connection object that will be set to the connection between the two nodes.
+   * @return Returns true if the extension is successful, and false otherwise.
+   */
   bool extendOnly(NodePtr &closest_node,
                   NodePtr& new_node,
                   ConnectionPtr& connection);
 
+  /**
+   * @brief extendToNode extends the tree to include a specified node.
+   *
+   * This function extends the tree to include the given node. If the node is already in the tree, the function returns true.
+   * Otherwise, it attempts to extend the tree to the node's configuration using the tryExtend method.
+   * If the extension is successful, a new node is created, and a connection is established between the closest existing node and the new node.
+   * The cost of the connection is calculated using the specified metrics.
+   *
+   * @param node A reference to a pointer to a Node object representing the node to be included in the tree.
+   * @param new_node A reference to a pointer to a Node object representing the newly created node or the existing node if it is already in the tree.
+   * @return Returns true if the tree is extended to include the node, and false otherwise.
+   */
   bool extendToNode(const NodePtr& node,
                     NodePtr& new_node);
 
+  /**
+   * @brief Connect connects the tree to a specified configuration by repeatedly extending towards that configuration.
+   *
+   * This function connects the tree to a specified configuration by iteratively extending the tree towards that configuration.
+   * The extension is performed using the extend method. If the extension is successful, the new node is updated, and the function
+   * checks if the distance between the new node's configuration and the specified configuration is within tolerance. If so, the connection is considered successful.
+   * The process continues until no further extension is possible or until the distance is within tolerance.
+   *
+   * @param configuration The target configuration to which the tree tries to extend.
+   * @param new_node A reference to a pointer to a Node object representing the last node created by the extend function, namely the farthest from the closest node of the tree
+   * and the closest one to node.
+   * @return Returns true if the tree is successfully connected to the specified configuration, and false otherwise.
+   */
   bool connect(const Eigen::VectorXd& configuration,
                NodePtr& new_node);
 
+  /**
+   * @brief informedExtend implements an informed extension method that prioritizes nodes with lower heuristic values.
+   *
+   * This function attempts to extend the tree from the closest nodes to a specified configuration, prioritizing nodes with lower heuristic values.
+   * The heuristic is calculated as a weighted sum of the distance between the node and the configuration and the cost-to-come to reach the node from start.
+   * Specifically, the heuristic is computed as:
+   *          heuristic = bias*distance between node and configuration + (1-bias)*cost to the node from root
+   * Bias is an input value between 0 and 1.
+   * The function iterates through the closest nodes, calculates the heuristic, and adds nodes with a favorable heuristic to a priority queue.
+   * It then attempts to extend the tree from the selected nodes and checks for successful extensions based on distance and path validity.
+   * A close node is added to the queue if and only if the following condition is true:
+   *
+   *          cost to the node + distance between node and configuration + distance between configuration and goal < cost to beat
+   *
+   * @param configuration The target configuration to which the tree is extended.
+   * @param new_node A reference to a pointer to a Node object representing the newly created node if the extension is successful.
+   * @param goal The goal is the final configuration of the path planning problem. It is used in the cost-to-go calculation.
+   * @param cost2beat The value used in the condition above.
+   * @param bias The bias factor determining the weights in the heuristic calculation. It belongs to the interval [0,1]
+   * @return Returns true if the tree is successfully extended to the specified configuration, and false otherwise.
+   */
   bool informedExtend(const Eigen::VectorXd& configuration,   //Used in AnytimeRRT
                       NodePtr& new_node,
                       const Eigen::VectorXd &goal, const double &cost2beat, const double &bias);
 
+  /**
+   * @brief connectToNode connects the tree to a specified node.
+   *
+   * This function connects the tree to a specified node by repeatedly extending the tree towards that node.
+   * The extension is performed using the extendToNode method. If the extension is successful, the new node is updated,
+   * and the function checks if the distance between the new node's configuration and the specified node's configuration is within tolerance.
+   * The process continues until no further extension is possible, the distance is within tolerance, or the maximum time limit is reached.
+   *
+   * @param node A reference to a pointer to a Node object representing the node to which the tree is connected.
+   * @param new_node A reference to a pointer to a Node object representing the last node created by the extend function, namely the farthest from the closest node of the tree
+   * and the closest one to node.
+   * @param max_time The maximum time limit (in seconds) for attempting the connection.
+   * @return Returns true if the tree is successfully connected to the specified node, and false otherwise.
+   */
   bool connectToNode(const NodePtr& node,
                      NodePtr& new_node,
                      const double &max_time = std::numeric_limits<double>::infinity());
 
+  /**
+   * @brief rewireOnly rewires the tree by potentially updating parent and/or child connections of a specified node.
+   *
+   * This function attempts to rewire the tree by potentially updating the parent and/or child connections of a specified node.
+   * The rewire operation is influenced by a given radius and a white list of nodes that should not be rewired. If a node belongs to the white list,
+   * a new parent for that node is not searched. By setting the rewiring radius <=0 the nearest nodes considered are the K nearest neighbours.
+   * The what_rewire parameter determines whether to rewire only parents (1), only children (2), or both (0).
+   *
+   * @param node A reference to a pointer to a Node object representing the node to be rewired.
+   * @param r_rewire The radius within which nodes are considered for rewiring. If <= 0, the nearest nodes are the K nearest neighbours.
+   * @param white_list A vector of NodePtr representing nodes that should not be considered for rewiring.
+   * @param what_rewire An integer specifying the rewire operation: 0 for for both parents and children, 1 for parents only, and 2 for children only.
+   * @return Returns true if the rewire operation results in improved connections, and false otherwise.
+   */
+  bool rewireOnly(NodePtr& node, double r_rewire, const std::vector<NodePtr> &white_list, const int &what_rewire = 0);
+  bool rewireOnly(NodePtr& node, double r_rewire, const int &what_rewire = 0);
+
+  /**
+   * @brief rewireOnlyWithPathCheck rewires the tree by potentially updating parent and/or child connections of a specified node with path checking.
+   *
+   * This function attempts to rewire the tree by potentially updating the parent and/or child connections of a specified node.
+   * The rewire operation is influenced by a given radius and a white list of nodes that should not be rewired. If a node belongs to the white list,
+   * a new parent for that node is not searched. By setting the rewiring radius <=0 the nearest nodes considered are the K nearest neighbours.
+   * The what_rewire parameter determines whether to rewire only parents (1), only children (2), or both (0).
+   * Path checking is performed to ensure the validity of connections during the rewire operation, e.g. the validity of the path to the new potential parent of the node.
+   *
+   * @param node A reference to a pointer to a Node object representing the node to be rewired.
+   * @param checked_connections A vector of ConnectionPtr representing the connections that have been checked for validity.
+   * @param r_rewire The radius within which nodes are considered for rewiring. If <= 0, the nearest nodes are the K nearest neighbours.
+   * @param white_list A vector of NodePtr representing nodes that should not be considered for rewiring.
+   * @param what_rewire An integer specifying the rewire operation: 0 for parents and children only, 1 for parents only, and 2 for children only.
+   * @return Returns true if the rewire operation results in improved connections, and false otherwise.
+   */
+  bool rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr> &checked_connections, double r_rewire, const std::vector<NodePtr> &white_list, const int& what_rewire = 0);
+  bool rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr> &checked_connections, double r_rewire, const int& what_rewire = 0);
+
+  /**
+   * @brief rewire rewires the tree after extending it from a given configuration within a specified radius.
+   *
+   * This function extends the tree from a given configuration using the extend method.
+   * If the extension is successful, it then attempts to rewire the tree around the new node using the rewireOnly method.
+   *
+   * @param configuration A reference to a constant Eigen::VectorXd representing the configuration from which the tree is extended.
+   * @param r_rewire The radius within which nodes are considered for rewiring during the rewire operation. If <= 0, the nearest nodes are the K nearest neighbours.
+   * @param new_node A reference to a pointer to a Node object representing the new node added to the tree during extension.
+   * @return Returns true if the extension and rewire operations are successful, and false otherwise.
+   */
+  bool rewire(const Eigen::VectorXd& configuration,
+              double r_rewire,
+              NodePtr& new_node);
   bool rewire(const Eigen::VectorXd& configuration,
               double r_rewire);
 
-  bool rewireK(const Eigen::VectorXd& configuration);
-
-  //Useful for replanning:  extend+rewireAndCheckPath -> new sample and rewire considering only nodes with path to them collision-free
-  bool rewireWithPathCheck(const Eigen::VectorXd& configuration,
-                           std::vector<ConnectionPtr> &checked_connections,
-                           double r_rewire,
-                           NodePtr& new_node);
+  /**
+   * @brief rewireWithPathCheck rewires the tree after extending it to a given configuration with path checking.
+   *
+   * This function extends the tree from a given configuration using the extendWithPathCheck method.
+   * If the extension is successful, it then attempts to rewire the tree around the new node with path checking using the rewireOnlyWithPathCheck method.
+   *
+   * @param configuration A reference to a constant Eigen::VectorXd representing the configuration to which the tree is extended.
+   * @param checked_connections A vector of ConnectionPtr representing the connections that have been checked for validity.
+   * @param r_rewire The radius within which nodes are considered for rewiring during the rewire operation. If <= 0, the nearest nodes are the K nearest neighbours.
+   * @param white_list A vector of NodePtr representing nodes that should not be considered for rewiring.
+   * @param new_node A reference to a pointer to a Node object representing the new node added to the tree during extension.
+   * @return Returns true if the extension and rewire operations are successful, and false otherwise.
+   */
   bool rewireWithPathCheck(const Eigen::VectorXd& configuration,
                            std::vector<ConnectionPtr> &checked_connections,
                            double r_rewire,
                            const std::vector<NodePtr> &white_list,
                            NodePtr& new_node);
-
+  bool rewireWithPathCheck(const Eigen::VectorXd& configuration,
+                           std::vector<ConnectionPtr> &checked_connections,
+                           double r_rewire,
+                           NodePtr& new_node);
   bool rewireWithPathCheck(const Eigen::VectorXd& configuration,
                            std::vector<ConnectionPtr> &checked_connections,
                            double r_rewire);
 
-  bool rewire(const Eigen::VectorXd& configuration,
-              double r_rewire,
-              NodePtr& new_node);
-
-  bool rewireToNode(const NodePtr& n,
-                    double r_rewire);
-
+  /**
+   * @brief rewireToNode rewires the tree to a specific node after extending it.
+   *
+   * This function extends the tree to a specific node using the extendToNode method.
+   * If the extension is successful, it then attempts to rewire the tree around the new node using the rewireOnly method.
+   *
+   * @param n A constant reference to a NodePtr representing the target node to which the tree is extended.
+   * @param r_rewire The radius within which nodes are considered for rewiring during the rewire operation. If <= 0, the nearest nodes are the K nearest neighbours.
+   * @param new_node A reference to a pointer to a Node object representing the new node added to the tree during extension.
+   * @return Returns true if the extension and rewire operations are successful, and false otherwise.
+   */
   bool rewireToNode(const NodePtr& n,
                     double r_rewire,
                     NodePtr& new_node);
+  bool rewireToNode(const NodePtr& n,
+                    double r_rewire);
 
-  //if what_rewire is 1 it searches for the best parent for node inside the radius r_rewire, if 2 it verifies if node is a better parent for the other nodes inside r_rewire, if 0 it does both
-  bool rewireOnly(NodePtr& node, double r_rewire, const int &what_rewire = 0);
-  bool rewireOnly(NodePtr& node, double r_rewire, const std::vector<NodePtr> &white_list, const int &what_rewire = 0);
-  //Useful for replanning: rewireOnly considering those nodes that have a free path from the root to them
-  bool rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr> &checked_connections, double r_rewire, const int& what_rewire = 0);
-  bool rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr> &checked_connections, double r_rewire, const std::vector<NodePtr> &white_list, const int& what_rewire = 0);
-
-  bool checkPathToNode(const NodePtr &node, std::vector<ConnectionPtr>& checked_connections);
+  /**
+   * @brief checkPathToNode checks the validity of the path to a specific node.
+   *
+   * This function checks the validity of the path to a specific node by examining the connections along the path.
+   * It first retrieves the connections leading to the node using the getConnectionToNode method.
+   * Then, it checks each connection for validity, updating costs and marking connections as checked.
+   *
+   * @param node A constant reference to a NodePtr representing the target node to which the path is checked.
+   * @param checked_connections A vector of ConnectionPtr representing the connections that have been checked for validity.
+   * @param path_connections A vector of ConnectionPtr representing the connections along the path to the target node.
+   * @return Returns true if the path to the node is valid, and false otherwise.
+   */
   bool checkPathToNode(const NodePtr &node, std::vector<ConnectionPtr>& checked_connections, std::vector<ConnectionPtr>& path_connections);
+  bool checkPathToNode(const NodePtr &node, std::vector<ConnectionPtr>& checked_connections);
 
+  /**
+   * @brief findClosestNode finds the closest existing node in the tree to a given configuration.
+   *
+   * This function utilizes the nearestNeighbor method of the nodes_ member to find and return the closest existing node in the tree
+   * to the specified configuration.
+   *
+   * @param configuration A constant reference to an Eigen::VectorXd representing the configuration for which the closest node is sought.
+   * @return Returns a pointer to the closest existing node in the tree to the specified configuration.
+   */
   NodePtr findClosestNode(const Eigen::VectorXd& configuration);
 
+  /**
+   * @brief costToNode calculates the cost to reach a specific node from the tree's root.
+   *
+   * This function calculates the cost to reach a specific node from the tree's root by traversing the tree along its parent connections.
+   * The cost is the sum of the costs of all connections along the path to the root.
+   *
+   * @param node A pointer to a Node object representing the target node for which the cost is calculated.
+   * @return Returns the cost to reach the specified node from the tree's root.
+   */
   double costToNode(NodePtr node);
 
-  std::vector<ConnectionPtr> getConnectionToNode(NodePtr node);  //la &?
+  /**
+   * @brief getConnectionToNode retrieves the connections along the path to a specific node from the tree's root.
+   *
+   * This function retrieves the connections along the path to a specific node from the tree's root.
+   * It traverses the tree along its parent connections and collects the connections in reverse order.
+   *
+   * @param node A constant reference to a NodePtr representing the target node for which the connections are retrieved.
+   * @return Returns a vector of ConnectionPtr representing the connections along the path from the root to the specified node.
+   */
+  std::vector<ConnectionPtr> getConnectionToNode(const NodePtr& node);
 
+  /**
+   * @brief Keeps only the branch specified by a vector of connections in the tree.
+   *
+   * This function retains only the branch specified by a vector of connections in the tree.
+   * It disconnects the nodes outside the specified branch and updates the tree's nodes_ member accordingly.
+   *
+   * @param connections A constant reference to a vector of ConnectionPtr representing the connections specifying the branch to be retained.
+   * @return Returns true if the operation is successful, and false otherwise.
+   */
   bool keepOnlyThisBranch(const std::vector<ConnectionPtr>& connections);
 
   bool addBranch(const std::vector<ConnectionPtr>& connections);

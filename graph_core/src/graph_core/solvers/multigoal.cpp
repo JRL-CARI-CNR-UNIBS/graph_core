@@ -509,7 +509,7 @@ bool MultigoalSolver::update(PathPtr& solution)
       }
       else
       {
-        improved=start_tree_->rewireK(configuration);
+        improved=start_tree_->rewire(configuration,-1); // by setting the rewiring radius <=0 the nearest nodes considered are the nearest K neighbours
       }
       if (improved)
       {
