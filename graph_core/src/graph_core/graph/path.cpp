@@ -1040,7 +1040,6 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
     }
     else
     {
-      //controlla se devi mettere connessione se rewire==false
       NodePtr actual_node = std::make_shared<Node>(configuration);
       is_a_new_node = true;
 
@@ -1074,7 +1073,7 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
         else
         {
           cost_parent = metrics_->cost(parent     ->getConfiguration(), actual_node->getConfiguration());
-          cost_child  = metrics_->cost(actual_node->getConfiguration(), child      ->getConfiguration());; //conn->getCost() - cost_parent;
+          cost_child  = metrics_->cost(actual_node->getConfiguration(), child      ->getConfiguration());
         }
 
         if(tree_)
@@ -1149,7 +1148,7 @@ NodePtr Path::findCloserNode(const NodePtr& node, double &dist)
   return findCloserNode(configuration,dist);
 }
 
-PathPtr Path::getSubpathToConf(const Eigen::VectorXd& conf, const bool get_copy)
+PathPtr Path::getSubpathToConf(const Eigen::VectorXd& conf, const bool clone)
 {
   //If get_copy, the node is not real added to the path and a copy of the subpath is returned
   //If !get_copy, the node is really added to the path, the path and the tree are rewired and the real subpath is returned
@@ -1159,7 +1158,7 @@ PathPtr Path::getSubpathToConf(const Eigen::VectorXd& conf, const bool get_copy)
   {
     if(conf == wp)
     {
-      if(not get_copy)
+      if(not clone)
         return getSubpathToNode(conf);
       else
         return getSubpathToNode(conf)->clone();
@@ -1179,7 +1178,7 @@ PathPtr Path::getSubpathToConf(const Eigen::VectorXd& conf, const bool get_copy)
     assert(0);
   }
 
-  if(not get_copy)
+  if(not clone)
   {
     node = addNodeAtCurrentConfig(conf,conn,true);
     subpath = getSubpathToNode(node);
@@ -1229,7 +1228,7 @@ PathPtr Path::getSubpathToConf(const Eigen::VectorXd& conf, const bool get_copy)
   return subpath;
 }
 
-PathPtr Path::getSubpathFromConf(const Eigen::VectorXd& conf, const bool get_copy)
+PathPtr Path::getSubpathFromConf(const Eigen::VectorXd& conf, const bool clone)
 {
   //If get_copy, the node is not real added to the path and a copy of the subpath is returned
   //If !get_copy, the node is really added to the path, the path and the tree are rewired and the real subpath is returned
@@ -1239,7 +1238,7 @@ PathPtr Path::getSubpathFromConf(const Eigen::VectorXd& conf, const bool get_cop
   {
     if(conf == wp)
     {
-      if(not get_copy)
+      if(not clone)
         return getSubpathFromNode(conf);
       else
         return getSubpathFromNode(conf)->clone();
@@ -1259,7 +1258,7 @@ PathPtr Path::getSubpathFromConf(const Eigen::VectorXd& conf, const bool get_cop
 
   bool is_net = conn->isNet();
 
-  if(not get_copy)
+  if(not clone)
   {
     node = addNodeAtCurrentConfig(conf,conn,true);
     subpath = getSubpathFromNode(node);
