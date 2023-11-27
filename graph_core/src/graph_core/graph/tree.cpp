@@ -757,9 +757,9 @@ bool Tree::rewireToNode(const NodePtr& n, double r_rewire)
 }
 
 
-std::multimap<double,NodePtr> Tree::near(const NodePtr &node, const double &r_rewire)
+std::multimap<double,NodePtr> Tree::near(const NodePtr &node, const double &radius)
 {
-  return nodes_->near(node->getConfiguration(),r_rewire);
+  return nodes_->near(node->getConfiguration(),radius);
 }
 
 std::multimap<double,NodePtr> Tree::nearK(const NodePtr &node)
@@ -834,7 +834,12 @@ bool Tree::keepOnlyThisBranch(const std::vector<ConnectionPtr>& connections)
   std::vector<NodePtr> branch_nodes;
   branch_nodes.push_back(connections.at(0)->getParent());
   for (const ConnectionPtr& conn : connections)
+  {
+    if(conn->getParent() != branch_nodes.back())
+      throw std::runtime_error("the branch should consist of contiguous connections");
+
     branch_nodes.push_back(conn->getChild());
+  }
 
   nodes_->disconnectNodes(branch_nodes);
   NearestNeighborsPtr nodes;
@@ -877,7 +882,6 @@ bool Tree::addTree(TreePtr &additional_tree, const double &max_time)
     if (not connectToNode(additional_tree->getRoot(),new_node,max_time))
       return false;
   }
-
 
   std::vector<NodePtr> additional_nodes=additional_tree->getNodes();
   for (size_t inode=1;inode<additional_nodes.size();inode++)
@@ -993,15 +997,15 @@ unsigned int Tree::purgeNodes(const InformedSamplerPtr& sampler, const std::vect
       idx++;
       continue;
     }
-    if (check_bounds && !sampler->inBounds(nodes.at(idx)->getConfiguration()))
+    if(check_bounds && !sampler->inBounds(nodes.at(idx)->getConfiguration()))
     {
       purgeFromHere(nodes.at(idx), white_list, removed_nodes);
       continue;
     }
 
-    if (nodes_to_remove < removed_nodes)
+    if (nodes_to_remove <= removed_nodes)
       break;
-    if (nodes.at(idx)->getChildConnectionsSize() == 0)
+    if(nodes.at(idx)->getChildConnectionsSize() == 0)
     {
       removed_nodes++;
       nodes.at(idx)->disconnect();
@@ -1238,12 +1242,12 @@ TreePtr Tree::fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
   if (not x.hasMember("nodes"))
   {
     ROS_ERROR("loading from XmlRpcValue a tree without 'nodes' field");
-    return NULL;
+    return nullptr;
   }
   if (not x.hasMember("connections"))
   {
     ROS_ERROR("loading from XmlRpcValue a tree without 'connections' field");
-    return NULL;
+    return nullptr;
   }
 
   XmlRpc::XmlRpcValue nodes=x["nodes"];
@@ -1251,12 +1255,12 @@ TreePtr Tree::fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
   if (nodes.getType()!= XmlRpc::XmlRpcValue::Type::TypeArray)
   {
     ROS_ERROR("loading from XmlRpcValue a tree where 'nodes' is not an array");
-    return NULL;
+    return nullptr;
   }
   if (connections.getType()!= XmlRpc::XmlRpcValue::Type::TypeArray)
   {
     ROS_ERROR("loading from XmlRpcValue a tree where 'connections' is not an array");
-    return NULL;
+    return nullptr;
   }
   NodePtr root=Node::fromXmlRpcValue(nodes[0]);
   if (not lazy)
@@ -1264,7 +1268,7 @@ TreePtr Tree::fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
     if (not checker->check(root->getConfiguration()))
     {
       ROS_DEBUG("root is in collision");
-      return NULL;
+      return nullptr;
     }
   }
   assert(root);
@@ -1327,12 +1331,12 @@ bool Tree::recheckCollision()
 bool Tree::recheckCollisionFromNode(NodePtr& n)
 {
   NodePtr child;
-  ConnectionPtr conn;
-  std::vector<NodePtr> white_list;
   unsigned int removed_nodes;
-  for(unsigned int i=0; i<n->getChildConnectionsSize();i++)
+  std::vector<NodePtr> white_list;
+
+  std::vector<ConnectionPtr> n_conns = n->getChildConnections();
+  for(ConnectionPtr& conn:n_conns)
   {
-    conn = n->childConnection(i);
     child=conn->getChild();
 
     if (not checker_->checkConnection(conn))
@@ -1340,7 +1344,7 @@ bool Tree::recheckCollisionFromNode(NodePtr& n)
       purgeFromHere(child,white_list,removed_nodes);
       return false;
     }
-    if (not recheckCollisionFromNode(child))
+    if(not recheckCollisionFromNode(child))
       return false;
   }
   return true;

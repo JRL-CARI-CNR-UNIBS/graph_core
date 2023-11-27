@@ -35,18 +35,45 @@ class Connection: public std::enable_shared_from_this<Connection>
   friend class Node;
 
 protected:
+
+  /**
+   * @brief Weak pointer to the parent node.
+   */
   NodeWeakPtr parent_;
+
+  /**
+   * @brief Shared pointer to the child node.
+   */
   NodePtr child_;
+
+  /**
+   * @brief Cost associated with the connection.
+   */
   double cost_;
+
+  /**
+   * @brief Euclidean norm of the connection.
+   */
   double euclidean_norm_;
+
+  /**
+   * @brief Time of the last cost update for the connection.
+   */
   double time_cost_update_;
+
+  /**
+   * @brief Likelihood associated with the connection.
+   */
   double likelihood_;
 
   /**
-   * @brief flags_ is a vector of flags. By default, the first three positions are reserved for valid flag, net flag and recently checked flag.
+   * @brief Vector of boolean flags.
+   *
+   * This member variable represents a vector of boolean flags associated with the connection.
+   * By default, the first three positions are reserved for valid flag, net flag and recently checked flag.
    * You can add new flags specific to your algorithm using function setFlag and passing the vector-index to store the flag.
-   * getReservedFlagsNumber allows you to know how many positions are reserved for the defaults. setFlag doesn't allow you to overwrite these positions.
-   * To overwrite them, you should use the flag-specific function (like setRecentlyChecked).
+   * getReservedFlagsNumber allows you to know how many positions are reserved for the defaults.
+   * setFlag doesn't allow you to overwrite these positions. To overwrite them, use the flag-specific functions.
    */
   std::vector<bool> flags_;
 
@@ -58,25 +85,48 @@ public:
    * Increment number_reserved_flags_ accordingly!
    * Initialize flags_ in the constructor accordingly!
    * If you need to modify or read these flags externally, implement getter and setter functions!
-   * If you want, print your flag when << operator is called on a connection
+   * If you want, print your flag when << operator is called on a connection.
+   */
+
+  /**
+   * @brief Index of the validity flag in the flags_ array.
    */
   static constexpr unsigned int idx_valid_ = 0;
+
+  /**
+   * @brief Index of the net connection flag in the flags_ array.
+   */
   static constexpr unsigned int idx_net_ = 1;
+
+  /**
+   * @brief Index of the recently checked flag in the flags_ array.
+   */
   static constexpr unsigned int idx_recently_checked_ = 2;
 
+  /**
+   * @brief Number of reserved flags in the flags_ array.
+   */
   static constexpr unsigned int number_reserved_flags_ = 3;
 
   /**
-   * @brief Connection is the constructor of the Connection object
-   * @param parent is the parent node of the connection
-   * @param child is the child node of the connection
-   * @param is_net is a bool to define the type of connection: net or standard.
+   * @brief Constructor for the Connection class.
+   *
+   * This constructor initializes a Connection object with the provided parent and child Nodes.
+   * It calculates the Euclidean norm between the parent and child configurations and sets deafult values for other members.
+   * The flags are set to {false, is_net, false} for valid, is_net, and recently_checked.
+   *
+   * @param parent The NodePtr to the parent Node.
+   * @param child The NodePtr to the child Node.
+   * @param is_net Boolean indicating if the connection is a net connection.
    */
   Connection(const NodePtr& parent, const NodePtr& child, const bool is_net = false);
 
   /**
-   * @brief pointer returns a std::shared_pointer to this connection
-   * @return
+   * @brief Returns a shared pointer to the Connection.
+   *
+   * This function returns a shared pointer to the Connection using shared_from_this().
+   *
+   * @return Returns a shared pointer to the Connection.
    */
   ConnectionPtr pointer()
   {
@@ -84,8 +134,9 @@ public:
   }
 
   /**
-   * @brief isNet tells if the connection is of type net or not. It basically check the value of the reserved flag.
-   * @return true if net, false otherwise
+   * @brief Checks if the Connection is a net connection.
+   *
+   * @return Returns true if the Connection is a net connection, false otherwise.
    */
   bool isNet() const
   {
@@ -93,8 +144,9 @@ public:
   }
 
   /**
-   * @brief isRecentlyChecked tells if the connection has been recently checked.  It basically check the value of the reserved flag.
-   * @return true if recently checked, false otherwise
+   * @brief Checks if the Connection has been recently checked.
+   *
+   * @return Returns true if the Connection has been recently checked, false otherwise.
    */
   bool isRecentlyChecked() const
   {
@@ -102,8 +154,9 @@ public:
   }
 
   /**
-   * @brief setRecentlyChecked sets the "recently checked" flag
-   * @param checked true if the connection has been recently checked, false otherwise
+   * @brief Sets the recently checked status of the Connection.
+   *
+   * @param checked Boolean indicating the recently checked status to be set.
    */
   void setRecentlyChecked(bool checked)
   {
@@ -111,8 +164,9 @@ public:
   }
 
   /**
-   * @brief isValid tells if the connection is valid, that means it is connected to a parent and to a child
-   * @return true if valid, false otherwise
+   * @brief Checks if the Connection is valid.
+   *
+   * @return Returns true if the Connection is valid, false otherwise.
    */
   bool isValid() const
   {
@@ -120,8 +174,9 @@ public:
   }
 
   /**
-   * @brief setCost sets the cost of the connection and updates time_cost_update_ accordingly
-   * @param cost is the cost
+   * @brief Sets the cost of the Connection and updates the time of the cost update.
+   *
+   * @param cost The cost value to be set for the Connection.
    */
   void setCost(const double& cost)
   {
@@ -130,8 +185,9 @@ public:
   }
 
   /**
-   * @brief getCost returns the cost of the connection
-   * @return the cost of the connection
+   * @brief Gets the cost of the Connection.
+   *
+   * @return Returns a reference to the cost value of the Connection.
    */
   const double& getCost() const
   {
@@ -139,7 +195,9 @@ public:
   }
 
   /**
-   * @brief getTimeCostUpdate returns the time when the connection cost was last updated
+   * @brief Gets the time of the last cost update for the Connection.
+   *
+   * @return Returns a reference to the time of the last cost update for the Connection.
    */
   const double& getTimeCostUpdate() const
   {
@@ -151,14 +209,22 @@ public:
    *  E.g., if you clone a path, you may want to set the same time_cost_update_ of the connections of the original path
    * @param time
    */
+  /**
+   * @brief Sets the time of the last cost update for the Connection.
+   *
+   * E.g., if you clone a path, you may want to set the same time_cost_update_ of the connections of the original path
+   *
+   * @param time The time value to be set for the last cost update.
+   */
   void setTimeCostUpdate(const double& time)
   {
     time_cost_update_ = time;
   }
 
   /**
-   * @brief norm returns the length of the connection, computed using the Euclidean norm.
-   * @return
+   * @brief Gets the Euclidean norm of the Connection.
+   *
+   * @return Returns the Euclidean norm of the Connection.
    */
   double norm() const
   {
@@ -166,8 +232,9 @@ public:
   }
 
   /**
-   * @brief getParent return the parent node
-   * @return the parent node
+   * @brief Gets the parent Node of the Connection.
+   *
+   * @return Returns a shared pointer to the parent Node of the Connection.
    */
   NodePtr getParent() const
   {
@@ -176,8 +243,9 @@ public:
   }
 
   /**
-   * @brief getChild return the child node
-   * @return the child node
+   * @brief Gets the child Node of the Connection.
+   *
+   * @return Returns a shared pointer to the child Node of the Connection.
    */
   NodePtr getChild() const
   {
@@ -185,105 +253,170 @@ public:
   }
 
   /**
-   * @brief setFlag sets your custome flag. Use this function only if the flag was not created before because it creates a new one flag in flags_ vector
-   * @param flag the NEW flag to set
-   * @return the index of the flag in flags_ vector to use when you want to change the value
-   */
-  unsigned int setFlag(const bool flag);
-
-  /**
-   * @brief setFlag sets the custom flag at index idx. The flag should be already present in the flags_ vector.
-   * If not, it add the new flag if and only if the index idx is equal to flags_ size
-   * @param idx the index of the flag
-   * @param flag the value of the flag
-   * @return true if the flag is set correctly, flase otherwise
+   * @brief Sets the value of a flag at the specified index.
+   *
+   * This function sets the value of a flag at the specified index. If the index is equal to the current
+   * number of flags, a new flag is added to the end of the flags list. If the index is less than the current
+   * number of flags, the function checks whether it is attempting to overwrite a default flag (with an index
+   * less than 'number_reserved_flags_'). If so, an error message is logged, and the function returns false.
+   * Otherwise, the value of the existing flag is updated.
+   *
+   * @param idx The index at which to set the flag.
+   * @param flag The value to set for the flag.
+   * @return Returns true if the flag is successfully set, and false otherwise.
    */
   bool setFlag(const int& idx, const bool flag);
 
   /**
-   * @brief setLikelihood sets the likelihood member
-   * @param likelihood the likelihood to set
+   * @brief Sets a new flag with the provided value and returns its index.
+   *
+   * This function sets a new flag with the provided value and returns its index. The new flag is added to
+   * the end of the flags list, and its index is equal to the current number of flags.
+   *
+   * @param flag The value to set for the new flag.
+   * @return Returns the index of the newly added flag.
+   */
+  unsigned int setFlag(const bool flag);
+
+  /**
+   * @brief Sets the likelihood value for the Connection.
+   *
+   * @param likelihood The likelihood value to be set.
    */
   void setLikelihood(const double& likelihood){likelihood_=likelihood;}
 
   /**
-   * @brief getFlag returns the value of the flag at position idx. It returns the value if the flag exists, otherwise return the default value.
-   * @param idx the index of the flag you are asking for.
-   * @param default_value the default value returned if the flag doesn't exist.
-   * @return the flag if it exists, the default value otherwise.
+   * @brief Retrieves the value of the flag at the specified index.
+   *
+   * This function retrieves the value of the flag at the specified index. If the index is within the
+   * range of existing flags, the corresponding flag value is returned. If the index is beyond the range
+   * of existing flags, the provided default value is returned.
+   *
+   * @param idx The index of the flag to retrieve.
+   * @param default_value The default value to return if the flag at the specified index does not exist.
+   * @return Returns the value of the flag at the specified index or the default value if the index is out of range.
    */
   bool getFlag(const int& idx, const bool default_value);
 
   /**
-   * @brief add notifies parent a child nodes that a new conenction exists. It should be called immediatly after the connection object is created
+   * @brief Adds the Connection to the corresponding nodes' connection vectors.
+   *
+   * This function sets the valid flag and adds the Connection to the connection vectors
+   * of the parent and child nodes, depending on whether it is a net connection or not.
    */
   void add();
 
   /**
-   * @brief add notifies parent a child nodes that a new conenction exists. It should be called immediatly after the connection object is created
-   * @param is_net allows to define if the connection is of type net or not. By default, it is not net
+   * @brief Adds the Connection to the corresponding nodes' connection vectors.
+   *
+   * This function sets the valid flag, sets the net flag, and adds the Connection to the connection vectors
+   * of the parent and child nodes, depending on whether it is a net connection or not.
+   *
+   * @param is_net A boolean indicating whether the Connection is a net connection.
    */
   void add(const bool is_net);
 
   /**
-   * @brief remove delete the connection and notifies its parent and child
+   * @brief Removes the Connection from the corresponding nodes' connection vectors.
+   *
+   * This function resets the valid flag and removes the Connection from the connection vectors
+   * of the parent and child nodes.
    */
   void remove();
 
   /**
-   * @brief flip reverses the direction of the connection, the child becomes the parent and viceversa
+   * @brief Flips the direction of the Connection by swapping parent and child nodes.
+   *
+   * This function removes the Connection from the parent and child nodes, swaps the parent and child
+   * pointers, and adds the new Connection between the swapped parent and child nodes.
    */
   void flip();
 
   /**
-   * @brief convertToConnection turns a net connection into a standard connection, if it is net connection
-   * @return true if successful
+   * @brief Converts the Connection to a regular (non-net) connection.
+   *
+   * This function converts the Connection to a regular connection.
+   *
+   * @return Returns true if the Connection is successfully converted to a regular connection, false otherwise.
    */
   bool convertToConnection();
 
   /**
-   * @brief convertToNetConnection turns a connection into a net connection, if it is a standard connection
-   * @return true if successful
+   * @brief Converts the Connection to a net connection.
+   *
+   * This function converts the Connection to a net connection.
+   *
+   * @return Returns true if the Connection is successfully converted to a net connection, false otherwise.
    */
   bool convertToNetConnection();
 
   /**
-   * @brief changeConnectionType calls convertToNetConnection or convertToConnection based on the connection type
+   * @brief Changes the type of the Connection.
+   *
+   * This function changes the type of the Connection. If the current type is a net connection,
+   * it converts it to a regular connection, and vice versa.
    */
   void changeConnectionType();
 
   /**
-   * @brief isParallel checks if the two connections are parallel
-   * @param conn is the input connection. The function check if this connection is parallel to conn
-   * @param toll is the error tolerance. Two connections are considered parallel when the disparity between the scalar product of the two connections is less than a tolerance value from the product of their lengths.
-   * @return true if parallel
+   * @brief Checks if two connections are parallel within a specified tolerance.
+   *
+   * This function checks if two connections are parallel by comparing their dot product with the product
+   * of their length. The connections are considered parallel if the the difference between these two values is less than toll.
+   *
+   * @param conn The ConnectionPtr to compare with.
+   * @param toll Tolerance for the comparison.
+   * @return Returns true if the connections are parallel, false otherwise.
    */
   bool isParallel(const ConnectionPtr& conn, const double& toll = 1e-06);
 
   /**
-   * @brief projectOnConnection projects a point on this connection
-   * @param point is the point to be projected
-   * @param distance is the distance between the projected point and point
-   * @param in_conn is true if the projection is between connection's parent and child, false if the projected point is on extending of the connection
-   * @param verbose set the verbosity
-   * @return the projected point as an Eigen::VectorXd
+   * @brief Projects a point onto the connection and calculates the distance from the point to the connection.
+   *
+   * This function projects a given point onto the connection defined by its parent and child nodes.
+   * It also calculates the distance from the point to the connection.
+   *
+   * @param point The point to be projected onto the connection.
+   * @param distance Output parameter for the distance from the point to the connection.
+   * @param in_conn Output parameter indicating if the projection is within the connection (true) or not (false).
+   * @param verbose Flag to enable verbose logging (default is false).
+   * @return Returns the projected point on the connection.
    */
   Eigen::VectorXd projectOnConnection(const Eigen::VectorXd& point, double& distance, bool& in_conn, const bool& verbose = false);
 
   /**
-   * @brief getReservedFlagsNumber tells you how many positions are occupied by the defaults. Use this to know where you can sve your new flags.
-   * @return the first free position in flags_ vector, so the idx next to the defaults.
+   * @brief Gets the number of reserved flags for the Connection class.
+   *
+   * This static function returns the number of reserved flags for the Connection class.
+   * Use this function to know where you can save new flags.
+   *
+   * @return Returns the number of reserved flags.
    */
   static unsigned int getReservedFlagsNumber()
   {
     return number_reserved_flags_;
   }
 
+  /**
+   * @brief Destructor for the Connection class.
+   *
+   * The destructor checks if the connection is valid (flags_[idx_valid_] is true) and removes the connection if valid.
+   */
   ~Connection();
 
   friend std::ostream& operator<<(std::ostream& os, const Connection& connection);
 };
 
+/**
+ * @brief Overloaded stream insertion operator for the Connection class.
+ *
+ * This operator prints information about the Connection object to the output stream, including parent and child configurations,
+ * cost, length, net status, and flags.
+ *
+ * @param os The output stream.
+ * @param connection The Connection object to be printed.
+ * @return The modified output stream.
+ */
 std::ostream& operator<<(std::ostream& os, const Connection& connection);
 
 }

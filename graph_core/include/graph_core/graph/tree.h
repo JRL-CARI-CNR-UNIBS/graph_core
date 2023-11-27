@@ -43,34 +43,79 @@ typedef std::shared_ptr<Tree> TreePtr;
 class Tree: public std::enable_shared_from_this<Tree>
 {
 protected:
+
+  /**
+   * @brief Pointer to the root node of the tree.
+   */
   NodePtr root_;
+
+  /**
+   * @brief K nearest neighbors.
+   */
   double k_rrt_;
+
+  /**
+   * @brief Flag indicating whether to use a k-d tree for nearest neighbors search.
+   */
   bool use_kdtree_;
+
+  /**
+   * @brief Maximum distance for connection attempts in the tree.
+   */
   double max_distance_ = 1;
+
+  /**
+   * @brief Maximum number of nodes allowed in the tree.
+   */
   unsigned int maximum_nodes_ = 5000;
 
+  /**
+   * @brief Pointer to the metrics used for cost computation.
+   */
   MetricsPtr metrics_;
+
+  /**
+   * @brief Pointer to the tree nodes data structure.
+   */
   NearestNeighborsPtr nodes_;
+
+  /**
+   * @brief Pointer to the collision checker.
+   */
   CollisionCheckerPtr checker_;
 
   /**
-   * @brief purgeNodeOutsideEllipsoid checks whether a given node falls within the bounds defined by the sampler. If not, it removes the node and its successors.
-   * @param node The node to be checked for inclusion within the bounds defined by the sampler.
-   * @param sampler It determines whether the node is within the bounds using the inBounds() function.
-   * @param white_list A list of nodes exempt from removal. If a node belongs to this vector, it will not be removed, even if it is outside the bounds. If one of its successors is in the white list, it and its predecessors will also be spared from removal.
-   * @param removed_nodes The number of successfully removed nodes.
+   * @brief Recursively purges nodes outside an ellipsoid region based on an informed sampler.
+   *
+   * This function recursively purges nodes outside an ellipsoid region from the tree, starting
+   * from the specified node. The decision to remove a node is based on whether it lies within
+   * the admissible informed set defined by the provided sampler. If a node is inside the
+   * admissible set, the function continues to check its successors. If a node is outside the
+   * admissible set, it is removed, along with its successors, unless they are in the white list.
+   *
+   * @param node The node from which the recursive purge operation begins.
+   * @param sampler An InformedSamplerPtr representing the sampler defining the admissible set.
+   * @param white_list A vector of NodePtr representing nodes that should not be removed.
+   * @param removed_nodes A reference to an unsigned int, counting the number of nodes removed.
    */
   void purgeNodeOutsideEllipsoid(NodePtr& node,
                                  const InformedSamplerPtr& sampler,
                                  const std::vector<NodePtr>& white_list,
                                  unsigned int& removed_nodes);
-
   /**
-   * @brief purgeNodeOutsideEllipsoid checks whether a given node falls within the bounds defined by a set of samplers. If not, it removes the node and its successors.
-   * @param node The node to be checked for inclusion within the bounds defined by the samplers.
-   * @param samplers A vector of samplers which determine whether the node is within the bounds using the inBounds() function.
-   * @param white_list A list of nodes exempt from removal. If a node belongs to this vector, it will not be removed, even if it is outside the bounds. If one of its successors is in the white list, it and its predecessors will also be spared from removal.
-   * @param removed_nodes The number of successfully removed nodes.
+   * @brief Recursively purges nodes outside multiple ellipsoid regions based on informed samplers.
+   *
+   * This function recursively purges nodes outside multiple ellipsoid regions from the tree, starting
+   * from the specified node. The decision to remove a node is based on whether it belongs to an
+   * admissible informed set defined by any of the provided samplers or is present in the white list.
+   * If a node is inside an admissible set or in the white list, the function continues to check its
+   * successors. If a node is outside all admissible sets and not in the white list, it is removed,
+   * along with its successors.
+   *
+   * @param node The node from which the recursive purge operation begins.
+   * @param samplers A vector of InformedSamplerPtr representing the informed samplers defining the admissible sets.
+   * @param white_list A vector of NodePtr representing nodes that should not be removed.
+   * @param removed_nodes A reference to an unsigned int, counting the number of nodes removed.
    */
   void purgeNodeOutsideEllipsoids(NodePtr& node,
                                   const std::vector<InformedSamplerPtr>& samplers,
@@ -78,12 +123,19 @@ protected:
                                   unsigned int& removed_nodes);
 
   /**
-   * @brief populateTreeFromNode adds the successors of a given node to the tree. The specified node, although not added itself, must already belong to the tree (e.g., it serves as the root).
+   * @brief Populates the tree with nodes based on specified criteria from a given node.
+   *
+   * This functin adds the successors of a given node to the tree. The specified node,
+   * although not added itself, must already belong to the tree (e.g., it serves as the root).
    * Successors are included only if the following conditions hold:
    *  1) They do not belong to the black_list.
    *  2) If node_check is true, they are collision-checked; if in collision, they are excluded.
-   *  3) They satisfy the condition metrics_->utopia(n->getConfiguration(), focus1) + metrics_->utopia(n->getConfiguration(), focus2) < cost, where n is the considered successor.
-   *     In the case of using the Euclidean distance as metrics, this condition ensures that the node belongs to the ellipsoid defined by focus1, focus2 and cost.
+   *  3) They satisfy the condition metrics_->utopia(n->getConfiguration(), focus1) +
+   *  metrics_->utopia(n->getConfiguration(), focus2) < cost, where n is the considered successor.
+   *
+   * In the case of using the Euclidean distance as metrics, condition 3) ensures that the node belongs
+   * to the ellipsoid defined by focus1, focus2 and cost.
+   *
    * @param node The successors of this node are added to the tree.
    * @param focus1 The first focus of condition 3).
    * @param focus2 The second focus of condition 3).
@@ -97,11 +149,15 @@ protected:
   void populateTreeFromNode(const NodePtr& node, const bool node_check = false);
 
   /**
-   * @brief populateTreeFromNodeConsideringCost adds the successors of a given node to the tree. The specified node, although not added itself, must already belong to the tree (e.g., it serves as the root).
+   * @brief Populates the tree with nodes based on specified criteria from a given node.
+   *
+   * This function adds the successors of a given node to the tree. The specified node,
+   * although not added itself, must already belong to the tree (e.g., it serves as the root).
    * Successors are included only if the following conditions hold:
    *  1) They do not belong to the black_list.
    *  2) If node_check is true, they are collision-checked; if in collision, they are excluded.
    *  3) If the cost to reach the node n + metrics_->utopia(n->getConfiguration(), goal) < cost, where n is the considered successor.
+   *
    * @param node The successors of this node are added to the tree.
    * @param goal the goal to reach, considered in condition 3).
    * @param cost The cost of condition 3)
@@ -120,8 +176,9 @@ public:
        const bool& use_kdtree=true);
 
   /**
-   * @brief isSubtree returs false because it is not a subtree (it is a tree)
-   * @return always false
+   * @brief Checks if the tree is considered a subtree.
+   *
+   * @return Returns false, indicating that the tree is not considered a subtree.
    */
   virtual bool isSubtree()
   {
@@ -129,8 +186,9 @@ public:
   }
 
   /**
-   * @brief getRoot returns the root node
-   * @return the root node
+   * @brief Retrieves a constant reference to the root node of the tree.
+   *
+   * @return Returns a constant reference to the root node of the tree.
    */
   const NodePtr& getRoot()
   {
@@ -138,8 +196,9 @@ public:
   }
 
   /**
-   * @brief getNodes returns a vector containing the nodes of the tree
-   * @return the vector of nodes of the tree
+   * @brief Retrieves a vector of all nodes in the tree.
+   *
+   * @return Returns a vector of NodePtr containing all nodes in the tree.
    */
   std::vector<NodePtr> getNodes()
   {
@@ -147,33 +206,53 @@ public:
   }
 
   /**
-   * @brief getLeaves populates the input vector with the leaves of the tree, namely the nodes without successors.
-   * @param leaves The vector to be filled with the tree's leaves.
+   * @brief Retrieves the leaves of the tree.
+   *
+   * This function populates the provided vector 'leaves' with the leaf nodes of the tree. A leaf node
+   * is defined as a node with exactly one parent connection (excluding the root) and no child connections.
+   *
+   * @param leaves A vector of NodePtr to store the leaf nodes of the tree.
    */
   void getLeaves(std::vector<NodePtr>& leaves);
 
   /**
-   * @brief changeRoot sets the specified node as the root of the tree.
-   * @param node The node to be set as the new root.
-   * @return True if the node is successfully set as the root.
+   * @brief Changes the root of the tree to the specified node.
+   *
+   * This function changes the root of the tree to the provided node. It first checks if the node is
+   * already in the tree using the 'isInTree' method. If the node is in the tree, the function retrieves
+   * the connections leading to the node and flips them. Finally, the root of the tree is updated to the
+   * provided node.
+   *
+   * @param node The node to be set as the new root of the tree.
+   * @return Returns true if the root is successfully changed, and false otherwise.
    */
   bool changeRoot(const NodePtr& node);
 
   /**
-   * @brief addNode appends a node to the tree if it is not already included. This function adds the input node to the tree's list of nodes without verifying if the node is connected to another tree node. Ensure a proper connection to this node (unless it is the root) before invoking this function.
+   * @brief Adds a node to the tree, optionally checking for its presence.
+   *
+   * This function adds the provided node to the tree. The addition is conditional on whether the node is
+   * already present in the tree, determined by the 'check_if_present' parameter. If 'check_if_present'
+   * is set to false or the node is not in the tree, the node is inserted into the underlying 'nodes_' structure.
+   *
    * @param node The node to be added to the tree.
-   * @param check_if_present If true, it checks for the node's existing presence in the tree. If already present, it is not added.
+   * @param check_if_present A boolean flag indicating whether to check if the node is already present in the tree.
    */
   virtual void addNode(const NodePtr& node, const bool& check_if_present = true);
 
   /**
-   * @brief removeNode deletes all connections associated with the node and removes it from the tree's list of nodes.
-   * @param node The node to be removed.
+   * @brief Removes a node from the tree.
+   *
+   * This function removes the provided node from the tree. The node is first disconnected from its parent
+   * using the 'disconnect' method. Subsequently, the node is deleted from the underlying 'nodes_' structure
+   * using the 'deleteNode' method.
+   *
+   * @param node The node to be removed from the tree.
    */
   virtual void removeNode(const NodePtr& node);
 
   /**
-   * @brief tryExtend attempts to extend the tree to the provided configuration.
+   * @brief Attempts to extend the tree to the provided configuration.
    *
    * This function finds the closest existing node in the tree to the given configuration using findClosestNode function,
    * and then attempts to extend the tree from that closest node using tryExtendFromNode function.
@@ -190,7 +269,7 @@ public:
                  NodePtr& closest_node);
 
   /**
-   * @brief tryExtendFromNode attempts to extend the tree from a given node to a new configuration.
+   * @brief Attempts to extend the tree from a given node to a new configuration.
    *
    * This function is responsible for trying to extend the tree from a specified node to the provided configuration by selecting a new configuration
    * and checking if the extension is valid based on a given tolerance and collision checking.
@@ -210,7 +289,7 @@ public:
                          NodePtr& node);
 
   /**
-   * @brief tryExtendWithPathCheck attempts to extend the tree to the provided configuration if the whole path to the new configuration is collision-free.
+   * @brief Attempts to extend the tree to the provided configuration if the whole path to the new configuration is collision-free.
    *
    * This function finds the closest existing node in the tree to the given configuration using findClosestNode function,
    * and then attempts to extend the tree from that closest node using tryExtendFromNodeWithPathCheck function, which checks if the path to the
@@ -230,7 +309,7 @@ public:
                               std::vector<ConnectionPtr> &checked_connections);
 
   /**
-   * @brief tryExtendFromNodeWithPathCheck attempts to extend the tree from a given node to the provided configuration if the whole path to the new configuration is collision-free.
+   * @brief Attempts to extend the tree from a given node to the provided configuration if the whole path to the new configuration is collision-free.
    *
    * This function is responsible for trying to extend the tree from a specified node by first checking the path to that node using checkPathToNode function.
    * Note that checkPathToNode checks only connection for which isRecentlyChecked returns false to avoid multiple checks of the same connection.
@@ -253,7 +332,7 @@ public:
                                       std::vector<ConnectionPtr> &checked_connections);
 
   /**
-   * @brief selectNextConfiguration selects the final configuration for tree expansion, which will start from the provided node in the direction of the provided configuration.
+   * @brief Selects the final configuration for tree expansion, which will start from the provided node in the direction of the provided configuration.
    *
    * The function calculates the distance between the input configuration and the current node's configuration using the norm() method.
    * If the calculated distance is below a specified tolerance (TOLERANCE), the next configuration is set to the input configuration.
@@ -271,7 +350,7 @@ public:
 
 
   /**
-   * @brief extend extends the tree by attempting to add a new node based on the provided configuration.
+   * @brief Extends the tree by attempting to add a new node based on the provided configuration.
    *
    * This function tries to extend the tree by finding the closest existing node to the given configuration using the tryExtend method.
    * If the extension is possible (t\ryExtend returns true), the tree is updated with a new node based on the configuration provided by tryExtend and
@@ -290,7 +369,7 @@ public:
               NodePtr& new_node);
 
   /**
-   * @brief extendWithPathCheck extends the tree by attempting to add a new node based on the provided configuration, if that the whole path to the new selected configuration is collision-free.
+   * @brief Extends the tree by attempting to add a new node based on the provided configuration, if that the whole path to the new selected configuration is collision-free.
    *
    * This function tries to extend the tree by finding the closest existing node to the given configuration and checking the whole path
    * to the configuration using the tryExtendWithPathCheck method.
@@ -315,7 +394,7 @@ public:
                            std::vector<ConnectionPtr> &checked_connections);
 
   /**
-   * @brief extendOnly extends the tree to a newly created node by establishing a connection with the closest existing node.
+   * @brief Extends the tree to a newly created node by establishing a connection with the closest existing node.
    *
    * This function extends the tree by creating a connection between the new node and the closest existing node, both provided by input.
    * The cost of the connection is calculated using the specified metrics, and the new node is added to the tree.
@@ -330,7 +409,7 @@ public:
                   ConnectionPtr& connection);
 
   /**
-   * @brief extendToNode extends the tree to include a specified node.
+   * @brief Extends the tree to include a specified node.
    *
    * This function extends the tree to include the given node. If the node is already in the tree, the function returns true.
    * Otherwise, it attempts to extend the tree to the node's configuration using the tryExtend method.
@@ -345,7 +424,7 @@ public:
                     NodePtr& new_node);
 
   /**
-   * @brief Connect connects the tree to a specified configuration by repeatedly extending towards that configuration.
+   * @brief Connects the tree to a specified configuration by repeatedly extending towards that configuration.
    *
    * This function connects the tree to a specified configuration by iteratively extending the tree towards that configuration.
    * The extension is performed using the extend method. If the extension is successful, the new node is updated, and the function
@@ -361,7 +440,7 @@ public:
                NodePtr& new_node);
 
   /**
-   * @brief informedExtend implements an informed extension method that prioritizes nodes with lower heuristic values.
+   * @brief Implements an informed extension method that prioritizes nodes with lower heuristic values.
    *
    * This function attempts to extend the tree from the closest nodes to a specified configuration, prioritizing nodes with lower heuristic values.
    * The heuristic is calculated as a weighted sum of the distance between the node and the configuration and the cost-to-come to reach the node from start.
@@ -386,7 +465,7 @@ public:
                       const Eigen::VectorXd &goal, const double &cost2beat, const double &bias);
 
   /**
-   * @brief connectToNode connects the tree to a specified node.
+   * @brief Connects the tree to a specified node.
    *
    * This function connects the tree to a specified node by repeatedly extending the tree towards that node.
    * The extension is performed using the extendToNode method. If the extension is successful, the new node is updated,
@@ -404,7 +483,7 @@ public:
                      const double &max_time = std::numeric_limits<double>::infinity());
 
   /**
-   * @brief rewireOnly rewires the tree by potentially updating parent and/or child connections of a specified node.
+   * @brief Rewires the tree by potentially updating parent and/or child connections of a specified node.
    *
    * This function attempts to rewire the tree by potentially updating the parent and/or child connections of a specified node.
    * The rewire operation is influenced by a given radius and a white list of nodes that should not be rewired. If a node belongs to the white list,
@@ -421,7 +500,7 @@ public:
   bool rewireOnly(NodePtr& node, double r_rewire, const int &what_rewire = 0);
 
   /**
-   * @brief rewireOnlyWithPathCheck rewires the tree by potentially updating parent and/or child connections of a specified node with path checking.
+   * @brief Rewires the tree by potentially updating parent and/or child connections of a specified node with path checking.
    *
    * This function attempts to rewire the tree by potentially updating the parent and/or child connections of a specified node.
    * The rewire operation is influenced by a given radius and a white list of nodes that should not be rewired. If a node belongs to the white list,
@@ -440,7 +519,7 @@ public:
   bool rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr> &checked_connections, double r_rewire, const int& what_rewire = 0);
 
   /**
-   * @brief rewire rewires the tree after extending it from a given configuration within a specified radius.
+   * @brief Rewires the tree after extending it from a given configuration within a specified radius.
    *
    * This function extends the tree from a given configuration using the extend method.
    * If the extension is successful, it then attempts to rewire the tree around the new node using the rewireOnly method.
@@ -457,7 +536,7 @@ public:
               double r_rewire);
 
   /**
-   * @brief rewireWithPathCheck rewires the tree after extending it to a given configuration with path checking.
+   * @brief Rewires the tree after extending it to a given configuration with path checking.
    *
    * This function extends the tree from a given configuration using the extendWithPathCheck method.
    * If the extension is successful, it then attempts to rewire the tree around the new node with path checking using the rewireOnlyWithPathCheck method.
@@ -483,7 +562,7 @@ public:
                            double r_rewire);
 
   /**
-   * @brief rewireToNode rewires the tree to a specific node after extending it.
+   * @brief Rewires the tree to a specific node after extending it.
    *
    * This function extends the tree to a specific node using the extendToNode method.
    * If the extension is successful, it then attempts to rewire the tree around the new node using the rewireOnly method.
@@ -500,7 +579,7 @@ public:
                     double r_rewire);
 
   /**
-   * @brief checkPathToNode checks the validity of the path to a specific node.
+   * @brief Checks the validity of the path to a specific node.
    *
    * This function checks the validity of the path to a specific node by examining the connections along the path.
    * It first retrieves the connections leading to the node using the getConnectionToNode method.
@@ -515,7 +594,7 @@ public:
   bool checkPathToNode(const NodePtr &node, std::vector<ConnectionPtr>& checked_connections);
 
   /**
-   * @brief findClosestNode finds the closest existing node in the tree to a given configuration.
+   * @brief Finds the closest existing node in the tree to a given configuration.
    *
    * This function utilizes the nearestNeighbor method of the nodes_ member to find and return the closest existing node in the tree
    * to the specified configuration.
@@ -526,7 +605,7 @@ public:
   NodePtr findClosestNode(const Eigen::VectorXd& configuration);
 
   /**
-   * @brief costToNode calculates the cost to reach a specific node from the tree's root.
+   * @brief Calculates the cost to reach a specific node from the tree's root.
    *
    * This function calculates the cost to reach a specific node from the tree's root by traversing the tree along its parent connections.
    * The cost is the sum of the costs of all connections along the path to the root.
@@ -537,7 +616,7 @@ public:
   double costToNode(NodePtr node);
 
   /**
-   * @brief getConnectionToNode retrieves the connections along the path to a specific node from the tree's root.
+   * @brief Retrieves the connections along the path to a specific node from the tree's root.
    *
    * This function retrieves the connections along the path to a specific node from the tree's root.
    * It traverses the tree along its parent connections and collects the connections in reverse order.
@@ -558,58 +637,312 @@ public:
    */
   bool keepOnlyThisBranch(const std::vector<ConnectionPtr>& connections);
 
+  /**
+   * @brief Adds a branch to the tree based on a sequence of connections.
+   *
+   * This function adds a branch to the tree by taking a sequence of connections as input.
+   * The connections represent parent-child relationships between nodes. The start node of
+   * the branch is extracted from the first connection in the sequence, and the function
+   * ensures that the start node is already part of the tree. If not, an error message is
+   * logged, and the function returns false.
+   *
+   * The function then iterates through the connections, extracting child nodes and adding
+   * them to the tree if they are not already present. The nodes are added using the
+   * underlying tree structure managed by the 'nodes_' object.
+   *
+   * @param connections A vector of ConnectionPtr representing the connections in the branch.
+   * @return Returns true if the branch is successfully added to the tree, and false otherwise.
+   *
+   * @note If the input vector 'connections' is empty, the function returns false.
+   */
   bool addBranch(const std::vector<ConnectionPtr>& connections);
+
+  /**
+   * @brief Adds the nodes of an additional tree to the current tree.
+   *
+   * This function adds the nodes of an additional tree to the current tree while preserving
+   * proper connections. The additional tree is specified by the 'additional_tree' parameter,
+   * and the maximum time for connecting nodes is constrained by the 'max_time' parameter.
+   *
+   * If the root of the additional tree is not already part of the current tree, an attempt is
+   * made to connect it to an existing node in the current tree. If this connection fails,
+   * the function returns false.
+   *
+   * Otherwise, if the root of the additional tree belongs to the current tree, the function
+   * iterates through the nodes of the additional tree (excluding the root) and adds them to
+   * the current tree using the 'addNode' method. The connections between nodes are maintained
+   * to ensure the tree structure remains valid.
+   *
+   * @param additional_tree A TreePtr representing the additional tree to be added.
+   * @param max_time The maximum time allowed for connecting the two trees using
+   * connectToNode function if the root of the additional tree does not belong to
+   * the current tree.
+   * @return Returns true if the nodes of the additional tree are successfully added to the
+   *         current tree, and false otherwise.
+   */
   bool addTree(TreePtr& additional_tree, const double &max_time = std::numeric_limits<double>::infinity());
+
+  /**
+   * @brief Cleans the tree by removing nodes, except the root.
+   *
+   * This function cleans the tree by iterating through the children of the root node and
+   * removing nodes and their descendants using the purgeFromHere function.
+   */
   void cleanTree();
-  std::multimap<double, NodePtr> near(const NodePtr& node, const double& r_rewire);
+
+  /**
+   * @brief Finds nodes near a given node within a specified radius.
+   *
+   * This function queries the underlying 'nodes_' structure to find nodes near the
+   * specified node within a given radius.
+   *
+   * @param node The target node for which nearby nodes are to be found.
+   * @param radius The radius within which nodes are considered.
+   * @return Returns a multimap of nodes ordered by their distances from the target
+   *         configuration. The multimap associates the distances with the corresponding
+   *         NodePtr instances.
+   */
+  std::multimap<double, NodePtr> near(const NodePtr& node, const double& radius);
+
+  /**
+   * @brief Finds the K nearest neighbors of a given node.
+   *
+   * This function queries the underlying 'nodes_' structure to find the K nearest neighbors
+   * of the specified node.
+   *
+   * @param node The target node for which the K nearest neighbors are to be found.
+   * @return Returns a multimap of the K nearest neighbors ordered by their distances from
+   *         the target configuration. The multimap associates the distances with the
+   *         corresponding NodePtr instances.
+   */
   std::multimap<double, NodePtr> nearK(const NodePtr& node);
   std::multimap<double, NodePtr> nearK(const Eigen::VectorXd& conf);
 
+  /**
+   * @brief Checks if a given node is present in the tree.
+   *
+   * This function checks whether the specified node is present in the tree by invoking the
+   * 'findNode' method of the underlying 'nodes_' object.
+   *
+   * @param node The node to be checked for presence in the tree.
+   * @return Returns true if the given node is found in the tree, and false otherwise.
+   */
   bool isInTree(const NodePtr& node);
+
+  /**
+   * @brief Retrieves the total number of nodes in the tree.
+   * @return Returns the total number of nodes in the tree.
+   */
   unsigned int getNumberOfNodes()const
   {
     return nodes_->size();
   }
 
+  /**
+   * @brief Purges nodes outside an ellipsoid region based on a given sampler and white list.
+   *
+   * This function purges nodes outside an ellipsoid region from the tree if the total number
+   * of nodes exceeds a specified maximum. The ellipsoid region is defined by the provided
+   * sampler, and nodes listed in the white list are exempt from removal.
+   *
+   * If the current number of nodes in the tree is less than the specified maximum, no nodes
+   * are purged, and the function returns 0.
+   *
+   * @param sampler An InformedSamplerPtr representing the sampler defining the ellipsoid region.
+   * @param white_list A vector of NodePtr representing nodes that should not be removed.
+   * @return Returns the number of nodes purged from the tree outside the ellipsoid region.
+   */
   unsigned int purgeNodesOutsideEllipsoid(const InformedSamplerPtr& sampler, const std::vector<NodePtr>& white_list);
   unsigned int purgeNodesOutsideEllipsoids(const std::vector<InformedSamplerPtr>& samplers, const std::vector<NodePtr>& white_list);
+
+  /**
+   * @brief Purges nodes from the tree based on specified conditions and constraints.
+   *
+   * This function purges nodes from the tree if the total number of nodes exceeds a specified
+   * maximum. Nodes are selectively removed based on the following criteria:
+   * - Nodes in the white list are exempt from removal.
+   * - Nodes outside the bounds defined by the provided sampler are removed if 'check_bounds'
+   *   is set to true.
+   * - Nodes with no child connections are removed.
+   *
+   * The function iterates through the nodes in the tree and applies the removal criteria,
+   * stopping when the number of nodes in the tree is reduced to the specified maximum.
+   *
+   * @param sampler An InformedSamplerPtr representing the sampler used for bounds checking.
+   * @param white_list A vector of NodePtr representing nodes that should not be removed.
+   * @param check_bounds A boolean flag indicating whether bounds checking should be performed.
+   * @return Returns the number of nodes purged from the tree.
+   */
   unsigned int purgeNodes(const InformedSamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds = true);
+
+  /**
+   * @brief Purges the specified node from the tree and updates the count of removed nodes.
+   *
+   * This function disconnects the specified node from its parent and children, and then attempts
+   * to remove it from the underlying 'nodes_' structure. If the removal is successful, the
+   * 'removed_nodes' count is incremented.
+   *
+   * @param node The node to be purged from the tree.
+   * @param removed_nodes A reference to an unsigned int, counting the number of nodes removed.
+   */
   virtual void purgeThisNode(NodePtr& node, unsigned int& removed_nodes);
-  virtual bool purgeFromHere(NodePtr& node);
+
+  /**
+   * @brief Recursively purges nodes starting from the specified node and updates the count of removed nodes.
+   *
+   * This function recursively purges nodes starting from the specified node and updates the count
+   * of removed nodes. Nodes listed in the white list are exempt from removal. The function
+   * traverses the subtree rooted at the given node and disconnects nodes that are not in the white
+   * list, proceeding to remove them from the underlying 'nodes_' structure.
+   *
+   * @param node The starting node for the recursive purge operation.
+   * @param white_list A vector of NodePtr representing nodes that should not be removed.
+   * @param removed_nodes A reference to an unsigned int, counting the number of nodes removed.
+   * @return Returns true if the specified node and its descendants are successfully purged,
+   *         and false otherwise.
+   */
   virtual bool purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
+  virtual bool purgeFromHere(NodePtr& node);
+
+  /**
+   * @brief Checks if the tree needs cleaning based on the current number of nodes.
+   *
+   * This function checks whether the tree needs cleaning by comparing the current number
+   * of nodes in the tree to the specified maximum number of nodes. Cleaning is deemed
+   * necessary if the current number of nodes exceeds the maximum.
+   *
+   * @return Returns true if the tree needs cleaning (i.e., the current number of nodes
+   *         exceeds the maximum), and false otherwise.
+   */
   bool needCleaning(){return (getNumberOfNodes()>maximum_nodes_);}
 
-  bool recheckCollision(); //return true if there are no collisions
-  bool recheckCollisionFromNode(NodePtr &n); //return true if there are no collisions
+  /**
+   * @brief Rechecks collision status for the subtree rooted at the specified node.
+   *
+   * This function recursively rechecks collision status for the subtree rooted at the
+   * specified node. It iterates through the child connections of the node, checking the
+   * collision status for each connection using the associated collision checker. If a
+   * collision is detected, the subtree rooted at the child node is purged, and the function
+   * returns false. If no collision is detected, the function continues to recheck collision
+   * status for the descendants in the subtree.
+   *
+   * @param n The root node of the subtree for which collision status is to be rechecked.
+   * @return Returns true if the subtree rooted at the specified node is collision-free,
+   *         and false otherwise.
+   */
+  bool recheckCollisionFromNode(NodePtr &n);
 
+  /**
+   * @brief Rechecks collision status for the entire tree.
+   *
+   * This function initiates the process of rechecking collision status for the entire tree by
+   * invoking the 'recheckCollisionFromNode' method with the root node as the starting point.
+   * It recursively traverses the tree, rechecking collision status for each subtree rooted at
+   * individual nodes.
+   *
+   * @return Returns true if the entire tree is collision-free, and false otherwise.
+   */
+  bool recheckCollision();
+
+  /**
+   * @brief Retrieves the maximum distance parameter used in the tree.
+   *
+   * This function returns a constant reference to the maximum distance parameter used in the tree.
+   *
+   * @return Returns a constant reference to the maximum distance parameter.
+   */
   const double& getMaximumDistance() const {return max_distance_;}
+
+  /**
+   * @brief Retrieves a reference to the MetricsPtr associated with the tree.
+   *
+   * This function returns a reference to the MetricsPtr associated with the tree.
+   *
+   * @return Returns a reference to the MetricsPtr associated with the tree.
+   */
   MetricsPtr& getMetrics() {return metrics_;}
+
+  /**
+   * @brief Retrieves a reference to the CollisionCheckerPtr associated with the tree.
+   *
+   * This function returns a reference to the CollisionCheckerPtr associated with the tree.
+   *
+   * @return Returns a reference to the CollisionCheckerPtr associated with the tree.
+   */
   CollisionCheckerPtr& getChecker() {return checker_;}
   
+  /**
+   * @brief Sets the CollisionCheckerPtr for the tree.
+   *
+   * @param checker The CollisionCheckerPtr to be set for the tree.
+   */
+
   void setChecker(const CollisionCheckerPtr& checker)
   {
     checker_ = checker;
   }
+
+  /**
+   * @brief Sets the MetricsPtr for the tree.
+   *
+   * @param metrics The MetricsPtr to be set for the tree.
+   */
 
   void setMetrics(const MetricsPtr& metrics)
   {
     metrics_ = metrics;
   }
 
+  /**
+   * @brief Retrieves the flag indicating the use of a Kd-tree in the tree structure.
+   *
+   * @return Returns true if a Kd-tree is used in the tree structure, and false otherwise.
+   */
   bool getUseKdTree(){return use_kdtree_;}
 
+  /**
+   * @brief Converts the tree to an XmlRpcValue.
+   *
+   * This function creates an XmlRpcValue representing the tree. It includes information about
+   * the nodes and connections in the tree.
+   *
+   * @return Returns an XmlRpcValue representing the tree.
+   */
   XmlRpc::XmlRpcValue toXmlRpcValue() const;
+
+  /**
+   * @brief Writes the tree to an XML file.
+   *
+   * This function converts the tree to an XmlRpcValue and writes it to an XML file.
+   *
+   * @param file_name The name of the XML file to write.
+   */
   void toXmlFile(const std::string& file_name) const;
+
   friend std::ostream& operator<<(std::ostream& os, const Tree& tree);
 
+  /**
+   * @brief Creates a TreePtr from an XmlRpcValue.
+   *
+   * This function creates a TreePtr from the provided XmlRpcValue, assuming the XmlRpcValue
+   * represents a tree structure with 'nodes' and 'connections' fields. It extracts the nodes
+   * and connections from the XmlRpcValue and constructs a Tree.
+   *
+   * @param x The XmlRpc::XmlRpcValue to be used for creating the Tree.
+   * @param max_distance The maximum distance for connecting nodes in the tree.
+   * @param checker The CollisionCheckerPtr used for collision checking.
+   * @param metrics The MetricsPtr used for evaluating connection costs.
+   * @param lazy If true, collision checking is skipped during the tree construction.
+   * @return Returns a TreePtr created from the XmlRpcValue. Returns nullptr if the provided XmlRpcValue
+   * does not have the required 'nodes' and 'connections' fields, or if there are issues with the tree structure.
+   *
+   * @note If lazy is false and the root node is in collision, nullptr is returned.
+   */
   static TreePtr fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
                                  const double& max_distance,
                                  const CollisionCheckerPtr& checker,
                                  const MetricsPtr& metrics,
                                  const bool& lazy=false);
 };
-
-std::ostream& operator<<(std::ostream& os, const Tree& tree);
-
 
 }
