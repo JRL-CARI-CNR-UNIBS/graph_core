@@ -127,7 +127,8 @@ PathPtr Path::clone()
     parent = child;                   //NB: parent of connection i+1 must be the child (same object) of connection i
   }
 
-  PathPtr new_path = std::make_shared<Path>(new_conn_vector,metrics_,checker_);
+//  PathPtr new_path = std::make_shared<Path>(new_conn_vector,metrics_,checker_);
+  PathPtr new_path = std::make_shared<Path>(new_conn_vector,metrics_->clone(),checker_->clone());
 
   new_path->setChangeWarp(change_warp_);
   new_path->setTree(nullptr);  //nodes are cloned, so the cloned path does not belong to the original tree
@@ -599,68 +600,6 @@ Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& point, c
   return projection;
 }
 
-Eigen::VectorXd Path::projectKeepingAbscissa(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection, const double& weight, const bool& verbose)
-{
-  double w;
-  bool in_connection;
-  Eigen::VectorXd candidate_projection, projection;
-  double distance_on_path, metric, abscissa, past_abscissa, distance;
-
-  if(weight>1)
-    w = 1;
-  else if(weight<0)
-    w = 0;
-  else
-    w = weight;
-
-  double min_metric = std::numeric_limits<double>::infinity();
-
-  for(unsigned int i=0;i<connections_.size();i++)
-  {
-    candidate_projection = connections_.at(i)->projectOnConnection(point,distance,in_connection,verbose);
-
-    if(in_connection)
-    {
-      abscissa = curvilinearAbscissaOfPointGivenConnection(candidate_projection,i);
-      past_abscissa = curvilinearAbscissaOfPoint(past_projection);
-      distance_on_path = std::abs(abscissa-past_abscissa);
-      metric = w*distance_on_path+(1-w)*(point-candidate_projection).norm();
-
-      if(verbose)
-        ROS_INFO("current abscissa %f, past abscissa %f, diff_abs %f, metric %f, min metric %f",abscissa,past_abscissa,distance_on_path,metric,min_metric);
-
-      if(metric<min_metric)
-      {
-        min_metric = metric;
-        projection = candidate_projection;
-      }
-    }
-  }
-
-  if(min_metric == std::numeric_limits<double>::infinity())
-  {
-    Eigen::VectorXd closest_node = findCloserNode(point)->getConfiguration();
-
-    double dist_past_prj     = (past_projection-point).norm();
-    double dist_closest_node = (closest_node-point   ).norm();
-
-    if(dist_past_prj<dist_closest_node)
-      projection = past_projection;
-    else
-      projection = closest_node;
-
-    if(verbose)
-      ROS_INFO_STREAM("projection on path not found, chosen projection "<<projection.transpose());
-  }
-  else
-  {
-    if(verbose)
-      ROS_INFO_STREAM("chosen projection "<<projection.transpose()<<" min diff "<<min_metric);
-  }
-
-  return projection;
-}
-
 Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const bool& verbose)
 {
   Eigen::VectorXd past_projection = start_node_->getConfiguration();
@@ -851,9 +790,10 @@ bool Path::removeNode(const NodePtr& node, const std::vector<NodePtr> &white_lis
 
 bool Path::splitConnection(const ConnectionPtr& conn1, const ConnectionPtr& conn2, const std::vector<ConnectionPtr>::iterator& it)
 {
-  assert((*it)->getParent() == conn1->getParent());
-  assert((*it)->getChild () == conn2->getChild ());
-  assert(conn1->getChild () == conn2->getParent());
+  if((*it)->getParent() != conn1->getParent() ||
+     (*it)->getChild () != conn2->getChild () ||
+     conn1->getChild () != conn2->getParent())
+    throw std::invalid_argument("no matching of parent and/or child nodes");
 
   if(it<connections_.end())
   {
@@ -1659,14 +1599,6 @@ std::ostream& operator<<(std::ostream& os, const Path& path)
 
   for(const ConnectionPtr& conn:path.connections_)
     os << *conn << std::endl;
-
-  //  os << "waypoints= " << std::endl << "[";
-
-  //  for (const ConnectionPtr& conn : path.connections_)
-  //  {
-  //    os << conn->getParent()->getConfiguration().transpose() << ";" << std::endl;
-  //  }
-  //  os << path.goal_node_->getConfiguration().transpose() << "];" << std::endl;
 
   return os;
 }

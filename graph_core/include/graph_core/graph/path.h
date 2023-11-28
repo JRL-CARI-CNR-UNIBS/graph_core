@@ -569,25 +569,156 @@ public:
     return connections_;
   }
 
+  /**
+   * @brief Create a copy of the path.
+   *
+   * This method creates and returns a new PathPtr that is a copy of the current path.
+   * The new path contains cloned nodes and connections, and the original and cloned paths are independent.
+   * The cloned path does not belong to the original tree, because and the nodes and connections are cloned.
+   *
+   * @return A PathPtr representing the copy of the path.
+   */
   PathPtr clone();
+
+  /**
+   * @brief Check if all connections in the path lie on the same straight line.
+   *
+   * This method checks if all connections in the path are parallel, indicating that they lie on the same straight line.
+   *
+   * @param toll Tolerance for considering connections as parallel.
+   * @return True if all connections are parallel, false otherwise.
+   */
   bool onLine(double toll = 1e-06);
+
+  /**
+   * @brief Set the connections of the path.
+   *
+   * This method sets the connections of the path using the provided vector of connections. It updates the cost,
+   * change_warp_, start_node_, and goal_node_ attributes based on the input connections.
+   *
+   * @param conn A vector of ConnectionPtr representing the connections to set for the path.
+   */
   void setConnections(const std::vector<ConnectionPtr>& conn);
+
+  /**
+   * @brief Split a connection and update the path.
+   *
+   * This method splits a connection by replacing the connection at position specified by the iterator with conn1
+   * and inserting conn2 at the next position. It updates the connections of the path and, if applicable, the tree
+   * by adding the child node of conn1.
+   *
+   * The splitting connections conn1 and conn2 must be provided as input. Conn1 must have the same parent of the original
+   * connection, conn2 the same child and conn1 and conn2 must be connected by the same node.
+   *
+   * @param conn1 The first connection to be used in the split.
+   * @param conn2 The second connection to be inserted after conn1 in the split.
+   * @param it An iterator pointing to the connection to split.
+   * @return True if the split is successful, false otherwise.
+   */
   bool splitConnection(const ConnectionPtr& conn1, const ConnectionPtr& conn2, const std::vector<ConnectionPtr>::iterator &it);
   bool splitConnection(const ConnectionPtr& conn1, const ConnectionPtr& conn2, const ConnectionPtr& conn);
-  bool restoreConnection(const ConnectionPtr& conn, const NodePtr& node2remove);
-  bool simplify(const double& distance = 0.02);
-  bool isValid(const CollisionCheckerPtr &this_checker = nullptr);
-  bool isValidFromConf(const Eigen::VectorXd &conf, const CollisionCheckerPtr &this_checker = nullptr);
-  bool isValidFromConf(const Eigen::VectorXd &conf, const int& conn_idx, const CollisionCheckerPtr &this_checker = nullptr);
-  bool isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker = nullptr);
-  bool isValidFromConf(const Eigen::VectorXd &conf, const int &conn_idx, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker = nullptr);
-  bool isValidFromConn(const ConnectionPtr &this_conn, const CollisionCheckerPtr &this_checker = nullptr);
-  Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point, const bool verbose = false);
-  Eigen::VectorXd projectKeepingAbscissa(const Eigen::VectorXd& point, const Eigen::VectorXd &past_prj, const double &weight = 0.5, const bool& verbose = false);
-  Eigen::VectorXd projectOnPath(const Eigen::VectorXd& point, const bool& verbose = false);
-  Eigen::VectorXd projectOnPath(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection, const bool& verbose = false);
-  Eigen::VectorXd projectOnPath(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection, ConnectionPtr &conn, const bool& verbose = false);
 
+  /**
+   * @brief Restore a connection in the path and cuts off a node with the provided connection.
+   *
+   * This method restores a connection in the path and cuts off a node with the provided connection.
+   * It updates the connections of the path and, if applicable, the tree by removing the specified node.
+   *
+   * @param conn The connection to be used in the restoration.
+   * @param node2remove The node to be removed and replaced by the connection.
+   * @return True if the restoration is successful, false otherwise.
+   */
+  bool restoreConnection(const ConnectionPtr& conn, const NodePtr& node2remove);
+
+  /**
+   * @brief Simplify the path by removing redundant nodes.
+   *
+   * This method simplifies the path by removing nodes that are close to each other and do not violate collision constraints.
+   * The distance parameter determines the threshold for node removal.
+   *
+   * @param distance The distance threshold for node removal.
+   * @return True if the path is simplified, false otherwise.
+   */
+  bool simplify(const double& distance = 0.02);
+
+  /**
+   * @brief Checks if the path is valid, taking into account collision checking.
+   *
+   * This function checks the validity of the path using collision checking. If a custom
+   * collision checker (`this_checker`) is provided, it is used; otherwise, the internal
+   * collision checker associated with the path is used.
+   * If not valid, cost is set equal to infinity.
+   *
+   * @param this_checker Optional custom collision checker.
+   * @return True if the path is collision-free, false otherwise.
+   */
+  bool isValid(const CollisionCheckerPtr &this_checker = nullptr);
+
+  /**
+   * @brief Checks the validity of the path from a specific configuration.
+   *
+   * This function checks the validity of the path from a given configuration (`conf`) starting
+   * from a specific connection index (`conn_idx`). The result is determined using collision checking.
+   * If a custom collision checker (`this_checker`) is provided, it is used; otherwise, the internal
+   * collision checker associated with the path is used.
+   * If not valid, cost is set equal to infinity.
+   *
+   * @param conf The configuration from which to check the validity.
+   * @param conn_idx The index of the connection to start checking from.
+   * @param pos_closest_obs_from_goal Output parameter indicating the position of the closest obstacle
+   *                                  from the goal, if the path is invalid.
+   * @param this_checker Optional custom collision checker.
+   * @return True if the path is collision-free from the given configuration, false otherwise.
+   */
+  bool isValidFromConf(const Eigen::VectorXd &conf, const int &conn_idx, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker = nullptr);
+  bool isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker = nullptr);
+  bool isValidFromConf(const Eigen::VectorXd &conf, const int& conn_idx, const CollisionCheckerPtr &this_checker = nullptr);
+  bool isValidFromConf(const Eigen::VectorXd &conf, const CollisionCheckerPtr &this_checker = nullptr);
+
+  /**
+   * @brief Checks the validity of the path from a specific connection.
+   *
+   * This function checks the validity of the path starting from a specific connection (`this_conn`).
+   * The result is determined using collision checking. If a custom collision checker (`this_checker`)
+   * is provided, it is used; otherwise, the internal collision checker associated with the path is used.
+   * If not valid, cost is set equal to infinity.
+   *
+   * @param this_conn The connection from which to start checking the validity.
+   * @param this_checker Optional custom collision checker.
+   * @return True if the path is collision-free from the given connection, false otherwise.
+   */
+  bool isValidFromConn(const ConnectionPtr &this_conn, const CollisionCheckerPtr &this_checker = nullptr);
+
+  /**
+   * @brief Projects a point onto the closest connection of the path.
+   *
+   * This function projects a given point onto the closest connection of the path. It iterates through all connections
+   * in the path, finds the one with the minimum distance to the point, and returns the projection.
+   * The distance is computed between the point to project and the projection on each connection.
+   *
+   * @param point The point to be projected onto the path.
+   * @param verbose If true, additional information will be printed during the projection process.
+   * @return The projected point on the closest connection of the path.
+   */
+  Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point, const bool verbose = false);
+
+  /**
+   * @brief Projects a point onto the path and returns the connection and precise projection.
+   *
+   * This function projects a point onto the path and returns the connection on which the projection lies,
+   * along with the precise projection on the connection. A past projection can be provided to compute a projection
+   * which will lie on the path at a curvilinear abscissa >= of that of the past projection.
+   * The provided projection is the one that minimize the distance from the input point.
+   *
+   * @param point The point to be projected onto the path.
+   * @param past_projection The past projection point used for curvilinear abscissa calculation.
+   * @param conn The connection on which the precise projection lies.
+   * @param verbose Whether to print verbose information for debugging.
+   * @return The precise projection on the path.
+   */
+  Eigen::VectorXd projectOnPath(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection, ConnectionPtr &conn, const bool& verbose = false);
+  Eigen::VectorXd projectOnPath(const Eigen::VectorXd& point, const Eigen::VectorXd &past_projection, const bool& verbose = false);
+  Eigen::VectorXd projectOnPath(const Eigen::VectorXd& point, const bool& verbose = false);
 
   /**
    * @brief Attempt to warp the path by adjusting configurations along connections.
@@ -603,11 +734,33 @@ public:
    */
   bool warp(const double& min_dist = 0.1, const double& max_time = std::numeric_limits<double>::infinity());
 
+  /**
+   * @brief Flips the path by reversing the order of connections.
+   *
+   * This function reverses the order of connections in the path and updates the start and goal nodes accordingly.
+   */
   void flip();
 
+  /**
+   * @brief Converts the path to an XmlRpcValue.
+   *
+   * This function converts the path to an XmlRpcValue. The order of nodes in the resulting XmlRpcValue can be reversed if specified.
+   *
+   * @param reverse If true, the order of nodes in the resulting XmlRpcValue is reversed.
+   * @return XmlRpcValue representing the path.
+   */
   XmlRpc::XmlRpcValue toXmlRpcValue(bool reverse=false) const;
   friend std::ostream& operator<<(std::ostream& os, const Path& path);
 };
 
+/**
+ * @brief Overloaded stream insertion operator for Path objects.
+ *
+ * This operator allows printing the information of a Path object to an output stream.
+ *
+ * @param os Output stream.
+ * @param path Path object to be printed.
+ * @return Reference to the output stream.
+ */
 std::ostream& operator<<(std::ostream& os, const Path& path);
 }
