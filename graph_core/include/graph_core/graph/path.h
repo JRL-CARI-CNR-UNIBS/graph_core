@@ -763,4 +763,5 @@ public:
  * @return Reference to the output stream.
  */
 std::ostream& operator<<(std::ostream& os, const Path& path);
+
 }
