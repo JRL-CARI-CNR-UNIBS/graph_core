@@ -30,10 +30,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
-bool TreeSolver::config(const ros::NodeHandle& nh)
+bool TreeSolver::config(const YAML::Node &config)
 {
-  nh_ = nh;
+  throw std::invalid_argument("not implemented yet");
   max_distance_ = 1;
+
+  config["max_distance"].as<double>();
   if (!nh.getParam("max_distance",max_distance_))
   {
     ROS_WARN("%s/max_distance is not set. using 1.0",nh.getNamespace().c_str());
@@ -94,7 +96,8 @@ bool TreeSolver::config(const ros::NodeHandle& nh)
 
 bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const double& max_time)
 {
-  ros::WallTime tic = ros::WallTime::now();
+  std::chrono::time_point<std::chrono::system_clock> tic = std::chrono::system_clock::now();
+
 
   if(max_time <=0.0) return false;
 
@@ -102,40 +105,30 @@ bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const do
   {
     if (update(solution))
     {
-      //ROS_INFO("Solved in %u iterations", iter);
       solved_ = true;
       return true;
     }
 
-    if((ros::WallTime::now()-tic).toSec()>=0.98*max_time)
-      break;
+    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+    std::chrono::duration<double> difference = now - tic;
+    if(difference.count() >= 0.98*max_time) break;
   }
   return false;
 }
 
-bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node, const ros::NodeHandle& nh, PathPtr &solution, const double &max_time, const unsigned int max_iter)
+#pragma message(Reminder "IS IT NEEDED?")
+bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node, const YAML::Node& nh, PathPtr &solution, const double &max_time, const unsigned int max_iter)
 {
   config(nh);
   addStart(start_node);
   addGoal(goal_node);
 
-  ros::WallTime tic = ros::WallTime::now();
 
   if (!solve(solution, max_iter, max_time))
   {
-    ROS_INFO("No solutions found");
-
-    ros::WallTime toc = ros::WallTime::now();
-    ROS_INFO_STREAM("time: "<<(toc-tic).toSec()<<" max_t: "<<max_time);
-
-    assert(0);
-
+    CNR_WARN(logger_,"No solutions found");
     return false;
   }
-
-  ros::WallTime toc = ros::WallTime::now();
-  ROS_INFO_STREAM("time: "<<(toc-tic).toSec()<<" max_t: "<<max_time);
-
   return true;
 }
 
@@ -155,9 +148,9 @@ bool TreeSolver::setSolution(const PathPtr &solution, const bool& solved)
 
 bool TreeSolver::importFromSolver(const TreeSolverPtr& solver)
 {
-  ROS_INFO_STREAM("Import from Tree solver");
+  CNR_INFO(logger_,"Import from Tree solver");
 
-  config(getNodeHandle());
+  config();
 
   solved_        = solver->solved();
   completed_     = solver->completed();

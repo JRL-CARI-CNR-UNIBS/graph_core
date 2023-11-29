@@ -27,8 +27,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <graph_core/util.h>
-#include <graph_core/collision_checker.h>
-#include <graph_core/sampler.h>
+#include <graph_core/collision_checker_base.h>
+#include <graph_core/sampler_base.h>
 #include <graph_core/metrics.h>
 #include <graph_core/datastructure/nearest_neighbors.h>
 #include <graph_core/datastructure/kdtree.h>
@@ -53,6 +53,7 @@ protected:
   MetricsPtr metrics_;
 
   NearestNeighborsPtr nodes_;
+  const cnr_logger::TraceLoggerPtr& logger_;
 
   void purgeNodeOutsideEllipsoid(NodePtr& node,
                                  const SamplerPtr& sampler,
@@ -79,6 +80,7 @@ public:
        const double& max_distance,
        const CollisionCheckerPtr& checker,
        const MetricsPtr& metrics,
+       const cnr_logger::TraceLoggerPtr& logger,
        const bool& use_kdtree=true);
 
   const NodePtr& getRoot()
@@ -88,6 +90,11 @@ public:
   std::vector<NodePtr> getNodes()
   {
     return nodes_->getNodes();
+  }
+
+  const cnr_logger::TraceLoggerPtr& getLogger()
+  {
+    return logger_;
   }
 
   bool changeRoot(const NodePtr& node);
@@ -201,15 +208,17 @@ public:
   CollisionCheckerPtr& getChecker() {return checker_;}
   bool getUseKdTree(){return use_kdtree_;}
 
-  XmlRpc::XmlRpcValue toXmlRpcValue() const;
-  void toXmlFile(const std::string& file_name) const;
+  #pragma message(Reminder "Change to YAML")
+  //XmlRpc::XmlRpcValue toXmlRpcValue() const;
+  //void toXmlFile(const std::string& file_name) const;
   friend std::ostream& operator<<(std::ostream& os, const Tree& tree);
 
-  static TreePtr fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
-                                 const double& max_distance,
-                                 const CollisionCheckerPtr& checker,
-                                 const MetricsPtr& metrics,
-                                 const bool& lazy=false);
+    #pragma message(Reminder "Change to YAML")
+//  static TreePtr fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
+//                                 const double& max_distance,
+//                                 const CollisionCheckerPtr& checker,
+//                                 const MetricsPtr& metrics,
+//                                 const bool& lazy=false);
 };
 
 std::ostream& operator<<(std::ostream& os, const Tree& tree);

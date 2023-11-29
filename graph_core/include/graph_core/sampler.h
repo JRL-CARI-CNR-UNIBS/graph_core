@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <eigen3/Eigen/Core>
 #include <graph_core/util.h>
-#include <ros/ros.h>
 #include <random>
 
 namespace pathplan
@@ -38,13 +37,10 @@ namespace pathplan
 class InformedSampler;
 typedef std::shared_ptr<InformedSampler> InformedSamplerPtr;
 
-class InformedSampler: public std::enable_shared_from_this<InformedSampler>
+class InformedSampler: public SamplerBase
 {
 protected:
-  Eigen::VectorXd start_configuration_;
-  Eigen::VectorXd stop_configuration_;
-  Eigen::VectorXd lower_bound_;
-  Eigen::VectorXd upper_bound_;
+
   Eigen::VectorXd center_bound_;
   Eigen::VectorXd bound_width_;
 
@@ -71,12 +67,14 @@ public:
                   const Eigen::VectorXd& stop_configuration,
                   const Eigen::VectorXd& lower_bound,
                   const Eigen::VectorXd& upper_bound,
+                  const cnr_logger::TraceLoggerPtr& logger,
                   const double& cost = std::numeric_limits<double>::infinity()):
-    start_configuration_(start_configuration),
-    stop_configuration_(stop_configuration),
-    lower_bound_(lower_bound),
-    upper_bound_(upper_bound),
-    cost_(cost),
+    SamplerBase(start_configuration,
+                stop_configuration,
+                lower_bound,
+                upper_bound,
+                logger,
+                cost),
     gen_{rd_()}//gen_(time(0))
   {
     ud_ = std::uniform_real_distribution<double>(0, 1);
@@ -90,11 +88,11 @@ public:
 
     rot_matrix_ = computeRotationMatrix(start_configuration_, stop_configuration_);
 
-    ROS_DEBUG_STREAM("rot_matrix_:\n" << rot_matrix_);
-    ROS_DEBUG_STREAM("ellipse center" << ellipse_center_.transpose());
-    ROS_DEBUG_STREAM("focii_distance_" << focii_distance_);
-    ROS_DEBUG_STREAM("center_bound_" << center_bound_.transpose());
-    ROS_DEBUG_STREAM("bound_width_" << bound_width_.transpose());
+    CNR_DEBUG(logger_,"rot_matrix_:\n" << rot_matrix_);
+    CNR_DEBUG(logger_,"ellipse center" << ellipse_center_.transpose());
+    CNR_DEBUG(logger_,"focii_distance_" << focii_distance_);
+    CNR_DEBUG(logger_,"center_bound_" << center_bound_.transpose());
+    CNR_DEBUG(logger_,"bound_width_" << bound_width_.transpose());
 
 
     if (cost_ < std::numeric_limits<double>::infinity())
@@ -133,7 +131,5 @@ public:
   const unsigned int& getDimension()const {return ndof_;}
 };
 
-
-typedef std::shared_ptr<InformedSampler> SamplerPtr;
 
 }  // namespace pathplan

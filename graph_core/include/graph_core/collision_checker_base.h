@@ -26,50 +26,35 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <ros/ros.h>
-#include <eigen3/Eigen/Core>
-#include <moveit_msgs/PlanningScene.h>
+#include <Eigen/Core>
 #include <graph_core/graph/connection.h>
-#include <moveit/planning_scene/planning_scene.h>
 
 namespace pathplan
 {
-class CollisionChecker;
-typedef std::shared_ptr<CollisionChecker> CollisionCheckerPtr;
+class CollisionCheckerBase;
+typedef std::shared_ptr<CollisionCheckerBase> CollisionCheckerPtr;
 
-class CollisionChecker
+class CollisionCheckerBase
 {
 protected:
   double min_distance_ = 0.01;
+
+  const cnr_logger::TraceLoggerPtr& logger_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  CollisionChecker(const double& min_distance = 0.01):
-    min_distance_(min_distance)
+  CollisionCheckerBase(const cnr_logger::TraceLoggerPtr& logger, const double& min_distance = 0.01):
+    min_distance_(min_distance),
+    logger_(logger)
   {
 
   }
 
-  virtual void setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg){}
-
-  virtual std::string getGroupName()
-  {
-    return "";
-  }
-
-  virtual planning_scene::PlanningScenePtr getPlanningScene() {}
-
-  virtual CollisionCheckerPtr clone()
-  {
-    return std::make_shared<CollisionChecker>(min_distance_);
-  }
+  virtual CollisionCheckerPtr clone()=0;
 
   // collision check: true if it is valid
-  virtual bool check(const Eigen::VectorXd& configuration)
-  {
-    return true;
-  }
+  virtual bool check(const Eigen::VectorXd& configuration)=0;
 
-  bool checkPath(const Eigen::VectorXd& configuration1,
+  virtual bool checkPath(const Eigen::VectorXd& configuration1,
                  const Eigen::VectorXd& configuration2,
                  Eigen::VectorXd& conf)
   {
@@ -158,9 +143,8 @@ public:
 
     if((dist-dist_child-dist_parent)>1e-04)
     {
-      ROS_ERROR("The conf is not on the connection between parent and child");
-      assert(0);
-      return false;
+      CNR_ERROR(logger_,"The conf is not on the connection between parent and child");
+      throw std::invalid_argument("The conf is not on the connection between parent and child");
     }
 
     if (!check(this_conf))
@@ -199,15 +183,6 @@ public:
   }
 };
 
-
-class Cube3dCollisionChecker: public CollisionChecker
-{
-public:
-  virtual bool check(const Eigen::VectorXd& configuration)
-  {
-    return configuration.cwiseAbs().maxCoeff() > 1;
-  }
-};
 
 
 }

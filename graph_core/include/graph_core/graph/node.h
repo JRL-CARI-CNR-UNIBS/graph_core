@@ -27,7 +27,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <eigen3/Eigen/Core>
-#include <ros/ros.h>
 #include <graph_core/util.h>
 #include <graph_core/graph/connection.h>
 
@@ -41,6 +40,7 @@ protected:
   unsigned int ndof_;
   bool analyzed_;
   bool non_optimal_;
+  const cnr_logger::TraceLoggerPtr& logger_;
 public:
   std::vector<ConnectionPtr> parent_connections_;
   std::vector<ConnectionPtr> child_connections_;
@@ -49,7 +49,7 @@ public:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Node(const Eigen::VectorXd& configuration);
+  Node(const Eigen::VectorXd& configuration, const cnr_logger::TraceLoggerPtr& logger);
   NodePtr pointer()
   {
     return shared_from_this();
@@ -83,11 +83,13 @@ public:
   }
   ~Node();
 
+#pragma message(Reminder "Change to YAML")
+  //XmlRpc::XmlRpcValue toXmlRpcValue() const;
+#pragma message(Reminder "Change to YAML")
+  //static NodePtr fromXmlRpcValue(const XmlRpc::XmlRpcValue& x);
 
-  XmlRpc::XmlRpcValue toXmlRpcValue() const;
   friend std::ostream& operator<<(std::ostream& os, const Node& path);
 
-  static NodePtr fromXmlRpcValue(const XmlRpc::XmlRpcValue& x);
 };
 
 std::ostream& operator<<(std::ostream& os, const Node& node);

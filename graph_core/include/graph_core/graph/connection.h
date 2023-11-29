@@ -40,10 +40,11 @@ protected:
   double euclidean_norm_;
   double time_;
   double likelihood_;
+  const cnr_logger::TraceLoggerPtr& logger_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Connection(const NodePtr& parent, const NodePtr& child, const double& time=0.0);
+  Connection(const NodePtr& parent, const NodePtr& child, const cnr_logger::TraceLoggerPtr& logger, const double& time=0.0);
   ConnectionPtr pointer()
   {
     return shared_from_this();

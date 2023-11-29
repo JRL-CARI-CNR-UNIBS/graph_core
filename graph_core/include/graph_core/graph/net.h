@@ -26,7 +26,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/util.h>
 #include <graph_core/graph/tree.h>
 
 namespace pathplan
@@ -41,8 +40,15 @@ protected:
 
   std::multimap<double,std::vector<ConnectionPtr>> computeConnectionFromNodeToNode(const NodePtr &start_node, const NodePtr &goal_node, std::vector<NodePtr>& visited_nodes);
 
+  const cnr_logger::TraceLoggerPtr& logger_;
 public:
-  Net(const TreePtr& tree): linked_tree_(tree){}
+  Net(const TreePtr& tree,
+      const cnr_logger::TraceLoggerPtr& logger):
+    linked_tree_(tree),
+    logger_(logger)
+  {
+
+  }
 
   void setTree(const TreePtr& tree)
   {

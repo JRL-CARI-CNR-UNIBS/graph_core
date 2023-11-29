@@ -29,8 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
-NetConnection::NetConnection(const NodePtr &parent, const NodePtr &child):
-  Connection(parent,child)
+NetConnection::NetConnection(const NodePtr &parent, const NodePtr &child, const cnr_logger::TraceLoggerPtr &logger, const double &time):
+  Connection(parent,child,logger,time)
 {
 }
 
@@ -51,22 +51,22 @@ void NetConnection::remove()
     parent_->remoteNetChildConnection(pointer());
   }
   else
-    ROS_FATAL("parent already destroied");
+    CNR_FATAL(logger_,"parent already destroied");
 
   if (child_)
   {
     child_->remoteNetParentConnection(pointer());
   }
   else
-    ROS_FATAL("child already destroied");
+    CNR_FATAL(logger_,"child already destroied");
 }
 
 ConnectionPtr NetConnection::clone()
 {
-  NodePtr new_parent = std::make_shared<Node>(parent_->getConfiguration());
-  NodePtr new_child = std::make_shared<Node>(child_->getConfiguration());
+  NodePtr new_parent = std::make_shared<Node>(parent_->getConfiguration(),logger_);
+  NodePtr new_child = std::make_shared<Node>(child_->getConfiguration(),logger_);
 
-  NetConnectionPtr new_connection = std::make_shared<NetConnection>(new_parent,new_child);
+  NetConnectionPtr new_connection = std::make_shared<NetConnection>(new_parent,new_child,logger_);
   new_connection->setCost(cost_);
   new_connection->add();
 

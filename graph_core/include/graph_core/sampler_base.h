@@ -26,30 +26,56 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <eigen3/Eigen/Core>
+#include <Eigen/Core>
 #include <graph_core/util.h>
-#include <ros/ros.h>
 #include <random>
 
 namespace pathplan
 {
 
-class Sampler;
-typedef std::shared_ptr<Sampler> SamplerPtr;
+class SamplerBase;
+typedef std::shared_ptr<SamplerBase> SamplerPtr;
 
-class Sampler: public std::enable_shared_from_this<Sampler>
+class SamplerBase: public std::enable_shared_from_this<SamplerBase>
 {
 protected:
   Eigen::VectorXd lower_bound_;
   Eigen::VectorXd upper_bound_;
+  Eigen::VectorXd start_configuration_;
+  Eigen::VectorXd stop_configuration_;
   unsigned int ndof_;
   double specific_volume_; // ndof-th root of volume of the hyperellipsoid divided by the volume of unit sphere
+  double cost_;
 
+
+  std::random_device rd_;
+  std::mt19937 gen_;
+  std::uniform_real_distribution<double> ud_;
+
+
+const cnr_logger::TraceLoggerPtr& logger_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Sampler();
+  SamplerBase(const Eigen::VectorXd& start_configuration,
+              const Eigen::VectorXd& stop_configuration,
+              const Eigen::VectorXd& lower_bound,
+              const Eigen::VectorXd& upper_bound,
+              const cnr_logger::TraceLoggerPtr& logger,
+              const double& cost = std::numeric_limits<double>::infinity()):
+    start_configuration_(start_configuration),
+    stop_configuration_(stop_configuration),
+    lower_bound_(lower_bound),
+    upper_bound_(upper_bound),
+    logger_(logger),
+    cost_(cost),
+    gen_{rd_()}//gen_(time(0))
+  {
+    ud_ = std::uniform_real_distribution<double>(0, 1);
+  }
+
   virtual bool config()=0;
 
+  const double& cost(){return cost_;}
   virtual Eigen::VectorXd sample()=0;
   virtual bool inBounds(const Eigen::VectorXd& q)
   {
@@ -68,6 +94,7 @@ public:
   const Eigen::VectorXd& getLB(){return lower_bound_;}
   const Eigen::VectorXd& getUB(){return upper_bound_;}
   const unsigned int& getDimension()const {return ndof_;}
+  const cnr_logger::TraceLoggerPtr& getLogger(){return logger_;}
 };
 
 

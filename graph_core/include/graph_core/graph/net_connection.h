@@ -38,7 +38,7 @@ protected:
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  NetConnection(const NodePtr& parent, const NodePtr& child);
+  NetConnection(const NodePtr& parent, const NodePtr& child, const cnr_logger::TraceLoggerPtr& logger, const double& time=0.0);
 
   virtual void add();
   virtual void remove();

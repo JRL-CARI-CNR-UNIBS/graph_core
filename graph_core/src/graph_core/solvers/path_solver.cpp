@@ -36,12 +36,12 @@ PathLocalOptimizer::PathLocalOptimizer(const CollisionCheckerPtr &checker, const
 {
 
 }
-void PathLocalOptimizer::config(ros::NodeHandle &nh)
-{
-  nh_ = nh;
-  max_stall_gen_ = 10;
-  stall_gen_ = 0;
-}
+//void PathLocalOptimizer::config(ros::NodeHandle &nh)
+//{
+//  nh_ = nh;
+//  max_stall_gen_ = 10;
+//  stall_gen_ = 0;
+//}
 
 void PathLocalOptimizer::setPath(const PathPtr &path)
 {
@@ -63,9 +63,7 @@ bool PathLocalOptimizer::step(PathPtr& solution)
 
   double cost = path_->cost();
 
-  ros::Time t1 = ros::Time::now();
   bool solved = !path_->warp();
-  PATH_COMMENT("warp needs %f seconds", (ros::Time::now() - t1).toSec());
 
   if (cost <= (1.001 * path_->cost()))
   {
@@ -97,8 +95,7 @@ bool PathLocalOptimizer::step(PathPtr& solution)
 
 bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iteration, const double& max_time)
 {
-  ros::WallTime tic = ros::WallTime::now();
-
+  std::chrono::time_point<std::chrono::system_clock> tic = std::chrono::system_clock::now();
   if(max_time<=0.0) return false;
 
   unsigned int iter = 0;
@@ -122,7 +119,9 @@ bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iterat
 
     //    if(time<0.7*mean || time<=0.0) break;
 
-    if((ros::WallTime::now()-tic).toSec() >= 0.98*max_time) break;
+    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+    std::chrono::duration<double> difference = now - tic;
+    if(difference.count() >= 0.98*max_time) break;
   }
   return solved_;
 }

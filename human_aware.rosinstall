@@ -1,4 +1,0 @@
-- git:
-    local-name: motion_control/human_aware_motion_planners
-    uri: https://github.com/JRL-CARI-CNR-UNIBS/cari_motion_planning.git
-    version: master

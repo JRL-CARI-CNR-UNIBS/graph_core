@@ -28,12 +28,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/tree.h>
 #include <graph_core/graph/path.h>
-#include <graph_core/collision_checker.h>
-#include <graph_core/metrics.h>
-#include <graph_core/sampler.h>
+#include <graph_core/sampler_base.h>
 #include <graph_core/goal_cost_function.h>
-#include <ros/ros.h>
-#include <ros/duration.h>
+
 namespace pathplan
 {
 
@@ -44,7 +41,6 @@ class TreeSolver: public std::enable_shared_from_this<TreeSolver>
 {
 protected:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  ros::NodeHandle nh_;
   MetricsPtr metrics_;
   CollisionCheckerPtr checker_;
   SamplerPtr sampler_;
@@ -71,6 +67,7 @@ protected:
   PathPtr solution_;                                           // if multigoal, it is related the best goal
   double best_utopia_=std::numeric_limits<double>::infinity(); // if multigoal, it is related the best goal
 
+  const cnr_logger::TraceLoggerPtr& logger_;
 protected:
   virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity())
   {
@@ -83,10 +80,12 @@ protected:
 public:
   TreeSolver(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
-             const SamplerPtr& sampler):
+             const SamplerPtr& sampler,
+             const cnr_logger::TraceLoggerPtr& logger):
     metrics_(metrics),
     checker_(checker),
-    sampler_(sampler)
+    sampler_(sampler),
+    logger_(logger)
   {
     path_cost_ = std::numeric_limits<double>::infinity();
     goal_cost_ = 0.0;
@@ -105,7 +104,7 @@ public:
   virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;
   virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity())=0;
 
-  virtual bool computePath(const NodePtr &start_node, const NodePtr &goal_node, const ros::NodeHandle& nh, PathPtr &solution, const double &max_time = std::numeric_limits<double>::infinity(), const unsigned int max_iter = 10000);
+  virtual bool computePath(const NodePtr &start_node, const NodePtr &goal_node, const YAML::Node& nh, PathPtr &solution, const double &max_time = std::numeric_limits<double>::infinity(), const unsigned int max_iter = 10000);
   virtual void resetProblem()=0;
   virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler) = 0;
 
@@ -118,7 +117,7 @@ public:
     return cost_;
   }
 
-  virtual bool config(const ros::NodeHandle& nh);
+  virtual bool config(const YAML::Node& config);
 
   void setGoalCostFunction(const GoalCostFunctionPtr& goal_cost_fcn)
   {
@@ -162,7 +161,6 @@ public:
 
   virtual std::vector<TreePtr> getGoalTrees()
   {
-    ROS_DEBUG("virtual fcn");
   }
 
   PathPtr getSolution() const
@@ -170,10 +168,6 @@ public:
     return solution_;
   }
 
-  ros::NodeHandle getNodeHandle() const
-  {
-    return nh_;
-  }
 
   void setSampler(const SamplerPtr& sampler)
   {
