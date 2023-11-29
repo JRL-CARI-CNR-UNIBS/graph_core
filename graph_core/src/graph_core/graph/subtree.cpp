@@ -32,7 +32,11 @@ namespace pathplan
 Subtree::Subtree(const TreePtr& parent_tree,
                  const NodePtr& root):
   Tree(root,parent_tree->getMaximumDistance(),
+<<<<<<< HEAD
   parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getUseKdTree()),
+=======
+       parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getLogger(),parent_tree->getUseKdTree()),
+>>>>>>> 1dc510815a81597abeb77c2de689d07284069805
   parent_tree_(parent_tree)
 {
   populateTreeFromNode(root);
@@ -42,7 +46,7 @@ Subtree::Subtree(const TreePtr& parent_tree,
                  const NodePtr& root,
                  const std::vector<NodePtr>& black_list):
   Tree(root,parent_tree->getMaximumDistance(),
-       parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getUseKdTree()),
+       parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getLogger(),parent_tree->getUseKdTree()),
   parent_tree_(parent_tree)
 {
   double cost = std::numeric_limits<double>::infinity();
@@ -59,7 +63,11 @@ Subtree::Subtree(const TreePtr& parent_tree,
                  const Eigen::VectorXd& focus2,
                  const double& cost):
   Tree(root,parent_tree->getMaximumDistance(),
+<<<<<<< HEAD
   parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getUseKdTree()),
+=======
+       parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getLogger(),parent_tree->getUseKdTree()),
+>>>>>>> 1dc510815a81597abeb77c2de689d07284069805
   parent_tree_(parent_tree)
 {
   std::vector<NodePtr> black_list;
@@ -74,7 +82,7 @@ Subtree::Subtree(const TreePtr& parent_tree,
                  const std::vector<NodePtr>& black_list,
                  const bool node_check):
   Tree(root,parent_tree->getMaximumDistance(),
-       parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getUseKdTree()),
+       parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getLogger(),parent_tree->getUseKdTree()),
   parent_tree_(parent_tree)
 {
   populateSubtreeInsideEllipsoid(root,focus1,focus2,cost,black_list,node_check);
@@ -100,8 +108,8 @@ void Subtree::populateSubtreeInsideEllipsoid(const NodePtr& root, const Eigen::V
     populateTreeFromNode(root,focus1,focus2,cost,black_list,node_check);
   else
   {
-    ROS_WARN("Root of subtree is not inside the ellipsoid!");
-    ROS_INFO_STREAM("Root:\n "<<*root<<"\nFocus1: "<<focus1.transpose()<<"\nFocus2: "<<focus1.transpose()<<"\nCost: "<<cost);
+    CNR_WARN(logger_,"Root of subtree is not inside the ellipsoid!");
+    CNR_INFO(logger_,"Root:\n "<<*root<<"\nFocus1: "<<focus1.transpose()<<"\nFocus2: "<<focus1.transpose()<<"\nCost: "<<cost);
 
     populateTreeFromNode(root,black_list,node_check);
   }

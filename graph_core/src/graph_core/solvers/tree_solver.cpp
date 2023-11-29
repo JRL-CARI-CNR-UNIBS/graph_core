@@ -30,9 +30,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
-bool TreeSolver::config(const ros::NodeHandle& nh)
+bool TreeSolver::config(const YAML::Node &config)
 {
+<<<<<<< HEAD
   nh_ = nh;
+=======
+  throw std::invalid_argument("not implemented yet");
+  max_distance_ = 1;
+
+  config["max_distance"].as<double>();
+>>>>>>> 1dc510815a81597abeb77c2de689d07284069805
   if (!nh.getParam("max_distance",max_distance_))
   {
     ROS_WARN("%s/max_distance is not set. using 1.0",nh.getNamespace().c_str());
@@ -93,23 +100,30 @@ bool TreeSolver::config(const ros::NodeHandle& nh)
 
 bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const double& max_time)
 {
+<<<<<<< HEAD
   ros::WallTime tic = ros::WallTime::now();
   if(max_time <=0.0)
   {
     return false;
   }
+=======
+  std::chrono::time_point<std::chrono::system_clock> tic = std::chrono::system_clock::now();
+
+
+  if(max_time <=0.0) return false;
+>>>>>>> 1dc510815a81597abeb77c2de689d07284069805
 
   for (unsigned int iter = 0; iter < max_iter; iter++)
   {
     if (update(solution))
     {
-      //ROS_INFO("Solved in %u iterations", iter);
       solved_ = true;
       return true;
     }
 
-    if((ros::WallTime::now()-tic).toSec()>=0.98*max_time)
-      break;
+    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+    std::chrono::duration<double> difference = now - tic;
+    if(difference.count() >= 0.98*max_time) break;
   }
 
   return false;
@@ -119,20 +133,32 @@ bool TreeSolver::computePath(const Eigen::VectorXd& start_conf, const Eigen::Vec
   NodePtr start_node = std::make_shared<Node>(start_conf);
   NodePtr goal_node  = std::make_shared<Node>(goal_conf);
 
+<<<<<<< HEAD
   return computePath(start_node,goal_node,nh,solution,max_time,max_iter);
 }
 
 bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node, const ros::NodeHandle& nh, PathPtr &solution, const double &max_time, const unsigned int &max_iter)
+=======
+#pragma message(Reminder "IS IT NEEDED?")
+bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node, const YAML::Node& nh, PathPtr &solution, const double &max_time, const unsigned int max_iter)
+>>>>>>> 1dc510815a81597abeb77c2de689d07284069805
 {
   resetProblem();
   config(nh);
   addStart(start_node);
   addGoal(goal_node);
 
+<<<<<<< HEAD
   ros::WallTime tic = ros::WallTime::now();
   if(!solve(solution, max_iter, max_time))
   {
     ROS_INFO_STREAM("No solutions found. Time: "<<(ros::WallTime::now()-tic).toSec()<<", max time: "<<max_time);
+=======
+
+  if (!solve(solution, max_iter, max_time))
+  {
+    CNR_WARN(logger_,"No solutions found");
+>>>>>>> 1dc510815a81597abeb77c2de689d07284069805
     return false;
   }
   return true;
@@ -169,9 +195,13 @@ bool TreeSolver::setSolution(const PathPtr &solution, const bool& solved)
 
 bool TreeSolver::importFromSolver(const TreeSolverPtr& solver)
 {
+<<<<<<< HEAD
   //ROS_INFO_STREAM("Import from Tree solver");
+=======
+  CNR_INFO(logger_,"Import from Tree solver");
+>>>>>>> 1dc510815a81597abeb77c2de689d07284069805
 
-  config(getNodeHandle());
+  config();
 
   solved_        = solver->solved();
   completed_     = solver->completed();

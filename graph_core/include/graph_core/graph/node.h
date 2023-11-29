@@ -26,10 +26,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <map>
-#include <any>
-#include <ros/ros.h>
-#include <eigen3/Eigen/Core>
+#include <Eigen/Core>
 #include <graph_core/util.h>
 #include <graph_core/graph/connection.h>
 
@@ -94,6 +91,12 @@ protected:
   std::vector<bool> flags_;
 
   /**
+   * @brief pointer to cnr_logger.
+   *
+   * This is Sparta!!
+   */
+  const cnr_logger::TraceLoggerPtr& logger_;
+  /**
    * @brief Adds a parent connection to the node.
    *
    * This function adds the provided connection to the list of parent connections for the node. The connection
@@ -154,7 +157,7 @@ public:
    *
    * @param configuration The Eigen::VectorXd representing the configuration of the node.
    */
-  Node(const Eigen::VectorXd& configuration);
+  Node(const Eigen::VectorXd& configuration, const cnr_logger::TraceLoggerPtr& logger);
 
   /**
    * @brief Retrieves a shared pointer to the Node.
@@ -540,7 +543,7 @@ public:
    *
    * @return Returns an XmlRpc::XmlRpcValue representing the configuration of the Node.
    */
-  XmlRpc::XmlRpcValue toXmlRpcValue() const;
+  //XmlRpc::XmlRpcValue toXmlRpcValue() const;
 
   /**
    * @brief Creates a NodePtr from an XmlRpcValue.
@@ -554,7 +557,7 @@ public:
    *
    * @note If the XmlRpcValue is not an array, a ROS_ERROR is logged, and NULL is returned.
    */
-  static NodePtr fromXmlRpcValue(const XmlRpc::XmlRpcValue& x);
+  //static NodePtr fromXmlRpcValue(const XmlRpc::XmlRpcValue& x);
 
   friend std::ostream& operator<<(std::ostream& os, const Node& node);
 };

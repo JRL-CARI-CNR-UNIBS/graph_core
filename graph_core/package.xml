@@ -26,7 +26,7 @@
   <exec_depend>moveit_ros_planning</exec_depend>
   <exec_depend>moveit_ros_planning_interface</exec_depend>
   <exec_depend>roscpp</exec_depend>
-  <depend>moveit_visual_tools</depend>
+  <depend>pluginlib</depend>
 
   <depend>geometry_msgs</depend>
 

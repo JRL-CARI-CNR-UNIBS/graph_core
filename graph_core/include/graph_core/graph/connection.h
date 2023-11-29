@@ -59,12 +59,13 @@ protected:
   /**
    * @brief Time of the last cost update for the connection.
    */
-  double time_cost_update_;
+  std::chrono::time_point<std::chrono::system_clock> time_cost_update_;
 
   /**
    * @brief Likelihood associated with the connection.
    */
   double likelihood_;
+  const cnr_logger::TraceLoggerPtr& logger_;
 
   /**
    * @brief Vector of boolean flags.
@@ -119,7 +120,7 @@ public:
    * @param child The NodePtr to the child Node.
    * @param is_net Boolean indicating if the connection is a net connection.
    */
-  Connection(const NodePtr& parent, const NodePtr& child, const bool is_net = false);
+  Connection(const NodePtr& parent, const NodePtr& child, const cnr_logger::TraceLoggerPtr& logger, const bool is_net = false);
 
   /**
    * @brief Returns a shared pointer to the Connection.
@@ -181,7 +182,7 @@ public:
   void setCost(const double& cost)
   {
     cost_ = cost;
-    time_cost_update_ = ros::WallTime::now().toSec();
+    time_cost_update_ = std::chrono::system_clock::now();
   }
 
   /**
@@ -199,7 +200,7 @@ public:
    *
    * @return Returns a reference to the time of the last cost update for the Connection.
    */
-  const double& getTimeCostUpdate() const
+  const std::chrono::time_point<std::chrono::system_clock>& getTimeCostUpdate() const
   {
     return time_cost_update_;
   }
@@ -216,7 +217,7 @@ public:
    *
    * @param time The time value to be set for the last cost update.
    */
-  void setTimeCostUpdate(const double& time)
+  void setTimeCostUpdate(const std::chrono::time_point<std::chrono::system_clock>& time)
   {
     time_cost_update_ = time;
   }

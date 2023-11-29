@@ -27,11 +27,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include <eigen3/Eigen/Core>
-#include <ros/ros.h>
-#include <graph_core/log.h>
-#define PATH_COMMENT(...) ROS_LOG(::ros::console::levels::Debug, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
-#define PATH_COMMENT_STREAM(...) ROS_LOG_STREAM(::ros::console::levels::Debug, ROSCONSOLE_DEFAULT_NAME, __VA_ARGS__)
+#include <Eigen/Core>
+#include <memory>
+#include <vector>
+#include <cnr_logger/cnr_logger.h>
+#include <chrono>
+#include <any>
+#include <yaml-cpp/yaml.h>
+
+#define Stringize( L )     #L
+#define MakeString( M, L ) M(L)
+#define $Line MakeString( Stringize, __LINE__ )
+#define Reminder __FILE__ "(" $Line ") : Reminder: "
+
 
 namespace pathplan
 {

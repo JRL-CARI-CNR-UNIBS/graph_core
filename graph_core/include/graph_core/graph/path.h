@@ -26,9 +26,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/util.h>
-#include <graph_core/metrics.h>
-#include <graph_core/collision_checker.h>
 #include <graph_core/graph/tree.h>
 #include <math.h>
 
@@ -91,6 +88,7 @@ protected:
    * indicates that warping changes are required for the corresponding connection.
    */
   std::vector<bool> change_warp_;
+  const cnr_logger::TraceLoggerPtr& logger_;
 
   /**
    * @brief Compute the total cost of the path.
@@ -129,6 +127,7 @@ protected:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+<<<<<<< HEAD
 
   /**
    * @brief Constructor for the Path class.
@@ -160,6 +159,12 @@ public:
    *
    * @return A reference to the computed cost of the path.
    */
+=======
+  Path(std::vector<ConnectionPtr> connections, const MetricsPtr& metrics, const CollisionCheckerPtr& checker,
+       const cnr_logger::TraceLoggerPtr& logger);
+  Path(std::vector<NodePtr> nodes, const MetricsPtr& metrics, const CollisionCheckerPtr& checker,
+       const cnr_logger::TraceLoggerPtr& logger);
+>>>>>>> 1dc510815a81597abeb77c2de689d07284069805
   const double& cost()
   {
     computeCost();
@@ -741,6 +746,7 @@ public:
    */
   void flip();
 
+<<<<<<< HEAD
   /**
    * @brief Converts the path to an XmlRpcValue.
    *
@@ -750,6 +756,10 @@ public:
    * @return XmlRpcValue representing the path.
    */
   XmlRpc::XmlRpcValue toXmlRpcValue(bool reverse=false) const;
+=======
+  #pragma message(Reminder "Change to YAML")
+  //XmlRpc::XmlRpcValue toXmlRpcValue(bool reverse=false) const;
+>>>>>>> 1dc510815a81597abeb77c2de689d07284069805
   friend std::ostream& operator<<(std::ostream& os, const Path& path);
 };
 

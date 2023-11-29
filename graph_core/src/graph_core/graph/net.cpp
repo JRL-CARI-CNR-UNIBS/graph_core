@@ -160,11 +160,20 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
     double cost2parent;
     for(const ConnectionPtr& conn2parent:all_parent_connections)
     {
+<<<<<<< HEAD
       tic_cycle = ros::WallTime::now();
       time2now = (tic_cycle-tic_search_).toSec();
 
       if(verbose_)
         ROS_INFO_STREAM("Available time: "<<max_time_-time2now);
+=======
+      CNR_ERROR(logger_,"a node of a tree should have only a parent");
+      CNR_ERROR(logger_,"node \n" << *goal_node);
+
+      CNR_INFO(logger_,"current root "<<linked_tree_->getRoot());
+      CNR_INFO(logger_,"goal node "<<goal_node);
+      CNR_INFO(logger_,"start node "<<start_node);
+>>>>>>> 1dc510815a81597abeb77c2de689d07284069805
 
       if(time2now>0.9*max_time_)
       {

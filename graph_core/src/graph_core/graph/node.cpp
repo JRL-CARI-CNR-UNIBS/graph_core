@@ -30,7 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
-Node::Node(const Eigen::VectorXd &configuration)
+Node::Node(const Eigen::VectorXd &configuration, const cnr_logger::TraceLoggerPtr& logger):
+  logger_(logger)
 {
   configuration_ = configuration;
   ndof_ = configuration_.size();
@@ -54,7 +55,7 @@ bool Node::setFlag(const int& idx, const bool flag)
   {
     if(idx<number_reserved_flags_)
     {
-      ROS_ERROR("can't overwrite a default flag");
+      CNR_ERROR(logger_,"can't overwrite a default flag");
       return false;
     }
     else
@@ -62,7 +63,7 @@ bool Node::setFlag(const int& idx, const bool flag)
   }
   else  //the flag should already exist or you should ask to create a flag at idx = flags_.size()
   {
-    ROS_ERROR_STREAM("flags size "<<flags_.size()<<" and you want to set a flag in position "<<idx);
+    CNR_ERROR(logger_,"flags size "<<flags_.size()<<" and you want to set a flag in position "<<idx);
     return false;
   }
 
@@ -111,7 +112,8 @@ void Node::removeParentConnection(const ConnectionPtr &connection)
 
   if (it_conn == parent_connections_.end())
   {
-    ROS_FATAL("connection is not in the parent vector");
+    CNR_FATAL(logger_,"connection is not in the parent vector");
+    throw std::invalid_argument("connection is not in the parent vector");
   }
   else
   {
@@ -131,7 +133,7 @@ void Node::removeParentConnection(const ConnectionPtr &connection)
 
       if(it_parent == parent->child_connections_.end())
       {
-        ROS_FATAL("connection is not in the child vector");
+       CNR_FATAL(logger_,"connection is not in the child vector");
       }
       else
       {
@@ -149,7 +151,7 @@ void Node::removeNetParentConnection(const ConnectionPtr &connection)
 
   if (it_conn == net_parent_connections_.end())
   {
-    ROS_FATAL("connection is not in the net parent vector");
+    CNR_FATAL(logger_,"connection is not in the net parent vector");
   }
   else
   {
@@ -169,7 +171,7 @@ void Node::removeNetParentConnection(const ConnectionPtr &connection)
 
       if(it_parent == parent->net_child_connections_.end())
       {
-        ROS_FATAL("connection is not in the net child vector");
+        CNR_FATAL(logger_,"connection is not in the net child vector");
       }
       else
       {
@@ -185,7 +187,8 @@ void Node::removeChildConnection(const ConnectionPtr &connection)
 
   if (it_conn == child_connections_.end())
   {
-    ROS_FATAL("connection is not in the child vector");
+    CNR_FATAL(logger_,"connection is not in the child vector");
+    throw std::invalid_argument("connection is not in the child vector");
   }
   else
   {
@@ -200,7 +203,7 @@ void Node::removeChildConnection(const ConnectionPtr &connection)
 
       if(it_child == child->parent_connections_.end())
       {
-        ROS_FATAL("connection is not in the parent vector");
+        CNR_FATAL(logger_,"connection is not in the parent vector");
       }
       else
       {
@@ -222,7 +225,8 @@ void Node::removeNetChildConnection(const ConnectionPtr &connection)
 
   if (it_conn == net_child_connections_.end())
   {
-    ROS_FATAL("connection is not in the child vector");
+    CNR_FATAL(logger_,"connection is not in the child vector");
+    throw std::invalid_argument("connection is not in the child vector");
   }
   else
   {
@@ -237,7 +241,7 @@ void Node::removeNetChildConnection(const ConnectionPtr &connection)
 
       if(it_child == child->net_parent_connections_.end())
       {
-        ROS_FATAL("connection is not in the net parent vector");
+        CNR_FATAL(logger_,"connection is not in the net parent vector");
       }
       else
       {
@@ -323,7 +327,7 @@ bool Node::switchParentConnection(const ConnectionPtr& net_connection)
                   [&net_connection](const ConnectionWeakPtr& conn){return net_connection == conn.lock();})
      >=net_parent_connections_.end())
   {
-    ROS_ERROR("it is not a parent net connection of the node!");
+    CNR_FATAL(logger_,"it is not a parent net connection of the node!");
     return false;
   }
 
@@ -333,7 +337,7 @@ bool Node::switchParentConnection(const ConnectionPtr& net_connection)
   ConnectionPtr parent_connection = parent_connections_.front().lock();
   if(not parent_connection->convertToNetConnection())
   {
-    ROS_ERROR("parent connection can't be converted into parent net connection!");
+    CNR_FATAL(logger_,"parent connection can't be converted into parent net connection!");
     return false;
   }
 
@@ -343,7 +347,7 @@ bool Node::switchParentConnection(const ConnectionPtr& net_connection)
     parent_connection->convertToConnection();
     assert(parent_connections_.size() == 1);
 
-    ROS_ERROR("parent net connection can't be converted into parent connection!");
+    CNR_FATAL(logger_,"parent net connection can't be converted into parent connection!");
     return false;
   }
 
@@ -521,34 +525,29 @@ std::vector<NodePtr> Node::getNetParents() const
   return parents;
 }
 
-//const std::vector<NodePtr> Node::getNetParentsConst() const
+//XmlRpc::XmlRpcValue Node::toXmlRpcValue() const
 //{
-//  return getNetParents();
+//  XmlRpc::XmlRpcValue x;
+//  x.setSize(configuration_.size());
+//  for (int idx=0;idx<configuration_.size();idx++)
+//    x[idx]=configuration_(idx);
+//  return x;
 //}
 
-XmlRpc::XmlRpcValue Node::toXmlRpcValue() const
-{
-  XmlRpc::XmlRpcValue x;
-  x.setSize(configuration_.size());
-  for (int idx=0;idx<configuration_.size();idx++)
-    x[idx]=configuration_(idx);
-  return x;
-}
-
-NodePtr Node::fromXmlRpcValue(const XmlRpc::XmlRpcValue& x)
-{
-  if (x.getType()!= XmlRpc::XmlRpcValue::Type::TypeArray)
-  {
-    ROS_ERROR("loading from XmlRpcValue a node, but XmlRpcValue is not an array");
-    return NULL;
-  }
-  Eigen::VectorXd conf(x.size());
-  for (int idx=0;idx<x.size();idx++)
-  {
-    conf(idx)=x[idx];
-  }
-  return std::make_shared<Node>(conf);
-}
+//NodePtr Node::fromXmlRpcValue(const XmlRpc::XmlRpcValue& x)
+//{
+//  if (x.getType()!= XmlRpc::XmlRpcValue::Type::TypeArray)
+//  {
+//    ROS_ERROR("loading from XmlRpcValue a node, but XmlRpcValue is not an array");
+//    return NULL;
+//  }
+//  Eigen::VectorXd conf(x.size());
+//  for (int idx=0;idx<x.size();idx++)
+//  {
+//    conf(idx)=x[idx];
+//  }
+//  return std::make_shared<Node>(conf);
+//}
 
 unsigned int Node::getReservedFlagsNumber()
 {

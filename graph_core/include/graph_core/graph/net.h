@@ -26,9 +26,13 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+<<<<<<< HEAD
 #include <graph_core/util.h>
 #include <graph_core/graph/subtree.h>
 #include <functional>
+=======
+#include <graph_core/graph/tree.h>
+>>>>>>> 1dc510815a81597abeb77c2de689d07284069805
 
 namespace pathplan
 {
@@ -140,7 +144,18 @@ protected:
   void computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node);
   void computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here, const double& cost2beat);
 
+  const cnr_logger::TraceLoggerPtr& logger_;
 public:
+<<<<<<< HEAD
+=======
+  Net(const TreePtr& tree,
+      const cnr_logger::TraceLoggerPtr& logger):
+    linked_tree_(tree),
+    logger_(logger)
+  {
+
+  }
+>>>>>>> 1dc510815a81597abeb77c2de689d07284069805
 
   /**
    * @brief Constructor for the Net class.

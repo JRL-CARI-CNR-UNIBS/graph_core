@@ -30,9 +30,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
-Connection::Connection(const NodePtr& parent, const NodePtr& child, const bool is_net):
+Connection::Connection(const NodePtr& parent, const NodePtr& child, const cnr_logger::TraceLoggerPtr &logger, const bool is_net):
   parent_(parent),
-  child_(child)
+  child_(child),
+  logger_(logger)
 {
   euclidean_norm_ = (child->getConfiguration() - parent->getConfiguration()).norm();
   likelihood_ = 1.0;
@@ -58,7 +59,7 @@ bool Connection::setFlag(const int& idx, const bool flag)
   {
     if(idx<number_reserved_flags_)
     {
-      ROS_ERROR("can't overwrite a default flag");
+      CNR_ERROR(logger_,"can't overwrite a default flag");
       return false;
     }
     else
@@ -66,7 +67,7 @@ bool Connection::setFlag(const int& idx, const bool flag)
   }
   else  //the flag should already exist or you should ask to create a flag at idx = flags_.size()
   {
-    ROS_ERROR_STREAM("flags size "<<flags_.size()<<" and you want to set a flag in position "<<idx);
+    CNR_ERROR(logger_,"flags size "<<flags_.size()<<" and you want to set a flag in position "<<idx);
     return false;
   }
 
@@ -121,7 +122,7 @@ void Connection::remove()
   }
   else //if the connection can't be removed by the child node, try using the parent node
   {
-    ROS_FATAL("child already destroied");
+    CNR_ERROR(logger_,"child already destroied");
     if(not (parent_.expired()))
     {
       if(flags_[idx_net_])
@@ -130,7 +131,7 @@ void Connection::remove()
         getParent()->removeChildConnection(pointer());
     }
     else
-      ROS_FATAL("parent already destroied");
+      CNR_ERROR(logger_,"parent already destroied");
   }
 }
 
@@ -142,7 +143,7 @@ Eigen::VectorXd Connection::projectOnConnection(const Eigen::VectorXd& point, do
   if(point == parent)
   {
     if(verbose)
-      ROS_INFO("point is parent");
+      CNR_INFO(logger_,"point is parent");
 
     in_conn = true;
     distance = 0.0;
@@ -151,7 +152,7 @@ Eigen::VectorXd Connection::projectOnConnection(const Eigen::VectorXd& point, do
   else if(point == child)
   {
     if(verbose)
-      ROS_INFO("point is child");
+      CNR_INFO(logger_,"point is child");
 
     in_conn = true;
     distance = 0.0;
@@ -181,7 +182,7 @@ Eigen::VectorXd Connection::projectOnConnection(const Eigen::VectorXd& point, do
                                     (in_conn = false);
 
     if(verbose)
-      ROS_INFO_STREAM("in_conn: "<<in_conn<<" dist: "<<distance<<" s: "<<s<<" point_length: "<<point_length<<" conn_length: "<<euclidean_norm_<< " projection: "<<projection.transpose()<<" parent: "<<parent.transpose()<<" child: "<<child.transpose());
+      CNR_INFO(logger_,"in_conn: "<<in_conn<<" dist: "<<distance<<" s: "<<s<<" point_length: "<<point_length<<" conn_length: "<<euclidean_norm_<< " projection: "<<projection.transpose()<<" parent: "<<parent.transpose()<<" child: "<<child.transpose());
 
     return projection;
   }
@@ -206,8 +207,8 @@ bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)
 {
   if(euclidean_norm_ == 0.0 || conn->norm() == 0.0)
   {
-    ROS_INFO_STREAM("A connection has norm zero");
-    assert(0);
+    CNR_ERROR(logger_,"A connection has norm zero");
+    throw std::invalid_argument("A connection has norm zero");
     return false;
   }
   // v1 dot v2 = norm(v1)*norm(v2)*cos(angle) if v1 not // v2

@@ -27,8 +27,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <graph_core/util.h>
+<<<<<<< HEAD
 #include <graph_core/collision_checker.h>
 #include <graph_core/informed_sampler.h>
+=======
+#include <graph_core/collision_checker_base.h>
+#include <graph_core/sampler_base.h>
+>>>>>>> 1dc510815a81597abeb77c2de689d07284069805
 #include <graph_core/metrics.h>
 #include <graph_core/datastructure/nearest_neighbors.h>
 #include <graph_core/datastructure/kdtree.h>
@@ -78,6 +83,7 @@ protected:
    * @brief Pointer to the tree nodes data structure.
    */
   NearestNeighborsPtr nodes_;
+  const cnr_logger::TraceLoggerPtr& logger_;
 
   /**
    * @brief Pointer to the collision checker.
@@ -173,6 +179,7 @@ public:
        const double& max_distance,
        const CollisionCheckerPtr& checker,
        const MetricsPtr& metrics,
+       const cnr_logger::TraceLoggerPtr& logger,
        const bool& use_kdtree=true);
 
   /**
@@ -205,6 +212,7 @@ public:
     return nodes_->getNodes();
   }
 
+<<<<<<< HEAD
   /**
    * @brief Retrieves the leaves of the tree.
    *
@@ -226,6 +234,13 @@ public:
    * @param node The node to be set as the new root of the tree.
    * @return Returns true if the root is successfully changed, and false otherwise.
    */
+=======
+  const cnr_logger::TraceLoggerPtr& getLogger()
+  {
+    return logger_;
+  }
+
+>>>>>>> 1dc510815a81597abeb77c2de689d07284069805
   bool changeRoot(const NodePtr& node);
 
   /**
@@ -900,6 +915,7 @@ public:
    */
   bool getUseKdTree(){return use_kdtree_;}
 
+<<<<<<< HEAD
   /**
    * @brief Converts the tree to an XmlRpcValue.
    *
@@ -943,6 +959,19 @@ public:
                                  const CollisionCheckerPtr& checker,
                                  const MetricsPtr& metrics,
                                  const bool& lazy=false);
+=======
+  #pragma message(Reminder "Change to YAML")
+  //XmlRpc::XmlRpcValue toXmlRpcValue() const;
+  //void toXmlFile(const std::string& file_name) const;
+  friend std::ostream& operator<<(std::ostream& os, const Tree& tree);
+
+    #pragma message(Reminder "Change to YAML")
+//  static TreePtr fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
+//                                 const double& max_distance,
+//                                 const CollisionCheckerPtr& checker,
+//                                 const MetricsPtr& metrics,
+//                                 const bool& lazy=false);
+>>>>>>> 1dc510815a81597abeb77c2de689d07284069805
 };
 
 }

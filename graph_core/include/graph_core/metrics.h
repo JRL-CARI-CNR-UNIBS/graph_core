@@ -36,9 +36,11 @@ typedef std::shared_ptr<Metrics> MetricsPtr;
 // Euclidean metrics
 class Metrics
 {
+protected:
+  const cnr_logger::TraceLoggerPtr& logger_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Metrics();
+  Metrics(const cnr_logger::TraceLoggerPtr& logger);
 
   virtual double cost(const NodePtr& node1,
                       const NodePtr& node2);

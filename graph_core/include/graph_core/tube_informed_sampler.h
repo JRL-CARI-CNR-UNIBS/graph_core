@@ -27,14 +27,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
+<<<<<<< HEAD
 #include <graph_core/informed_sampler.h>
+=======
+#include <graph_core/sampler_base.h>
+>>>>>>> 1dc510815a81597abeb77c2de689d07284069805
 #include <graph_core/graph/path.h>
 
 namespace pathplan {
 
 
 
-class TubeInformedSampler: public InformedSampler
+class TubeInformedSampler: public SamplerBase
 {
 protected:
   std::vector<Eigen::VectorXd>  path_;
@@ -50,11 +54,21 @@ protected:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   TubeInformedSampler(const Eigen::VectorXd& start_configuration,
                       const Eigen::VectorXd& stop_configuration,
                       const InformedSamplerPtr& sampler,
                       const MetricsPtr& metrics):
+<<<<<<< HEAD
     InformedSampler(start_configuration,stop_configuration,sampler->getLB(),sampler->getUB(),sampler->getCost())
+=======
+    SamplerBase(start_configuration,
+                    stop_configuration,
+                    sampler->getLB(),
+                    sampler->getUB(),
+                    sampler->getLogger(),
+                    sampler->cost())
+>>>>>>> 1dc510815a81597abeb77c2de689d07284069805
   {
     length_ = 0;
     radius_=0;

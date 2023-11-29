@@ -31,7 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
-Metrics::Metrics()
+Metrics::Metrics(const cnr_logger::TraceLoggerPtr &logger):
+  logger_(logger)
 {
 
 }
@@ -64,7 +65,7 @@ double Metrics::utopia(const Eigen::VectorXd& configuration1,
 
 MetricsPtr Metrics::clone()
 {
-  return std::make_shared<Metrics>();
+  return std::make_shared<Metrics>(logger_);
 }
 
 }

@@ -26,11 +26,39 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include <graph_core/log.h>
 
+<<<<<<< HEAD:graph_core/src/graph_core/log.cpp
 namespace ros_log_color
+=======
+#include <graph_core/graph/net_connection.h>
+
+namespace pathplan
+{
+NetConnection::NetConnection(const NodePtr &parent, const NodePtr &child, const cnr_logger::TraceLoggerPtr &logger, const double &time):
+  Connection(parent,child,logger,time)
+{
+}
+
+void NetConnection::add()
+>>>>>>> 1dc510815a81597abeb77c2de689d07284069805:graph_core/src/graph_core/graph/net_connection.cpp
 {
 std::ostream& operator<<(std::ostream& os, PRINT_COLOR c)
 {
+<<<<<<< HEAD:graph_core/src/graph_core/log.cpp
   switch(c)
+=======
+  if (!added_)
+    return;
+
+  added_ = false;
+  if (parent_)
+  {
+    parent_->remoteNetChildConnection(pointer());
+  }
+  else
+    CNR_FATAL(logger_,"parent already destroied");
+
+  if (child_)
+>>>>>>> 1dc510815a81597abeb77c2de689d07284069805:graph_core/src/graph_core/graph/net_connection.cpp
   {
   case BLACK       : os << "\033[30m"  ; break;
   case RED         : os << "\033[31m"  ; break;
@@ -51,6 +79,23 @@ std::ostream& operator<<(std::ostream& os, PRINT_COLOR c)
   case ENDCOLOR    : os << "\033[0m";    break;
   default          : os << "\033[37m";
   }
+<<<<<<< HEAD:graph_core/src/graph_core/log.cpp
   return os;
+=======
+  else
+    CNR_FATAL(logger_,"child already destroied");
+}
+
+ConnectionPtr NetConnection::clone()
+{
+  NodePtr new_parent = std::make_shared<Node>(parent_->getConfiguration(),logger_);
+  NodePtr new_child = std::make_shared<Node>(child_->getConfiguration(),logger_);
+
+  NetConnectionPtr new_connection = std::make_shared<NetConnection>(new_parent,new_child,logger_);
+  new_connection->setCost(cost_);
+  new_connection->add();
+
+  return new_connection;
+>>>>>>> 1dc510815a81597abeb77c2de689d07284069805:graph_core/src/graph_core/graph/net_connection.cpp
 }
 }
