@@ -123,7 +123,7 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
 
 
   InformedSamplerPtr sampler = std::make_shared<InformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler_->getLB(),sampler_->getUB());
-  TubeInformedSamplerPtr tube_sampler = std::make_shared<TubeInformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler_,metrics_);
+  TubeInformedSamplerPtr tube_sampler = std::make_shared<TubeInformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler,metrics_);
   tube_sampler->setLocalBias(local_bias_);
   tube_sampler->setRadius(tube_radius_);
   if (solution)
@@ -340,6 +340,7 @@ bool MultigoalSolver::update(PathPtr& solution)
     else if (ud_(gen_)>goal_probabilities_.at(igoal))
       continue;
 
+    ROS_INFO_THROTTLE(60,"goal %u cost=%f",igoal, costs_.at(igoal));
     were_goals_sampled_.at(igoal) = true;
 
     NodePtr new_start_node, new_goal_node;
