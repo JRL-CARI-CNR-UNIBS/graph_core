@@ -95,6 +95,7 @@ protected:
    *
    * This is Sparta!!
    */
+  #pragma Reminder "add documentation"
   const cnr_logger::TraceLoggerPtr& logger_;
   /**
    * @brief Adds a parent connection to the node.

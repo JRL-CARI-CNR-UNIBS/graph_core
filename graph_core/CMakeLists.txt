@@ -6,6 +6,7 @@ set(CMAKE_BUILD_TYPE Debug)
 
 find_package(Eigen3 REQUIRED COMPONENTS)
 find_package(cnr_logger REQUIRED)
+find_package(Boost REQUIRED COMPONENTS date_time filesystem)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 
@@ -14,13 +15,13 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${cnr_logger_INCLUDE_DIRS}
   ${YAML_CPP_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
  )
 
 add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/graph/node.cpp
   src/${PROJECT_NAME}/graph/connection.cpp
-#  src/${PROJECT_NAME}/graph/net_connection.cpp
-#  src/${PROJECT_NAME}/graph/tree.cpp
+  src/${PROJECT_NAME}/graph/tree.cpp
 
 #  src/${PROJECT_NAME}/graph/subtree.cpp
 #  src/${PROJECT_NAME}/graph/path.cpp
@@ -47,4 +48,12 @@ add_library(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
   ${YAML_CPP_LIBRARIES}
   ${cnr_logger_LIBRARIES}
+  ${Boost_LIBRARIES}
 )
+
+add_executable(graph_test tests/graph_test.cpp)
+#add_dependencies(graph_test ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(graph_test
+  ${PROJECT_NAME}
+)
+

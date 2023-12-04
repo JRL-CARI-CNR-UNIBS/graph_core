@@ -27,13 +27,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <graph_core/util.h>
-<<<<<<< HEAD
-#include <graph_core/collision_checker.h>
-#include <graph_core/informed_sampler.h>
-=======
 #include <graph_core/collision_checker_base.h>
 #include <graph_core/sampler_base.h>
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805
 #include <graph_core/metrics.h>
 #include <graph_core/datastructure/nearest_neighbors.h>
 #include <graph_core/datastructure/kdtree.h>
@@ -105,7 +100,7 @@ protected:
    * @param removed_nodes A reference to an unsigned int, counting the number of nodes removed.
    */
   void purgeNodeOutsideEllipsoid(NodePtr& node,
-                                 const InformedSamplerPtr& sampler,
+                                 const SamplerPtr& sampler,
                                  const std::vector<NodePtr>& white_list,
                                  unsigned int& removed_nodes);
   /**
@@ -124,7 +119,7 @@ protected:
    * @param removed_nodes A reference to an unsigned int, counting the number of nodes removed.
    */
   void purgeNodeOutsideEllipsoids(NodePtr& node,
-                                  const std::vector<InformedSamplerPtr>& samplers,
+                                  const std::vector<SamplerPtr>& samplers,
                                   const std::vector<NodePtr>& white_list,
                                   unsigned int& removed_nodes);
 
@@ -212,7 +207,6 @@ public:
     return nodes_->getNodes();
   }
 
-<<<<<<< HEAD
   /**
    * @brief Retrieves the leaves of the tree.
    *
@@ -234,13 +228,12 @@ public:
    * @param node The node to be set as the new root of the tree.
    * @return Returns true if the root is successfully changed, and false otherwise.
    */
-=======
+
   const cnr_logger::TraceLoggerPtr& getLogger()
   {
     return logger_;
   }
 
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805
   bool changeRoot(const NodePtr& node);
 
   /**
@@ -767,8 +760,8 @@ public:
    * @param white_list A vector of NodePtr representing nodes that should not be removed.
    * @return Returns the number of nodes purged from the tree outside the ellipsoid region.
    */
-  unsigned int purgeNodesOutsideEllipsoid(const InformedSamplerPtr& sampler, const std::vector<NodePtr>& white_list);
-  unsigned int purgeNodesOutsideEllipsoids(const std::vector<InformedSamplerPtr>& samplers, const std::vector<NodePtr>& white_list);
+  unsigned int purgeNodesOutsideEllipsoid(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list);
+  unsigned int purgeNodesOutsideEllipsoids(const std::vector<SamplerPtr>& samplers, const std::vector<NodePtr>& white_list);
 
   /**
    * @brief Purges nodes from the tree based on specified conditions and constraints.
@@ -788,7 +781,7 @@ public:
    * @param check_bounds A boolean flag indicating whether bounds checking should be performed.
    * @return Returns the number of nodes purged from the tree.
    */
-  unsigned int purgeNodes(const InformedSamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds = true);
+  unsigned int purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds = true);
 
   /**
    * @brief Purges the specified node from the tree and updates the count of removed nodes.
@@ -915,7 +908,6 @@ public:
    */
   bool getUseKdTree(){return use_kdtree_;}
 
-<<<<<<< HEAD
   /**
    * @brief Converts the tree to an XmlRpcValue.
    *
@@ -924,7 +916,8 @@ public:
    *
    * @return Returns an XmlRpcValue representing the tree.
    */
-  XmlRpc::XmlRpcValue toXmlRpcValue() const;
+  #pragma message(Reminder "Change to YAML")
+  //XmlRpc::XmlRpcValue toXmlRpcValue() const;
 
   /**
    * @brief Writes the tree to an XML file.
@@ -933,7 +926,8 @@ public:
    *
    * @param file_name The name of the XML file to write.
    */
-  void toXmlFile(const std::string& file_name) const;
+  #pragma message(Reminder "Change to YAML")
+  //void toXmlFile(const std::string& file_name) const;
 
   friend std::ostream& operator<<(std::ostream& os, const Tree& tree);
 
@@ -954,24 +948,13 @@ public:
    *
    * @note If lazy is false and the root node is in collision, nullptr is returned.
    */
-  static TreePtr fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
-                                 const double& max_distance,
-                                 const CollisionCheckerPtr& checker,
-                                 const MetricsPtr& metrics,
-                                 const bool& lazy=false);
-=======
   #pragma message(Reminder "Change to YAML")
-  //XmlRpc::XmlRpcValue toXmlRpcValue() const;
-  //void toXmlFile(const std::string& file_name) const;
-  friend std::ostream& operator<<(std::ostream& os, const Tree& tree);
-
-    #pragma message(Reminder "Change to YAML")
 //  static TreePtr fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
 //                                 const double& max_distance,
 //                                 const CollisionCheckerPtr& checker,
 //                                 const MetricsPtr& metrics,
 //                                 const bool& lazy=false);
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805
+
 };
 
 }

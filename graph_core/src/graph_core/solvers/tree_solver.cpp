@@ -38,7 +38,12 @@ bool TreeSolver::config(const YAML::Node &config)
   throw std::invalid_argument("not implemented yet");
   max_distance_ = 1;
 
-  config["max_distance"].as<double>();
+  if (!config["max_distance"])
+  {
+    CNR_WARN(logger_,"max_distance is not set. using 1.0");
+    max_distance_=1.0;
+  }
+  max_distance_=config["max_distance"].as<double>();
 >>>>>>> 1dc510815a81597abeb77c2de689d07284069805
   if (!nh.getParam("max_distance",max_distance_))
   {

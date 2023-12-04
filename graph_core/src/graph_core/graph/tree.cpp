@@ -39,9 +39,9 @@ Tree::Tree(const NodePtr& root,
   root_(root),
   use_kdtree_(use_kdtree),
   max_distance_(max_distance),
-  checker_(checker),
   metrics_(metrics),
-  logger_(logger)
+  logger_(logger),
+  checker_(checker)
 {
   if (use_kdtree)
   {
@@ -146,15 +146,9 @@ double Tree::selectNextConfiguration(const Eigen::VectorXd& configuration,
 bool Tree::extendOnly(NodePtr& closest_node, NodePtr &new_node, ConnectionPtr &connection)
 {
   double cost = metrics_->cost(closest_node, new_node);
-<<<<<<< HEAD
-  connection = std::make_shared<Connection>(closest_node, new_node);
+  connection = std::make_shared<Connection>(closest_node, new_node,logger_);
   connection->add();
   connection->setCost(cost);
-=======
-  conn = std::make_shared<Connection>(closest_node, new_node,logger_);
-  conn->add();
-  conn->setCost(cost);
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805
 
   addNode(new_node,false);
 
@@ -240,17 +234,10 @@ bool Tree::extendToNode(const NodePtr& node,
     addNode(new_node,false);
   }
 
-<<<<<<< HEAD
   double cost = metrics_->cost(closest_node, new_node);
-  ConnectionPtr conn = std::make_shared<Connection>(closest_node, new_node);
+  ConnectionPtr conn = std::make_shared<Connection>(closest_node, new_node,logger_);
   conn->add();
   conn->setCost(cost);
-=======
-    double cost = metrics_->cost(closest_node, new_node);
-    ConnectionPtr conn = std::make_shared<Connection>(closest_node, new_node,logger_);
-    conn->add();
-    conn->setCost(cost);
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805
 
   return true;
 }
@@ -1090,7 +1077,7 @@ void Tree::purgeNodeOutsideEllipsoids(NodePtr& node,
 
   // check if it belongs to a admissible informed set or the white list
   bool inbound=std::find(white_list.begin(), white_list.end(), node) != white_list.end();
-  for (const InformedSamplerPtr& sampler: samplers)
+  for (const SamplerPtr& sampler: samplers)
     inbound = inbound || sampler->inBounds(node->getConfiguration());
 
   if (inbound)
@@ -1112,7 +1099,7 @@ void Tree::purgeNodeOutsideEllipsoids(NodePtr& node,
   return;
 }
 
-unsigned int Tree::purgeNodes(const InformedSamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds)
+unsigned int Tree::purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list, const bool check_bounds)
 {
   if (nodes_->size() < maximum_nodes_)
     return 0;
