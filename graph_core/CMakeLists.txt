@@ -21,7 +21,7 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/graph/node.cpp
   src/${PROJECT_NAME}/graph/connection.cpp
-  src/${PROJECT_NAME}/graph/tree.cpp
+  #src/${PROJECT_NAME}/graph/tree.cpp
 
 #  src/${PROJECT_NAME}/graph/subtree.cpp
 #  src/${PROJECT_NAME}/graph/path.cpp
