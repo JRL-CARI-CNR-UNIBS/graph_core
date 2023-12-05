@@ -65,6 +65,14 @@ protected:
    * @brief Likelihood associated with the connection.
    */
   double likelihood_;
+
+  /**
+   * @brief Pointer to a TraceLogger instance for logging.
+   *
+   * This member variable represents a pointer to a TraceLogger instance, allowing the connection
+   * to perform logging operations. TraceLogger is a part of the cnr_logger library.
+   * Ensure that the logger is properly configured and available for use.
+   */
   const cnr_logger::TraceLoggerPtr& logger_;
 
   /**
@@ -230,6 +238,19 @@ public:
   double norm() const
   {
     return euclidean_norm_;
+  }
+
+  /**
+   * @brief Retrieves a pointer to the TraceLogger associated with the node.
+   *
+   * This member function provides read-only access to the TraceLogger instance associated
+   * with the node, allowing external components to access and utilize the logging capabilities.
+   *
+   * @return A constant reference to the TraceLogger pointer.
+   */
+  const cnr_logger::TraceLoggerPtr& getLogger() const
+  {
+    return logger_;
   }
 
   /**

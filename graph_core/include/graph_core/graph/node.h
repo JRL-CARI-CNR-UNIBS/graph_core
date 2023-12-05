@@ -91,12 +91,14 @@ protected:
   std::vector<bool> flags_;
 
   /**
-   * @brief pointer to cnr_logger.
+   * @brief Pointer to a TraceLogger instance for logging.
    *
-   * This is Sparta!!
+   * This member variable represents a pointer to a TraceLogger instance, allowing the node
+   * to perform logging operations. TraceLogger is a part of the cnr_logger library.
+   * Ensure that the logger is properly configured and available for use.
    */
-  #pragma Reminder "add documentation"
   const cnr_logger::TraceLoggerPtr& logger_;
+
   /**
    * @brief Adds a parent connection to the node.
    *
@@ -229,6 +231,19 @@ public:
    * @return Returns the value of the flag at the specified index or the default value if the index is out of range.
    */
   bool getFlag(const int& idx, const bool default_value);
+
+  /**
+   * @brief Retrieves a pointer to the TraceLogger associated with the node.
+   *
+   * This member function provides read-only access to the TraceLogger instance associated
+   * with the node, allowing external components to access and utilize the logging capabilities.
+   *
+   * @return A constant reference to the TraceLogger pointer.
+   */
+  const cnr_logger::TraceLoggerPtr& getLogger() const
+  {
+    return logger_;
+  }
 
   /**
    * @brief Retrieves the number of parent connections for the node.

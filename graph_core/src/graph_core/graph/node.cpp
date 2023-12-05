@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
-Node::Node(const Eigen::VectorXd &configuration, const cnr_logger::TraceLoggerPtr& logger):
+Node::Node(const Eigen::VectorXd &configuration, const cnr_logger::TraceLoggerPtr &logger):
   logger_(logger)
 {
   configuration_ = configuration;
@@ -80,27 +80,47 @@ bool Node::getFlag(const int& idx, const bool default_value)
 
 void Node::addParentConnection(const ConnectionPtr &connection)
 {
-  assert(connection->getChild() == pointer());
+  if(connection->getChild() != pointer())
+  {
+    CNR_FATAL(logger_,"child of connection is not this node");
+    throw std::runtime_error("child of connection is not this node");
+  }
+
   parent_connections_.push_back(connection);
   assert(parent_connections_.back().lock() == connection);
 }
 
 void Node::addChildConnection(const ConnectionPtr &connection)
 {
-  assert(connection->getParent() == pointer());
+  if(connection->getParent() != pointer())
+  {
+    CNR_FATAL(logger_,"parent of connection is not this node");
+    throw std::runtime_error("parent of connection is not this node");
+  }
+
   child_connections_.push_back(connection);
 }
 
 void Node::addNetParentConnection(const ConnectionPtr &connection)
 {
-  assert(connection->getChild() == pointer());
+  if(connection->getChild() != pointer())
+  {
+    CNR_FATAL(logger_,"child of net connection is not this node");
+    throw std::runtime_error("child of net connection is not this node");
+  }
+
   net_parent_connections_.push_back(connection);
   assert(net_parent_connections_.back().lock() == connection);
 }
 
 void Node::addNetChildConnection(const ConnectionPtr &connection)
 {
-  assert(connection->getParent() == pointer());
+  if(connection->getParent() != pointer())
+  {
+    CNR_FATAL(logger_,"parent of net connection is not this node");
+    throw std::runtime_error("parent of net connection is not this node");
+  }
+
   net_child_connections_.push_back(connection);
 }
 
@@ -134,6 +154,7 @@ void Node::removeParentConnection(const ConnectionPtr &connection)
       if(it_parent == parent->child_connections_.end())
       {
        CNR_FATAL(logger_,"connection is not in the child vector");
+       throw std::runtime_error("connection is not in the child vector");
       }
       else
       {

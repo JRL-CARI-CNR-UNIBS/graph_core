@@ -18,10 +18,10 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
  )
 
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME} SHARED
   src/${PROJECT_NAME}/graph/node.cpp
   src/${PROJECT_NAME}/graph/connection.cpp
-  src/${PROJECT_NAME}/graph/tree.cpp
+  #src/${PROJECT_NAME}/graph/tree.cpp
 
 #  src/${PROJECT_NAME}/graph/subtree.cpp
 #  src/${PROJECT_NAME}/graph/path.cpp
@@ -49,11 +49,13 @@ target_link_libraries(${PROJECT_NAME}
   ${YAML_CPP_LIBRARIES}
   ${cnr_logger_LIBRARIES}
   ${Boost_LIBRARIES}
+  # log4cxx aprutil-1 apr-1
 )
 
-add_executable(graph_test tests/graph_test.cpp)
-#add_dependencies(graph_test ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(graph_test
+add_executable(node_connection_test tests/node_connection_test.cpp)
+target_link_libraries(node_connection_test
+  ${cnr_logger_LIBRARIES}
   ${PROJECT_NAME}
+  # log4cxx aprutil-1 apr-1
 )
 

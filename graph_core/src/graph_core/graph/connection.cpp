@@ -259,11 +259,13 @@ std::ostream& operator<<(std::ostream& os, const Connection& connection)
 
   os << connection.getParent()->getConfiguration().transpose()<<" ("<<
         connection.getParent()<<") --> "<<connection.getChild()->getConfiguration().transpose()<<
-        " ("<<connection.getChild()<<")"<<" | cost: "<<connection.cost_<<" | length: "<<
-        connection.euclidean_norm_<<" | net: "<<connection.isNet()<<" | r.c.: "<<connection.isRecentlyChecked();
+        " ("<<connection.getChild()<<")"<<"\ncost: "<<connection.cost_<<" | length: "<<
+        connection.euclidean_norm_<<"\nvalid: "<<connection.isValid()<<" | net: "<<
+        connection.isNet()<<" | r.c.: "<<connection.isRecentlyChecked();
 
   if(connection.flags_.size()>Connection::getReservedFlagsNumber())
   {
+    os<<"\n";
     for(unsigned int i=Connection::getReservedFlagsNumber();i<connection.flags_.size();i++)
       os<<" | flag"<<(i-Connection::getReservedFlagsNumber())<<": "<<connection.flags_[i];
   }
