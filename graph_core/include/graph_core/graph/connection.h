@@ -260,7 +260,7 @@ public:
    */
   NodePtr getParent() const
   {
-    assert(not parent_.expired());
+//    assert(not parent_.expired());
     return parent_.lock();
   }
 

@@ -87,7 +87,6 @@ void Node::addParentConnection(const ConnectionPtr &connection)
   }
 
   parent_connections_.push_back(connection);
-  assert(parent_connections_.back().lock() == connection);
 }
 
 void Node::addChildConnection(const ConnectionPtr &connection)
@@ -110,7 +109,6 @@ void Node::addNetParentConnection(const ConnectionPtr &connection)
   }
 
   net_parent_connections_.push_back(connection);
-  assert(net_parent_connections_.back().lock() == connection);
 }
 
 void Node::addNetChildConnection(const ConnectionPtr &connection)

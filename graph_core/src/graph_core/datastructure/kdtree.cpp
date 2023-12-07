@@ -308,7 +308,7 @@ void KdTree::insert(const NodePtr& node)
 NodePtr KdTree::findMin(const int& dim)
 {
   if (not root_)
-    return NULL;
+    return nullptr;
   return root_->findMin(dim)->node();
 }
 

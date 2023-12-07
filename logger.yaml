@@ -1,0 +1,5 @@
+appenders: [screen,file]
+levels: [info,debug]
+file_name: "cesare"
+append_to_file: true
+pattern_layout: "[%5p][%d{HH:mm:ss,SSS}][%M:%04L][%c] %m%n"

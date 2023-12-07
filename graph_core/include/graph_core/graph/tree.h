@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/datastructure/nearest_neighbors.h>
 #include <graph_core/datastructure/kdtree.h>
 #include <graph_core/datastructure/vector.h>
+#include <fstream>
 
 namespace pathplan
 {

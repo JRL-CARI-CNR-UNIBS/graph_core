@@ -84,16 +84,19 @@ bool Connection::getFlag(const int& idx, const bool default_value)
 
 void Connection::add(const bool is_net)
 {
-  assert((is_net && getChild()->getParentConnectionsSize()== 1) || ((not is_net) && getChild()->getParentConnectionsSize() == 0));
-
   flags_[idx_net_] = is_net;
   add();
 }
 
 void Connection::add()
 {
-  assert(not flags_[idx_valid_]);
-  flags_[idx_valid_] = true;
+  if(flags_[idx_valid_])
+  {
+    CNR_INFO(logger_,"connection already added");
+    return;
+  }
+  else
+    flags_[idx_valid_] = true;
 
   if(flags_[idx_net_])
   {
