@@ -30,8 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 Net::Net(const TreePtr& tree, const cnr_logger::TraceLoggerPtr& logger):
+  logger_(logger)
 {
-  logger_ = logger;
   verbose_ = false;
   search_every_solution_ = true;
 
@@ -328,7 +328,7 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
       }
     }
 
-    time_vector_.push_back(time_tot);
+    time_vector_.push_back(time_tot.count());
     return;
   }
 }

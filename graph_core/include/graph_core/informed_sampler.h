@@ -110,7 +110,6 @@ public:
   }
 
   const double& getFociiDistance(){return focii_distance_;}
-  const double& getCost(){return cost_;}
 
   virtual double getSpecificVolume();
 

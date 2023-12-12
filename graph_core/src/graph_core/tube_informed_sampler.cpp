@@ -30,7 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
-
 Eigen::VectorXd TubeInformedSampler::sample()
 {
    if (ud_(gen_)>local_bias_)

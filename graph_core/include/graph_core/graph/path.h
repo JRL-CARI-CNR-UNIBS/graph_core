@@ -752,7 +752,6 @@ public:
    */
   void flip();
 
-<<<<<<< HEAD
   /**
    * @brief Converts the path to an XmlRpcValue.
    *
@@ -761,11 +760,9 @@ public:
    * @param reverse If true, the order of nodes in the resulting XmlRpcValue is reversed.
    * @return XmlRpcValue representing the path.
    */
-  XmlRpc::XmlRpcValue toXmlRpcValue(bool reverse=false) const;
-=======
   #pragma message(Reminder "Change to YAML")
-  //XmlRpc::XmlRpcValue toXmlRpcValue(bool reverse=false) const;
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805
+//  XmlRpc::XmlRpcValue toXmlRpcValue(bool reverse=false) const;
+
   friend std::ostream& operator<<(std::ostream& os, const Path& path);
 };
 

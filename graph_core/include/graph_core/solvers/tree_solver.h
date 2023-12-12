@@ -28,21 +28,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/tree.h>
 #include <graph_core/graph/path.h>
-<<<<<<< HEAD
-#include <graph_core/collision_checker.h>
-#include <graph_core/metrics.h>
-#include <graph_core/informed_sampler.h>
-#include <graph_core/goal_cost_function.h>
-#include <ros/ros.h>
-#include <ros/duration.h>
-=======
+
+//#include <graph_core/collision_checker.h>
+//#include <graph_core/metrics.h>
+//#include <graph_core/informed_sampler.h>
+//#include <graph_core/goal_cost_function.h>
+//#include <ros/ros.h>
+//#include <ros/duration.h>
+
 #include <graph_core/sampler_base.h>
 #include <graph_core/goal_cost_function.h>
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805
 
 namespace pathplan
 {
-
 
 class TreeSolver;
 typedef std::shared_ptr<TreeSolver> TreeSolverPtr;
@@ -52,7 +50,7 @@ protected:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   MetricsPtr metrics_;
   CollisionCheckerPtr checker_;
-  InformedSamplerPtr sampler_;
+  SamplerPtr sampler_;
   GoalCostFunctionPtr goal_cost_fcn_;
   bool solved_ = false;
   bool completed_=false;
@@ -61,13 +59,15 @@ protected:
   TreePtr start_tree_;
   unsigned int dof_;
 
-  double max_distance_=1.0;
-  bool extend_ = false;
-  double utopia_tolerance_=1.003;
-  bool informed_=true;
-  bool warp_=false;
-  bool first_warp_=false;
-  bool use_kdtree_=true;
+  YAML::Node nh_;
+
+  double max_distance_;
+  bool extend_;
+  double utopia_tolerance_;
+  bool informed_;
+  bool warp_;
+  bool first_warp_;
+  bool use_kdtree_;
 
   NodePtr goal_node_;                                          // if multigoal, it is related the best goal
   double path_cost_;                                           // if multigoal, it is related the best goal
@@ -77,7 +77,7 @@ protected:
   double best_utopia_=std::numeric_limits<double>::infinity(); // if multigoal, it is related the best goal
 
   const cnr_logger::TraceLoggerPtr& logger_;
-protected:
+
   virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity())
   {
     return false;
@@ -89,12 +89,8 @@ protected:
 public:
   TreeSolver(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
-<<<<<<< HEAD
-             const InformedSamplerPtr& sampler):
-=======
              const SamplerPtr& sampler,
              const cnr_logger::TraceLoggerPtr& logger):
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805
     metrics_(metrics),
     checker_(checker),
     sampler_(sampler),
@@ -117,12 +113,8 @@ public:
   virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()) = 0;
   virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity())=0;
 
-<<<<<<< HEAD
-  virtual bool computePath(const NodePtr &start_node, const NodePtr &goal_node, const ros::NodeHandle& nh, PathPtr &solution, const double &max_time = std::numeric_limits<double>::infinity(), const unsigned int &max_iter = 10000);
-  virtual bool computePath(const Eigen::VectorXd& start_conf, const Eigen::VectorXd& goal_conf, const ros::NodeHandle& nh, PathPtr &solution, const double &max_time = std::numeric_limits<double>::infinity(), const unsigned int &max_iter = 10000);
-=======
-  virtual bool computePath(const NodePtr &start_node, const NodePtr &goal_node, const YAML::Node& nh, PathPtr &solution, const double &max_time = std::numeric_limits<double>::infinity(), const unsigned int max_iter = 10000);
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805
+  virtual bool computePath(const NodePtr &start_node, const NodePtr &goal_node, const YAML::Node& nh, PathPtr &solution, const double &max_time = std::numeric_limits<double>::infinity(), const unsigned int &max_iter = 10000);
+  virtual bool computePath(const Eigen::VectorXd& start_conf, const Eigen::VectorXd& goal_conf, const YAML::Node& nh, PathPtr &solution, const double &max_time = std::numeric_limits<double>::infinity(), const unsigned int &max_iter = 10000);
   virtual void resetProblem()=0;
   virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const InformedSamplerPtr& sampler) = 0;
 
@@ -192,7 +184,7 @@ public:
     sampler_ = sampler;
   }
 
-  InformedSamplerPtr getSampler() const
+  SamplerPtr getSampler() const
   {
     return sampler_;
   }

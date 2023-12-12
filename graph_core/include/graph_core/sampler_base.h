@@ -81,7 +81,7 @@ public:
 
   virtual bool config()=0;
 
-  const double& cost(){return cost_;}
+  const double& getCost(){return cost_;}
   virtual void setCost(const double& cost) = 0;
 
   virtual Eigen::VectorXd sample()=0;

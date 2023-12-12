@@ -57,6 +57,7 @@ Path::Path(std::vector<ConnectionPtr> connections,
       {
         for(const ConnectionPtr& c : connections_)
           CNR_WARN(logger_,*c);
+
         CNR_FATAL(logger_,"parent of a connection is different from the child of the previous connection!");
         throw std::runtime_error("parent of a connection is different from the child of the previous connection!");
       }
@@ -111,12 +112,12 @@ PathPtr Path::clone()
   std::vector<ConnectionPtr> new_conn_vector;
 
   std::vector<Eigen::VectorXd> wp = getWaypoints();
-  start = std::make_shared<Node>(wp.at(0));
+  start = std::make_shared<Node>(wp.at(0),logger_);
   parent = start;
 
   for(unsigned int i = 1;i<wp.size();i++)
   {
-    child = std::make_shared<Node>(wp.at(i));
+    child = std::make_shared<Node>(wp.at(i),logger_);
 
     conn = std::make_shared<Connection>(parent,child,logger_);
     conn->setCost(connections_.at(i-1)->getCost());  //update also the internal time of the cloned connection
@@ -438,23 +439,6 @@ bool Path::warp(const double &min_dist, const double &max_time)
   });
 }
 
-bool Path::resample(const double &distance)
-{
-  bool resampled = false;
-  unsigned int ic = 0;
-  while (ic < connections_.size())
-  {
-    if (connections_.at(ic)->norm() <= distance)
-      continue;
-
-    CNR_ERROR(logger_,"still unimplemented");
-    resampled = true;
-  }
-
-  return resampled;
-
-}
-
 std::vector<NodePtr> Path::getNodes() const
 {
   std::vector<NodePtr> nodes;
@@ -722,7 +706,7 @@ bool Path::removeNode(const NodePtr& node, const int& idx_conn, const std::vecto
 
   if(idx_conn<0 || idx_conn>(connections_.size()-1))
   {
-    CNR_INFOlogger_,("Node does not belong to the path");
+    CNR_INFO(logger_,"Node does not belong to the path");
     return false;
   }
 
@@ -948,7 +932,7 @@ int Path::resample(const double& max_distance)
              return true;
              else
              {
-               ROS_INFO_STREAM("\nconnections_ "<<connections_.size()<<"\initial size "<<initial_size<<"\nnodes_added "<<nodes_added);
+               CNR_INFO(logger_,"\nconnections_ "<<connections_.size()<<"\ninitial size "<<initial_size<<"\nnodes_added "<<nodes_added);
                return false;
              }
            }
@@ -1234,7 +1218,7 @@ PathPtr Path::getSubpathFromConf(const Eigen::VectorXd& conf, const bool clone)
     }
     else
     {
-      child = std::make_shared<Node>(conn->getChild()->getConfiguration()),logger_;
+      child = std::make_shared<Node>(conn->getChild()->getConfiguration(),logger_);
     }
 
     double cost;
@@ -1314,14 +1298,10 @@ PathPtr Path::getSubpathFromNode(const Eigen::VectorXd& conf)
 {
   if((conf-goal_node_->getConfiguration()).norm()<TOLERANCE)
   {
-    <<<<<<< HEAD
-        ROS_ERROR("No subpath available, the node is equal to the last node of the path");
-    ROS_INFO_STREAM("configuration: "<<conf.transpose());
-    ROS_INFO_STREAM("path:\n"<<*this);
-    =======
-    CNR_ERROR(logger_,"No subpath available, the node is equal to the last node of the path");
     CNR_INFO(logger_,"configuration: "<<conf.transpose());
-    >>>>>>> 1dc510815a81597abeb77c2de689d07284069805
+    CNR_INFO(logger_,"path:\n"<<*this);
+    CNR_ERROR(logger_,"No subpath available, the node is equal to the last node of the path");
+
     throw std::invalid_argument("No subpath available, the node is equal to the last node of the path");
   }
 
@@ -1343,17 +1323,13 @@ PathPtr Path::getSubpathFromNode(const Eigen::VectorXd& conf)
     }
   }
 
-  <<<<<<< HEAD
-      ROS_ERROR("The node doesn't belong to this path");
-  ROS_INFO_STREAM("configuration: "<<conf.transpose());
-  ROS_INFO_STREAM("path:\n"<<*this);
+  CNR_ERROR(logger_,"The node doesn't belong to this path");
+  CNR_INFO(logger_,"configuration: "<<conf.transpose());
+  CNR_INFO(logger_,"path:\n"<<*this);
 
   throw std::invalid_argument("The node doesn't belong to this path");
-  =======
-  CNR_ERROR(logger_,"The node doesn t belong to this path");
-  CNR_INFO(logger_,"configuration: "<<conf.transpose());
-  throw std::invalid_argument("The node doesn to belong to this path");
-  >>>>>>> 1dc510815a81597abeb77c2de689d07284069805
+
+  return nullptr;
 }
 
 bool Path::simplify(const double& distance)
@@ -1386,15 +1362,11 @@ bool Path::simplify(const double& distance)
       simplified = true;
       double cost = metrics_->cost(connections_.at(ic - 1)->getParent(),
                                    connections_.at(ic)->getChild());
-      <<<<<<< HEAD
 
-          bool is_net = connections_.at(ic)->isNet();
-      ConnectionPtr conn = std::make_shared<Connection>(connections_.at(ic - 1)->getParent(),connections_.at(ic)->getChild(),is_net);
-      =======
+      bool is_net = connections_.at(ic)->isNet();
       ConnectionPtr conn = std::make_shared<Connection>(connections_.at(ic - 1)->getParent(),
                                                         connections_.at(ic)->getChild(),
-                                                        logger_);
-      >>>>>>> 1dc510815a81597abeb77c2de689d07284069805
+                                                        logger_,is_net);
       conn->setCost(cost);
       conn->add();
 
@@ -1531,11 +1503,7 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const int& conn_idx, int
     }
     else
     {
-      <<<<<<< HEAD
-          ROS_INFO_STREAM("Conf is equal to goal, no connection to validate from here. Conf: "<<conf.transpose()<<" goal: "<<goal_node_->getConfiguration().transpose());
-      =======
-      CNR_INFO(logger_,"conf is equal to goal, no connection to validate from here");
-      >>>>>>> 1dc510815a81597abeb77c2de689d07284069805
+      CNR_INFO(logger_,"Conf is equal to goal, no connection to validate from here. Conf: "<<conf.transpose()<<" goal: "<<goal_node_->getConfiguration().transpose());
       validity = true;
       assert(0);
     }
@@ -1570,8 +1538,6 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const int& conn_idx, int
   return validity;
 }
 
-<<<<<<< HEAD
-
 bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker)
 {
   int conn_idx;
@@ -1579,28 +1545,6 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_fro
   return isValidFromConf(conf,conn_idx,pos_closest_obs_from_goal,this_checker);
 }
 
-XmlRpc::XmlRpcValue Path::toXmlRpcValue(bool reverse) const
-{
-  XmlRpc::XmlRpcValue x;
-  if (connections_.size()==0)
-    return x;
-  x.setSize(connections_.size()+1);
-
-  if (not reverse)
-  {
-    x[0]=connections_.at(0)->getParent()->toXmlRpcValue();
-    for (size_t idx=0;idx<connections_.size();idx++)
-      x[idx+1]=connections_.at(idx)->getChild()->toXmlRpcValue();
-  }
-  else
-  {
-    x[0]=goal_node_->toXmlRpcValue();
-    for (size_t idx=0;idx<connections_.size();idx++)
-      x[idx+1]=connections_.at(connections_.size()-idx-1)->getParent()->toXmlRpcValue();
-  }
-  return x;
-}
-=======
 //XmlRpc::XmlRpcValue Path::toXmlRpcValue(bool reverse) const
 //{
 //  XmlRpc::XmlRpcValue x;
@@ -1616,13 +1560,12 @@ XmlRpc::XmlRpcValue Path::toXmlRpcValue(bool reverse) const
 //  }
 //  else
 //  {
-//    x[0]=connections_.back()->getChild()->toXmlRpcValue();
+//    x[0]=goal_node_->toXmlRpcValue();
 //    for (size_t idx=0;idx<connections_.size();idx++)
 //      x[idx+1]=connections_.at(connections_.size()-idx-1)->getParent()->toXmlRpcValue();
 //  }
 //  return x;
 //}
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805
 
 void Path::flip()
 {
@@ -1663,5 +1606,4 @@ std::ostream& operator<<(std::ostream& os, const Path& path)
 
   return os;
 }
-
 }
