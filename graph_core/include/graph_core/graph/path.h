@@ -31,7 +31,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
-
+/**
+ * @class Path
+ * @brief Class for defining a path as a vector of connections.
+ */
 class Path;
 typedef std::shared_ptr<Path> PathPtr;
 class Path: public std::enable_shared_from_this<Path>
@@ -88,6 +91,14 @@ protected:
    * indicates that warping changes are required for the corresponding connection.
    */
   std::vector<bool> change_warp_;
+
+  /**
+   * @brief Pointer to a TraceLogger instance for logging.
+   *
+   * This member variable represents a pointer to a TraceLogger instance, allowing
+   * to perform logging operations. TraceLogger is a part of the cnr_logger library.
+   * Ensure that the logger is properly configured and available for use.
+   */
   const cnr_logger::TraceLoggerPtr& logger_;
 
   /**
@@ -127,7 +138,6 @@ protected:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-<<<<<<< HEAD
 
   /**
    * @brief Constructor for the Path class.
@@ -137,8 +147,9 @@ public:
    * @param connections A vector of ConnectionPtr representing the connections in the path.
    * @param metrics The MetricsPtr used for computing the cost of the path.
    * @param checker The CollisionCheckerPtr used for checking collision along the path.
+   * @param logger The cnr_logger::TraceLoggerPtr logger for logging operations.
    */
-  Path(std::vector<ConnectionPtr> connections, const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
+  Path(std::vector<ConnectionPtr> connections, const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const cnr_logger::TraceLoggerPtr& logger);
 
   /**
    * @brief Constructor for the Path class from a vector of nodes.
@@ -149,8 +160,9 @@ public:
    * @param nodes A vector of NodePtr representing the nodes in the path.
    * @param metrics The MetricsPtr used for computing the cost of the path.
    * @param checker The CollisionCheckerPtr used for checking collision along the path.
+   * @param logger The cnr_logger::TraceLoggerPtr logger for logging operations.
    */
-  Path(std::vector<NodePtr> nodes, const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
+  Path(std::vector<NodePtr> nodes, const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const cnr_logger::TraceLoggerPtr& logger);
 
   /**
    * @brief Get the cost of the path.
@@ -159,12 +171,6 @@ public:
    *
    * @return A reference to the computed cost of the path.
    */
-=======
-  Path(std::vector<ConnectionPtr> connections, const MetricsPtr& metrics, const CollisionCheckerPtr& checker,
-       const cnr_logger::TraceLoggerPtr& logger);
-  Path(std::vector<NodePtr> nodes, const MetricsPtr& metrics, const CollisionCheckerPtr& checker,
-       const cnr_logger::TraceLoggerPtr& logger);
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805
   const double& cost()
   {
     computeCost();

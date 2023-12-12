@@ -38,53 +38,50 @@ class CollisionCheckerBase
 {
 protected:
   double min_distance_ = 0.01;
-<<<<<<< HEAD:graph_core/include/graph_core/collision_checker.h
   bool verbose_ = false;
-=======
 
+  /**
+   * @brief Pointer to a TraceLogger instance for logging.
+   *
+   * This member variable represents a pointer to a TraceLogger instance, allowing
+   * to perform logging operations. TraceLogger is a part of the cnr_logger library.
+   * Ensure that the logger is properly configured and available for use.
+   */
   const cnr_logger::TraceLoggerPtr& logger_;
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805:graph_core/include/graph_core/collision_checker_base.h
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   CollisionCheckerBase(const cnr_logger::TraceLoggerPtr& logger, const double& min_distance = 0.01):
     min_distance_(min_distance),
     logger_(logger)
   {
-
+    verbose_ = false;
   }
 
-<<<<<<< HEAD:graph_core/include/graph_core/collision_checker.h
   void setVerbose(const bool& verbose)
   {
     verbose_ = verbose;
   }
 
-  virtual void setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg){}
+  //  virtual void setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg){}
 
   virtual std::string getGroupName()
   {
     return "";
   }
 
-  virtual planning_scene::PlanningScenePtr getPlanningScene()
-  {
-    return nullptr;
-  }
+  //  virtual planning_scene::PlanningScenePtr getPlanningScene()
+  //  {
+  //    return nullptr;
+  //  }
 
-  virtual CollisionCheckerPtr clone()
-  {
-    return std::make_shared<CollisionChecker>(min_distance_);
-  }
-=======
-  virtual CollisionCheckerPtr clone()=0;
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805:graph_core/include/graph_core/collision_checker_base.h
 
   // collision check: true if it is valid
   virtual bool check(const Eigen::VectorXd& configuration)=0;
 
   virtual bool checkPath(const Eigen::VectorXd& configuration1,
-                 const Eigen::VectorXd& configuration2,
-                 Eigen::VectorXd& conf)
+                         const Eigen::VectorXd& configuration2,
+                         Eigen::VectorXd& conf)
   {
     if (!check(configuration1))
       return false;
@@ -113,7 +110,7 @@ public:
   }
 
   virtual bool checkPath(const Eigen::VectorXd& configuration1,
-                 const Eigen::VectorXd& configuration2)
+                         const Eigen::VectorXd& configuration2)
   {
     if (!check(configuration1))
     {
@@ -160,7 +157,7 @@ public:
   }
 
   virtual bool checkConnFromConf(const ConnectionPtr &conn,
-                         const Eigen::VectorXd& this_conf)
+                                 const Eigen::VectorXd& this_conf)
   {
     Eigen::VectorXd parent = conn->getParent()->getConfiguration();
     Eigen::VectorXd child = conn->getChild()->getConfiguration();
@@ -209,19 +206,9 @@ public:
     }
     return true;
   }
+
+  virtual CollisionCheckerPtr clone()=0;
+
 };
 
-
-<<<<<<< HEAD:graph_core/include/graph_core/collision_checker.h
-class Cube3dCollisionChecker: public CollisionChecker
-{
-public:
-  virtual bool check(const Eigen::VectorXd& configuration)
-  {
-    return configuration.cwiseAbs().maxCoeff() > 1;
-  }
-};
-=======
-
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805:graph_core/include/graph_core/collision_checker_base.h
 }

@@ -34,20 +34,38 @@ namespace pathplan
 void InformedSampler::init()
 {
   if(cost_ < 0.0)
+  {
+    CNR_FATAL(logger_,"cost should be >= 0");
     throw std::invalid_argument("cost should be >= 0");
+  }
 
   ndof_ = lower_bound_.rows();
 
   if(start_configuration_.rows() != ndof_)
+  {
+    CNR_FATAL(logger_,"start configuration should have the same size of ndof");
     throw std::invalid_argument("start configuration should have the same size of ndof");
+  }
   if(stop_configuration_.rows() != ndof_)
+  {
+    CNR_FATAL(logger_,"stop configuration should have the same size of ndof");
     throw std::invalid_argument("stop configuration should have the same size of ndof");
+  }
   if(upper_bound_.rows() != ndof_)
+  {
+    CNR_FATAL(logger_,"upper bound should have the same size of ndof");
     throw std::invalid_argument("upper bound should have the same size of ndof");
+  }
   if(lower_bound_.rows() != ndof_)
+  {
+    CNR_FATAL(logger_,"lower bound should have the same size of ndof");
     throw std::invalid_argument("lower bound should have the same size of ndof");
+  }
   if(scale_.rows() != ndof_)
+  {
+    CNR_FATAL(logger_,"scale should have the same size of ndof");
     throw std::invalid_argument("scale should have the same size of ndof");
+  }
 
   ud_ = std::uniform_real_distribution<double>(0, 1);
 
@@ -67,11 +85,11 @@ void InformedSampler::init()
 
   rot_matrix_ = computeRotationMatrix(start_configuration_, stop_configuration_);
 
-  ROS_DEBUG_STREAM("rot_matrix_:\n" << rot_matrix_);
-  ROS_DEBUG_STREAM("ellipse center" << ellipse_center_.transpose());
-  ROS_DEBUG_STREAM("focii_distance_" << focii_distance_);
-  ROS_DEBUG_STREAM("center_bound_" << center_bound_.transpose());
-  ROS_DEBUG_STREAM("bound_width_" << bound_width_.transpose());
+  CNR_DEBUG(logger_,"rot_matrix_:\n" << rot_matrix_);
+  CNR_DEBUG(logger_,"ellipse center" << ellipse_center_.transpose());
+  CNR_DEBUG(logger_,"focii_distance_" << focii_distance_);
+  CNR_DEBUG(logger_,"center_bound_" << center_bound_.transpose());
+  CNR_DEBUG(logger_,"bound_width_" << bound_width_.transpose());
 
   if (cost_ < std::numeric_limits<double>::infinity())
   {
@@ -179,9 +197,9 @@ void InformedSampler::setCost(const double &cost)
 
   if (cost_ < focii_distance_)
   {
-    ROS_WARN("cost is %f, focci distance is %f", cost_, focii_distance_);
-    ROS_WARN_STREAM("start_configuration: " << start_configuration_.transpose());
-    ROS_WARN_STREAM("stop_configuration: " << stop_configuration_.transpose());
+    CNR_WARN(logger_,"cost is "<<cost_<<" focci distance is "<< focii_distance_);
+    CNR_WARN(logger_,"start_configuration: " << start_configuration_.transpose());
+    CNR_WARN(logger_,"stop_configuration: " << stop_configuration_.transpose());
     cost_ = focii_distance_;
     min_radius_ = 0.0;
   }

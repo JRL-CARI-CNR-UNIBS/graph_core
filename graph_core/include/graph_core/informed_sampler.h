@@ -26,9 +26,10 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <graph_core/sampler_base.h>
+
 #include <eigen3/Eigen/Core>
 #include <graph_core/util.h>
-#include <ros/ros.h>
 #include <random>
 
 namespace pathplan
@@ -37,20 +38,13 @@ namespace pathplan
 class InformedSampler;
 typedef std::shared_ptr<InformedSampler> InformedSamplerPtr;
 
-class InformedSampler: public std::enable_shared_from_this<InformedSampler>
+class InformedSampler: public SamplerBase
 {
 protected:
-  Eigen::VectorXd start_configuration_;
-  Eigen::VectorXd stop_configuration_;
   Eigen::VectorXd scale_;
   Eigen::VectorXd inv_scale_;
-  Eigen::VectorXd lower_bound_;
-  Eigen::VectorXd upper_bound_;
   Eigen::VectorXd center_bound_;
   Eigen::VectorXd bound_width_;
-
-  double cost_;
-  unsigned int ndof_;
 
   Eigen::VectorXd ellipse_center_;
   Eigen::VectorXd ellipse_axis_;
@@ -59,11 +53,6 @@ protected:
   Eigen::MatrixXd rot_matrix_;
   double focii_distance_;
   bool inf_cost_;
-  double specific_volume_; // ndof-th root of volume of the hyperellipsoid divided by the volume of unit sphere
-
-  std::random_device rd_;
-  std::mt19937 gen_;
-  std::uniform_real_distribution<double> ud_;
 
   Eigen::MatrixXd computeRotationMatrix(const Eigen::VectorXd& x1, const Eigen::VectorXd&  x2);
   virtual void init();
@@ -74,16 +63,16 @@ public:
                   const Eigen::VectorXd& stop_configuration,
                   const Eigen::VectorXd& lower_bound,
                   const Eigen::VectorXd& upper_bound,
+                  const cnr_logger::TraceLoggerPtr& logger,
                   const double& cost = std::numeric_limits<double>::infinity()):
-    start_configuration_(start_configuration),
-    stop_configuration_(stop_configuration),
-    lower_bound_(lower_bound),
-    upper_bound_(upper_bound),
-    cost_(cost),
-    gen_{rd_()}//gen_(time(0))
+    SamplerBase(start_configuration,
+                stop_configuration,
+                lower_bound,
+                upper_bound,
+                logger,
+                cost)
   {
     scale_.setOnes(lower_bound_.rows(),1);
-
     init();
   }
 
@@ -92,14 +81,15 @@ public:
                   const Eigen::VectorXd& lower_bound,
                   const Eigen::VectorXd& upper_bound,
                   const Eigen::VectorXd& scale,
+                  const cnr_logger::TraceLoggerPtr& logger,
                   const double& cost):
-    start_configuration_(start_configuration),
-    stop_configuration_(stop_configuration),
-    lower_bound_(lower_bound),
-    upper_bound_(upper_bound),
-    scale_(scale),
-    cost_(cost),
-    gen_{rd_()}//gen_(time(0))
+    SamplerBase(start_configuration,
+                stop_configuration,
+                lower_bound,
+                upper_bound,
+                logger,
+                cost),
+    scale_(scale)
   {
     init();
   }

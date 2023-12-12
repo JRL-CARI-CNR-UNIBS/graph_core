@@ -39,21 +39,27 @@ typedef std::shared_ptr<SamplerBase> SamplerPtr;
 class SamplerBase: public std::enable_shared_from_this<SamplerBase>
 {
 protected:
-  Eigen::VectorXd lower_bound_;
-  Eigen::VectorXd upper_bound_;
   Eigen::VectorXd start_configuration_;
   Eigen::VectorXd stop_configuration_;
+  Eigen::VectorXd lower_bound_;
+  Eigen::VectorXd upper_bound_;
   unsigned int ndof_;
   double specific_volume_; // ndof-th root of volume of the hyperellipsoid divided by the volume of unit sphere
   double cost_;
-
 
   std::random_device rd_;
   std::mt19937 gen_;
   std::uniform_real_distribution<double> ud_;
 
+  /**
+   * @brief Pointer to a TraceLogger instance for logging.
+   *
+   * This member variable represents a pointer to a TraceLogger instance, allowing
+   * to perform logging operations. TraceLogger is a part of the cnr_logger library.
+   * Ensure that the logger is properly configured and available for use.
+   */
+  const cnr_logger::TraceLoggerPtr& logger_;
 
-const cnr_logger::TraceLoggerPtr& logger_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   SamplerBase(const Eigen::VectorXd& start_configuration,
@@ -76,6 +82,8 @@ public:
   virtual bool config()=0;
 
   const double& cost(){return cost_;}
+  virtual void setCost(const double& cost) = 0;
+
   virtual Eigen::VectorXd sample()=0;
   virtual bool inBounds(const Eigen::VectorXd& q)
   {

@@ -1,3 +1,0 @@
-appenders: ["file", "screen"]
-levels: ["debug", "debug"]
-file_name: "graph_core_test"

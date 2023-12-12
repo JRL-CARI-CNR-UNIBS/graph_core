@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/util.h>
 #include <graph_core/collision_checker_base.h>
 #include <graph_core/sampler_base.h>
+#include <graph_core/informed_sampler.h>
 #include <graph_core/metrics.h>
 #include <graph_core/datastructure/nearest_neighbors.h>
 #include <graph_core/datastructure/kdtree.h>
@@ -37,6 +38,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
+/**
+ * @class Tree
+ * @brief Class for defining a tree.
+ */
 
 class Tree;
 typedef std::shared_ptr<Tree> TreePtr;
@@ -79,6 +84,14 @@ protected:
    * @brief Pointer to the tree nodes data structure.
    */
   NearestNeighborsPtr nodes_;
+
+  /**
+   * @brief Pointer to a TraceLogger instance for logging.
+   *
+   * This member variable represents a pointer to a TraceLogger instance, allowing
+   * to perform logging operations. TraceLogger is a part of the cnr_logger library.
+   * Ensure that the logger is properly configured and available for use.
+   */
   const cnr_logger::TraceLoggerPtr& logger_;
 
   /**
@@ -123,6 +136,7 @@ protected:
                                   const std::vector<SamplerPtr>& samplers,
                                   const std::vector<NodePtr>& white_list,
                                   unsigned int& removed_nodes);
+
 
   /**
    * @brief Populates the tree with nodes based on specified criteria from a given node.
@@ -171,6 +185,19 @@ protected:
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+  /**
+   * @brief Constructor for the Tree class.
+   *
+   * Initializes a tree with the specified parameters, including the root node, maximum distance, collision checker, metrics,
+   * logger, and an option to use a k-d tree for nearest neighbor queries.
+   *
+   * @param root A constant reference to a NodePtr representing the root node of the tree.
+   * @param max_distance A constant reference to a double representing the maximum distance for extending the tree.
+   * @param checker A constant reference to a CollisionCheckerPtr representing the collision checker used by the tree.
+   * @param metrics A constant reference to a MetricsPtr representing the metrics used by the tree.
+   * @param logger A constant reference to a cnr_logger::TraceLoggerPtr representing the logger used by the tree.
+   * @param use_kdtree A constant reference to a bool indicating whether to use a k-d tree for nearest neighbor queries (default is true).
+   */
   Tree(const NodePtr& root,
        const double& max_distance,
        const CollisionCheckerPtr& checker,
@@ -753,7 +780,7 @@ public:
    * This function purges nodes outside an ellipsoid region from the tree if the total number
    * of nodes exceeds a specified maximum. The ellipsoid region is defined by the provided
    * sampler, and nodes listed in the white list are exempt from removal.
-   *
+   *9
    * If the current number of nodes in the tree is less than the specified maximum, no nodes
    * are purged, and the function returns 0.
    *

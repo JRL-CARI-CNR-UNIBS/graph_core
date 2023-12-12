@@ -30,6 +30,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
+/**
+ * @class Connection
+ * @brief Class for defining connection between nodes of a graph.
+ * Connection can be standard or net connections:
+ *  - standard: connections of a tree -> each node has at max 1 standard parent connection.
+ *  - net: do not belong to the tree  -> a node can have multiple net parent connections.
+ *         The tree can not see these connections.
+ */
 class Connection: public std::enable_shared_from_this<Connection>
 {
   friend class Node;
@@ -69,7 +77,7 @@ protected:
   /**
    * @brief Pointer to a TraceLogger instance for logging.
    *
-   * This member variable represents a pointer to a TraceLogger instance, allowing the connection
+   * This member variable represents a pointer to a TraceLogger instance, allowing
    * to perform logging operations. TraceLogger is a part of the cnr_logger library.
    * Ensure that the logger is properly configured and available for use.
    */
@@ -126,6 +134,7 @@ public:
    *
    * @param parent The NodePtr to the parent Node.
    * @param child The NodePtr to the child Node.
+   * @param logger The cnr_logger::TraceLoggerPtr logger for logging operations.
    * @param is_net Boolean indicating if the connection is a net connection.
    */
   Connection(const NodePtr& parent, const NodePtr& child, const cnr_logger::TraceLoggerPtr& logger, const bool is_net = false);

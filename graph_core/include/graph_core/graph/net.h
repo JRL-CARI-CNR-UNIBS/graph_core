@@ -26,16 +26,17 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-<<<<<<< HEAD
 #include <graph_core/util.h>
 #include <graph_core/graph/subtree.h>
 #include <functional>
-=======
-#include <graph_core/graph/tree.h>
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805
 
 namespace pathplan
 {
+
+/**
+ * @class Net
+ * @brief Class for defining a net, i.e. a graph that extends the tree allowing for multiple parent connections for the same node.
+ */
 class Net;
 typedef std::shared_ptr<Net> NetPtr;
 
@@ -59,7 +60,7 @@ protected:
   /**
    * @brief Wall time representing the start time of the search.
    */
-  ros::WallTime tic_search_;
+  std::chrono::time_point<std::chrono::system_clock> tic_search_;
 
   /**
    * @brief Vector to store the time values during the search.
@@ -130,6 +131,15 @@ protected:
   int curse_of_dimensionality_;
 
   /**
+   * @brief Pointer to a TraceLogger instance for logging.
+   *
+   * This member variable represents a pointer to a TraceLogger instance, allowing
+   * to perform logging operations. TraceLogger is a part of the cnr_logger library.
+   * Ensure that the logger is properly configured and available for use.
+   */
+  const cnr_logger::TraceLoggerPtr& logger_;
+
+  /**
    * @brief Searches for paths in the net from a start node to a goal node.
    *
    * This function performs a depth-first search to compute paths from a start node to a goal node.
@@ -144,26 +154,17 @@ protected:
   void computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node);
   void computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here, const double& cost2beat);
 
-  const cnr_logger::TraceLoggerPtr& logger_;
 public:
-<<<<<<< HEAD
-=======
-  Net(const TreePtr& tree,
-      const cnr_logger::TraceLoggerPtr& logger):
-    linked_tree_(tree),
-    logger_(logger)
-  {
-
-  }
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805
 
   /**
    * @brief Constructor for the Net class.
    * It gets the metrics from tree_
    *
    * @param tree The tree to be associated with the Net.
+   * @param logger The cnr_logger::TraceLoggerPtr logger for logging operations.
    */
-  Net(const TreePtr& tree);
+  Net(const TreePtr& tree,
+      const cnr_logger::TraceLoggerPtr& logger);
 
   /**
    * @brief Set the tree associated with the Net.

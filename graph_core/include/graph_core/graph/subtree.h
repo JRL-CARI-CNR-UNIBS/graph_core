@@ -30,7 +30,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
-
+/**
+ * @class Subtree
+ * @brief Class for defining a subtree, namely a portion of a tree.
+ */
 class Subtree;
 typedef std::shared_ptr<Subtree> SubtreePtr;
 

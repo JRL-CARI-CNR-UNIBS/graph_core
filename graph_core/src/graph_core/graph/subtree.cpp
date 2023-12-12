@@ -32,11 +32,7 @@ namespace pathplan
 Subtree::Subtree(const TreePtr& parent_tree,
                  const NodePtr& root):
   Tree(root,parent_tree->getMaximumDistance(),
-<<<<<<< HEAD
-  parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getUseKdTree()),
-=======
        parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getLogger(),parent_tree->getUseKdTree()),
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805
   parent_tree_(parent_tree)
 {
   populateTreeFromNode(root);
@@ -63,11 +59,7 @@ Subtree::Subtree(const TreePtr& parent_tree,
                  const Eigen::VectorXd& focus2,
                  const double& cost):
   Tree(root,parent_tree->getMaximumDistance(),
-<<<<<<< HEAD
-  parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getUseKdTree()),
-=======
        parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getLogger(),parent_tree->getUseKdTree()),
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805
   parent_tree_(parent_tree)
 {
   std::vector<NodePtr> black_list;
@@ -96,7 +88,7 @@ Subtree::Subtree(const TreePtr& parent_tree,
                  const bool node_check):
   parent_tree_(parent_tree),
   Tree(root,parent_tree->getMaximumDistance(),
-       parent_tree->getChecker(),parent_tree->getMetrics())
+       parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getLogger(),parent_tree->getUseKdTree())
 
 {
   populateTreeFromNodeConsideringCost(root,goal,cost,black_list,node_check);

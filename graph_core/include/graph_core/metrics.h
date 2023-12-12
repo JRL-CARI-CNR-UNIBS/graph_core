@@ -29,6 +29,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/graph/node.h>
 namespace pathplan
 {
+
+/**
+ * @class Metrics
+ * @brief Base class for defining metrics to measure costs.
+ */
 class Metrics;
 typedef std::shared_ptr<Metrics> MetricsPtr;
 
@@ -37,24 +42,49 @@ typedef std::shared_ptr<Metrics> MetricsPtr;
 class Metrics
 {
 protected:
+  /**
+   * @brief Pointer to a TraceLogger instance for logging.
+   *
+   * This member variable represents a pointer to a TraceLogger instance, allowing
+   * to perform logging operations. TraceLogger is a part of the cnr_logger library.
+   * Ensure that the logger is properly configured and available for use.
+   */
   const cnr_logger::TraceLoggerPtr& logger_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+  /**
+   * @brief Constructs a Metrics object.
+   * @param logger A shared pointer to a TraceLogger for logging.
+   */
   Metrics(const cnr_logger::TraceLoggerPtr& logger);
 
+  /**
+   * @brief Calculates the cost between two configurations.
+   * @param configuration1 The first node.
+   * @param configuration2 The second node.
+   * @return The cost between the two configurations.
+   */
+  virtual double cost(const Eigen::VectorXd& configuration1,
+                      const Eigen::VectorXd& configuration2);
   virtual double cost(const NodePtr& node1,
                       const NodePtr& node2);
 
-  virtual double cost(const Eigen::VectorXd& configuration1,
-                      const Eigen::VectorXd& configuration2);
-
-
+  /**
+   * @brief Calculates the utopia (ideal minimum cost) between two configurations.
+   * @param configuration1 The first configuration.
+   * @param configuration2 The second configuration.
+   * @return The utopia distance between the two configurations.
+   */
+  virtual double utopia(const Eigen::VectorXd& configuration1,
+                        const Eigen::VectorXd& configuration2);
   virtual double utopia(const NodePtr& node1,
                         const NodePtr& node2);
 
-  virtual double utopia(const Eigen::VectorXd& configuration1,
-                        const Eigen::VectorXd& configuration2);
-
+  /**
+   * @brief Creates a clone of the Metrics object.
+   * @return A shared pointer to the cloned Metrics object.
+   */
   virtual MetricsPtr clone();
 
 };

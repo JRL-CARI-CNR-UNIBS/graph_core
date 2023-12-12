@@ -32,6 +32,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
+/**
+ * @class Node
+ * @brief Class for defining node of a graph.
+ */
 class Node: public std::enable_shared_from_this<Node>
 {
   friend class Connection;
@@ -93,7 +97,7 @@ protected:
   /**
    * @brief Pointer to a TraceLogger instance for logging.
    *
-   * This member variable represents a pointer to a TraceLogger instance, allowing the node
+   * This member variable represents a pointer to a TraceLogger instance, allowing
    * to perform logging operations. TraceLogger is a part of the cnr_logger library.
    * Ensure that the logger is properly configured and available for use.
    */

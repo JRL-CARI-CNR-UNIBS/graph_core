@@ -29,8 +29,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
-Net::Net(const TreePtr& tree)
+Net::Net(const TreePtr& tree, const cnr_logger::TraceLoggerPtr& logger):
 {
+  logger_ = logger;
   verbose_ = false;
   search_every_solution_ = true;
 
@@ -68,7 +69,7 @@ std::multimap<double,std::vector<ConnectionPtr>>& Net::getConnectionBetweenNodes
   if(max_time_<=0.0)
     return map_;
 
-  tic_search_ = ros::WallTime::now();
+  tic_search_ = std::chrono::system_clock::now();
   computeConnectionFromNodeToNode(start_node,goal_node,cost2here,cost2beat);
 
   return map_;
@@ -101,7 +102,7 @@ std::multimap<double,std::vector<ConnectionPtr>>& Net::getConnectionToNode(const
   if(max_time_<=0.0)
     return map_;
 
-  tic_search_ = ros::WallTime::now();
+  tic_search_ = std::chrono::system_clock::now();
   computeConnectionFromNodeToNode(linked_tree_->getRoot(),node,cost2here,cost2beat);
 
   return map_;
@@ -122,26 +123,27 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
 
 void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here)
 {
-  ros::WallTime time_black_list_check, time_visited_list_check;
-  ros::WallTime now = ros::WallTime::now();
-  ros::WallTime tic_tot = now;
+  std::chrono::time_point<std::chrono::system_clock> time_black_list_check, time_visited_list_check;
+  std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+  std::chrono::time_point<std::chrono::system_clock> tic_tot = now;
 
   if(verbose_)
-    ROS_INFO_STREAM("time in: "<<(now-tic_search_).toSec());
+    CNR_INFO(logger_,"time in: "<<(std::chrono::duration<double>(now-tic_search_)).count());
 
   //Depth-first search
   curse_of_dimensionality_++;
 
-  long double time_tot = 0.0;
+  std::chrono::duration<double> time_tot;
 
   NodePtr parent;
 
   if(goal_node == linked_tree_->getRoot() || goal_node == start_node)
   {
-    now = ros::WallTime::now();
-    time_tot = (now-tic_tot).toSec();
+    now = std::chrono::system_clock::now();
+    time_tot = now-tic_tot;
+
     if(verbose_)
-      ROS_INFO_STREAM("time return: "<<time_tot);
+      CNR_INFO(logger_,"time return: "<<time_tot.count());
 
     return;
   }
@@ -151,37 +153,28 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
     std::vector<ConnectionPtr> net_parent_connections = goal_node->getNetParentConnections();
     all_parent_connections.insert(all_parent_connections.end(),net_parent_connections.begin(),net_parent_connections.end());
 
-    ros::WallTime tic_cycle;
+    std::chrono::time_point<std::chrono::system_clock> tic_cycle;
 
-    now = ros::WallTime::now();
-    time_tot = (now-tic_tot).toSec();
+    now = std::chrono::system_clock::now();
+    time_tot = now-tic_tot;
 
     double time2now;
     double cost2parent;
     for(const ConnectionPtr& conn2parent:all_parent_connections)
     {
-<<<<<<< HEAD
-      tic_cycle = ros::WallTime::now();
-      time2now = (tic_cycle-tic_search_).toSec();
+      tic_cycle = std::chrono::system_clock::now();
+      time2now =  (std::chrono::duration<double>(tic_cycle-tic_search_)).count();
 
       if(verbose_)
-        ROS_INFO_STREAM("Available time: "<<max_time_-time2now);
-=======
-      CNR_ERROR(logger_,"a node of a tree should have only a parent");
-      CNR_ERROR(logger_,"node \n" << *goal_node);
-
-      CNR_INFO(logger_,"current root "<<linked_tree_->getRoot());
-      CNR_INFO(logger_,"goal node "<<goal_node);
-      CNR_INFO(logger_,"start node "<<start_node);
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805
+        CNR_INFO(logger_,"Available time: "<<(std::chrono::duration<double>(max_time_-time2now)).count());
 
       if(time2now>0.9*max_time_)
       {
         if(verbose_)
         {
-          now = ros::WallTime::now();
-          ROS_INFO_STREAM("Net max time exceeded! Time: "<<time2now<<" max time: "<<max_time_);
-          ROS_INFO_STREAM("time return: "<<(now-tic_cycle).toSec());
+          now = std::chrono::system_clock::now();
+          CNR_INFO(logger_,"Net max time exceeded! Time: "<<time2now<<" max time: "<<max_time_);
+          CNR_INFO(logger_,"time return: "<<(std::chrono::duration<double>(now-tic_cycle)).count());
         }
         return;
       }
@@ -201,13 +194,13 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
 
       if(cost2parent == std::numeric_limits<double>::infinity() || cost2parent>=cost_to_beat_ || std::abs(cost2parent-cost_to_beat_)<=NET_ERROR_TOLERANCE) //NET_ERROR_TOLERANCE to cope with machine errors
       {
-        now = ros::WallTime::now();
-        time_tot += (now-tic_cycle).toSec();
+        now = std::chrono::system_clock::now();
+        time_tot = time_tot+(now-tic_cycle);
 
         if(verbose_)
         {
-          ROS_INFO("cost up to now %lf, cost to beat %f -> don't follow this branch!",cost2parent,cost_to_beat_);
-          ROS_INFO_STREAM("time don't follow branch: "<<(now-tic_cycle).toSec());
+          CNR_INFO(logger_,"cost up to now %lf, cost to beat %f -> don't follow this branch!",cost2parent,cost_to_beat_);
+          CNR_INFO(logger_,"time don't follow branch: "<<(std::chrono::duration<double>(now-tic_cycle)).count());
         }
         continue;
       }
@@ -215,7 +208,7 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
       assert([&]() ->bool{
                if(not(cost2parent<cost_to_beat_))
                {
-                 ROS_INFO("cost to parent %f, cost to beat %f ",cost2parent,cost_to_beat_);
+                 CNR_INFO(logger_,"cost to parent %f, cost to beat %f ",cost2parent,cost_to_beat_);
                  return false;
                }
                return true;
@@ -224,13 +217,13 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
       double cost_heuristics = cost2parent+metrics_->utopia(parent->getConfiguration(),start_node->getConfiguration());
       if(cost_heuristics>=cost_to_beat_ || std::abs(cost_heuristics-cost_to_beat_)<=NET_ERROR_TOLERANCE )
       {
-        now = ros::WallTime::now();
-        time_tot += (now-tic_cycle).toSec();
+        now = std::chrono::system_clock::now();
+        time_tot = time_tot+(now-tic_cycle);
 
         if(verbose_)
         {
-          ROS_INFO("cost heuristic through this node %lf, cost to beat %f -> don't follow this branch!",cost_heuristics,cost_to_beat_);
-          ROS_INFO_STREAM("time cost heuristics: "<<(now-tic_cycle).toSec());
+          CNR_INFO(logger_,"cost heuristic through this node %lf, cost to beat %f -> don't follow this branch!",cost_heuristics,cost_to_beat_);
+          CNR_INFO(logger_,"time cost heuristics: "<<(std::chrono::duration<double>(now-tic_cycle)).count());
         }
         continue;
       }
@@ -238,7 +231,7 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
       assert([&]() ->bool{
                if(not(cost_heuristics<cost_to_beat_))
                {
-                 ROS_INFO("cost heuristics %f, cost to beat %f ",cost_heuristics,cost_to_beat_);
+                 CNR_INFO(logger_,"cost heuristics %f, cost to beat %f ",cost_heuristics,cost_to_beat_);
                  return false;
                }
                return true;
@@ -263,44 +256,45 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
 
         if(verbose_)
         {
-          ROS_INFO_STREAM("New conn inserted: "<<conn2parent<<" "<<*conn2parent<<" cost up to now: "<<cost2parent<<" cost to beat: "<<cost_to_beat_);
-          ROS_INFO_STREAM("Start node reached! Cost: "<<cost2parent<<" (cost to beat updated)");
+          CNR_INFO(logger_,"New conn inserted: "<<conn2parent<<" "<<*conn2parent<<" cost up to now: "<<cost2parent<<" cost to beat: "<<cost_to_beat_);
+          CNR_INFO(logger_,"Start node reached! Cost: "<<cost2parent<<" (cost to beat updated)");
         }
 
         map_.insert(pair);
 
-        time_tot += (ros::WallTime::now()-tic_cycle).toSec();
+        time_tot = time_tot+(std::chrono::system_clock::now()-tic_cycle);
       }
       else
       {
-        time_black_list_check = ros::WallTime::now();
+        time_black_list_check = std::chrono::system_clock::now();
         if(std::find(black_list_.begin(),black_list_.end(),parent)<black_list_.end())
         {
-          now = ros::WallTime::now();
-          time_tot += (now-tic_cycle).toSec();
+          now = std::chrono::system_clock::now();
+          time_tot = time_tot + (now-tic_cycle);
 
           if(verbose_)
           {
-            ROS_INFO_STREAM("parent belongs to black list, skipping..");
-            ROS_INFO_STREAM("time black list: "<<(now-tic_cycle).toSec()<<" check: "<<(now-time_black_list_check).toSec());
+            CNR_INFO(logger_,"parent belongs to black list, skipping..");
+            CNR_INFO(logger_,"time black list: "<<(std::chrono::duration<double>(now-tic_cycle)).count()<<" check: "
+                     <<(std::chrono::duration<double>(now-time_black_list_check)).count());
           }
           continue;
         }
 
-        now = ros::WallTime::now();
+        now = std::chrono::system_clock::now();
         if(verbose_)
-          ROS_INFO_STREAM("time black list check: "<<(now-time_black_list_check).toSec());
+          CNR_INFO(logger_,"time black list check: "<<((std::chrono::duration<double>(now-time_black_list_check)).count()));
 
-        time_visited_list_check = ros::WallTime::now();
+        time_visited_list_check = std::chrono::system_clock::now();
         if(std::find(visited_nodes_.begin(),visited_nodes_.end(),parent)<visited_nodes_.end())
         {
-          now = ros::WallTime::now();
-          time_tot += (now-tic_cycle).toSec();
+          now = std::chrono::system_clock::now();
+          time_tot = time_tot+(now-tic_cycle);
 
           if(verbose_)
           {
-            ROS_INFO_STREAM("avoiding cycles...");
-            ROS_INFO_STREAM("time visited nodes: "<<(now-tic_cycle).toSec()<<" check: "<<(now-time_visited_list_check).toSec());
+            CNR_INFO(logger_,"avoiding cycles...");
+            CNR_INFO(logger_,"time visited nodes: "<<(std::chrono::duration<double>(now-tic_cycle)).count()<<" check: "<<(std::chrono::duration<double>(now-time_visited_list_check)).count());
           }
 
           continue;
@@ -308,29 +302,29 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
         else
           visited_nodes_.push_back(parent);
 
-        now = ros::WallTime::now();
+        now = std::chrono::system_clock::now();
         if(verbose_)
-          ROS_INFO_STREAM("time visited list check: "<<(now-time_visited_list_check).toSec());
+          CNR_INFO(logger_,"time visited list check: "<<(std::chrono::duration<double>(now-time_visited_list_check)).count());
 
         connections2parent_.push_back(conn2parent);
 
-        now = ros::WallTime::now();
-        time_tot += (now-tic_cycle).toSec();
+        now = std::chrono::system_clock::now();
+        time_tot = time_tot+(now-tic_cycle);
 
         if(verbose_)
         {
-          ROS_INFO_STREAM("New conn inserted: "<<conn2parent<<" "<<*conn2parent<<" cost up to now: "<<cost2parent<<" cost to beat: "<<cost_to_beat_);
-          ROS_INFO_STREAM("time before: "<<(now-tic_search_).toSec()<<" time cycle "<<(now-tic_cycle).toSec());
+          CNR_INFO(logger_,"New conn inserted: "<<conn2parent<<" "<<*conn2parent<<" cost up to now: "<<cost2parent<<" cost to beat: "<<cost_to_beat_);
+          CNR_INFO(logger_,"time before: "<<(std::chrono::duration<double>(now-tic_search_)).count()<<" time cycle "<<(std::chrono::duration<double>(now-tic_cycle)).count());
         }
 
         computeConnectionFromNodeToNode(start_node,parent,cost2parent);
 
-        ros::WallTime tic_cycle2 = ros::WallTime::now();
+        std::chrono::time_point<std::chrono::system_clock> tic_cycle2 = std::chrono::system_clock::now();
         visited_nodes_.pop_back();
         connections2parent_.pop_back();
 
-        now = ros::WallTime::now();
-        time_tot += (now-tic_cycle2).toSec();
+        now = std::chrono::system_clock::now();
+        time_tot = time_tot+(now-tic_cycle2);
       }
     }
 

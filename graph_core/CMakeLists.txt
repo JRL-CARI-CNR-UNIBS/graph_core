@@ -21,15 +21,14 @@ include_directories(
 add_library(${PROJECT_NAME} SHARED
   src/${PROJECT_NAME}/graph/node.cpp
   src/${PROJECT_NAME}/graph/connection.cpp
-  #src/${PROJECT_NAME}/graph/tree.cpp
+  src/${PROJECT_NAME}/graph/tree.cpp
+  src/${PROJECT_NAME}/graph/subtree.cpp
+  src/${PROJECT_NAME}/graph/path.cpp
+  src/${PROJECT_NAME}/graph/net.cpp
 
-#  src/${PROJECT_NAME}/graph/subtree.cpp
-#  src/${PROJECT_NAME}/graph/path.cpp
-#  src/${PROJECT_NAME}/graph/net.cpp
-
-#  src/${PROJECT_NAME}/metrics.cpp
-#  src/${PROJECT_NAME}/collision_checker.cpp
-#  src/${PROJECT_NAME}/goal_cost_function.cpp
+  src/${PROJECT_NAME}/informed_sampler.cpp
+  src/${PROJECT_NAME}/metrics.cpp
+  src/${PROJECT_NAME}/goal_cost_function.cpp
 
 #  src/${PROJECT_NAME}/tube_informed_sampler.cpp
 
@@ -40,8 +39,8 @@ add_library(${PROJECT_NAME} SHARED
 #  src/${PROJECT_NAME}/solvers/rrt_star.cpp
 #  src/${PROJECT_NAME}/solvers/anytime_rrt.cpp
 #  src/${PROJECT_NAME}/solvers/path_solver.cpp
-#  src/${PROJECT_NAME}/datastructure/kdtree.cpp
-#  src/${PROJECT_NAME}/datastructure/vector.cpp
+  src/${PROJECT_NAME}/datastructure/kdtree.cpp
+  src/${PROJECT_NAME}/datastructure/vector.cpp
   )
 #add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
