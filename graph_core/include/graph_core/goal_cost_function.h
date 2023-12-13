@@ -31,21 +31,39 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
+/**
+ * @class GoalCostFunction
+ * @brief Base class for defining goal cost functions.
+ *
+ * The GoalCostFunction class provides an interface for defining cost functions
+ * associated with goal configurations in path planning. Users can derive from
+ * this class to implement custom cost functions.
+ */
 class GoalCostFunction
 {
 public:
-GoalCostFunction()
-{
 
-}
-virtual double cost(const Eigen::VectorXd& q)
-{
-  return 0;
-}
-double cost(const NodePtr& node)
-{
-  return cost(node->getConfiguration());
-}
+  /**
+   * @brief Default constructor for GoalCostFunction.
+   */
+  GoalCostFunction()
+  {
+
+  }
+
+  /**
+   * @brief Calculate the cost for a given goal configuration.
+   * @param q The goal configuration for which the cost is calculated.
+   * @return The cost associated with the goal configuration.
+   */
+  virtual double cost(const Eigen::VectorXd& q)
+  {
+    return 0;
+  }
+  double cost(const NodePtr& node)
+  {
+    return cost(node->getConfiguration());
+  }
 };
 
 typedef std::shared_ptr<GoalCostFunction> GoalCostFunctionPtr;

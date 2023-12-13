@@ -31,13 +31,30 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace pathplan
 {
+
+/**
+ * @class CollisionCheckerBase
+ * @brief Base class for collision checkers in path planning. The current implementation of collision checking assumes that
+ * path's connections are straight lines between configurations.
+ *
+ * The CollisionCheckerBase class provides an interface for collision checking
+ * in path planning. Users can derive from this class to implement custom
+ * collision checking algorithms.
+ */
 class CollisionCheckerBase;
 typedef std::shared_ptr<CollisionCheckerBase> CollisionCheckerPtr;
 
 class CollisionCheckerBase
 {
 protected:
+  /**
+   * @brief min_distance_ Defines the distance between configurations checked for collisions along a connection.
+   */
   double min_distance_ = 0.01;
+
+  /**
+   * @brief verbose_ Flag for enabling verbose output.
+   */
   bool verbose_ = false;
 
   /**
@@ -51,6 +68,12 @@ protected:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+  /**
+   * @brief Constructor for CollisionCheckerBase.
+   * @param logger Pointer to a TraceLogger for logging.
+   * @param min_distance Distance between configurations checked for collisions along a connection.
+   */
   CollisionCheckerBase(const cnr_logger::TraceLoggerPtr& logger, const double& min_distance = 0.01):
     min_distance_(min_distance),
     logger_(logger)
@@ -58,6 +81,10 @@ public:
     verbose_ = false;
   }
 
+  /**
+   * @brief Set the verbose flag for additional output.
+   * @param verbose True to enable verbose output, false otherwise.
+   */
   void setVerbose(const bool& verbose)
   {
     verbose_ = verbose;
@@ -65,6 +92,10 @@ public:
 
   //  virtual void setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg){}
 
+  /**
+   * @brief Get the name of the robotic group for which collision checking is performed.
+   * @return The group name.
+   */
   virtual std::string getGroupName()
   {
     return "";
@@ -76,10 +107,22 @@ public:
   //  }
 
 
-  // collision check: true if it is valid
+  /**
+   * @brief Perform collision check for a given configuration.
+   * @param configuration The robot configuration to check for collision.
+   * @return True if the configuration is collision-free, false otherwise.
+   */
   virtual bool check(const Eigen::VectorXd& configuration)=0;
 
-  virtual bool checkPath(const Eigen::VectorXd& configuration1,
+  /**
+   * @brief Perform collision check along a connection between two configurations.
+   *  It assumes the connection is as a straight line between configuration1 and configuration2.
+   * @param configuration1 Start configuration of the connection.
+   * @param configuration2 End configuration of the connection.
+   * @param conf If collision is detected, this is the last feasible configuration on the connection.
+   * @return True if the connection is collision-free, false otherwise.
+   */
+  virtual bool checkConnection(const Eigen::VectorXd& configuration1,
                          const Eigen::VectorXd& configuration2,
                          Eigen::VectorXd& conf)
   {
@@ -109,7 +152,7 @@ public:
     return true;
   }
 
-  virtual bool checkPath(const Eigen::VectorXd& configuration1,
+  virtual bool checkConnection(const Eigen::VectorXd& configuration1,
                          const Eigen::VectorXd& configuration2)
   {
     if (!check(configuration1))
@@ -145,9 +188,14 @@ public:
 
   virtual bool checkConnection(const ConnectionPtr& conn)
   {
-    return checkPath(conn->getParent()->getConfiguration(),conn->getChild()->getConfiguration());
+    return checkConnection(conn->getParent()->getConfiguration(),conn->getChild()->getConfiguration());
   }
 
+  /**
+   * @brief Perform collision check along multiple connections.
+   * @param connections The vector of connections to check for collision.
+   * @return True if all connections are collision-free, false otherwise.
+   */
   virtual bool checkConnections(const std::vector<ConnectionPtr>& connections)
   {
     for (const ConnectionPtr& c: connections)
@@ -156,6 +204,12 @@ public:
     return true;
   }
 
+  /**
+   * @brief Perform collision check along a connection, starting from a given configuration.
+   * @param conn The connection to check for collision.
+   * @param this_conf The configuration to start the collision check from.
+   * @return True if the connection is collision-free, false otherwise.
+   */
   virtual bool checkConnFromConf(const ConnectionPtr &conn,
                                  const Eigen::VectorXd& this_conf)
   {
@@ -207,6 +261,10 @@ public:
     return true;
   }
 
+  /**
+   * @brief Clone the collision checker.
+   * @return A shared pointer to the cloned collision checker.
+   */
   virtual CollisionCheckerPtr clone()=0;
 
 };

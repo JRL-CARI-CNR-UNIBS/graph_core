@@ -26,22 +26,43 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <Eigen/Core>
 #include <graph_core/util.h>
 #include <random>
 
 namespace pathplan
 {
 
+/**
+ * @brief Base class for sampling configurations in a planning problem.
+ *
+ * This class provides a base interface for sampling configurations within the specified
+ * bounds and handling cost-related functionality. Derived classes should implement
+ * specific sampling strategies and behaviors.
+ */
 class SamplerBase;
 typedef std::shared_ptr<SamplerBase> SamplerPtr;
 
 class SamplerBase: public std::enable_shared_from_this<SamplerBase>
 {
 protected:
+  /**
+   * @brief start_configuration_ Start configuration for sampling.
+   */
   Eigen::VectorXd start_configuration_;
+
+  /**
+   * @brief stop_configuration_ Stop configuration for sampling.
+   */
   Eigen::VectorXd stop_configuration_;
+
+  /**
+   * @brief lower_bound_ Lower bounds for configuration sampling.
+   */
   Eigen::VectorXd lower_bound_;
+
+  /**
+   * @brief upper_bound_ Upper bounds for configuration sampling.
+   */
   Eigen::VectorXd upper_bound_;
   unsigned int ndof_;
   double specific_volume_; // ndof-th root of volume of the hyperellipsoid divided by the volume of unit sphere
