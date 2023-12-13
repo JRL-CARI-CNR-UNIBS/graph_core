@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(graph_core)
+
 add_compile_options(-std=c++17 -funroll-loops -Wall -Ofast)
 #set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_BUILD_TYPE Debug)
@@ -8,7 +9,16 @@ find_package(Eigen3 REQUIRED COMPONENTS)
 find_package(cnr_logger REQUIRED)
 find_package(Boost REQUIRED COMPONENTS date_time filesystem)
 find_package(PkgConfig REQUIRED)
+find_package(pluginlib)
 pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
+
+
+if (pluginlib_FOUND)
+  message("L'HO TROVATO")
+  add_definitions(-DPLUGINLIB_AVAILABLE)
+else()
+  set(pluginlib_INCLUDE_DIRS "")
+endif()
 
 include_directories(
   include
@@ -16,6 +26,7 @@ include_directories(
   ${cnr_logger_INCLUDE_DIRS}
   ${YAML_CPP_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
+  ${pluginlib_INCLUDE_DIRS}
  )
 
 add_library(${PROJECT_NAME} SHARED

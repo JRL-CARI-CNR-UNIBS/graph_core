@@ -58,3 +58,9 @@ public:
 };
 
 }
+
+# pragma message("nel cpp?")
+#if defined(PLUGINLIB_AVAILABLE)
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(pathplan::RRT, pathplan::TreeSolver)
+#endif
