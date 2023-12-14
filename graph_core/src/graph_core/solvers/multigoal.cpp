@@ -37,14 +37,14 @@ bool MultigoalSolver::addStart(const NodePtr& start_node, const double &max_time
 {
   if (!configured_)
   {
-    ROS_ERROR("Solver is not configured.");
+    CNR_ERROR(logger_,"Solver is not configured.");
     return false;
   }
-  start_tree_ = std::make_shared<Tree>(start_node, max_distance_, checker_, metrics_,use_kdtree_);
+  start_tree_ = std::make_shared<Tree>(start_node, max_distance_, checker_, metrics_, logger_, use_kdtree_);
   solved_ = false;
 
   setProblem(max_time);
-  ROS_DEBUG("Add start goal");
+  CNR_DEBUG(logger_,"Add start goal");
   return true;
 }
 
@@ -61,7 +61,7 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
 {
   if (!start_tree_)
   {
-    ROS_ERROR("You have to specify first the start goal");
+    CNR_ERROR(logger_,"You have to specify first the start goal");
     return false;
   }
 
@@ -70,12 +70,12 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
   double utopia=goal_cost+metrics_->utopia(goal_node,start_tree_->getRoot());
   if ((utopia)>cost_)
   {
-    ROS_DEBUG("the utopia cost of this goal is already worst than the actual solution, skip it");
+    CNR_DEBUG(logger_,"the utopia cost of this goal is already worst than the actual solution, skip it");
     return false;
   }
   if (!checker_->check(goal_node->getConfiguration()))
   {
-    ROS_DEBUG("goal collides, skip it");
+    CNR_DEBUG(logger_,"goal collides, skip it");
     return false;
   }
 
@@ -92,7 +92,7 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
   unsigned int index=goal_nodes_.size();
   if (start_tree_->connectToNode(goal_node, new_node,max_time))
   {
-    solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node), metrics_, checker_);
+    solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node), metrics_, checker_, logger_);
     solution->setTree(start_tree_);
 
     path_cost = solution->cost();
@@ -102,28 +102,32 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
 
     if (cost<=(utopia*utopia_tolerance_))
     {
-      ROS_DEBUG("Goal %u reaches its utopia.", index);
+      CNR_DEBUG(logger_,"Goal %u reaches its utopia.", index);
       status=GoalStatus::done;
     }
     else
     {
-      ROS_DEBUG("Goal %u has a solution with cost %f",index,cost);
+      CNR_DEBUG(logger_,"Goal %u has a solution with cost %f",index,cost);
       status=GoalStatus::refine;
     }
 
-    PATH_COMMENT_STREAM("A direct solution is found\n" << *solution);
+    CNR_DEBUG(logger_,"A direct solution is found\n" << *solution);
   }
   else
   {
     path_cost=cost = std::numeric_limits<double>::infinity();
-    goal_tree = std::make_shared<Tree>(goal_node, max_distance_, checker_, metrics_,use_kdtree_);
+    goal_tree = std::make_shared<Tree>(goal_node, max_distance_, checker_, metrics_, logger_, use_kdtree_);
     status=GoalStatus::search;
   }
 
 
 
-  InformedSamplerPtr sampler = std::make_shared<InformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler_->getLB(),sampler_->getUB());
-  TubeInformedSamplerPtr tube_sampler = std::make_shared<TubeInformedSampler>(start_tree_->getRoot()->getConfiguration(),goal_node->getConfiguration(),sampler,metrics_);
+  InformedSamplerPtr sampler = std::make_shared<InformedSampler>(start_tree_->getRoot()->getConfiguration(),
+                                                                 goal_node->getConfiguration(),
+                                                                 sampler_->getLB(),
+                                                                 sampler_->getUB(),
+                                                                 logger_);
+  TubeInformedSamplerPtr tube_sampler = std::make_shared<TubeInformedSampler>(sampler,metrics_);
   tube_sampler->setLocalBias(local_bias_);
   tube_sampler->setRadius(tube_radius_);
   if (solution)
@@ -143,7 +147,7 @@ bool MultigoalSolver::addGoal(const NodePtr& goal_node, const double &max_time)
   goal_probabilities_.push_back(1.0);
 
   if (isBestSolution(goal_nodes_.size()-1))
-    ROS_DEBUG_STREAM("Goal "<<goal_node->getConfiguration().transpose() << " is the best one with a cost = "  << cost);
+    CNR_DEBUG(logger_,"Goal "<<goal_node->getConfiguration().transpose() << " is the best one with a cost = "  << cost);
 
   init_=true;
   return true;
@@ -169,7 +173,7 @@ bool MultigoalSolver::isBestSolution(const int &index)
     if (utopias_.at(igoal)>cost_)
     {
       status_.at(igoal)=GoalStatus::discard;
-      ROS_DEBUG("Goal %u is discarded. utopia=%f, best cost=%f",igoal,utopias_.at(igoal),cost_);
+      CNR_DEBUG(logger_,"Goal %u is discarded. utopia=%f, best cost=%f",igoal,utopias_.at(igoal),cost_);
       cleanTree();
       continue;
     }
@@ -210,7 +214,7 @@ void MultigoalSolver::resetProblem()
   solved_=false;
 }
 
-bool MultigoalSolver::setProblem(const double &max_time)   //CHIEDI A MNAUEL->devi metterlo perche in TreeSolver hai dovuto metterlo, ma qua non serve
+bool MultigoalSolver::setProblem(const double &max_time)
 {
   if (!start_tree_)
     return false;
@@ -220,73 +224,114 @@ bool MultigoalSolver::setProblem(const double &max_time)   //CHIEDI A MNAUEL->de
   return true;
 }
 
-bool MultigoalSolver::config(const ros::NodeHandle& nh)
+bool MultigoalSolver::config(const YAML::Node &config)
 {
-  if (not TreeSolver::config(nh))
+  if (not TreeSolver::config(config))
     return false;
 
-  if (!nh.getParam("rewire_radius",r_rewire_))
+  if (!config_["rewire_radius"])
   {
-    ROS_DEBUG("%s/rewire_radius is not set. using 2.0*max_distance",nh.getNamespace().c_str());
-    r_rewire_=2.0*max_distance_;
+    CNR_WARN(logger_,"rewire_radius is not set. using 2.0*max_distance");
+    r_rewire_ = 2.0 * max_distance_;
+  }
+  else
+  {
+    r_rewire_ = config_["rewire_radius"].as<double>();
   }
 
-  if (!nh.getParam("mixed_strategy",mixed_strategy_))
+  // Mixed Strategy
+  if (!config_["mixed_strategy"])
   {
-    ROS_DEBUG("%s/mixed_strategy is not set. enable it if informed set is enable",nh.getNamespace().c_str());
-    mixed_strategy_=informed_;
+    CNR_WARN(logger_,"mixed_strategy is not set. enable it if informed set is enable");
+    mixed_strategy_ = informed_;
   }
-  if (not informed_ && mixed_strategy_)
+  else
   {
-    ROS_WARN("you cannot use mixed_strategy without informed set enable, turning it on");
-    informed_=true;
-  }
-  if (!nh.getParam("bidirectional",bidirectional_))
-  {
-    ROS_DEBUG("%s/bidirectional is not set. using true",nh.getNamespace().c_str());
-    bidirectional_=true;
+    mixed_strategy_ = config_["mixed_strategy"].as<bool>();
   }
 
-  if (!nh.getParam("k_nearest",knearest_))
+  if (!informed_ && mixed_strategy_)
   {
-    ROS_DEBUG("%s/k_nearest is not set. using false (rewire using nodes in the radius)",nh.getNamespace().c_str());
-    knearest_=false;
-  }
-  if (!nh.getParam("local_bias",local_bias_))
-  {
-    ROS_WARN("%s/local_bias is not set. using 0.3",nh.getNamespace().c_str());
-    local_bias_=0.3;
-  }
-  if (local_bias_<0)
-  {
-    ROS_WARN("%s/local_bias cannot be negative, set equal to 0",nh.getNamespace().c_str());
-    local_bias_=0.0;
-  }
-  if (local_bias_>1)
-  {
-    ROS_WARN("%s/local_bias cannot be greater than 1.0, set equal to 1.0",nh.getNamespace().c_str());
-    local_bias_=1.0;
+    CNR_WARN(logger_,"you cannot use mixed_strategy without informed set enable, turning it on");
+    informed_ = true;
   }
 
-  if (!nh.getParam("tube_radius",tube_radius_))
+  // Bidirectional
+  if (!config_["bidirectional"])
   {
-    ROS_WARN("%s/tube_radius is not set. using 0.01",nh.getNamespace().c_str());
-    tube_radius_=0.3;
+    CNR_WARN(logger_,"bidirectional is not set. using true");
+    bidirectional_ = true;
   }
-  if (tube_radius_<=0)
+  else
   {
-    ROS_WARN("%s/tube_radius cannot be negative, set equal to 0.01",nh.getNamespace().c_str());
-    tube_radius_=0.01;
+    bidirectional_ = config_["bidirectional"].as<bool>();
   }
-  if (!nh.getParam("forgetting_factor",forgetting_factor_))
+
+  // K Nearest
+  if (!config_["k_nearest"])
   {
-    ROS_WARN("%s/forgetting_factor is not set. using 0.01",nh.getNamespace().c_str());
-    forgetting_factor_=0.01;
+    CNR_WARN(logger_,"k_nearest is not set. using false (rewire using nodes in the radius)");
+    knearest_ = false;
   }
-  if (forgetting_factor_<=0)
+  else
   {
-    ROS_WARN("%s/forgetting_factor cannot be negative, set equal to 0.0",nh.getNamespace().c_str());
-    forgetting_factor_=0.0;
+    knearest_ = config_["k_nearest"].as<bool>();
+  }
+
+  // Local Bias
+  if (!config_["local_bias"])
+  {
+    CNR_WARN(logger_,"local_bias is not set. using 0.3");
+    local_bias_ = 0.3;
+  }
+  else
+  {
+    local_bias_ = config_["local_bias"].as<double>();
+  }
+
+  if (local_bias_ < 0)
+  {
+    CNR_WARN(logger_,"local_bias cannot be negative, set equal to 0");
+    local_bias_ = 0.0;
+  }
+  if (local_bias_ > 1)
+  {
+    CNR_WARN(logger_,"local_bias cannot be greater than 1.0, set equal to 1.0");
+    local_bias_ = 1.0;
+  }
+
+  // Tube Radius
+  if (!config_["tube_radius"])
+  {
+    CNR_WARN(logger_,"tube_radius is not set. using 0.01");
+    tube_radius_ = 0.3;
+  }
+  else
+  {
+    tube_radius_ = config_["tube_radius"].as<double>();
+  }
+
+  if (tube_radius_ <= 0)
+  {
+    CNR_WARN(logger_,"%s/tube_radius cannot be negative, set equal to 0.01");
+    tube_radius_ = 0.01;
+  }
+
+  // Forgetting Factor
+  if (!config_["forgetting_factor"])
+  {
+    CNR_WARN(logger_,"forgetting_factor is not set. using 0.01");
+    forgetting_factor_ = 0.01;
+  }
+  else
+  {
+    forgetting_factor_ = config_["forgetting_factor"].as<double>();
+  }
+
+  if (forgetting_factor_ <= 0)
+  {
+    CNR_WARN(logger_,"forgetting_factor cannot be negative, set equal to 0.0");
+    forgetting_factor_ = 0.0;
   }
 
   configured_=true;
@@ -306,17 +351,16 @@ bool MultigoalSolver::update(PathPtr& solution)
 {
   if (!init_)
   {
-    ROS_WARN("MultigoalSolver is not initialized");
+    CNR_WARN(logger_,"MultigoalSolver is not initialized");
     return false;
   }
   if (cost_ <= utopia_tolerance_ * best_utopia_)
   {
-    ROS_DEBUG("Find the final solution");
+    CNR_DEBUG(logger_,"Find the final solution");
     solution=solution_;
     completed_=true;
     return false;
   }
-
 
 //  ROS_INFO("update probabilities");
 

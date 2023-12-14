@@ -40,18 +40,25 @@ class PathLocalOptimizer: public std::enable_shared_from_this<PathLocalOptimizer
 {
 
 protected:
+
+  YAML::Node config_;
   CollisionCheckerPtr checker_;
   MetricsPtr metrics_;
   PathPtr path_;
   bool solved_ = false;
-  unsigned int max_stall_gen_ = 10;
-  unsigned int stall_gen_ = 0;
+  unsigned int max_stall_gen_;
+  unsigned int stall_gen_;
+  bool configured_;
+
+  const cnr_logger::TraceLoggerPtr& logger_;
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   PathLocalOptimizer(const CollisionCheckerPtr& checker,
-                     const MetricsPtr& metrics);
+                     const MetricsPtr& metrics,
+                     const cnr_logger::TraceLoggerPtr& logger);
   void setPath(const PathPtr& path);
-  //void config(ros::NodeHandle& nh);
+  void config(const YAML::Node& config);
   bool step(PathPtr& solution);
   bool solve(PathPtr& solution, const unsigned int& max_iteration = 100, const double &max_time = std::numeric_limits<double>::infinity());
 

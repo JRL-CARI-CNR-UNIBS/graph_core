@@ -81,15 +81,16 @@ protected:
 public:
 
   MultigoalSolver(const MetricsPtr& metrics,
-             const CollisionCheckerPtr& checker,
-             const InformedSamplerPtr& sampler):
-    TreeSolver(metrics, checker, sampler),
+                  const CollisionCheckerPtr& checker,
+                  const InformedSamplerPtr& sampler,
+                  const cnr_logger::TraceLoggerPtr& logger):
+    TreeSolver(metrics, checker, sampler, logger),
     gen_(time(0))
   {
     ud_ = std::uniform_real_distribution<double>(0, 1);
   }
 
-  virtual bool config(const ros::NodeHandle& nh) override;
+  virtual bool config(const YAML::Node &config) override;
   virtual bool initGoalSelector() ;
   virtual bool update(PathPtr& solution) override;
 

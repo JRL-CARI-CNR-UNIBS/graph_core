@@ -25,23 +25,38 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/solvers/path_solver.h>
+#include <graph_core/solvers/path_local_optimizer.h>
 
 namespace pathplan
 {
 
-PathLocalOptimizer::PathLocalOptimizer(const CollisionCheckerPtr &checker, const MetricsPtr &metrics):
+PathLocalOptimizer::PathLocalOptimizer(const CollisionCheckerPtr &checker,
+                                       const MetricsPtr &metrics,
+                                       const cnr_logger::TraceLoggerPtr &logger):
   checker_(checker),
-  metrics_(metrics)
+  metrics_(metrics),
+  logger_(logger)
 {
-
+  configured_ = false;
 }
-//void PathLocalOptimizer::config(ros::NodeHandle &nh)
-//{
-//  nh_ = nh;
-//  max_stall_gen_ = 10;
-//  stall_gen_ = 0;
-//}
+
+void PathLocalOptimizer::config(const YAML::Node& config)
+{
+  config_ = config;
+
+  if (!config_["max_stall_gen"])
+  {
+    CNR_WARN(logger_,"max_stall_gen is not set, using 10");
+    max_stall_gen_ = 10;
+  }
+  else
+  {
+    max_stall_gen_ = config_["max_stall_gen"].as<unsigned int>();
+  }
+
+  stall_gen_ = 0;
+  configured_ = true;
+}
 
 void PathLocalOptimizer::setPath(const PathPtr &path)
 {
@@ -95,15 +110,15 @@ bool PathLocalOptimizer::step(PathPtr& solution)
 
 bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iteration, const double& max_time)
 {
-<<<<<<< HEAD
-  ros::WallTime tic = ros::WallTime::now();
+  if(not configured_)
+  {
+    CNR_ERROR(logger_,"Path local solver not configured!");
+    return false;
+  }
 
+  std::chrono::time_point<std::chrono::system_clock> tic = std::chrono::system_clock::now();
   if(max_time<=0.0)
     return false;
-=======
-  std::chrono::time_point<std::chrono::system_clock> tic = std::chrono::system_clock::now();
-  if(max_time<=0.0) return false;
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805
 
   unsigned int iter = 0;
   solution = path_;
@@ -111,26 +126,15 @@ bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iterat
   {
     if (solved_)
     {
-      //ROS_FATAL("solved in %u iterations", iter);
+      CNR_DEBUG(logger_,"solved in %u iterations", iter);
       return true;
     }
     step(solution);
 
-<<<<<<< HEAD
-    if((ros::WallTime::now()-tic).toSec() >= 0.98*max_time) break;
-=======
-    //    toc_cycle = ros::WallTime::now();
-    //    time_vector.push_back((toc_cycle-tic_cycle).toSec());
-    //    mean = std::accumulate(time_vector.begin(), time_vector.end(),0.0)/((double) time_vector.size());
-    //    toc = ros::WallTime::now();
-    //    time = max_time-(toc-tic).toSec();
-
-    //    if(time<0.7*mean || time<=0.0) break;
-
     std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
     std::chrono::duration<double> difference = now - tic;
-    if(difference.count() >= 0.98*max_time) break;
->>>>>>> 1dc510815a81597abeb77c2de689d07284069805
+    if(difference.count() >= 0.98*max_time)
+      break;
   }
   return solved_;
 }

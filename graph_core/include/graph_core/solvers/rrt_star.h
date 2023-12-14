@@ -43,10 +43,11 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   RRTStar(const MetricsPtr& metrics,
           const CollisionCheckerPtr& checker,
-          const InformedSamplerPtr& sampler):
-    RRT(metrics, checker, sampler) {}
+          const InformedSamplerPtr& sampler,
+          const cnr_logger::TraceLoggerPtr& logger):
+    RRT(metrics, checker, sampler, logger) {}
 
-  virtual bool config(const ros::NodeHandle& nh) override;
+  virtual bool config(const YAML::Node& config) override;
   virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity()) override;
   virtual bool update(PathPtr& solution) override;
   virtual bool solve(PathPtr &solution, const unsigned int& max_iter=100, const double &max_time = std::numeric_limits<double>::infinity()) override;

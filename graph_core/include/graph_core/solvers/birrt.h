@@ -44,8 +44,9 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   BiRRT(const MetricsPtr& metrics,
         const CollisionCheckerPtr& checker,
-        const InformedSamplerPtr& sampler):
-    RRT(metrics, checker, sampler) {}
+        const InformedSamplerPtr& sampler,
+        const cnr_logger::TraceLoggerPtr& logger):
+    RRT(metrics, checker, sampler, logger) {}
 
   virtual bool config(const YAML::Node& config);
 

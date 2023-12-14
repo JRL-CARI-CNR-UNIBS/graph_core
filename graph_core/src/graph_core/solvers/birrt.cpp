@@ -39,7 +39,7 @@ bool BiRRT::config(const YAML::Node& config)
 
 bool BiRRT::addGoal(const NodePtr &goal_node, const double &max_time)
 {
-  goal_tree_ = std::make_shared<Tree>(goal_node, max_distance_, checker_, metrics_,use_kdtree_);
+  goal_tree_ = std::make_shared<Tree>(goal_node, max_distance_, checker_, metrics_, logger_, use_kdtree_);
 
   return RRT::addGoal(goal_node, max_time);
 }
@@ -60,7 +60,6 @@ bool BiRRT::update(PathPtr &solution)
     return false;
   }
 
-
   Eigen::VectorXd configuration = sampler_->sample();
 
   return update(configuration, solution);
@@ -71,7 +70,7 @@ bool BiRRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
   CNR_DEBUG(logger_,"RRTConnect::update");
   if (solved_)
   {
-    CNR_DEBUG(logger_,"alreay find a solution");
+    CNR_DEBUG(logger_,"already found a solution");
     solution = solution_;
     return true;
   }
@@ -86,6 +85,7 @@ bool BiRRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
   add_to_goal = extend_? goal_tree_->extend(configuration, new_goal_node):
                          goal_tree_->connect(configuration, new_goal_node);
 
+  tree_connected = false;
   if(add_to_start && add_to_goal)
   {
     distance = (new_start_node->getConfiguration()-new_goal_node->getConfiguration()).norm();
@@ -99,12 +99,12 @@ bool BiRRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 
     NodePtr parent=new_goal_node->getParents().at(0);
     double cost_to_parent=new_goal_node->parentConnection(0)->getCost();
-    double time_cost = new_goal_node->parentConnection(0)->getTimeCostUpdate();
+    std::chrono::time_point<std::chrono::system_clock> time_cost = new_goal_node->parentConnection(0)->getTimeCostUpdate();
     std::vector<ConnectionPtr> connections=goal_tree_->getConnectionToNode(parent);
     for (ConnectionPtr& conn: connections)
       conn->flip();
 
-    ConnectionPtr conn_to_goal_parent=std::make_shared<Connection>(new_start_node,parent);
+    ConnectionPtr conn_to_goal_parent=std::make_shared<Connection>(new_start_node,parent,logger_);
     conn_to_goal_parent->add();
     conn_to_goal_parent->setCost(cost_to_parent);
     conn_to_goal_parent->setTimeCostUpdate(time_cost);
@@ -112,7 +112,7 @@ bool BiRRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
     for (ConnectionPtr& conn: connections)
       start_tree_->addNode(conn->getChild(),false);
 
-    solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
+    solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_, logger_);
     solution_->setTree(start_tree_);
     path_cost_ = solution_->cost();
     cost_=path_cost_+goal_cost_;
@@ -150,6 +150,7 @@ bool BiRRT::update(const NodePtr& n, PathPtr& solution)
   add_to_goal = extend_? goal_tree_->extendToNode(n, new_goal_node):
                          goal_tree_->connectToNode(n, new_goal_node);
 
+  tree_connected = false;
   if(add_to_start && add_to_goal)
   {
     distance = (new_start_node->getConfiguration()-new_goal_node->getConfiguration()).norm();
@@ -163,14 +164,14 @@ bool BiRRT::update(const NodePtr& n, PathPtr& solution)
 
     NodePtr parent=new_goal_node->getParents().at(0);
     double cost_to_parent=new_goal_node->parentConnection(0)->getCost();
-    double time_cost = new_goal_node->parentConnection(0)->getTimeCostUpdate();
+    std::chrono::time_point<std::chrono::system_clock> time_cost = new_goal_node->parentConnection(0)->getTimeCostUpdate();
     new_goal_node->disconnect();
 
     std::vector<ConnectionPtr> connections=goal_tree_->getConnectionToNode(parent);
     for (ConnectionPtr& conn: connections)
       conn->flip();
 
-    ConnectionPtr conn_to_goal_parent=std::make_shared<Connection>(new_start_node,parent);
+    ConnectionPtr conn_to_goal_parent=std::make_shared<Connection>(new_start_node,parent,logger_);
     conn_to_goal_parent->add();
     conn_to_goal_parent->setCost(cost_to_parent);
     conn_to_goal_parent->setTimeCostUpdate(time_cost);
@@ -178,7 +179,7 @@ bool BiRRT::update(const NodePtr& n, PathPtr& solution)
     for (ConnectionPtr& conn: connections)
       start_tree_->addNode(conn->getChild(),false);
 
-    solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
+    solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_, logger_);
     solution_->setTree(start_tree_);
     path_cost_ = solution_->cost();
     cost_=path_cost_+goal_cost_;
