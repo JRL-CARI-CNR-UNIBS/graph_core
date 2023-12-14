@@ -41,15 +41,15 @@ void InformedSampler::init()
 
   ndof_ = lower_bound_.rows();
 
-  if(start_configuration_.rows() != ndof_)
+  if(focus_1_.rows() != ndof_)
   {
-    CNR_FATAL(logger_,"start configuration should have the same size of ndof");
-    throw std::invalid_argument("start configuration should have the same size of ndof");
+    CNR_FATAL(logger_,"focus 1 should have the same size of ndof");
+    throw std::invalid_argument("focus 1 should have the same size of ndof");
   }
-  if(stop_configuration_.rows() != ndof_)
+  if(focus_2_.rows() != ndof_)
   {
-    CNR_FATAL(logger_,"stop configuration should have the same size of ndof");
-    throw std::invalid_argument("stop configuration should have the same size of ndof");
+    CNR_FATAL(logger_,"focus 2 should have the same size of ndof");
+    throw std::invalid_argument("focus 2 should have the same size of ndof");
   }
   if(upper_bound_.rows() != ndof_)
   {
@@ -71,19 +71,19 @@ void InformedSampler::init()
 
   inv_scale_=scale_.cwiseInverse();
 
-  start_configuration_ = start_configuration_.cwiseProduct(scale_);
-  stop_configuration_  = stop_configuration_ .cwiseProduct(scale_);
+  focus_1_ = focus_1_.cwiseProduct(scale_);
+  focus_2_  = focus_2_ .cwiseProduct(scale_);
 
   lower_bound_ = lower_bound_.cwiseProduct(scale_);
   upper_bound_ = upper_bound_.cwiseProduct(scale_);
 
-  ellipse_center_ = 0.5 * (start_configuration_ + stop_configuration_);
-  focii_distance_ = (start_configuration_ - stop_configuration_).norm();
+  ellipse_center_ = 0.5 * (focus_1_ + focus_2_);
+  focii_distance_ = (focus_1_ - focus_2_).norm();
   center_bound_ = 0.5 * (lower_bound_ + upper_bound_);
   bound_width_ = 0.5 * (lower_bound_ - upper_bound_);
   ellipse_axis_.resize(ndof_);
 
-  rot_matrix_ = computeRotationMatrix(start_configuration_, stop_configuration_);
+  rot_matrix_ = computeRotationMatrix(focus_1_, focus_2_);
 
   CNR_DEBUG(logger_,"rot_matrix_:\n" << rot_matrix_);
   CNR_DEBUG(logger_,"ellipse center" << ellipse_center_.transpose());
@@ -186,7 +186,7 @@ bool InformedSampler::inBounds(const Eigen::VectorXd& q)
   if (inf_cost_)
     return true;
   else
-    return ((q_scaled - start_configuration_).norm() + (q_scaled  - stop_configuration_).norm()) < cost_;
+    return ((q_scaled - focus_1_).norm() + (q_scaled  - focus_2_).norm()) < cost_;
 
 }
 
@@ -198,8 +198,8 @@ void InformedSampler::setCost(const double &cost)
   if (cost_ < focii_distance_)
   {
     CNR_WARN(logger_,"cost is "<<cost_<<" focci distance is "<< focii_distance_);
-    CNR_WARN(logger_,"start_configuration: " << start_configuration_.transpose());
-    CNR_WARN(logger_,"stop_configuration: " << stop_configuration_.transpose());
+    CNR_WARN(logger_,"focus 1: " << focus_1_.transpose());
+    CNR_WARN(logger_,"focus 2: " << focus_2_.transpose());
     cost_ = focii_distance_;
     min_radius_ = 0.0;
   }
@@ -230,6 +230,11 @@ void InformedSampler::setCost(const double &cost)
 double InformedSampler::getSpecificVolume()
 {
   return specific_volume_;
+}
+
+SamplerPtr InformedSampler::clone()
+{
+  return std::make_shared<InformedSampler>(focus_1_,focus_2_,lower_bound_,upper_bound_,scale_,logger_,cost_);
 }
 
 }

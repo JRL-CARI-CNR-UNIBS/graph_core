@@ -96,21 +96,15 @@ public:
 
   /**
    * @brief Constructor for TubeInformedSampler.
-   * @param start_configuration Start configuration of the path.
-   * @param stop_configuration Stop configuration of the path.
    * @param sampler Pointer to the underlying sampler.
    * @param metrics Pointer to the metrics for evaluating costs.
    */
-  TubeInformedSampler(const Eigen::VectorXd& start_configuration,
-                      const Eigen::VectorXd& stop_configuration,
-                      const SamplerPtr& sampler,
+  TubeInformedSampler(const SamplerPtr& sampler,
                       const MetricsPtr& metrics):
-    SamplerBase(start_configuration,
-                    stop_configuration,
-                    sampler->getLB(),
-                    sampler->getUB(),
-                    sampler->getLogger(),
-                    sampler->getCost())
+    SamplerBase(sampler->getLB(),
+                sampler->getUB(),
+                sampler->getLogger(),
+                sampler->getCost())
   {
     length_ = 0;
     radius_=0;
@@ -159,6 +153,26 @@ public:
    */
   virtual Eigen::VectorXd sample();
 
+  /**
+   * @brief Set the cost associated with the sampler.
+   *
+   * @param cost Cost to be set.
+   */
+  virtual void setCost(const double& cost) override;
+
+  /**
+   * @brief Check if the sampler should collapse.
+   *
+   * @return True if the sampler should collapse, false otherwise.
+   */
+  virtual bool collapse();
+
+  /**
+   * @brief Creates a clone of the TubeInformedSampler object.
+   *
+   * @return A shared pointer to the cloned TubeInformedSampler object.
+   */
+  virtual SamplerPtr clone() override;
 };
 
 typedef std::shared_ptr<TubeInformedSampler> TubeInformedSamplerPtr;

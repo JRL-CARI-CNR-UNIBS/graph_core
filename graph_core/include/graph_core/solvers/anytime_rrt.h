@@ -41,7 +41,7 @@ protected:
   double delta_; //dist_bias and cost_bias update factor
   double cost_impr_;  //cost improvement factor (new cost < (1-cost_impr_)*path_cost_)
   double cost2beat_;
-  InformedSamplerPtr improve_sampler_;
+  SamplerPtr improve_sampler_;
   TreePtr new_tree_;
   NodePtr tmp_goal_node_;
 
@@ -51,9 +51,11 @@ protected:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   AnytimeRRT(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
-             const InformedSamplerPtr& sampler): RRT(metrics, checker, sampler)
+             const SamplerPtr& sampler,
+             const cnr_logger::TraceLoggerPtr& logger): RRT(metrics, checker, sampler, logger)
   {
     setParameters();
   }
@@ -130,14 +132,11 @@ public:
   virtual bool solve(PathPtr& solution,
                      const unsigned int& max_iter = 100,
                      const double &max_time = std::numeric_limits<double>::infinity()) override;
-  virtual bool config(const ros::NodeHandle& nh) override;
+  virtual bool config(const YAML::Node &config) override;
   virtual void resetProblem() override;
   virtual bool improveUpdate(const Eigen::VectorXd& point, PathPtr& solution);
   virtual bool improveUpdate(PathPtr& solution);
   virtual bool update(const NodePtr& n, PathPtr& solution) override;
-  virtual TreeSolverPtr clone(const MetricsPtr& metrics,
-                              const CollisionCheckerPtr& checker,
-                              const InformedSamplerPtr& sampler) override;
 
 };
 

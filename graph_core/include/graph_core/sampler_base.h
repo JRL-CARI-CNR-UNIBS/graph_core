@@ -45,15 +45,6 @@ typedef std::shared_ptr<SamplerBase> SamplerPtr;
 class SamplerBase: public std::enable_shared_from_this<SamplerBase>
 {
 protected:
-  /**
-   * @brief start_configuration_ Start configuration for sampling.
-   */
-  Eigen::VectorXd start_configuration_;
-
-  /**
-   * @brief stop_configuration_ Stop configuration for sampling.
-   */
-  Eigen::VectorXd stop_configuration_;
 
   /**
    * @brief lower_bound_ Lower bounds for configuration sampling.
@@ -64,12 +55,31 @@ protected:
    * @brief upper_bound_ Upper bounds for configuration sampling.
    */
   Eigen::VectorXd upper_bound_;
+
+  /**
+   * @brief ndof_ Number of degrees of freedom in the configuration.
+   */
   unsigned int ndof_;
-  double specific_volume_; // ndof-th root of volume of the hyperellipsoid divided by the volume of unit sphere
+
+  /**
+   * @brief cost_ Cost associated with the sampler. The base implementation of the Sampler does not use the cost
+   * in the sampling procedure.
+   */
   double cost_;
 
+  /**
+   * @brief rd_ Random device for seed generation.
+   */
   std::random_device rd_;
+
+  /**
+   * @brief gen_  Mersenne Twister engine for random number generation.
+   */
   std::mt19937 gen_;
+
+  /**
+   * @brief ud_ Uniform distribution for random numbers.
+   */
   std::uniform_real_distribution<double> ud_;
 
   /**
@@ -83,14 +93,19 @@ protected:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  SamplerBase(const Eigen::VectorXd& start_configuration,
-              const Eigen::VectorXd& stop_configuration,
-              const Eigen::VectorXd& lower_bound,
+
+  /**
+   * @brief Constructor for the SamplerBase class.
+   *
+   * @param lower_bound Lower bounds for configuration sampling.
+   * @param upper_bound Upper bounds for configuration sampling.
+   * @param logger Pointer to a TraceLogger instance for logging.
+   * @param cost Cost associated with the sampler (default: infinity).
+   */
+  SamplerBase(const Eigen::VectorXd& lower_bound,
               const Eigen::VectorXd& upper_bound,
               const cnr_logger::TraceLoggerPtr& logger,
               const double& cost = std::numeric_limits<double>::infinity()):
-    start_configuration_(start_configuration),
-    stop_configuration_(stop_configuration),
     lower_bound_(lower_bound),
     upper_bound_(upper_bound),
     logger_(logger),
@@ -100,12 +115,33 @@ public:
     ud_ = std::uniform_real_distribution<double>(0, 1);
   }
 
-  virtual bool config()=0;
-
+  /**
+   * @brief Get the cost associated with the sampler.
+   * @return Cost associated with the sampler.
+   */
   const double& getCost(){return cost_;}
+
+  /**
+   * @brief Set the cost associated with the sampler.
+   *
+   * Derived classes should implement this method.
+   * @param cost Cost to be set.
+   */
   virtual void setCost(const double& cost) = 0;
 
+  /**
+   * @brief Sample a configuration using the sampling strategy.
+   *
+   * Derived classes should implement this method.
+   * @return Sampled configuration.
+   */
   virtual Eigen::VectorXd sample()=0;
+
+  /**
+   * @brief Check if a given configuration is within bounds.
+   * @param q Configuration to check.
+   * @return True if the configuration is within bounds, false otherwise.
+   */
   virtual bool inBounds(const Eigen::VectorXd& q)
   {
     for (unsigned int iax = 0; iax < ndof_; iax++)
@@ -118,14 +154,45 @@ public:
     return true;
   }
 
+  /**
+   * @brief Check if the sampler should collapse.
+   *
+   * Derived classes should implement this method.
+   * @return True if the sampler should collapse, false otherwise.
+   */
   virtual bool collapse()=0;
-  virtual double getSpecificVolume()=0;
+
+  /**
+   * @brief Get the lower bounds of the sampler.
+   * @return Lower bounds of the sampler.
+   */
   const Eigen::VectorXd& getLB(){return lower_bound_;}
+
+  /**
+   * @brief Get the upper bounds of the sampler.
+   * @return Upper bounds of the sampler.
+   */
   const Eigen::VectorXd& getUB(){return upper_bound_;}
+
+  /**
+   * @brief Get the dimension of the sampler.
+   * @return Dimension of the sampler.
+   */
   const unsigned int& getDimension()const {return ndof_;}
+
+  /**
+   * @brief Get the logger associated with the sampler.
+   * @return Pointer to the TraceLogger instance.
+   */
   const cnr_logger::TraceLoggerPtr& getLogger(){return logger_;}
+
+  /**
+   * @brief Creates a clone of the Sampler object.
+   *
+   * Derived classes should implement this method.
+   * @return A shared pointer to the cloned Sampler object.
+   */
+  virtual SamplerPtr clone() = 0;
 };
-
-
 
 }  // namespace pathplan

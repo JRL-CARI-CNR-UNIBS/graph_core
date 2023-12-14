@@ -51,6 +51,16 @@ class InformedSampler: public SamplerBase
 protected:
 
   /**
+   * @brief focus_1_ Focus 1 of the ellipse.
+   */
+  Eigen::VectorXd focus_1_;
+
+  /**
+   * @brief focus_2_ Focus 2 of the ellipse.
+   */
+  Eigen::VectorXd focus_2_;
+
+  /**
    * @brief scale_ A vector containing a scaling for each element of a configuration: scale.*configuration
    */
   Eigen::VectorXd scale_;
@@ -106,9 +116,15 @@ protected:
   bool inf_cost_;
 
   /**
+   * @brief specific_volume_ The sepecific volume of the ellipsoid,
+   *  measured as ndof-th root of volume of the hyperellipsoid divided by the volume of unit sphere.
+   */
+  double specific_volume_;
+
+  /**
    * @brief Compute the rotation matrix for the ellipse.
-   * @param x1 Start configuration.
-   * @param x2 Stop configuration.
+   * @param x1 Configuration 1.
+   * @param x2 Configuration 2.
    * @return Rotation matrix.
    */
   Eigen::MatrixXd computeRotationMatrix(const Eigen::VectorXd& x1, const Eigen::VectorXd&  x2);
@@ -123,43 +139,40 @@ public:
 
   /**
    * @brief Constructor for InformedSampler.
-   * @param start_configuration focus1 for the ellipse.
-   * @param stop_configuration focus2 for the ellipse.
+   * @param focus_1 focus 1 for the ellipse.
+   * @param focus_2 focus 2 for the ellipse.
    * @param lower_bound Lower bounds for each dimension.
    * @param upper_bound Upper bounds for each dimension.
    * @param scale Scaling factors for each dimension (default: 1).
    * @param logger TraceLogger for logging.
    * @param cost Cost of the path (default: infinity).
    */
-  InformedSampler(const Eigen::VectorXd& start_configuration,
-                  const Eigen::VectorXd& stop_configuration,
+  InformedSampler(const Eigen::VectorXd& focus_1,
+                  const Eigen::VectorXd& focus_2,
                   const Eigen::VectorXd& lower_bound,
                   const Eigen::VectorXd& upper_bound,
                   const Eigen::VectorXd& scale,
                   const cnr_logger::TraceLoggerPtr& logger,
                   const double& cost):
-    SamplerBase(start_configuration,
-                stop_configuration,
-                lower_bound,
+    SamplerBase(lower_bound,
                 upper_bound,
                 logger,
                 cost),
-    scale_(scale)
+    focus_1_(focus_1),focus_2_(focus_2),scale_(scale)
   {
     init();
   }
-  InformedSampler(const Eigen::VectorXd& start_configuration,
-                  const Eigen::VectorXd& stop_configuration,
+  InformedSampler(const Eigen::VectorXd& focus_1,
+                  const Eigen::VectorXd& focus_2,
                   const Eigen::VectorXd& lower_bound,
                   const Eigen::VectorXd& upper_bound,
                   const cnr_logger::TraceLoggerPtr& logger,
                   const double& cost = std::numeric_limits<double>::infinity()):
-    SamplerBase(start_configuration,
-                stop_configuration,
-                lower_bound,
+    SamplerBase(lower_bound,
                 upper_bound,
                 logger,
-                cost)
+                cost),
+    focus_1_(focus_1),focus_2_(focus_2)
   {
     scale_.setOnes(lower_bound_.rows(),1);
     init();
@@ -213,7 +226,7 @@ public:
    * @brief Get the specific volume of the informed bounds.
    * @return Specific volume.
    */
-  virtual double getSpecificVolume();
+  double getSpecificVolume();
 
   /**
    * @brief Get the lower bounds of the informed sampler in the unscaled space.
@@ -228,22 +241,30 @@ public:
   const Eigen::VectorXd getUB(){return upper_bound_.cwiseProduct(inv_scale_);}
 
   /**
-   * @brief Get the start configuration of the informed sampler in the unscaled space, namely the focus1.
-   * @return Start configuration of the informed sampler in the unscaled space.
+   * @brief Get the focus 1 of the informed sampler in the unscaled space.
+   * @return Focus 1 of the informed sampler in the unscaled space.
    */
-  const Eigen::VectorXd getStartConf(){return start_configuration_.cwiseProduct(inv_scale_);}
+  const Eigen::VectorXd getFocus1(){return focus_1_.cwiseProduct(inv_scale_);}
 
   /**
-   * @brief Get the stop configuration of the informed sampler in the unscaled space, namely the focus 2.
-   * @return Stop configuration of the informed sampler in the unscaled space.
+   * @brief Get the focus 2 of the informed sampler in the unscaled space.
+   * @return Focus 2 of the informed sampler in the unscaled space.
    */
-  const Eigen::VectorXd getStopConf(){return stop_configuration_.cwiseProduct(inv_scale_);}
+  const Eigen::VectorXd getFocus2(){return focus_2_.cwiseProduct(inv_scale_);}
 
   /**
    * @brief Get the dimension of the informed sampler.
    * @return Dimension of the informed sampler.
    */
   const unsigned int& getDimension()const {return ndof_;}
+
+  /**
+   * @brief Creates a clone of the InformedSampler object.
+   *
+   * @return A shared pointer to the cloned InformedSampler object.
+   */
+  virtual SamplerPtr clone() override;
+
 };
 
 }  // namespace pathplan

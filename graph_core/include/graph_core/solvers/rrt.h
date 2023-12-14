@@ -36,16 +36,16 @@ typedef std::shared_ptr<RRT> RRTPtr;
 class RRT: public TreeSolver
 {
 protected:
-  virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity()); //max_time not used
+  virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity());
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   RRT(const MetricsPtr& metrics,
       const CollisionCheckerPtr& checker,
-      const InformedSamplerPtr& sampler):
-    TreeSolver(metrics, checker, sampler) {}
+      const SamplerPtr& sampler,
+      const cnr_logger::TraceLoggerPtr& logger):
+    TreeSolver(metrics, checker, sampler, logger) {}
 
-  virtual bool config(const ros::NodeHandle& nh) override;
   virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
   virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity());
   virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
@@ -53,14 +53,12 @@ public:
   virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution) override;
   virtual bool update(const NodePtr& n, PathPtr& solution) override;
   virtual bool update(PathPtr& solution) override;
-
-  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const InformedSamplerPtr& sampler) override;
 };
 
 }
 
-# pragma message("nel cpp?")
-#if defined(PLUGINLIB_AVAILABLE)
-#include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(pathplan::RRT, pathplan::TreeSolver)
-#endif
+//# pragma message("nel cpp?")
+//#if defined(PLUGINLIB_AVAILABLE)
+//#include <pluginlib/class_list_macros.hpp>
+//PLUGINLIB_EXPORT_CLASS(pathplan::RRT, pathplan::TreeSolver)
+//#endif

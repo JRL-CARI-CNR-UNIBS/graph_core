@@ -47,13 +47,12 @@ public:
         const InformedSamplerPtr& sampler):
     RRT(metrics, checker, sampler) {}
 
-  virtual bool config(const ros::NodeHandle& nh);
+  virtual bool config(const YAML::Node& config);
 
   virtual bool addGoal(const NodePtr &goal_node, const double &max_time = std::numeric_limits<double>::infinity());
   virtual bool update(PathPtr& solution);
   virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution);
   virtual bool update(const NodePtr& n, PathPtr& solution);
-  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const InformedSamplerPtr& sampler);
 
 };
 

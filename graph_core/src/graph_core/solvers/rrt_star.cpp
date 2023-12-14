@@ -218,11 +218,4 @@ bool RRTStar::solve(PathPtr &solution, const unsigned int& max_iter, const doubl
   return solved;
 }
 
-TreeSolverPtr RRTStar::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const InformedSamplerPtr& sampler)
-{
-  RRTStarPtr new_solver = std::make_shared<RRTStar>(metrics,checker,sampler);
-  new_solver->config(nh_);
-  return new_solver;
-}
-
 }

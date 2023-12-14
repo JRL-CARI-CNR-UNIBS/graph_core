@@ -52,8 +52,6 @@ public:
   virtual bool solve(PathPtr &solution, const unsigned int& max_iter=100, const double &max_time = std::numeric_limits<double>::infinity()) override;
   virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution) override;
   virtual bool update(const NodePtr& n, PathPtr& solution) override;
-  virtual TreeSolverPtr clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const InformedSamplerPtr& sampler) override;
-
 
 };
 }

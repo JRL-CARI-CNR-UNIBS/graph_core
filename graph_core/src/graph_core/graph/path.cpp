@@ -274,7 +274,7 @@ double Path::getCostFromConf(const Eigen::VectorXd &conf)
     {
       if(this_conn->getCost() == std::numeric_limits<double>::infinity())
       {
-        if(checker_->checkPath(conf,this_conn->getChild()->getConfiguration()))
+        if(checker_->checkConnection(conf,this_conn->getChild()->getConfiguration()))
           cost += metrics_->cost(conf,this_conn->getChild()->getConfiguration());
         else
           cost = std::numeric_limits<double>::infinity();
@@ -361,7 +361,7 @@ bool Path::bisection(const unsigned int &connection_idx,
       min_distance = distance;
       continue;
     }
-    bool is_valid = checker_->checkPath(parent->getConfiguration(), p) && checker_->checkPath(p, child->getConfiguration());
+    bool is_valid = checker_->checkConnection(parent->getConfiguration(), p) && checker_->checkConnection(p, child->getConfiguration());
     if (!is_valid)
     {
       min_distance = distance;
@@ -996,11 +996,11 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
           }
           else
           {
-            if(not checker_->checkPath(actual_node->getConfiguration(),child->getConfiguration()))
+            if(not checker_->checkConnection(actual_node->getConfiguration(),child->getConfiguration()))
             {
               cost_child = std::numeric_limits<double>::infinity();
 
-              checker_->checkPath(actual_node->getConfiguration(),parent->getConfiguration())?
+              checker_->checkConnection(actual_node->getConfiguration(),parent->getConfiguration())?
                     (cost_parent = metrics_->cost(parent->getConfiguration(),actual_node->getConfiguration())):
                     (cost_parent = std::numeric_limits<double>::infinity());
             }
@@ -1142,7 +1142,7 @@ PathPtr Path::getSubpathToConf(const Eigen::VectorXd& conf, const bool clone)
     double cost;
     if(conn->getCost() == std::numeric_limits<double>::infinity())
     {
-      checker_->checkPath(conn->getParent()->getConfiguration(),node->getConfiguration())?
+      checker_->checkConnection(conn->getParent()->getConfiguration(),node->getConfiguration())?
             (cost  = metrics_->cost(conn->getParent()->getConfiguration(),node->getConfiguration())):
             (cost = std::numeric_limits<double>::infinity());
     }
@@ -1224,7 +1224,7 @@ PathPtr Path::getSubpathFromConf(const Eigen::VectorXd& conf, const bool clone)
     double cost;
     if(conn->getCost() == std::numeric_limits<double>::infinity())
     {
-      checker_->checkPath(node->getConfiguration(),conn->getChild()->getConfiguration())?
+      checker_->checkConnection(node->getConfiguration(),conn->getChild()->getConfiguration())?
             (cost  = metrics_->cost(node->getConfiguration(),conn->getChild()->getConfiguration())):
             (cost = std::numeric_limits<double>::infinity());
     }
@@ -1356,7 +1356,7 @@ bool Path::simplify(const double& distance)
         continue;
       }
     }
-    if (checker_->checkPath(connections_.at(ic - 1)->getParent()->getConfiguration(),
+    if (checker_->checkConnection(connections_.at(ic - 1)->getParent()->getConfiguration(),
                             connections_.at(ic)->getChild()->getConfiguration()))
     {
       simplified = true;

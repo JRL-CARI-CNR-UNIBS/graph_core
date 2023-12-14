@@ -32,46 +32,46 @@ namespace pathplan
 
 bool TreeSolver::config(const YAML::Node &config)
 {
-  nh_ = config;
+  config_ = config;
 
-  if (!nh_["max_distance"])
+  if (!config_["max_distance"])
   {
     CNR_WARN(logger_,"max_distance is not set, using 1.0");
     max_distance_ = 1.0;
   }
   else
   {
-    max_distance_ = nh_["max_distance"].as<double>();
+    max_distance_ = config_["max_distance"].as<double>();
   }
 
-  if (!nh_["use_kdtree"])
+  if (!config_["use_kdtree"])
   {
     CNR_WARN(logger_,"use_kdtree is not set, using true");
     use_kdtree_ = true;
   }
   else
   {
-    use_kdtree_ = nh_["use_kdtree"].as<bool>();
+    use_kdtree_ = config_["use_kdtree"].as<bool>();
   }
 
-  if (!nh_["informed"])
+  if (!config_["informed"])
   {
     CNR_WARN(logger_,"informed is not set, using true");
     informed_ = true;
   }
   else
   {
-    informed_ = nh_["informed"].as<bool>();
+    informed_ = config_["informed"].as<bool>();
   }
 
-  if (!nh_["extend"])
+  if (!config_["extend"])
   {
     CNR_WARN(logger_,"extend is not set, using false (connect algorithm)");
     extend_ = false;
   }
   else
   {
-    extend_ = nh_["extend"].as<bool>();
+    extend_ = config_["extend"].as<bool>();
   }
 
   if (!config["warp"])
@@ -81,19 +81,19 @@ bool TreeSolver::config(const YAML::Node &config)
   }
   else
   {
-    warp_ = nh_["warp"].as<bool>();
+    warp_ = config_["warp"].as<bool>();
   }
 
   if (!warp_)
   {
-    if (!nh_["warp_once"])
+    if (!config_["warp_once"])
     {
       CNR_DEBUG(logger_,"%warp_once is not set. using false");
       first_warp_ = false;
     }
     else
     {
-      first_warp_ = nh_["warp_once"].as<bool>();
+      first_warp_ = config_["warp_once"].as<bool>();
     }
   }
   else
@@ -101,14 +101,14 @@ bool TreeSolver::config(const YAML::Node &config)
     first_warp_ = true;
   }
 
-  if (!nh_["utopia_tolerance"])
+  if (!config_["utopia_tolerance"])
   {
     CNR_WARN(logger_,"utopia_tolerance is not set. using 0.01");
     utopia_tolerance_ = 0.01;
   }
   else
   {
-    utopia_tolerance_ = nh_["utopia_tolerance"].as<double>();
+    utopia_tolerance_ = config_["utopia_tolerance"].as<double>();
   }
 
   if (utopia_tolerance_ <= 0.0)
@@ -203,7 +203,7 @@ bool TreeSolver::importFromSolver(const TreeSolverPtr& solver)
 {
   CNR_DEBUG(logger_,"Import from Tree solver");
 
-  config(nh_);
+  config(config_);
 
   solved_        = solver->solved();
   completed_     = solver->completed();

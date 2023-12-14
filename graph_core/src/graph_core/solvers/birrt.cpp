@@ -31,10 +31,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace pathplan
 {
 
-bool BiRRT::config(const ros::NodeHandle &nh)
+bool BiRRT::config(const YAML::Node& config)
 {
-  nh_ = nh;
-  return RRT::config(nh);
+  config_ = config;
+  return RRT::config(config);
 }
 
 bool BiRRT::addGoal(const NodePtr &goal_node, const double &max_time)
@@ -46,17 +46,17 @@ bool BiRRT::addGoal(const NodePtr &goal_node, const double &max_time)
 
 bool BiRRT::update(PathPtr &solution)
 {
-  PATH_COMMENT("RRTConnect::update");
+  CNR_DEBUG(logger_,"RRTConnect::update");
   if (solved_)
   {
-    PATH_COMMENT("alreay found a solution");
+    CNR_DEBUG(logger_,"alreay found a solution");
     solution = solution_;
     return true;
   }
 
   if (sampler_->collapse())
   {
-    PATH_COMMENT("collapsed");
+    CNR_DEBUG(logger_,"collapsed");
     return false;
   }
 
@@ -68,10 +68,10 @@ bool BiRRT::update(PathPtr &solution)
 
 bool BiRRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 {
-  PATH_COMMENT("RRTConnect::update");
+  CNR_DEBUG(logger_,"RRTConnect::update");
   if (solved_)
   {
-    PATH_COMMENT("alreay find a solution");
+    CNR_DEBUG(logger_,"alreay find a solution");
     solution = solution_;
     return true;
   }
@@ -90,12 +90,12 @@ bool BiRRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
   {
     distance = (new_start_node->getConfiguration()-new_goal_node->getConfiguration()).norm();
     tree_connected = (distance<TOLERANCE);
-    PATH_COMMENT("Distance between node added to start tree and node added to goal tree: %f (tolerance %f)",distance,TOLERANCE);
+    CNR_DEBUG(logger_,"Distance between node added to start tree and node added to goal tree: %f (tolerance %f)",distance,TOLERANCE);
   }
 
   if (tree_connected) // a solution is found
   {
-    PATH_COMMENT("Trees connected");
+    CNR_DEBUG(logger_,"Trees connected");
 
     NodePtr parent=new_goal_node->getParents().at(0);
     double cost_to_parent=new_goal_node->parentConnection(0)->getCost();
@@ -132,10 +132,10 @@ void BiRRT::clean()
 
 bool BiRRT::update(const NodePtr& n, PathPtr& solution)
 {
-  PATH_COMMENT("RRTConnect::update");
+  CNR_DEBUG(logger_,"RRTConnect::update");
   if (solved_)
   {
-    PATH_COMMENT("alreay find a solution");
+    CNR_DEBUG(logger_,"alreay find a solution");
     solution = solution_;
     return true;
   }
@@ -154,12 +154,12 @@ bool BiRRT::update(const NodePtr& n, PathPtr& solution)
   {
     distance = (new_start_node->getConfiguration()-new_goal_node->getConfiguration()).norm();
     tree_connected = (distance<TOLERANCE);
-    PATH_COMMENT("Distance between node added to start tree and node added to goal tree: %f (tolerance %f)",distance,TOLERANCE);
+    CNR_DEBUG(logger_,"Distance between node added to start tree and node added to goal tree: %f (tolerance %f)",distance,TOLERANCE);
   }
 
   if (tree_connected) // a solution is found
   {
-    PATH_COMMENT("Trees connected");
+    CNR_DEBUG(logger_,"Trees connected");
 
     NodePtr parent=new_goal_node->getParents().at(0);
     double cost_to_parent=new_goal_node->parentConnection(0)->getCost();
@@ -190,11 +190,5 @@ bool BiRRT::update(const NodePtr& n, PathPtr& solution)
   return false;
 }
 
-TreeSolverPtr BiRRT::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const InformedSamplerPtr& sampler)
-{
-  BiRRTPtr new_solver = std::make_shared<BiRRT>(metrics,checker,sampler);
-  new_solver->config(nh_);
-  return new_solver;
-}
 
 }

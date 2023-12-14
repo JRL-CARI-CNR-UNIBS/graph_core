@@ -80,7 +80,7 @@ bool Tree::tryExtendFromNode(const Eigen::VectorXd &configuration,
   if (distance < TOLERANCE)
     return true;
   else
-    if (checker_->checkPath(node->getConfiguration(), next_configuration))
+    if (checker_->checkConnection(node->getConfiguration(), next_configuration))
       return true;
 
   return false;
@@ -111,7 +111,7 @@ bool Tree::tryExtendFromNodeWithPathCheck(const Eigen::VectorXd &configuration,
     if (distance < TOLERANCE)
       return true;
     else
-      if (checker_->checkPath(node->getConfiguration(), next_configuration))
+      if (checker_->checkConnection(node->getConfiguration(), next_configuration))
         return true;
   }
 
@@ -306,7 +306,7 @@ bool Tree::informedExtend(const Eigen::VectorXd &configuration, NodePtr &new_nod
     }
     else
     {
-      if (checker_->checkPath(ext.tree_node->getConfiguration(), ext.new_conf))
+      if (checker_->checkConnection(ext.tree_node->getConfiguration(), ext.new_conf))
       {
         extend_ok = true;
         break;
@@ -469,7 +469,7 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const std::vector<NodePtr>
       if ((cost_to_near + cost_near_to_node) >= cost_to_node)
         continue;
 
-      if (!checker_->checkPath(n->getConfiguration(), node->getConfiguration()))
+      if (!checker_->checkConnection(n->getConfiguration(), node->getConfiguration()))
         continue;
 
       assert(node->parentConnection(0)->isValid());
@@ -510,7 +510,7 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const std::vector<NodePtr>
       if ((cost_to_node + cost_node_to_near) >= cost_to_near)
         continue;
 
-      if (!checker_->checkPath(node->getConfiguration(), n->getConfiguration()))
+      if (!checker_->checkConnection(node->getConfiguration(), n->getConfiguration()))
         continue;
 
       assert(n->parentConnection(0)->isValid());
@@ -607,7 +607,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
       if ((cost_to_near + cost_near_to_node) >= cost_to_node)
         continue;
 
-      if (not checker_->checkPath(n->getConfiguration(), node->getConfiguration()))
+      if (not checker_->checkConnection(n->getConfiguration(), node->getConfiguration()))
         continue;
 
       if(not checkPathToNode(n,checked_connections)) //validate connections to n
@@ -672,7 +672,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
         }
       }
 
-      if(not checker_->checkPath(node->getConfiguration(), n->getConfiguration()))
+      if(not checker_->checkConnection(node->getConfiguration(), n->getConfiguration()))
         continue;
 
       n->parentConnection(0)->remove();

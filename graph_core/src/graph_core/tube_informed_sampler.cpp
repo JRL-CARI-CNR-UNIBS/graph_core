@@ -32,7 +32,7 @@ namespace pathplan
 {
 Eigen::VectorXd TubeInformedSampler::sample()
 {
-   if (ud_(gen_)>local_bias_)
+  if (ud_(gen_)>local_bias_)
     return sampler_->sample();
 
   if (length_<=0)
@@ -128,6 +128,17 @@ Eigen::VectorXd TubeInformedSampler::pointOnCurvilinearAbscissa(const double& ab
   return path_.back();
 }
 
+void TubeInformedSampler::setCost(const double& cost)
+{
+  cost_ = cost;
+  sampler_->setCost(cost);
+}
+
+bool TubeInformedSampler::collapse()
+{
+  return sampler_->collapse();
+}
+
 bool TubeInformedSampler::couldImprove(const Eigen::VectorXd& q)
 {
   for (size_t idx=1;idx<path_.size()-1;idx++)
@@ -140,4 +151,8 @@ bool TubeInformedSampler::couldImprove(const Eigen::VectorXd& q)
   return false;
 }
 
+SamplerPtr TubeInformedSampler::clone()
+{
+  return std::make_shared<TubeInformedSampler>(sampler_->clone(),metrics_);
+}
 }  // namespace pathplan

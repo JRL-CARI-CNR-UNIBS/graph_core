@@ -32,7 +32,7 @@ namespace pathplan
 
 void AnytimeRRT::importFromSolver(const AnytimeRRTPtr& solver)
 {
-  //ROS_INFO_STREAM("Import from AnytimeRRT solver");
+  CNR_DEBUG(logger_,"Import from AnytimeRRT solver");
 
   RRT::importFromSolver(std::static_pointer_cast<RRT>(solver));
 
@@ -63,7 +63,7 @@ bool AnytimeRRT::solveWithRRT(PathPtr& solution,
 
 bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const double& max_time)
 {
-  ros::WallTime tic = ros::WallTime::now();
+  std::chrono::time_point<std::chrono::system_clock> tic = std::chrono::system_clock::now();
   double time;
 
   if(solved_)
@@ -72,7 +72,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
 
     if (cost_ <= utopia_tolerance_ * best_utopia_)
     {
-      //ROS_INFO("Utopia reached!");
+      CNR_DEBUG(logger_,"Utopia reached!");
       completed_=true;
       return true;
     }
@@ -85,27 +85,27 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   bool success;
   unsigned int n_failed_iter = 0;
 
-  time = (ros::WallTime::now()-tic).toSec();
+  time = (std::chrono::duration<double> (std::chrono::system_clock::now()-tic)).count();
   while(time<0.98*max_time && (not solved_) && n_failed_iter<FAILED_ITER)
   {
     success = AnytimeRRT::solveWithRRT(solution,max_iter,(max_time-time));
 
-    PATH_COMMENT_STREAM("Tree has "<<start_tree_->getNumberOfNodes()<<" nodes");
+    CNR_DEBUG(logger_,"Tree has "<<start_tree_->getNumberOfNodes()<<" nodes");
 
     if(!success)
       n_failed_iter++;
 
-    time = (ros::WallTime::now()-tic).toSec();
+    time = (std::chrono::duration<double> (std::chrono::system_clock::now()-tic)).count();
   }
 
   if(not solved_)
     return false;
 
-  //ROS_INFO_STREAM("Path cost: "<<path_cost_);
+  CNR_DEBUG(logger_,"Path cost: "<<path_cost_);
 
   if (cost_ <= utopia_tolerance_ * best_utopia_)
   {
-    //ROS_INFO("Utopia reached!");
+    CNR_DEBUG(logger_,"Utopia reached!");
     completed_=true;
     return true;
   }
@@ -117,14 +117,14 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   bool improved;
   n_failed_iter = 0;
 
-  time = (ros::WallTime::now()-tic).toSec();
+  time = (std::chrono::duration<double> (std::chrono::system_clock::now()-tic)).count();
   while(time<0.98*max_time && completed_ == false && n_failed_iter<FAILED_ITER)
   {
-    NodePtr tmp_start_node = std::make_shared<Node>(start_node->getConfiguration());
-    NodePtr tmp_goal_node  = std::make_shared<Node>(goal_node->getConfiguration());
+    NodePtr tmp_start_node = std::make_shared<Node>(start_node->getConfiguration(),logger_);
+    NodePtr tmp_goal_node  = std::make_shared<Node>(goal_node->getConfiguration(),logger_);
     improved = AnytimeRRT::improve(tmp_start_node,tmp_goal_node,solution,max_iter,(max_time-time));
 
-    PATH_COMMENT_STREAM("New tree has "<<new_tree_->getNumberOfNodes()<<" nodes");
+    CNR_DEBUG(logger_,"New tree has "<<new_tree_->getNumberOfNodes()<<" nodes");
 
     improved? (n_failed_iter = 0):
               (n_failed_iter++);
@@ -133,12 +133,12 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
 
     if(cost_ <= utopia_tolerance_ * best_utopia_)
     {
-      //ROS_INFO("Utopia reached!");
+      CNR_DEBUG(logger_,"Utopia reached!");
       completed_=true;
       break;
     }
 
-    time = (ros::WallTime::now()-tic).toSec();
+    time = (std::chrono::duration<double> (std::chrono::system_clock::now()-tic)).count();
   }
 
   if(goal_node_ != goal_node)
@@ -146,7 +146,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     //Rewire the tree goal (set goal_node)
     goal_node->disconnect();
 
-    ConnectionPtr conn = std::make_shared<Connection>(solution_->getConnections().back()->getParent(), goal_node);
+    ConnectionPtr conn = std::make_shared<Connection>(solution_->getConnections().back()->getParent(), goal_node, logger_);
     conn->setCost(solution_->getConnections().back()->getCost());
     conn->setTimeCostUpdate(solution_->getConnections().back()->getTimeCostUpdate());
     conn->add();
@@ -155,7 +155,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     goal_node_ = goal_node;
     start_tree_->addNode(goal_node_);
 
-    solution_ = solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
+    solution_ = solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_, logger_);
     solution->setTree(start_tree_);
   }
 
@@ -188,24 +188,24 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
 
     for(unsigned int i=0; i<root_children.size(); i++)
     {
-      ConnectionPtr conn = std::make_shared<Connection>(start_node,root_children.at(i));  //the parent of start_node is the node on the path, the others are children
+      ConnectionPtr conn = std::make_shared<Connection>(start_node,root_children.at(i),logger_);  //the parent of start_node is the node on the path, the others are children
       conn->setCost(root_children.at(i)->getParentConnections().front()->getCost());
       conn->setTimeCostUpdate(root_children.at(i)->getParentConnections().front()->getTimeCostUpdate());
       conn->add();
     }
 
-    ConnectionPtr conn2node_on_path = std::make_shared<Connection>(root_child_on_path,start_node);
+    ConnectionPtr conn2node_on_path = std::make_shared<Connection>(root_child_on_path,start_node,logger_);
     conn2node_on_path->setCost(cost_first_conn_on_path);
     conn2node_on_path->add();
 
     start_tree_->addNode(start_node);
     start_tree_->changeRoot(start_node);
 
-    solution_ = solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
+    solution_ = solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_, logger_);
     solution->setTree(start_tree_);
   }
 
-  PATH_COMMENT_STREAM("Final tree has "<<start_tree_->getNumberOfNodes()<<" nodes");
+  CNR_DEBUG(logger_,"Final tree has "<<start_tree_->getNumberOfNodes()<<" nodes");
 
   return solved_;
 }
@@ -218,7 +218,7 @@ bool AnytimeRRT::improve(NodePtr& start_node, PathPtr& solution, const unsigned 
 
 bool AnytimeRRT::improve(NodePtr& start_node, PathPtr& solution, const double& cost2beat, const unsigned int& max_iter, const double &max_time)
 {
-  NodePtr tmp_goal_node = std::make_shared<Node>(goal_node_->getConfiguration());
+  NodePtr tmp_goal_node = std::make_shared<Node>(goal_node_->getConfiguration(),logger_);
   return improve(start_node, tmp_goal_node, solution, cost2beat, max_iter, max_time);
 }
 
@@ -230,7 +230,7 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
 
 bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solution, const double& cost2beat, const unsigned int& max_iter, const double &max_time)
 {
-  ros::WallTime tic = ros::WallTime::now();
+  std::chrono::time_point<std::chrono::system_clock> tic = std::chrono::system_clock::now();
 
   if(max_time <=0.0)
     return false;
@@ -240,18 +240,18 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
 
   if(cost_ <= utopia_tolerance_ * utopia) //also if start and/or goal are changed, the old path is better to follow
   {
-    PATH_COMMENT_STREAM("Utopia reached! Utopia: "<<utopia_tolerance_*utopia<<" path cost: "<<path_cost_);
+    CNR_DEBUG(logger_,"Utopia reached! Utopia: "<<utopia_tolerance_*utopia<<" path cost: "<<path_cost_);
     completed_=true;
     return false;
   }
 
   if(cost2beat <= utopia)
   {
-    PATH_COMMENT_STREAM("The cost to beat is less than utopia, impossible to reach! Utopia: "<<utopia<<" cost to beat: "<<cost2beat);
+    CNR_DEBUG(logger_,"The cost to beat is less than utopia, impossible to reach! Utopia: "<<utopia<<" cost to beat: "<<cost2beat);
     return false;
   }
 
-  new_tree_ = std::make_shared<Tree>(start_node, max_distance_, checker_, metrics_,use_kdtree_);
+  new_tree_ = std::make_shared<Tree>(start_node, max_distance_, checker_, metrics_, logger_, use_kdtree_);
 
   tmp_goal_node_ = goal_node;
   cost2beat_ = cost2beat;
@@ -259,14 +259,14 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
   bias_ = bias_-delta_;
   if(bias_<0.1) bias_ = 0.1;
 
-  improve_sampler_ = std::make_shared<pathplan::InformedSampler>(start_node->getConfiguration(),goal_node->getConfiguration(),sampler_->getLB(),sampler_->getUB());
+//  improve_sampler_ = std::make_shared<pathplan::InformedSampler>(start_node->getConfiguration(),goal_node->getConfiguration(),sampler_->getLB(),sampler_->getUB());
   improve_sampler_->setCost(path_cost_); //(1-cost_impr_)*path_cost_
 
   for (unsigned int iter = 0; iter < max_iter; iter++)
   {
     if(AnytimeRRT::improveUpdate(solution))
     {
-      PATH_COMMENT_STREAM("Improved path cost: "<<path_cost_);
+      CNR_DEBUG(logger_,"Improved path cost: "<<path_cost_);
 
       if(solution->getTree() != solution_->getTree())
         assert(0);
@@ -276,18 +276,18 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
       return true;
     }
 
-    if((ros::WallTime::now()-tic).toSec()>=0.98*max_time)
+    if((std::chrono::duration<double> (std::chrono::system_clock::now()-tic)).count()>=0.98*max_time)
       break;
   }
 
   return false;
 }
 
-bool AnytimeRRT::config(const ros::NodeHandle& nh)
+bool AnytimeRRT::config(const YAML::Node& config)
 {
   setParameters();
 
-  return RRT::config(nh);
+  return RRT::config(config);
 }
 
 void AnytimeRRT::resetProblem()
@@ -300,11 +300,11 @@ void AnytimeRRT::resetProblem()
 
 bool AnytimeRRT::improveUpdate(PathPtr &solution)
 {
-  PATH_COMMENT("AnytimeRRT::improveUpdate");
+  CNR_DEBUG(logger_,"AnytimeRRT::improveUpdate");
 
   if(completed_)
   {
-    PATH_COMMENT("already found the best solution");
+    CNR_DEBUG(logger_,"already found the best solution");
     solution = solution_;
     return true;
   }
@@ -317,11 +317,11 @@ bool AnytimeRRT::improveUpdate(PathPtr &solution)
 
 bool AnytimeRRT::improveUpdate(const Eigen::VectorXd& point, PathPtr &solution)
 {
-  PATH_COMMENT("AnytimeRRT::improveUpdate");
+  CNR_DEBUG(logger_,"AnytimeRRT::improveUpdate");
 
   if (completed_)
   {
-    PATH_COMMENT("already found the best solution");
+    CNR_DEBUG(logger_,"already found the best solution");
     solution = solution_;
     return true;
   }
@@ -340,7 +340,7 @@ bool AnytimeRRT::improveUpdate(const Eigen::VectorXd& point, PathPtr &solution)
 
       if(new_solution_cost<solution_->cost())
       {
-        if(checker_->checkPath(new_node->getConfiguration(), tmp_goal_node_->getConfiguration()))
+        if(checker_->checkConnection(new_node->getConfiguration(), tmp_goal_node_->getConfiguration()))
         {
           assert(tmp_goal_node_->getParentConnectionsSize() == 0);
 
@@ -348,14 +348,14 @@ bool AnytimeRRT::improveUpdate(const Eigen::VectorXd& point, PathPtr &solution)
           goal_node_ = tmp_goal_node_;
           goal_cost_=goal_cost_fcn_->cost(goal_node_);
 
-          ConnectionPtr conn_node2goal = std::make_shared<Connection>(new_node, goal_node_);
+          ConnectionPtr conn_node2goal = std::make_shared<Connection>(new_node, goal_node_, logger_);
           conn_node2goal->setCost(cost_node2goal);
           conn_node2goal->add();
 
           new_tree_->addNode(goal_node_);
           start_tree_ = new_tree_;
 
-          solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_);
+          solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_, logger_);
           solution->setTree(start_tree_);
           solution_ = solution;
 
@@ -376,16 +376,10 @@ bool AnytimeRRT::improveUpdate(const Eigen::VectorXd& point, PathPtr &solution)
 
 bool AnytimeRRT::update(const NodePtr& n, PathPtr &solution)
 {
-  ROS_FATAL("Update to node not yet available");
+  CNR_ERROR(logger_,"Update to node not yet available");
   return false;
 }
 
-TreeSolverPtr AnytimeRRT::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const InformedSamplerPtr& sampler)
-{
-  AnytimeRRTPtr new_solver = std::make_shared<AnytimeRRT>(metrics,checker,sampler);
-  new_solver->config(nh_);
-  return new_solver;
-}
 
 }
 

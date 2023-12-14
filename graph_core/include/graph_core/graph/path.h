@@ -149,7 +149,10 @@ public:
    * @param checker The CollisionCheckerPtr used for checking collision along the path.
    * @param logger The cnr_logger::TraceLoggerPtr logger for logging operations.
    */
-  Path(std::vector<ConnectionPtr> connections, const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const cnr_logger::TraceLoggerPtr& logger);
+  Path(std::vector<ConnectionPtr> connections,
+       const MetricsPtr& metrics,
+       const CollisionCheckerPtr& checker,
+       const cnr_logger::TraceLoggerPtr& logger);
 
   /**
    * @brief Constructor for the Path class from a vector of nodes.

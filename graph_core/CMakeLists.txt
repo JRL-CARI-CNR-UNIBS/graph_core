@@ -12,11 +12,11 @@ find_package(PkgConfig REQUIRED)
 find_package(pluginlib)
 pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 
-
 if (pluginlib_FOUND)
-  message("L'HO TROVATO")
+  message("pluginlib found")
   add_definitions(-DPLUGINLIB_AVAILABLE)
 else()
+  message("pluginlib not found")
   set(pluginlib_INCLUDE_DIRS "")
 endif()
 
@@ -46,11 +46,11 @@ add_library(${PROJECT_NAME} SHARED
   src/${PROJECT_NAME}/datastructure/vector.cpp
 
   src/${PROJECT_NAME}/solvers/tree_solver.cpp
-#  src/${PROJECT_NAME}/solvers/rrt.cpp
+  src/${PROJECT_NAME}/solvers/rrt.cpp
 #  src/${PROJECT_NAME}/solvers/multigoal.cpp
-#  src/${PROJECT_NAME}/solvers/birrt.cpp
+  src/${PROJECT_NAME}/solvers/birrt.cpp
 #  src/${PROJECT_NAME}/solvers/rrt_star.cpp
-#  src/${PROJECT_NAME}/solvers/anytime_rrt.cpp
+  src/${PROJECT_NAME}/solvers/anytime_rrt.cpp
 #  src/${PROJECT_NAME}/solvers/path_solver.cpp
 
   )

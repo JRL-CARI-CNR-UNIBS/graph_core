@@ -295,7 +295,7 @@ bool MultigoalSolver::config(const ros::NodeHandle& nh)
 
 bool MultigoalSolver::initGoalSelector()
 {
-  goal_manager_ = std::make_shared<multi_goal_selection::GoalSelectionManager>(nh_.getNamespace(), goal_nodes_.size(),sampler_->getDimension());
+  goal_manager_ = std::make_shared<multi_goal_selection::GoalSelectionManager>(config_.getNamespace(), goal_nodes_.size(),sampler_->getDimension());
   if (goal_manager_->isWarmStartSet())
     goal_manager_->warmStart(costs_,utopias_,cost_);
   return true;
@@ -672,13 +672,6 @@ void MultigoalSolver::cleanTree()
   start_tree_->purgeNodesOutsideEllipsoids(samplers,white_list);
 }
 
-TreeSolverPtr MultigoalSolver::clone(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const InformedSamplerPtr& sampler)
-{
-  MultigoalSolverPtr new_solver = std::make_shared<MultigoalSolver>(metrics,checker,sampler);
-  new_solver->config(nh_);
-  return new_solver;
-
-}
 
 std::vector<TreePtr> MultigoalSolver::getGoalTrees()
 {
