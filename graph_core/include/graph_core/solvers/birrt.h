@@ -39,7 +39,6 @@ class BiRRT: public RRT
 {
 protected:
   TreePtr goal_tree_;
-  virtual void clean();
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   BiRRT(const MetricsPtr& metrics,

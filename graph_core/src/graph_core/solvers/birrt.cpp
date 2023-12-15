@@ -124,11 +124,6 @@ bool BiRRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
   return false;
 }
 
-void BiRRT::clean()
-{
-  goal_tree_->keepOnlyThisBranch(solution_->getConnections());
-}
-
 
 bool BiRRT::update(const NodePtr& n, PathPtr& solution)
 {

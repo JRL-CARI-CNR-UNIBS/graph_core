@@ -47,12 +47,10 @@ add_library(${PROJECT_NAME} SHARED
 
   src/${PROJECT_NAME}/solvers/tree_solver.cpp
   src/${PROJECT_NAME}/solvers/rrt.cpp
-#  src/${PROJECT_NAME}/solvers/multigoal.cpp
   src/${PROJECT_NAME}/solvers/birrt.cpp
   src/${PROJECT_NAME}/solvers/rrt_star.cpp
   src/${PROJECT_NAME}/solvers/anytime_rrt.cpp
   src/${PROJECT_NAME}/solvers/path_local_optimizer.cpp
-
   )
 #add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 

@@ -36,7 +36,6 @@ typedef std::shared_ptr<RRT> RRTPtr;
 class RRT: public TreeSolver
 {
 protected:
-  virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity());
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -47,7 +46,7 @@ public:
     TreeSolver(metrics, checker, sampler, logger) {}
 
   virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
-  virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity());
+  virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity()) override;
   virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
   virtual void resetProblem() override;
   virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution) override;

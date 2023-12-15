@@ -57,15 +57,25 @@ protected:
   Eigen::VectorXd upper_bound_;
 
   /**
-   * @brief ndof_ Number of degrees of freedom in the configuration.
+   * @brief Pointer to a TraceLogger instance for logging.
+   *
+   * This member variable represents a pointer to a TraceLogger instance, allowing
+   * to perform logging operations. TraceLogger is a part of the cnr_logger library.
+   * Ensure that the logger is properly configured and available for use.
    */
-  unsigned int ndof_;
+  const cnr_logger::TraceLoggerPtr& logger_;
+
 
   /**
    * @brief cost_ Cost associated with the sampler. The base implementation of the Sampler does not use the cost
    * in the sampling procedure.
    */
   double cost_;
+
+  /**
+   * @brief ndof_ Number of degrees of freedom in the configuration.
+   */
+  unsigned int ndof_;
 
   /**
    * @brief rd_ Random device for seed generation.
@@ -81,15 +91,6 @@ protected:
    * @brief ud_ Uniform distribution for random numbers.
    */
   std::uniform_real_distribution<double> ud_;
-
-  /**
-   * @brief Pointer to a TraceLogger instance for logging.
-   *
-   * This member variable represents a pointer to a TraceLogger instance, allowing
-   * to perform logging operations. TraceLogger is a part of the cnr_logger library.
-   * Ensure that the logger is properly configured and available for use.
-   */
-  const cnr_logger::TraceLoggerPtr& logger_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -110,7 +111,7 @@ public:
     upper_bound_(upper_bound),
     logger_(logger),
     cost_(cost),
-    gen_{rd_()}//gen_(time(0))
+    gen_{rd_()}
   {
     ud_ = std::uniform_real_distribution<double>(0, 1);
   }
@@ -156,6 +157,11 @@ public:
 
   /**
    * @brief Check if the sampler should collapse.
+   * A sampler collapses when it cannot generate new samples.
+   * Examples:
+   *  - An Informed Sampler collapses when the cost that defines the ellipsoid is less than the distance
+   *    between the focii of the ellipsoid
+   *  - A standard uniform sampler never collapses (i.e., the function returns always false).
    *
    * Derived classes should implement this method.
    * @return True if the sampler should collapse, false otherwise.

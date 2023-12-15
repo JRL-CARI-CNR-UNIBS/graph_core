@@ -61,7 +61,9 @@ protected:
   Eigen::VectorXd focus_2_;
 
   /**
-   * @brief scale_ A vector containing a scaling for each element of a configuration: scale.*configuration
+   * @brief scale_ A vector containing a scaling for each element of a configuration.
+   * Each configuration in the scaled space is computed as the component-wise product between the configuration
+   * and scale_.
    */
   Eigen::VectorXd scale_;
 
@@ -182,13 +184,13 @@ public:
    * @brief Generate a sampled configuration.
    * @return Sampled configuration.
    */
-  virtual Eigen::VectorXd sample();
+  virtual Eigen::VectorXd sample() override;
 
   /**
    * @brief Set the cost for the informed sampler.
    * @param cost Cost of the path.
    */
-  void setCost(const double& cost);
+  void setCost(const double& cost) override;
 
   /**
    * @brief Set the scaling factors for the bounds.
@@ -205,13 +207,13 @@ public:
    * @param q Configuration to check.
    * @return True if in bounds, false otherwise.
    */
-  virtual bool inBounds(const Eigen::VectorXd& q);
+  virtual bool inBounds(const Eigen::VectorXd& q) override;
 
   /**
    * @brief Check if the informed bounds collapse (focii distance exceeds cost).
    * @return True if bounds collapse, false otherwise.
    */
-  virtual bool collapse()
+  virtual bool collapse() override
   {
     return focii_distance_ >= cost_;
   }
@@ -260,7 +262,6 @@ public:
 
   /**
    * @brief Creates a clone of the InformedSampler object.
-   *
    * @return A shared pointer to the cloned InformedSampler object.
    */
   virtual SamplerPtr clone() override;
