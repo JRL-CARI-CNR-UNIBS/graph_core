@@ -68,3 +68,41 @@ target_link_libraries(node_connection_test
   # log4cxx aprutil-1 apr-1
 )
 
+# Install
+install(DIRECTORY include/${PROJECT_NAME}
+  DESTINATION include)
+
+install(
+  TARGETS ${PROJECT_NAME}
+  EXPORT graph_coreTargets
+  ARCHIVE DESTINATION lib#/${PROJECT_NAME}
+  LIBRARY DESTINATION lib#/${PROJECT_NAME}
+  RUNTIME DESTINATION bin#/${PROJECT_NAME}
+)
+
+# set(CMAKE_INSTALL_PREFIX "/home/riemann/test_cmake")
+
+set(EXPORT_CONFIGDIR "share/${PROJECT_NAME}/cmake")
+
+install(EXPORT graph_coreTargets
+  DESTINATION ${EXPORT_CONFIGDIR}
+  FILE graph_coreTargets.cmake
+)
+
+export(
+  EXPORT graph_coreTargets
+  FILE "${PROJECT_BINARY_DIR}/graph_coreTargets.cmake")
+
+include(CMakePackageConfigHelpers)
+set(INCLUDE_DIR include)
+configure_package_config_file(${CMAKE_CURRENT_LIST_DIR}/graph_coreConfig.cmake.in 
+  ${CMAKE_CURRENT_BINARY_DIR}/graph_coreConfig.cmake
+  INSTALL_DESTINATION ${EXPORT_CONFIGDIR})
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/graph_coreConfigVersion.cmake
+  VERSION 0.0.1
+  COMPATIBILITY AnyNewerVersion)
+
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/graph_coreConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/graph_coreConfigVersion.cmake
+  DESTINATION ${EXPORT_CONFIGDIR})
