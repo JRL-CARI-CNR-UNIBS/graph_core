@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/datastructure/vector.h>
 
-namespace pathplan
+namespace graph_core
 {
 
 Vector::Vector():
@@ -62,16 +62,16 @@ void Vector::nearestNeighbor(const Eigen::VectorXd& configuration,
   }
 }
 
-std::multimap<double, pathplan::NodePtr> Vector::near(const Eigen::VectorXd& configuration,
+std::multimap<double, graph_core::NodePtr> Vector::near(const Eigen::VectorXd& configuration,
                                   const double& radius)
 {
-  std::multimap<double, pathplan::NodePtr> nodes;
+  std::multimap<double, graph_core::NodePtr> nodes;
   for (const NodePtr& n: nodes_)
   {
     double dist=(n->getConfiguration()-configuration).norm();
     if (dist<radius)
     {
-      nodes.insert(std::pair<double, pathplan::NodePtr>(dist,n));
+      nodes.insert(std::pair<double, graph_core::NodePtr>(dist,n));
     }
   }
   return nodes;
@@ -84,7 +84,7 @@ std::multimap<double, NodePtr> Vector::kNearestNeighbors(const Eigen::VectorXd& 
   for (const NodePtr& n: nodes_)
   {
     double dist=(n->getConfiguration()-configuration).norm();
-    nodes.insert(std::pair<double, pathplan::NodePtr>(dist,n));
+    nodes.insert(std::pair<double, graph_core::NodePtr>(dist,n));
   }
   if (nodes.size()<k)
     return nodes;

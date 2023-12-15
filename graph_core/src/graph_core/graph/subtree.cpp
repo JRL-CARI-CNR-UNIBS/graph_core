@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/subtree.h>
 
-namespace pathplan
+namespace graph_core
 {
 Subtree::Subtree(const TreePtr& parent_tree,
                  const NodePtr& root):

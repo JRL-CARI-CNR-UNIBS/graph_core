@@ -31,7 +31,7 @@ PSEUDO CODE :
 */
 #pragma once
 #include <graph_core/graph/node.h>
-namespace pathplan
+namespace graph_core
 {
 
 

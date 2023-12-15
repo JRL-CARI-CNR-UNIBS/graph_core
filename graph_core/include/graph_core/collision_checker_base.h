@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Core>
 #include <graph_core/graph/connection.h>
 
-namespace pathplan
+namespace graph_core
 {
 
 /**

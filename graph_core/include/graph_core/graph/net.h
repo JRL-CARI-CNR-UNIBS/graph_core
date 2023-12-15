@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/graph/subtree.h>
 #include <functional>
 
-namespace pathplan
+namespace graph_core
 {
 
 /**

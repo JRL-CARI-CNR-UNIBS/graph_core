@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/rrt_star.h>
 
-namespace pathplan
+namespace graph_core
 {
 
 bool RRTStar::addStartTree(const TreePtr &start_tree, const double &max_time)

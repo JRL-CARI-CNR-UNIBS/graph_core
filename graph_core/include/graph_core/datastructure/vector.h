@@ -31,7 +31,7 @@ PSEUDO CODE :
 */
 
 #include <graph_core/datastructure/nearest_neighbors.h>
-namespace pathplan
+namespace graph_core
 {
 
 class Vector: public NearestNeighbors

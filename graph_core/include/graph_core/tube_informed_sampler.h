@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/sampler_base.h>
 #include <graph_core/graph/path.h>
 
-namespace pathplan {
+namespace graph_core {
 
 /**
  * @class TubeInformedSampler
@@ -117,7 +117,7 @@ public:
    * @param path The path.
    * @return True if the path is successfully set, false otherwise.
    */
-  bool setPath(const pathplan::PathPtr& path);
+  bool setPath(const graph_core::PathPtr& path);
   bool setPath(const std::vector<Eigen::VectorXd>& path);
   bool setPath(const std::vector<std::vector<double>>& path);
 

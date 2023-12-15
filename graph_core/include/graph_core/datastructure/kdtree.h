@@ -32,7 +32,7 @@ PSEUDO CODE :
 #pragma once
 
 #include <graph_core/datastructure/nearest_neighbors.h>
-namespace pathplan
+namespace graph_core
 {
 
 class KdTree;

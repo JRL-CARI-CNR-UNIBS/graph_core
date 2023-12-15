@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/metrics.h>
 
 
-namespace pathplan
+namespace graph_core
 {
 
 Metrics::Metrics(const cnr_logger::TraceLoggerPtr &logger):

@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/node.h>
 
-namespace pathplan
+namespace graph_core
 {
 
 Node::Node(const Eigen::VectorXd &configuration, const cnr_logger::TraceLoggerPtr &logger):

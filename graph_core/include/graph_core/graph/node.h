@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/util.h>
 #include <graph_core/graph/connection.h>
 
-namespace pathplan
+namespace graph_core
 {
 /**
  * @class Node

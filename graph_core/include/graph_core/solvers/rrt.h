@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/tree_solver.h>
 
-namespace pathplan
+namespace graph_core
 {
 class RRT;
 typedef std::shared_ptr<RRT> RRTPtr;

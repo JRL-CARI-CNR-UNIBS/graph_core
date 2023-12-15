@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/informed_sampler.h>
 
-namespace pathplan
+namespace graph_core
 {
 
 void InformedSampler::init()

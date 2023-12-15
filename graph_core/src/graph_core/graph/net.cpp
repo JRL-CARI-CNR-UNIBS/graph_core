@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/net.h>
 
-namespace pathplan
+namespace graph_core
 {
 Net::Net(const TreePtr& tree, const cnr_logger::TraceLoggerPtr& logger):
   logger_(logger)

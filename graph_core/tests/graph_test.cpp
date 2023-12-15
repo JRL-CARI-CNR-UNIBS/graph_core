@@ -13,13 +13,13 @@ int main(int argc, char **argv)
                                                                               "/home/jacobi/projects/cari_motion_planning/cari_motion_planning/logger.yaml");
 
   CNR_INFO(logger, cnr_logger::RED() << "prova");
-  pathplan::NodePtr parent = std::make_shared<pathplan::Node>(q1,logger);
-  pathplan::NodePtr child  = std::make_shared<pathplan::Node>(q2,logger);
+  graph_core::NodePtr parent = std::make_shared<graph_core::Node>(q1,logger);
+  graph_core::NodePtr child  = std::make_shared<graph_core::Node>(q2,logger);
 
   std::cout << "parent "<<*parent << std::endl;
   std::cout << "child "<<*child << std::endl;
 
-  pathplan::ConnectionPtr conn = std::make_shared<pathplan::Connection>(parent,child,logger);
+  graph_core::ConnectionPtr conn = std::make_shared<graph_core::Connection>(parent,child,logger);
   conn->add();
   std::cout << "conn "<<*conn << std::endl;
 

@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/path_local_optimizer.h>
 
-namespace pathplan
+namespace graph_core
 {
 
 PathLocalOptimizer::PathLocalOptimizer(const CollisionCheckerPtr &checker,

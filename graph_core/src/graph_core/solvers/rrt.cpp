@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/rrt.h>
 
-namespace pathplan
+namespace graph_core
 {
 
 bool RRT::addGoal(const NodePtr &goal_node, const double &max_time)

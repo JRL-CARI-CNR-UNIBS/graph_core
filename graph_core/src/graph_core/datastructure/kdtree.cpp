@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/datastructure/kdtree.h>
 
-namespace pathplan
+namespace graph_core
 {
 
 KdNode::KdNode(const NodePtr& node,
@@ -323,10 +323,10 @@ void KdTree::nearestNeighbor(const Eigen::VectorXd& configuration,
 }
 
 
-std::multimap<double, pathplan::NodePtr> KdTree::near(const Eigen::VectorXd& configuration,
+std::multimap<double, graph_core::NodePtr> KdTree::near(const Eigen::VectorXd& configuration,
                                   const double& radius)
 {
-  std::multimap<double, pathplan::NodePtr> nodes;
+  std::multimap<double, graph_core::NodePtr> nodes;
   if (not root_)
     return nodes;
 

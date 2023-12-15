@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/anytime_rrt.h>
 
-namespace pathplan
+namespace graph_core
 {
 
 void AnytimeRRT::importFromSolver(const AnytimeRRTPtr& solver)
@@ -44,7 +44,7 @@ void AnytimeRRT::importFromSolver(const AnytimeRRTPtr& solver)
 
 void AnytimeRRT::importFromSolver(const TreeSolverPtr& solver)
 {
-  if(std::dynamic_pointer_cast<pathplan::AnytimeRRT>(solver) != nullptr)
+  if(std::dynamic_pointer_cast<graph_core::AnytimeRRT>(solver) != nullptr)
   {
     AnytimeRRT::importFromSolver(std::static_pointer_cast<AnytimeRRT>(solver));
   }

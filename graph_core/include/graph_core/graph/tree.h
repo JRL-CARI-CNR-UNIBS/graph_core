@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/datastructure/vector.h>
 #include <fstream>
 
-namespace pathplan
+namespace graph_core
 {
 /**
  * @class Tree

@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/tree.h>
 
-namespace pathplan
+namespace graph_core
 {
 Tree::Tree(const NodePtr& root,
            const double &max_distance,

@@ -41,7 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define Reminder __FILE__ "(" $Line ") : Reminder: "
 
 
-namespace pathplan
+namespace graph_core
 {
 
 class Connection;

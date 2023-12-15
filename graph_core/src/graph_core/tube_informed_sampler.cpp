@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/tube_informed_sampler.h>
 
-namespace pathplan
+namespace graph_core
 {
 Eigen::VectorXd TubeInformedSampler::sample()
 {

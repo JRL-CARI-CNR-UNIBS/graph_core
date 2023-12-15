@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/connection.h>
 
-namespace pathplan
+namespace graph_core
 {
 
 Connection::Connection(const NodePtr& parent, const NodePtr& child, const cnr_logger::TraceLoggerPtr &logger, const bool is_net):

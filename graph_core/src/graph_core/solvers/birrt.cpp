@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/birrt.h>
 
-namespace pathplan
+namespace graph_core
 {
 
 bool BiRRT::config(const YAML::Node& config)
