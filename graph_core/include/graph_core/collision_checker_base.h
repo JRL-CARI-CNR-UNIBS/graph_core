@@ -90,8 +90,6 @@ public:
     verbose_ = verbose;
   }
 
-  //  virtual void setPlanningSceneMsg(const moveit_msgs::PlanningScene& msg){}
-
   /**
    * @brief Get the name of the robotic group for which collision checking is performed.
    * @return The group name.
@@ -100,12 +98,6 @@ public:
   {
     return "";
   }
-
-  //  virtual planning_scene::PlanningScenePtr getPlanningScene()
-  //  {
-  //    return nullptr;
-  //  }
-
 
   /**
    * @brief Perform collision check for a given configuration.

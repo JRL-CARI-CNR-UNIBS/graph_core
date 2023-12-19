@@ -29,6 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace graph_core
 {
+Node::Node(const Eigen::VectorXd& configuration):logger_(nullptr)
+{}
 
 Node::Node(const Eigen::VectorXd &configuration, const cnr_logger::TraceLoggerPtr &logger):
   logger_(logger)

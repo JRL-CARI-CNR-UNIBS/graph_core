@@ -259,7 +259,7 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
   bias_ = bias_-delta_;
   if(bias_<0.1) bias_ = 0.1;
 
-//  improve_sampler_ = std::make_shared<pathplan::InformedSampler>(start_node->getConfiguration(),goal_node->getConfiguration(),sampler_->getLB(),sampler_->getUB());
+//  improve_sampler_ = std::make_shared<graph_core::InformedSampler>(start_node->getConfiguration(),goal_node->getConfiguration(),sampler_->getLB(),sampler_->getUB());
   improve_sampler_->setCost(path_cost_); //(1-cost_impr_)*path_cost_
 
   for (unsigned int iter = 0; iter < max_iter; iter++)

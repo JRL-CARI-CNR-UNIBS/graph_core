@@ -164,6 +164,8 @@ public:
    *
    * @param configuration The Eigen::VectorXd representing the configuration of the node.
    */
+
+  Node(const Eigen::VectorXd& configuration);
   Node(const Eigen::VectorXd& configuration, const cnr_logger::TraceLoggerPtr& logger);
 
   /**

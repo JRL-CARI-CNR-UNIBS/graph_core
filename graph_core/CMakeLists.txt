@@ -52,9 +52,9 @@ add_library(${PROJECT_NAME} SHARED
   src/${PROJECT_NAME}/solvers/anytime_rrt.cpp
   src/${PROJECT_NAME}/solvers/path_local_optimizer.cpp
   )
-#add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME} graph_core_EXPORTED_TARGETS)
 
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME} PUBLIC
   ${YAML_CPP_LIBRARIES}
   ${cnr_logger_LIBRARIES}
   ${Boost_LIBRARIES}
@@ -62,7 +62,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 add_executable(node_connection_test tests/node_connection_test.cpp)
-target_link_libraries(node_connection_test
+target_link_libraries(node_connection_test PUBLIC
   ${cnr_logger_LIBRARIES}
   ${PROJECT_NAME}
   # log4cxx aprutil-1 apr-1
@@ -74,7 +74,7 @@ install(DIRECTORY include/${PROJECT_NAME}
 
 install(
   TARGETS ${PROJECT_NAME}
-  EXPORT graph_coreTargets
+  EXPORT ${PROJECT_NAME}Targets
   ARCHIVE DESTINATION lib#/${PROJECT_NAME}
   LIBRARY DESTINATION lib#/${PROJECT_NAME}
   RUNTIME DESTINATION bin#/${PROJECT_NAME}
