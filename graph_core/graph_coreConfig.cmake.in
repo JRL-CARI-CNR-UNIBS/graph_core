@@ -9,11 +9,24 @@ find_dependency(PkgConfig  REQUIRED)
 find_dependency(cnr_logger REQUIRED)
 find_dependency(yaml-cpp   REQUIRED)
 
+
+
 include("${graph_core_CMAKE_DIR}/graph_coreTargets.cmake")
 
 #set_and_check(graph_core_INCLUDE_DIRS "@PACKAGE_graph_core_INCLUDE_DIRS@")
 set(graph_core_FOUND TRUE)
 
-set(graph_core_LIBRARIES graph_core)
+set(graph_core_INCLUDE_DIRS 
+    "@CONF_INCLUDE_DIRS@"
+  ${EIGEN3_INCLUDE_DIRS}
+  ${cnr_logger_INCLUDE_DIRS}
+  ${YAML_CPP_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
+  ${pluginlib_INCLUDE_DIRS})
+  
+set(graph_core_LIBRARIES graph_core   
+  ${YAML_CPP_LIBRARIES}
+  ${cnr_logger_LIBRARIES}
+  ${Boost_LIBRARIES})
 
 check_required_components(graph_core)
