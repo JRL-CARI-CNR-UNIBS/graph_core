@@ -194,18 +194,18 @@ bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const do
   return false;
 }
 
-bool TreeSolver::computePath(const Eigen::VectorXd& start_conf, const Eigen::VectorXd& goal_conf, const YAML::Node& nh, PathPtr &solution, const double &max_time, const unsigned int &max_iter)
+bool TreeSolver::computePath(const Eigen::VectorXd& start_conf, const Eigen::VectorXd& goal_conf, const YAML::Node& config, PathPtr &solution, const double &max_time, const unsigned int &max_iter)
 {
   NodePtr start_node = std::make_shared<Node>(start_conf,logger_);
   NodePtr goal_node  = std::make_shared<Node>(goal_conf ,logger_);
 
-  return computePath(start_node,goal_node,nh,solution,max_time,max_iter);
+  return computePath(start_node,goal_node,config,solution,max_time,max_iter);
 }
 
-bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node, const YAML::Node& nh, PathPtr &solution, const double &max_time, const unsigned int& max_iter)
+bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node, const YAML::Node& config, PathPtr &solution, const double &max_time, const unsigned int& max_iter)
 {
   resetProblem();
-  config(nh);
+  this->config(config);
   addStart(start_node);
   addGoal(goal_node);
 

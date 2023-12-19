@@ -86,10 +86,10 @@ void InformedSampler::init()
   rot_matrix_ = computeRotationMatrix(focus_1_, focus_2_);
 
   CNR_DEBUG(logger_,"rot_matrix_:\n" << rot_matrix_);
-  CNR_DEBUG(logger_,"ellipse center" << ellipse_center_.transpose());
-  CNR_DEBUG(logger_,"focii_distance_" << focii_distance_);
-  CNR_DEBUG(logger_,"center_bound_" << center_bound_.transpose());
-  CNR_DEBUG(logger_,"bound_width_" << bound_width_.transpose());
+  CNR_DEBUG(logger_,"ellipse center: " << ellipse_center_.transpose());
+  CNR_DEBUG(logger_,"focii_distance_: " << focii_distance_);
+  CNR_DEBUG(logger_,"center_bound_: " << center_bound_.transpose());
+  CNR_DEBUG(logger_,"bound_width_: " << bound_width_.transpose());
 
   if (cost_ < std::numeric_limits<double>::infinity())
   {

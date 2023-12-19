@@ -288,14 +288,14 @@ public:
    *
    * @param start_conf The start configuration.
    * @param goal_conf The goal configuration.
-   * @param nh The YAML configuration node.
+   * @param config The YAML configuration node.
    * @param solution The output solution path.
    * @param max_time The maximum allowed time for solving.
    * @param max_iter The maximum number of iterations.
    * @return true if a solution is found, false otherwise.
    */
-  virtual bool computePath(const NodePtr &start_node, const NodePtr &goal_node, const YAML::Node& nh, PathPtr &solution, const double &max_time = std::numeric_limits<double>::infinity(), const unsigned int &max_iter = 10000);
-  virtual bool computePath(const Eigen::VectorXd& start_conf, const Eigen::VectorXd& goal_conf, const YAML::Node& nh, PathPtr &solution, const double &max_time = std::numeric_limits<double>::infinity(), const unsigned int &max_iter = 10000);
+  virtual bool computePath(const NodePtr &start_node, const NodePtr &goal_node, const YAML::Node& config, PathPtr &solution, const double &max_time = std::numeric_limits<double>::infinity(), const unsigned int &max_iter = 10000);
+  virtual bool computePath(const Eigen::VectorXd& start_conf, const Eigen::VectorXd& goal_conf, const YAML::Node& config, PathPtr &solution, const double &max_time = std::numeric_limits<double>::infinity(), const unsigned int &max_iter = 10000);
 
   /**
    * @brief Reset the path planning problem.
