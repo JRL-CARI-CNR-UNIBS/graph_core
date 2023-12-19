@@ -52,7 +52,7 @@ add_library(${PROJECT_NAME} SHARED
   src/${PROJECT_NAME}/solvers/anytime_rrt.cpp
   src/${PROJECT_NAME}/solvers/path_local_optimizer.cpp
   )
-add_dependencies(${PROJECT_NAME} graph_core_EXPORTED_TARGETS)
+# add_dependencies(${PROJECT_NAME} graph_core_EXPORTED_TARGETS)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
   ${YAML_CPP_LIBRARIES}
@@ -95,7 +95,7 @@ export(
 
 include(CMakePackageConfigHelpers)
 set(INCLUDE_DIR include)
-configure_package_config_file(${CMAKE_CURRENT_LIST_DIR}/graph_coreConfig.cmake.in 
+configure_package_config_file(${CMAKE_CURRENT_LIST_DIR}/graph_coreConfig.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/graph_coreConfig.cmake
   INSTALL_DESTINATION ${EXPORT_CONFIGDIR})
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/graph_coreConfigVersion.cmake
