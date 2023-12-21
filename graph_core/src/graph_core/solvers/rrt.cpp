@@ -37,6 +37,14 @@ bool RRT::addGoal(const NodePtr &goal_node, const double &max_time)
     CNR_ERROR(logger_,"Solver is not configured!");
     return false;
   }
+
+  if(not sampler_->inBounds(goal_node->getConfiguration()))
+  {
+    CNR_WARN(logger_,"Goal not in bounds");
+    return false;
+  }
+
+
   solved_ = false;
   goal_node_ = goal_node;
 
@@ -54,6 +62,13 @@ bool RRT::addStart(const NodePtr &start_node, const double &max_time)
     CNR_ERROR(logger_,"Solver is not configured!");
     return false;
   }
+
+  if(not sampler_->inBounds(start_node->getConfiguration()))
+  {
+    CNR_WARN(logger_,"Start not in bounds");
+    return false;
+  }
+
   solved_ = false;
   start_tree_ = std::make_shared<Tree>(start_node, max_distance_, checker_, metrics_, logger_, use_kdtree_);
 

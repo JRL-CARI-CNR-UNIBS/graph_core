@@ -31,10 +31,35 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace graph_core
 {
 
-bool BiRRT::config(const YAML::Node& config)
+bool BiRRT::importFromSolver(const BiRRTPtr& solver)
 {
-  config_ = config;
-  return RRT::config(config);
+  CNR_DEBUG(logger_,"Import from BiRRT solver");
+
+  if(this == solver.get())// Avoid self-assignment
+    return true;
+
+  if(RRT::importFromSolver(std::static_pointer_cast<RRT>(solver)))
+  {
+    goal_tree_ = solver->goal_tree_;
+    return true;
+  }
+  else
+  {
+    CNR_ERROR(logger_,"Import from solver failed");
+    return false;
+  }
+}
+
+bool BiRRT::importFromSolver(const TreeSolverPtr& solver)
+{
+  if(std::dynamic_pointer_cast<graph_core::BiRRT>(solver) != nullptr)
+  {
+    return BiRRT::importFromSolver(std::static_pointer_cast<BiRRT>(solver));
+  }
+  else
+  {
+    return TreeSolver::importFromSolver(solver);
+  }
 }
 
 bool BiRRT::addGoal(const NodePtr &goal_node, const double &max_time)

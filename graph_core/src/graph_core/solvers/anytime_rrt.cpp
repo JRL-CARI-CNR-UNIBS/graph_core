@@ -30,27 +30,48 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace graph_core
 {
 
-void AnytimeRRT::importFromSolver(const AnytimeRRTPtr& solver)
+bool AnytimeRRT::importFromSolver(const AnytimeRRTPtr& solver)
 {
   CNR_DEBUG(logger_,"Import from AnytimeRRT solver");
 
-  RRT::importFromSolver(std::static_pointer_cast<RRT>(solver));
+  //  config(solver->getConfig());
 
-  bias_            = solver->getBias();
-  delta_           = solver->getDelta();
-  new_tree_        = solver->getNewTree();
-  cost_impr_       = solver->getCostImpr();
-}
+  if(this == solver.get())// Avoid self-assignment
+    return true;
 
-void AnytimeRRT::importFromSolver(const TreeSolverPtr& solver)
-{
-  if(std::dynamic_pointer_cast<graph_core::AnytimeRRT>(solver) != nullptr)
+  if(RRT::importFromSolver(std::static_pointer_cast<RRT>(solver)))
   {
-    AnytimeRRT::importFromSolver(std::static_pointer_cast<AnytimeRRT>(solver));
+    //    bias_            = solver->getBias();
+    //    delta_           = solver->getDelta();
+    //    new_tree_        = solver->getNewTree();
+    //    cost_impr_       = solver->getCostImpr();
+
+    bias_ = solver->bias_;
+    delta_ = solver->delta_;
+    cost_impr_ = solver->cost_impr_;
+    cost2beat_ = solver->cost2beat_;
+    improve_sampler_ = solver->improve_sampler_;
+    new_tree_ = solver->new_tree_;
+    tmp_goal_node_ = solver->tmp_goal_node_;
+
+    return true;
   }
   else
   {
-    TreeSolver::importFromSolver(solver);
+    CNR_ERROR(logger_,"Import from solver failed");
+    return false;
+  }
+}
+
+bool AnytimeRRT::importFromSolver(const TreeSolverPtr& solver)
+{
+  if(std::dynamic_pointer_cast<graph_core::AnytimeRRT>(solver) != nullptr)
+  {
+    return AnytimeRRT::importFromSolver(std::static_pointer_cast<AnytimeRRT>(solver));
+  }
+  else
+  {
+    return TreeSolver::importFromSolver(solver);
   }
 }
 
@@ -225,6 +246,7 @@ bool AnytimeRRT::improve(NodePtr& start_node, PathPtr& solution, const double& c
 bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solution, const unsigned int& max_iter, const double &max_time)
 {
   double cost2beat = (1.0-cost_impr_)*path_cost_;
+  CNR_DEBUG(logger_,"cost2beat: "<<cost2beat);
   return improve(start_node, goal_node, solution, cost2beat, max_iter, max_time);
 }
 
@@ -235,7 +257,7 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
   if(max_time <=0.0)
     return false;
 
-  double utopia = (goal_node->getConfiguration() - start_node->getConfiguration()).norm(); //start and goal may be different from the previous ones
+  double utopia = metrics_->utopia(start_node->getConfiguration(),goal_node->getConfiguration()); //start and goal may be different from the previous ones
   completed_ = false;
 
   if(cost_ <= utopia_tolerance_ * utopia) //also if start and/or goal are changed, the old path is better to follow
@@ -259,7 +281,10 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
   bias_ = bias_-delta_;
   if(bias_<0.1) bias_ = 0.1;
 
-//  improve_sampler_ = std::make_shared<graph_core::InformedSampler>(start_node->getConfiguration(),goal_node->getConfiguration(),sampler_->getLB(),sampler_->getUB());
+  improve_sampler_ = std::make_shared<graph_core::InformedSampler>(start_node->getConfiguration(),
+                                                                   goal_node->getConfiguration(),
+                                                                   sampler_->getLB(),sampler_->getUB(),
+                                                                   logger_);
   improve_sampler_->setCost(path_cost_); //(1-cost_impr_)*path_cost_
 
   for (unsigned int iter = 0; iter < max_iter; iter++)

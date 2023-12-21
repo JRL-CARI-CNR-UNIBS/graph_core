@@ -43,16 +43,17 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   BiRRT(const MetricsPtr& metrics,
         const CollisionCheckerPtr& checker,
-        const InformedSamplerPtr& sampler,
+        const SamplerPtr& sampler,
         const cnr_logger::TraceLoggerPtr& logger):
     RRT(metrics, checker, sampler, logger) {}
 
-  virtual bool config(const YAML::Node& config);
+  virtual bool addGoal(const NodePtr &goal_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
+  virtual bool update(PathPtr& solution) override;
+  virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution) override;
+  virtual bool update(const NodePtr& n, PathPtr& solution) override;
 
-  virtual bool addGoal(const NodePtr &goal_node, const double &max_time = std::numeric_limits<double>::infinity());
-  virtual bool update(PathPtr& solution);
-  virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution);
-  virtual bool update(const NodePtr& n, PathPtr& solution);
+  bool importFromSolver(const BiRRTPtr& solver);
+  bool importFromSolver(const TreeSolverPtr& solver) override;
 
 };
 

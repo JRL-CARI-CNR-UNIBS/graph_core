@@ -125,11 +125,11 @@ protected:
    */
   bool use_kdtree_;
 
-//SPOSTARE IN MULTIGOAL?
+  //SPOSTARE IN MULTIGOAL?
   bool informed_;
   bool warp_;
   bool first_warp_;
-//
+  //
 
   /**
    * @brief Pointer to the goal node of the path planning problem.
@@ -159,7 +159,7 @@ protected:
   /**
    * @brief Best utopia value associated with the solver.
    */
-  double best_utopia_ = std::numeric_limits<double>::infinity();  //PERCHE BEST E NON UTOPIA E BASTA?
+  double best_utopia_ = std::numeric_limits<double>::infinity();
 
   /**
    * @brief Logger for trace logging.
@@ -218,7 +218,6 @@ public:
    */
   virtual bool config(const YAML::Node& config);
 
-
   /**
    * @brief Update is the single step of the search for a solution.
    * It is repeatedly called by the solve() function to expand the tree towards the goal.
@@ -233,8 +232,6 @@ public:
   virtual bool update(PathPtr& solution) = 0;
   virtual bool update(const NodePtr& n, PathPtr& solution){return false;}
   virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution){return false;}
-
-//  virtual bool initGoalSelector(){return false;} //SAPOSTARE IN MULTIGOAL?
 
   /**
    * @brief Solve for a path.
@@ -308,22 +305,33 @@ public:
    * @brief Set the solution for the solver.
    *
    * This function sets the solution for the solver and updates relevant information.
+   * If the solution is valid it becomes the current solution for the TreeSolver
+   *  and costs and relevant information are updated accordingly.
    *
-   * @param solution The solution path.
-   * @param solved Flag indicating whether the problem is solved.
-   * @return true if setting the solution is successful, false otherwise.
+   * The solution is considered valid if its cost is finite. In this case it marks
+   * the problem as solved. Additionally, the problem is marked as completed if
+   * the solution cost is below a certain tolerance factor multiplied by the utopia value.
+   *
+   * The solver needs to be configured before (calling config method).
+   *
+   * Note that the function determines the solution's validity without performing collision
+   * checks on the path and tree, but simply relying on the current solution cost.
+   *
+   * @param solution A shared pointer to a Path object representing the solution.
+   * @return Returns true if the solution is valid and set successfully, false otherwise.
    */
-  virtual bool setSolution(const PathPtr &solution, const bool& solved=false);
+  virtual bool setSolution(const PathPtr &solution);
 
   /**
     * @brief Import solver parameters from another solver.
     *
     * This function imports common parameters from another solver into the current solver.
+    * It copies the general configuration usign the config function and set the current solution, if available.
     *
     * @param solver The source solver.
     * @return true if the import is successful, false otherwise.
     */
-  bool importFromSolver(const TreeSolverPtr& solver);
+  virtual bool importFromSolver(const TreeSolverPtr& solver);
 
   /**
    * @brief Get the cost associated with the current solution.
@@ -453,6 +461,16 @@ public:
   }
 
   /**
+   * @brief Get the solver configuration file.
+   *
+   * @return The configuration file.
+   */
+  const YAML::Node& getConfig() const
+  {
+    return config_;
+  }
+
+  /**
    * @brief Set the sampler.
    * @param sampler The sampler to be set.
    */
@@ -506,47 +524,6 @@ public:
     return cost_;
   }
 
-//  /**
-//   * @brief Set the solved status.
-//   *
-//   * This function sets the solved status of the path planning problem.
-//   *
-//   * @param solved The status to be set.
-//   */
-//  void setSolved(const bool& solved)
-//  {
-//    solved_ = solved;
-//  }
-
-
-//  /**
-//   * @brief Set the start tree of the path planning problem.
-//   *
-//   * This virtual function sets the start tree of the path planning problem.
-//   *
-//   * @param tree The start tree to be set.
-//   */
-//  virtual void setStartTree(const TreePtr& tree)
-//  {
-//    start_tree_ = tree;
-//  }
-
-//  void setCompleted(const bool& completed)
-//  {
-//    completed_ = completed;
-//  }
-
-//  void setInit(const bool& init)
-//  {
-//    init_ = init;
-//  }
-
-//  void setPathCost(const double& path_cost)
-//  {
-//    path_cost_ = path_cost;
-//    cost_ = path_cost_+goal_cost_;
-//  }
-
   /**
    * @brief Set the collision checker for the solver.
    *
@@ -596,44 +573,6 @@ public:
   }
 
   /**
-   * @brief Set the utopia value for the solver.
-   *
-   * This virtual function sets the utopia value for the solver.
-   * The utopia value represents the minimum achievable value of the total cost of the solution.
-   * Usually this value is set by setProblem, but you can override it using this function.
-   *
-   * @param utopia The utopia value to be set.
-   */
-  virtual void setUtopia(const double& utopia)
-  {
-    best_utopia_ = utopia;
-  }
-
-  /**
-   * @brief Get the utopia value.
-   *
-   * This function returns the utopia value associated with the solver.
-   *
-   * @return The utopia value.
-   */
-  double getUtopia()
-  {
-    return best_utopia_;
-  }
-
-  /**
-   * @brief Set the goal node for the path planning problem.
-   *
-   * This virtual function sets the goal node for the path planning problem.
-   *
-   * @param goal The goal node to be set.
-   */
-  virtual void setGoal(const NodePtr& goal)
-  {
-    goal_node_=goal;
-  }
-
-  /**
    * @brief Get the goal node of the path planning problem.
    *
    * This virtual function returns the goal node of the path planning problem.
@@ -672,29 +611,17 @@ public:
   /**
    * @brief Update the cost based on the solution.
    *
-   * This function updates the cost based on the cost of the solution path and the goal cost.
+   * This function updates the path cost, the goal cost and the total cost.
    *
    * @return The updated total cost.
    */
   double updateCost()
   {
     path_cost_ = solution_->cost();
+    goal_cost_ = goal_cost_fcn_->cost(goal_node_);
     cost_ = path_cost_+goal_cost_;
-    return cost_;
-  }
 
-  /**
-   * @brief Update the cost based on the provided goal node.
-   *
-   * This function updates the cost based on the cost of the provided goal node.
-   *
-   * @param goal_node The goal node for which the cost is updated.
-   * @return The updated total cost.
-   */
-  double updateCost(const NodePtr& goal_node)  //DA TENERE? SE GOAL DIVERSO DAL GOAL DI PATH?
-  {
-    goal_cost_ = goal_cost_fcn_->cost(goal_node);
-    return updateCost();
+    return cost_;
   }
 
   friend std::ostream& operator<<(std::ostream& os, const TreeSolver& solver);
@@ -711,4 +638,4 @@ public:
  */
 inline std::ostream& operator<<(std::ostream& os, const TreeSolver& solver){solver.printMyself(os);return os;}
 
-}  // namespace pathplan
+}  // namespace graph_core

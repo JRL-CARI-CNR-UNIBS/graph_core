@@ -132,7 +132,7 @@ bool TreeSolver::setProblem(const double &max_time)
     return false;
   goal_cost_ = goal_cost_fcn_->cost(goal_node_);
 
-  best_utopia_ = goal_cost_+(goal_node_->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
+  best_utopia_ = goal_cost_+metrics_->utopia(start_tree_->getRoot()->getConfiguration(),goal_node_->getConfiguration());
   init_ = true;
 
   if (start_tree_->isInTree(goal_node_))
@@ -206,8 +206,10 @@ bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node
 {
   resetProblem();
   this->config(config);
-  addStart(start_node);
-  addGoal(goal_node);
+  if(not addStart(start_node))
+    return false;
+  if(not addGoal(goal_node))
+    return false;
 
   std::chrono::time_point<std::chrono::system_clock> tic = std::chrono::system_clock::now();
   if(!solve(solution, max_iter, max_time))
@@ -218,53 +220,110 @@ bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node
   return true;
 }
 
-bool TreeSolver::setSolution(const PathPtr &solution, const bool& solved)
+bool TreeSolver::setSolution(const PathPtr &solution)
 {
-  //  solution_->setTree(start_tree_);   //SE SOLUTION HA IL SUO TREE ED E' DIVERSO?
-  if(not solution ->getTree())
+  if (not solution)
+  {
+    CNR_WARN(logger_,"Solution is empty");
     return false;
+  }
 
-  resetProblem();
+  if(not solution ->getTree())
+  {
+    CNR_WARN(logger_,"Tree is empty");
+    return false;
+  }
 
-  solution_ = solution;
-  start_tree_ = solution_->getTree();
+  if(not config_)
+  {
+    CNR_WARN(logger_,"Solver not configured");
+    return false;
+  }
 
-  goal_node_ = solution_->getGoalNode();
-  goal_cost_ = goal_cost_fcn_->cost(goal_node_);
+  double path_cost = solution->cost();
+  double goal_cost = goal_cost_fcn_->cost(solution->getGoalNode());
+  double cost = path_cost+goal_cost;
 
-  best_utopia_ = goal_cost_+(goal_node_->getConfiguration() - start_tree_->getRoot()->getConfiguration()).norm();
+  if(cost< std::numeric_limits<double>::infinity())
+  {
+    solution_ = solution;
+    start_tree_ = solution_->getTree();
 
-  path_cost_ = solution->cost();
-  cost_ = path_cost_+goal_cost_;
+    path_cost_ = path_cost;
+    goal_node_ = solution->getGoalNode();
+    goal_cost_ = goal_cost;
+    cost_ = cost;
 
-  sampler_->setCost(path_cost_);
+    best_utopia_ = goal_cost_+metrics_->utopia(start_tree_->getRoot()->getConfiguration(),goal_node_->getConfiguration());
 
-  init_ = true;
-  solved_=solved;
+    solved_ = true;
+    completed_ = (cost_ <= (utopia_tolerance_ * best_utopia_));
 
-  return true;
+    sampler_->setCost(path_cost_);
+
+    init_ = true;
+
+    CNR_DEBUG(logger_,"Solution set. Solved %d, completed %d, cost %f, utopia %f",solved_,completed_,cost_,best_utopia_*utopia_tolerance_);
+    return true;
+  }
+  else
+  {
+    CNR_WARN(logger_,"Invalid solution, not set in the solver");
+    return false;
+  }
 }
 
 bool TreeSolver::importFromSolver(const TreeSolverPtr& solver)
 {
   CNR_DEBUG(logger_,"Import from Tree solver");
 
-  config(config_);
+  if(this == solver.get())// Avoid self-assignment
+    return true;
 
-  solved_        = solver->solved();
-  completed_     = solver->completed();
-  init_          = solver->init();
-  configured_    = solver->configured();
-  dof_           = solver->dof();
-  goal_cost_fcn_ = solver->getGoalCostFunction();
-  path_cost_     = solver->getPathCost();
-  goal_cost_     = solver->getGoalCost();
-  cost_          = solver->getCost();
-  start_tree_    = solver->getStartTree();
-  solution_      = solver->getSolution();
-  max_distance_  = solver->getMaxDistance();
-  best_utopia_   = solver->getUtopia();
-  setGoal(solver->getGoal());
+  if(not config(solver->getConfig()))
+  {
+    CNR_ERROR(logger_,"Cannot import from the solver because the configuration failed");
+    return false;
+  }
+
+    goal_cost_fcn_ = solver->goal_cost_fcn_;
+    solved_ = solver->solved_;
+    completed_ = solver->completed_;
+    init_ = solver->init_;
+    configured_ = solver->configured_;
+    start_tree_ = solver->start_tree_;
+    dof_ = solver->dof_;
+    config_ = solver->config_;
+    max_distance_ = solver->max_distance_;
+    extend_ = solver->extend_;
+    utopia_tolerance_ = solver->utopia_tolerance_;
+    use_kdtree_ = solver->use_kdtree_;
+    informed_ = solver->informed_;
+    warp_ = solver->warp_;
+    first_warp_ = solver->first_warp_;
+    goal_node_ = solver->goal_node_;
+    path_cost_ = solver->path_cost_;
+    goal_cost_ = solver->goal_cost_;
+    cost_ = solver->cost_;
+    solution_ = solver->solution_;
+    best_utopia_ = solver->best_utopia_;
+
+//  GoalCostFunctionPtr goal_cost_fcn = goal_cost_fcn_;
+//  goal_cost_fcn_ = solver->getGoalCostFunction();
+
+//  if(solver->getSolution())
+//  {
+//    if(not setSolution(solver->getSolution()))//updates solution and costs
+//    {
+//      goal_cost_fcn_ = goal_cost_fcn; //restore previous fcn
+
+//      CNR_ERROR(logger_,"Cannot import from the solver because setting the current solution failed");
+//      return false;
+//    }
+//  }
+
+//  //Parameters which may be different from those obtained from config or setSolution
+//  max_distance_  = solver->getMaxDistance();
 
   return true;
 }
@@ -283,13 +342,13 @@ void TreeSolver::printMyself(std::ostream &os) const
   os << "\nSolved: " << solved();
   os << "\nCompleted: " << completed();
 
-if(solved())
-{
-  os << "Cost: " << cost_;
-  os << ". Path cost: " << path_cost_;
-  os << ". Goal cost: " << goal_cost_;
-  os << ".\n Path: " << *getSolution();
-}
+  if(solved())
+  {
+    os << "Cost: " << cost_;
+    os << ". Path cost: " << path_cost_;
+    os << ". Goal cost: " << goal_cost_;
+    os << ".\n Path: " << *getSolution();
+  }
 
 }
 
