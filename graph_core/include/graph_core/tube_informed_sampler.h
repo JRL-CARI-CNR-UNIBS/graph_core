@@ -177,4 +177,4 @@ public:
 
 typedef std::shared_ptr<TubeInformedSampler> TubeInformedSamplerPtr;
 
-}    // namespace pathplan
+}    // namespace graph_core

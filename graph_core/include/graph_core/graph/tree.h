@@ -73,7 +73,7 @@ protected:
   /**
    * @brief Maximum number of nodes allowed in the tree.
    */
-  unsigned int maximum_nodes_ = 5000;
+  unsigned int maximum_nodes_ = std::numeric_limits<double>::infinity();
 
   /**
    * @brief Pointer to the metrics used for cost computation.

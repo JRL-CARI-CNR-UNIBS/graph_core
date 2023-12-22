@@ -201,4 +201,4 @@ public:
   virtual SamplerPtr clone() = 0;
 };
 
-}  // namespace pathplan
+}  // namespace graph_core

@@ -268,4 +268,4 @@ public:
 
 };
 
-}  // namespace pathplan
+}  // namespace graph_core

@@ -68,7 +68,7 @@ protected:
   /**
    * @brief Pointer to the goal cost function used to evaluate the cost associated with reaching the goal.
    */
-  GoalCostFunctionPtr goal_cost_fcn_;  //SPOSTARE IN MULTIGOAL?
+  GoalCostFunctionPtr goal_cost_fcn_;
 
   /**
    * @brief Flag indicating  whether the path planning task is solved, i.e., a solution has been found.
@@ -159,7 +159,7 @@ protected:
   /**
    * @brief Best utopia value associated with the solver.
    */
-  double best_utopia_ = std::numeric_limits<double>::infinity();  //PERCHE BEST E NON UTOPIA E BASTA?
+  double best_utopia_ = std::numeric_limits<double>::infinity();
 
   /**
    * @brief Logger for trace logging.
@@ -683,23 +683,11 @@ public:
     return cost_;
   }
 
-  /**
-   * @brief Update the cost based on the provided goal node.
-   *
-   * This function updates the cost based on the cost of the provided goal node.
-   *
-   * @param goal_node The goal node for which the cost is updated.
-   * @return The updated total cost.
-   */
-  double updateCost(const NodePtr& goal_node)  //DA TENERE? SE GOAL DIVERSO DAL GOAL DI PATH?
-  {
-    goal_cost_ = goal_cost_fcn_->cost(goal_node);
-    return updateCost();
-  }
 
   friend std::ostream& operator<<(std::ostream& os, const TreeSolver& solver);
 
 };
+
 /**
  * @brief Overloaded stream insertion operator for the TreeSolver class.
  *
@@ -711,4 +699,4 @@ public:
  */
 inline std::ostream& operator<<(std::ostream& os, const TreeSolver& solver){solver.printMyself(os);return os;}
 
-}  // namespace pathplan
+}  // namespace graph_core
