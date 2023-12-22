@@ -126,8 +126,8 @@ public:
                const unsigned int& max_iter = 100,
                const double &max_time = std::numeric_limits<double>::infinity());
 
-  void importFromSolver(const AnytimeRRTPtr& solver);
-  void importFromSolver(const TreeSolverPtr& solver);
+  bool importFromSolver(const AnytimeRRTPtr& solver);
+  bool importFromSolver(const TreeSolverPtr& solver) override;
 
   virtual bool solve(PathPtr& solution,
                      const unsigned int& max_iter = 100,

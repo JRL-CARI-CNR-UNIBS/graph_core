@@ -77,8 +77,6 @@ install(
   RUNTIME DESTINATION bin#/${PROJECT_NAME}
 )
 
-# set(CMAKE_INSTALL_PREFIX "/home/riemann/test_cmake")
-
 set(EXPORT_CONFIGDIR "share/${PROJECT_NAME}/cmake")
 
 install(EXPORT graph_coreTargets

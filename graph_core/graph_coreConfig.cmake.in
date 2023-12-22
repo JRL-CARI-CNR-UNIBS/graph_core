@@ -9,11 +9,8 @@ find_dependency(PkgConfig  REQUIRED)
 find_dependency(cnr_logger REQUIRED)
 find_dependency(yaml-cpp   REQUIRED)
 
-
-
 include("${graph_core_CMAKE_DIR}/graph_coreTargets.cmake")
 
-#set_and_check(graph_core_INCLUDE_DIRS "@PACKAGE_graph_core_INCLUDE_DIRS@")
 set(graph_core_FOUND TRUE)
 
 set(graph_core_INCLUDE_DIRS 

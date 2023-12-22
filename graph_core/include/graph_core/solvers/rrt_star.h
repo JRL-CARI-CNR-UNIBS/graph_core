@@ -43,7 +43,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   RRTStar(const MetricsPtr& metrics,
           const CollisionCheckerPtr& checker,
-          const InformedSamplerPtr& sampler,
+          const SamplerPtr& sampler,
           const cnr_logger::TraceLoggerPtr& logger):
     RRT(metrics, checker, sampler, logger) {}
 
@@ -53,6 +53,14 @@ public:
   virtual bool solve(PathPtr &solution, const unsigned int& max_iter=100, const double &max_time = std::numeric_limits<double>::infinity()) override;
   virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution) override;
   virtual bool update(const NodePtr& n, PathPtr& solution) override;
+
+  double getRewireRadius()
+  {
+    return r_rewire_;
+  }
+
+  bool importFromSolver(const RRTStarPtr& solver);
+  bool importFromSolver(const TreeSolverPtr& solver) override;
 
 };
 }

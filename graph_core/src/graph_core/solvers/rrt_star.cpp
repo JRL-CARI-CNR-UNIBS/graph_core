@@ -54,6 +54,37 @@ bool RRTStar::config(const YAML::Node &config)
   return true;
 }
 
+bool RRTStar::importFromSolver(const RRTStarPtr& solver)
+{
+  CNR_DEBUG(logger_,"Import from RRTStar solver");
+
+  if(this == solver.get())// Avoid self-assignment
+    return true;
+
+  if(RRT::importFromSolver(std::static_pointer_cast<RRT>(solver)))
+  {
+    r_rewire_ = solver->r_rewire_;
+    return true;
+  }
+  else
+  {
+    CNR_ERROR(logger_,"Import from solver failed");
+    return false;
+  }
+}
+
+bool RRTStar::importFromSolver(const TreeSolverPtr& solver)
+{
+  if(std::dynamic_pointer_cast<graph_core::RRTStar>(solver) != nullptr)
+  {
+    return RRTStar::importFromSolver(std::static_pointer_cast<RRTStar>(solver));
+  }
+  else
+  {
+    return TreeSolver::importFromSolver(solver);
+  }
+}
+
 bool RRTStar::update(PathPtr& solution)
 {
   CNR_DEBUG(logger_,"RRT*::update");
@@ -141,18 +172,21 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
   CNR_DEBUG(logger_,"RRT*::update");
 
   if (!init_)
+  {
+    CNR_DEBUG(logger_,"RRT* -> not init");
+
     return false;
+  }
   if (cost_ <= utopia_tolerance_ * best_utopia_)
   {
-    completed_=true;
+    CNR_DEBUG(logger_,"RRT*:: Solution already optimal");
+
     solution=solution_;
+    completed_=true;
     return true;
   }
   
-  double old_path_cost = solution_->cost();
-  bool improved = start_tree_->rewireToNode(n, r_rewire_);
-
-  if(solution_ == nullptr)
+  if(not solved_)
   {
     CNR_DEBUG(logger_,"RRT* -> solving");
     NodePtr new_node;
@@ -212,17 +246,27 @@ bool RRTStar::solve(PathPtr &solution, const unsigned int& max_iter, const doubl
 {
   std::chrono::time_point<std::chrono::system_clock> tic = std::chrono::system_clock::now();
   bool solved = false;
+  unsigned int n_iter = 0;
   for (unsigned int iter = 0; iter < max_iter; iter++)
   {
+    n_iter++;
     if(update(solution))
     {
-      CNR_DEBUG(logger_,"Improved or solved in %u iterations", iter);
-      solved_ = true;  //if solution_ was set externally, solved_ was altready true -> use solved to know if solve() completed successfully
+      CNR_DEBUG(logger_,"Improved or solved in %u iterations", n_iter);
+      solved_ = true;
       solved = true;
+
+      n_iter = 0;
+
+      if(completed_)
+        break;
     }
     if(std::chrono::duration<double>(std::chrono::system_clock::now()-tic).count()>=0.98*max_time)
       break;
   }
+
+  CNR_DEBUG(logger_,"Solved: %d. Completed: %d. Cost: %f. Utopia: %f", solved_,completed_,cost_,best_utopia_*utopia_tolerance_);
+
   return solved;
 }
 
