@@ -937,51 +937,59 @@ public:
   bool getUseKdTree(){return use_kdtree_;}
 
   /**
-   * @brief Converts the tree to an XmlRpcValue.
+   * @brief Convert the Tree to a YAML::Node.
    *
-   * This function creates an XmlRpcValue representing the tree. It includes information about
-   * the nodes and connections in the tree.
+   * This function converts the Tree to a YAML::Node. It represents the Tree's nodes and connections in YAML format.
+   * Nodes configuration is written in the yaml under the field 'nodes'.
+   * Connections are written under the field 'connections' as a sequence containing the indices in the nodes in the field 'nodes'.
    *
-   * @return Returns an XmlRpcValue representing the tree.
+   * @return A YAML::Node representing the Tree.
    */
-  #pragma message(Reminder "Change to YAML")
-  //XmlRpc::XmlRpcValue toXmlRpcValue() const;
+  YAML::Node toYAML() const;
 
   /**
-   * @brief Writes the tree to an XML file.
+   * @brief Write the Tree to a YAML file.
    *
-   * This function converts the tree to an XmlRpcValue and writes it to an XML file.
+   * This function writes the YAML representation of the Tree to a file with the specified name.
    *
-   * @param file_name The name of the XML file to write.
+   * @param file_name The name of the file to write the YAML representation to.
    */
-  #pragma message(Reminder "Change to YAML")
-  //void toXmlFile(const std::string& file_name) const;
+  void toYAML(const std::string& file_name) const;
 
+  /**
+   * @brief Output stream operator for a Tree.
+   *
+   * This operator allows streaming a textual representation of the Tree to an output stream.
+   * It prints the number of nodes in the Tree and the information about the root node.
+   *
+   * @param os The output stream where the Tree information will be printed.
+   * @param tree The Tree to be printed.
+   * @return A reference to the output stream for chaining.
+   */
   friend std::ostream& operator<<(std::ostream& os, const Tree& tree);
 
   /**
-   * @brief Creates a TreePtr from an XmlRpcValue.
+   * @brief Create a Tree from a YAML::Node.
    *
-   * This function creates a TreePtr from the provided XmlRpcValue, assuming the XmlRpcValue
-   * represents a tree structure with 'nodes' and 'connections' fields. It extracts the nodes
-   * and connections from the XmlRpcValue and constructs a Tree.
+   * This function constructs a Tree from a YAML::Node, assuming the YAML node contains the required fields:
+   * 'nodes' representing a sequence of Nodes and 'connections' defining connections by specifying the indices
+   * of nodes in the 'nodes' sequence to connect.
    *
-   * @param x The XmlRpc::XmlRpcValue to be used for creating the Tree.
-   * @param max_distance The maximum distance for connecting nodes in the tree.
-   * @param checker The CollisionCheckerPtr used for collision checking.
-   * @param metrics The MetricsPtr used for evaluating connection costs.
-   * @param lazy If true, collision checking is skipped during the tree construction.
-   * @return Returns a TreePtr created from the XmlRpcValue. Returns nullptr if the provided XmlRpcValue
-   * does not have the required 'nodes' and 'connections' fields, or if there are issues with the tree structure.
-   *
-   * @note If lazy is false and the root node is in collision, nullptr is returned.
+   * @param yaml The YAML::Node containing 'nodes' and 'connections' fields.
+   * @param max_distance The maximum distance for the Tree.
+   * @param checker The CollisionCheckerPtr for collision checking.
+   * @param metrics The MetricsPtr for computing connection costs.
+   * @param logger The TraceLoggerPtr for logging error messages.
+   * @param lazy If true, collision checking is deferred until necessary.
+   * @return A TreePtr constructed from the YAML::Node. If an error occurs during construction, returns nullptr.
    */
-  #pragma message(Reminder "Change to YAML")
-//  static TreePtr fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
-//                                 const double& max_distance,
-//                                 const CollisionCheckerPtr& checker,
-//                                 const MetricsPtr& metrics,
-//                                 const bool& lazy=false);
+  static TreePtr fromYAML(const YAML::Node& yaml,
+                          const double& max_distance,
+                          const CollisionCheckerPtr& checker,
+                          const MetricsPtr& metrics,
+                          const cnr_logger::TraceLoggerPtr& logger,
+                          const bool use_kdtree,
+                          const bool& lazy=false);
 
 };
 

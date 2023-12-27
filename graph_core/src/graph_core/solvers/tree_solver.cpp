@@ -286,44 +286,27 @@ bool TreeSolver::importFromSolver(const TreeSolverPtr& solver)
     return false;
   }
 
-    goal_cost_fcn_ = solver->goal_cost_fcn_;
-    solved_ = solver->solved_;
-    completed_ = solver->completed_;
-    init_ = solver->init_;
-    configured_ = solver->configured_;
-    start_tree_ = solver->start_tree_;
-    dof_ = solver->dof_;
-    config_ = solver->config_;
-    max_distance_ = solver->max_distance_;
-    extend_ = solver->extend_;
-    utopia_tolerance_ = solver->utopia_tolerance_;
-    use_kdtree_ = solver->use_kdtree_;
-    informed_ = solver->informed_;
-    warp_ = solver->warp_;
-    first_warp_ = solver->first_warp_;
-    goal_node_ = solver->goal_node_;
-    path_cost_ = solver->path_cost_;
-    goal_cost_ = solver->goal_cost_;
-    cost_ = solver->cost_;
-    solution_ = solver->solution_;
-    best_utopia_ = solver->best_utopia_;
-
-//  GoalCostFunctionPtr goal_cost_fcn = goal_cost_fcn_;
-//  goal_cost_fcn_ = solver->getGoalCostFunction();
-
-//  if(solver->getSolution())
-//  {
-//    if(not setSolution(solver->getSolution()))//updates solution and costs
-//    {
-//      goal_cost_fcn_ = goal_cost_fcn; //restore previous fcn
-
-//      CNR_ERROR(logger_,"Cannot import from the solver because setting the current solution failed");
-//      return false;
-//    }
-//  }
-
-//  //Parameters which may be different from those obtained from config or setSolution
-//  max_distance_  = solver->getMaxDistance();
+  goal_cost_fcn_ = solver->goal_cost_fcn_;
+  solved_ = solver->solved_;
+  completed_ = solver->completed_;
+  init_ = solver->init_;
+  configured_ = solver->configured_;
+  start_tree_ = solver->start_tree_;
+  dof_ = solver->dof_;
+  config_ = solver->config_;
+  max_distance_ = solver->max_distance_;
+  extend_ = solver->extend_;
+  utopia_tolerance_ = solver->utopia_tolerance_;
+  use_kdtree_ = solver->use_kdtree_;
+  informed_ = solver->informed_;
+  warp_ = solver->warp_;
+  first_warp_ = solver->first_warp_;
+  goal_node_ = solver->goal_node_;
+  path_cost_ = solver->path_cost_;
+  goal_cost_ = solver->goal_cost_;
+  cost_ = solver->cost_;
+  solution_ = solver->solution_;
+  best_utopia_ = solver->best_utopia_;
 
   return true;
 }

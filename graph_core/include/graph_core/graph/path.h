@@ -165,7 +165,10 @@ public:
    * @param checker The CollisionCheckerPtr used for checking collision along the path.
    * @param logger The cnr_logger::TraceLoggerPtr logger for logging operations.
    */
-  Path(std::vector<NodePtr> nodes, const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const cnr_logger::TraceLoggerPtr& logger);
+  Path(std::vector<NodePtr> nodes,
+       const MetricsPtr& metrics,
+       const CollisionCheckerPtr& checker,
+       const cnr_logger::TraceLoggerPtr& logger);
 
   /**
    * @brief Get the cost of the path.
@@ -756,15 +759,28 @@ public:
   void flip();
 
   /**
-   * @brief Converts the path to an XmlRpcValue.
+   * @brief Convert the Path to a YAML::Node.
    *
-   * This function converts the path to an XmlRpcValue. The order of nodes in the resulting XmlRpcValue can be reversed if specified.
+   * This function converts the Path to a YAML::Node.
+   * It creates a YAML sequence with each element representing a connection in the path.
    *
-   * @param reverse If true, the order of nodes in the resulting XmlRpcValue is reversed.
-   * @return XmlRpcValue representing the path.
+   * @param reverse If true, the path connections will be listed in reverse order.
+   * @return A YAML::Node representing the Path.
    */
-  #pragma message(Reminder "Change to YAML")
-//  XmlRpc::XmlRpcValue toXmlRpcValue(bool reverse=false) const;
+  YAML::Node toYAML(bool reverse=false) const;
+
+  /**
+   * @brief Create a Path from a YAML::Node.
+   *
+   * This function creates a Path from a YAML::Node.
+   * It expects the YAML node to be a sequence, where each element represents a Node in the path.
+   *
+   * @param yaml The YAML::Node containing the sequence of Nodes.
+   * @param logger The TraceLoggerPtr for logging error messages.
+   * @return A Path constructed from the YAML::Node. If an error occurs during construction, returns an empty Path.
+   */
+  static PathPtr fromYAML(const YAML::Node& yaml, const MetricsPtr& metrics,
+                          const CollisionCheckerPtr& checker, const cnr_logger::TraceLoggerPtr& logger);
 
   friend std::ostream& operator<<(std::ostream& os, const Path& path);
 };

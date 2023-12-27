@@ -363,11 +363,6 @@ public:
    */
   std::vector<NodePtr> getNetChildren() const;
 
-  //  const std::vector<NodePtr> getChildrenConst() const;
-  //  const std::vector<NodePtr> getParentsConst() const;
-  //  const std::vector<NodePtr> getNetParentsConst() const;
-  //  const std::vector<NodePtr> getNetChildrenConst() const;
-
   /**
    * @brief Retrieves the parent connections associated with the node.
    *
@@ -407,30 +402,6 @@ public:
    * @return Returns a vector of shared pointers to the net child connections associated with the node.
    */
   std::vector<ConnectionPtr> getNetChildConnections() const;
-
-  //  /**
-  //   * @brief getParentConnectionsConst returns the vector of parent connections of the node
-  //   * @return a const vector of parent connections of the node
-  //   */
-  //  const std::vector<ConnectionPtr>& getParentConnectionsConst() const;
-
-  //  /**
-  //   * @brief getNetParentConnectionsConst returns the vector of net parent connections of the node
-  //   * @return a const vector of net parent connections of the node
-  //   */
-  //  const std::vector<ConnectionPtr>& getNetParentConnectionsConst() const;
-
-  //  /**
-  //   * @brief getChildConnectionsConst returns the vector of child connections of the node
-  //   * @return a const vector of child connections of the node
-  //   */
-  //  const std::vector<ConnectionPtr>& getChildConnectionsConst() const;
-
-  //  /**
-  //   * @brief getNetChildConnectionsConst returns the vector of net child connections of the node
-  //   * @return a const vector of net child connections of the node
-  //   */
-  //  const std::vector<ConnectionPtr>& getNetChildConnectionsConst() const;
 
   /**
    * @brief Disconnects all child connections of the node.
@@ -559,27 +530,28 @@ public:
   ~Node();
 
   /**
-   * @brief Converts the Node's configuration to an XmlRpcValue.
+   *@brief Convert the Node's configuration to a YAML::Node.
    *
-   * This function converts the configuration vector of the Node to an XmlRpcValue.
+   * This function converts the configuration of the Node to a YAML::Node.
+   * It creates a YAML sequence with each element representing a configuration value.
    *
-   * @return Returns an XmlRpc::XmlRpcValue representing the configuration of the Node.
+   * @return A YAML::Node representing the Node's configuration.
    */
-  //XmlRpc::XmlRpcValue toXmlRpcValue() const;
+  YAML::Node toYAML() const;
 
   /**
-   * @brief Creates a NodePtr from an XmlRpcValue.
+   * @brief Create a NodePtr from a YAML::Node.
    *
-   * This function creates a NodePtr from the provided XmlRpcValue, assuming the XmlRpcValue
-   * represents an array. It extracts the values from the array and constructs a Node with
-   * the configuration vector.
+   * This static function creates a NodePtr (shared pointer to a Node) from a YAML::Node.
+   * It expects the YAML node to be a sequence, where each element represents a configuration value.
+   * The function extracts the configuration values and constructs a Node with the specified configuration.
    *
-   * @param x The XmlRpc::XmlRpcValue to be used for creating the Node.
-   * @return Returns a NodePtr created from the XmlRpcValue.
-   *
-   * @note If the XmlRpcValue is not an array, a ROS_ERROR is logged, and NULL is returned.
+   * @param yaml The YAML::Node containing the sequence of configuration values.
+   * @param logger The TraceLoggerPtr for logging error messages.
+   * @return A shared pointer to the constructed Node.
+   *  If the YAML::Node is not a sequence or if an error occurs during construction, returns nullptr.
    */
-  //static NodePtr fromXmlRpcValue(const XmlRpc::XmlRpcValue& x);
+  static NodePtr fromYAML(const YAML::Node& yaml, const cnr_logger::TraceLoggerPtr& logger);
 
   friend std::ostream& operator<<(std::ostream& os, const Node& node);
 };

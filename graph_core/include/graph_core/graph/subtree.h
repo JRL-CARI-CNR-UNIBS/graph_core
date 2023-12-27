@@ -313,6 +313,4 @@ public:
                                   const bool node_check = false);
 
 };
-
-
 }

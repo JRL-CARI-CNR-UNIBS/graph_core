@@ -34,18 +34,11 @@ bool AnytimeRRT::importFromSolver(const AnytimeRRTPtr& solver)
 {
   CNR_DEBUG(logger_,"Import from AnytimeRRT solver");
 
-  //  config(solver->getConfig());
-
   if(this == solver.get())// Avoid self-assignment
     return true;
 
   if(RRT::importFromSolver(std::static_pointer_cast<RRT>(solver)))
   {
-    //    bias_            = solver->getBias();
-    //    delta_           = solver->getDelta();
-    //    new_tree_        = solver->getNewTree();
-    //    cost_impr_       = solver->getCostImpr();
-
     bias_ = solver->bias_;
     delta_ = solver->delta_;
     cost_impr_ = solver->cost_impr_;

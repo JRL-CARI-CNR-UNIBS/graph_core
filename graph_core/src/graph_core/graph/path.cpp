@@ -1357,7 +1357,7 @@ bool Path::simplify(const double& distance)
       }
     }
     if (checker_->checkConnection(connections_.at(ic - 1)->getParent()->getConfiguration(),
-                            connections_.at(ic)->getChild()->getConfiguration()))
+                                  connections_.at(ic)->getChild()->getConfiguration()))
     {
       simplified = true;
       double cost = metrics_->cost(connections_.at(ic - 1)->getParent(),
@@ -1545,27 +1545,51 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_fro
   return isValidFromConf(conf,conn_idx,pos_closest_obs_from_goal,this_checker);
 }
 
-//XmlRpc::XmlRpcValue Path::toXmlRpcValue(bool reverse) const
-//{
-//  XmlRpc::XmlRpcValue x;
-//  if (connections_.size()==0)
-//    return x;
-//  x.setSize(connections_.size()+1);
+YAML::Node Path::toYAML(bool reverse) const
+{
+  YAML::Node yaml;
+  if (connections_.empty())
+    return yaml;
 
-//  if (not reverse)
-//  {
-//    x[0]=connections_.at(0)->getParent()->toXmlRpcValue();
-//    for (size_t idx=0;idx<connections_.size();idx++)
-//      x[idx+1]=connections_.at(idx)->getChild()->toXmlRpcValue();
-//  }
-//  else
-//  {
-//    x[0]=goal_node_->toXmlRpcValue();
-//    for (size_t idx=0;idx<connections_.size();idx++)
-//      x[idx+1]=connections_.at(connections_.size()-idx-1)->getParent()->toXmlRpcValue();
-//  }
-//  return x;
-//}
+  yaml.push_back(reverse ? goal_node_->toYAML() : start_node_->toYAML());
+
+  for (size_t idx = 0; idx < connections_.size(); idx++)
+  {
+    yaml.push_back(reverse ? connections_.at(connections_.size() - idx - 1)->getParent()->toYAML()
+                           : connections_.at(idx)->getChild()->toYAML());
+  }
+
+  return yaml;
+}
+
+PathPtr Path::fromYAML(const YAML::Node& yaml, const MetricsPtr& metrics,
+                              const CollisionCheckerPtr& checker, const cnr_logger::TraceLoggerPtr& logger)
+{
+  if (!yaml.IsSequence())
+  {
+    CNR_ERROR(logger, "Cannot load a path from YAML::Node which does not contain a sequence");
+    return nullptr;
+  }
+
+  std::vector<NodePtr> nodes;
+
+  for (const YAML::Node& node_yaml : yaml)
+  {
+    NodePtr node = Node::fromYAML(node_yaml, logger);
+    if(!node)
+    {
+      // Error creating a Node from YAML
+      CNR_ERROR(logger, "Error creating a Node from YAML");
+      return nullptr;
+    }
+
+    nodes.push_back(node);
+  }
+
+  CNR_WARN(logger,"Path created from yaml but no tree is available, remember to add it!");
+
+  return std::make_shared<Path>(nodes,metrics,checker,logger);
+}
 
 void Path::flip()
 {

@@ -1186,49 +1186,58 @@ void Tree::getLeaves(std::vector<NodePtr>& leaves)
   });
 }
 
-//XmlRpc::XmlRpcValue Tree::toXmlRpcValue() const
-//{
-//  XmlRpc::XmlRpcValue tree;
-//  XmlRpc::XmlRpcValue nodes;
-//  XmlRpc::XmlRpcValue connections;
-//  int iconn=0;
+YAML::Node Tree::toYAML() const
+{
+    YAML::Node tree;
+    YAML::Node nodes;
+    YAML::Node connections;
 
-//  std::vector<NodePtr> nodes_vector=nodes_->getNodes();
-//  for (size_t inode=0;inode<nodes_vector.size();inode++)
-//  {
-//    const NodePtr& n=nodes_vector.at(inode);
-//    nodes[inode]=n->toXmlRpcValue();
-//    std::vector<NodePtr> dest;
-//      dest=n->getChildren();
+    std::vector<NodePtr> nodes_vector = nodes_->getNodes();
+    for (std::size_t inode = 0; inode < nodes_vector.size(); ++inode)
+    {
+        const NodePtr& n = nodes_vector.at(inode);
+        nodes.push_back(n->toYAML());
 
-//    for (size_t idest=0;idest<dest.size();idest++)
-//    {
-//      for (size_t in2=0;in2<nodes_vector.size();in2++)
-//      {
-//        if (nodes_vector.at(in2)==dest.at(idest))
-//        {
-//          XmlRpc::XmlRpcValue connection;
-//          connection[0]=(int)inode;
-//          connection[1]=(int)in2;
-//          connections[iconn++]=connection;
-//          break;
-//        }
-//      }
-//    }
-//  }
-//  tree["nodes"]=nodes;
-//  tree["connections"]=connections;
-//  return tree;
-//}
+        std::vector<NodePtr> children = n->getChildren();
+
+        for (std::size_t ichild = 0; ichild < children.size(); ++ichild)
+        {
+            for (std::size_t inodes = 0; inodes < nodes_vector.size(); ++inodes)
+            {
+                if (nodes_vector.at(inodes) == children.at(ichild))
+                {
+                    YAML::Node connection;
+                    connection.SetStyle(YAML::EmitterStyle::Flow); // Set the style to flow style for a more compact representation
+
+                    connection.push_back(static_cast<int>(inode));
+                    connection.push_back(static_cast<int>(inodes));
+                    connections.push_back(connection);
+                    break;
+                }
+            }
+        }
+    }
+
+    tree["nodes"] = nodes;
+    tree["connections"] = connections;
+    return tree;
+}
 
 
-//void Tree::toXmlFile(const std::string& file_name) const
-//{
-//  std::string xml=toXmlRpcValue().toXml();
-//  std::ofstream out(file_name);
-//  out << xml;
-//  out.close();
-//}
+void Tree::toYAML(const std::string& file_name) const
+{
+  std::ofstream out(file_name);
+  if(out.is_open())
+  {
+      out << toYAML();
+      out.close();
+  }
+  else
+  {
+      // Handle error opening the file
+      CNR_ERROR(logger_, "Error opening file: " << file_name);
+  }
+}
 
 std::ostream& operator<<(std::ostream& os, const Tree& tree)
 {
@@ -1237,79 +1246,98 @@ std::ostream& operator<<(std::ostream& os, const Tree& tree)
   return os;
 }
 
-//TreePtr Tree::fromXmlRpcValue(const XmlRpc::XmlRpcValue& x,
-//                              const double& max_distance,
-//                              const CollisionCheckerPtr& checker,
-//                              const MetricsPtr& metrics,
-//                              const bool &lazy)
-//{
-//  if (not x.hasMember("nodes"))
-//  {
-//    ROS_ERROR("loading from XmlRpcValue a tree without 'nodes' field");
-//    return nullptr;
-//  }
-//  if (not x.hasMember("connections"))
-//  {
-//    ROS_ERROR("loading from XmlRpcValue a tree without 'connections' field");
-//    return nullptr;
-//  }
+TreePtr Tree::fromYAML(const YAML::Node& yaml,
+                        const double& max_distance,
+                        const CollisionCheckerPtr& checker,
+                        const MetricsPtr& metrics,
+                        const cnr_logger::TraceLoggerPtr& logger,
+                        const bool use_kdtree,
+                        const bool& lazy)
+{
+  if (!yaml["nodes"])
+  {
+    CNR_ERROR(logger, "Cannot load a tree from a YAML without 'nodes' field");
+    return nullptr;
+  }
 
-//  XmlRpc::XmlRpcValue nodes=x["nodes"];
-//  XmlRpc::XmlRpcValue connections=x["connections"];
-//  if (nodes.getType()!= XmlRpc::XmlRpcValue::Type::TypeArray)
-//  {
-//    ROS_ERROR("loading from XmlRpcValue a tree where 'nodes' is not an array");
-//    return nullptr;
-//  }
-//  if (connections.getType()!= XmlRpc::XmlRpcValue::Type::TypeArray)
-//  {
-//    ROS_ERROR("loading from XmlRpcValue a tree where 'connections' is not an array");
-//    return nullptr;
-//  }
-//  NodePtr root=Node::fromXmlRpcValue(nodes[0]);
-//  if (not lazy)
-//  {
-//    if (not checker->check(root->getConfiguration()))
-//    {
-//      ROS_DEBUG("root is in collision");
-//      return nullptr;
-//    }
-//  }
-//  assert(root);
+  if (!yaml["connections"])
+  {
+    CNR_ERROR(logger, "Cannot load a tree from a YAML without 'connections' field");
+    return nullptr;
+  }
 
+  YAML::Node nodes = yaml["nodes"];
+  YAML::Node connections = yaml["connections"];
 
-//  std::vector<NodePtr> nodes_vector(nodes.size());
-//  nodes_vector.at(0)=root;
-//  for (int inode=1;inode<nodes.size();inode++)
-//  {
-//    nodes_vector.at(inode)=Node::fromXmlRpcValue(nodes[inode]);
-//  }
+  if (!nodes.IsSequence())
+  {
+    CNR_ERROR(logger, "Cannot load a tree from YAML::Node where 'nodes' is not a sequence");
+    return nullptr;
+  }
 
-//  for (int iconn=0;iconn<connections.size();iconn++)
-//  {
-//    int in1=connections[iconn][0];
-//    int in2=connections[iconn][1];
+  if (!connections.IsSequence())
+  {
+    CNR_ERROR(logger, "Cannot load a tree from YAML::Node where 'connections' is not a sequence");
+    return nullptr;
+  }
 
-//    NodePtr& n1=nodes_vector.at(in1);
-//    NodePtr& n2=nodes_vector.at(in2);
-//    ConnectionPtr conn;
-//    conn=std::make_shared<Connection>(n1,n2);
-//    conn->setCost(metrics->cost(n1,n2));
+  NodePtr root = Node::fromYAML(nodes[0],logger);
+  if (not lazy)
+  {
+    if (not checker->check(root->getConfiguration()))
+    {
+      CNR_DEBUG(logger,"Root is in collision");
+      return nullptr;
+    }
+  }
 
-//    conn->add();
-//  }
-//  pathplan::TreePtr tree=std::make_shared<Tree>(root,max_distance,checker,metrics);
-//  for (int inode=1;inode<nodes.size();inode++)
-//  {
-//    tree->addNode(nodes_vector.at(inode),false);
-//  }
+  std::vector<NodePtr> nodes_vector(nodes.size());
+  nodes_vector[0] = root;
 
-//  if (not lazy)
-//  {
-//    tree->recheckCollision();
-//  }
-//  return tree;
-//}
+  NodePtr node;
+  for(size_t in = 1; in<nodes.size(); in++)
+  {
+    node = Node::fromYAML(nodes[in],logger);
+
+    if(!node)
+    {
+      // Error creating a Node from YAML
+      CNR_ERROR(logger, "Error creating a Node from YAML");
+      return nullptr;
+    }
+
+    nodes_vector[in] = node;
+  }
+
+  ConnectionPtr conn;
+  for (int ic=0;ic<connections.size();ic++)
+  {
+    int in1 = connections[ic][0].as<int>();
+    int in2 = connections[ic][1].as<int>();
+
+    NodePtr& n1 = nodes_vector.at(in1);
+    NodePtr& n2 = nodes_vector.at(in2);
+
+    conn = std::make_shared<Connection>(n1, n2, logger);
+    conn->setCost(metrics->cost(n1, n2));
+
+    conn->add();
+  }
+
+  TreePtr tree = std::make_shared<Tree>(root, max_distance, checker, metrics, logger, use_kdtree);
+
+  for (size_t inode = 1; inode < nodes_vector.size(); inode++)
+  {
+    tree->addNode(nodes_vector[inode], false);
+  }
+
+  if (!lazy)
+  {
+    tree->recheckCollision();
+  }
+
+  return tree;
+}
 
 bool Tree::changeRoot(const NodePtr& node)
 {

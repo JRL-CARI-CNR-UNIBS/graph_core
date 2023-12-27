@@ -153,8 +153,8 @@ void Node::removeParentConnection(const ConnectionPtr &connection)
 
       if(it_parent == parent->child_connections_.end())
       {
-       CNR_FATAL(logger_,"connection is not in the child vector");
-       throw std::runtime_error("connection is not in the child vector");
+        CNR_FATAL(logger_,"connection is not in the child vector");
+        throw std::runtime_error("connection is not in the child vector");
       }
       else
       {
@@ -451,26 +451,6 @@ std::vector<ConnectionPtr> Node::getNetChildConnections() const
   return net_child_connections_;
 }
 
-//const std::vector<ConnectionPtr>& Node::getParentConnectionsConst() const
-//{
-//  return getParentConnections();
-//}
-
-//const std::vector<ConnectionPtr>& Node::getNetParentConnectionsConst() const
-//{
-//  return getNetParentConnections();
-//}
-
-//const std::vector<ConnectionPtr>& Node::getChildConnectionsConst() const
-//{
-//  return getChildConnections();
-//}
-
-//const std::vector<ConnectionPtr>& Node::getNetChildConnectionsConst() const
-//{
-//  return getNetChildConnections();
-//}
-
 std::vector<NodePtr> Node::getChildren() const
 {
   std::vector<NodePtr> children;
@@ -485,11 +465,6 @@ std::vector<NodePtr> Node::getChildren() const
   return children;
 }
 
-//const std::vector<NodePtr> Node::getChildrenConst() const
-//{
-//  return getChildren();
-//}
-
 std::vector<NodePtr> Node::getNetChildren() const
 {
   std::vector<NodePtr> children;
@@ -503,11 +478,6 @@ std::vector<NodePtr> Node::getNetChildren() const
   }
   return children;
 }
-
-//const std::vector<NodePtr> Node::getNetChildrenConst() const
-//{
-//  return getNetChildren();
-//}
 
 std::vector<NodePtr> Node::getParents() const
 {
@@ -525,11 +495,6 @@ std::vector<NodePtr> Node::getParents() const
   return parents;
 }
 
-//const std::vector<NodePtr> Node::getParentsConst() const
-//{
-//  return getParents();
-//}
-
 std::vector<NodePtr> Node::getNetParents() const
 {
   std::vector<NodePtr> parents;
@@ -546,29 +511,33 @@ std::vector<NodePtr> Node::getNetParents() const
   return parents;
 }
 
-//XmlRpc::XmlRpcValue Node::toXmlRpcValue() const
-//{
-//  XmlRpc::XmlRpcValue x;
-//  x.setSize(configuration_.size());
-//  for (int idx=0;idx<configuration_.size();idx++)
-//    x[idx]=configuration_(idx);
-//  return x;
-//}
+YAML::Node Node::toYAML() const
+{
+  YAML::Node yaml;
+  yaml.SetStyle(YAML::EmitterStyle::Flow); // Set the style to flow style for a more compact representation
 
-//NodePtr Node::fromXmlRpcValue(const XmlRpc::XmlRpcValue& x)
-//{
-//  if (x.getType()!= XmlRpc::XmlRpcValue::Type::TypeArray)
-//  {
-//    ROS_ERROR("loading from XmlRpcValue a node, but XmlRpcValue is not an array");
-//    return NULL;
-//  }
-//  Eigen::VectorXd conf(x.size());
-//  for (int idx=0;idx<x.size();idx++)
-//  {
-//    conf(idx)=x[idx];
-//  }
-//  return std::make_shared<Node>(conf);
-//}
+  for (int idx = 0; idx < configuration_.size(); ++idx)
+    yaml.push_back(configuration_(idx));
+
+  return yaml;
+}
+
+NodePtr Node::fromYAML(const YAML::Node& yaml, const cnr_logger::TraceLoggerPtr& logger)
+{
+  if (!yaml.IsSequence())
+  {
+    CNR_ERROR(logger,"Cannot load a node from YAML::Node which does not contain a sequence");
+    return nullptr;
+  }
+
+  Eigen::VectorXd conf(yaml.size());
+  for (int idx=0;idx<yaml.size();idx++)
+  {
+    conf(idx)=yaml[idx].as<double>();
+  }
+
+  return std::make_shared<Node>(conf,logger);
+}
 
 unsigned int Node::getReservedFlagsNumber()
 {
