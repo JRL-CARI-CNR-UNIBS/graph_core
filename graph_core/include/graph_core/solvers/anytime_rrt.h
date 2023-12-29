@@ -45,10 +45,6 @@ protected:
   TreePtr new_tree_;
   NodePtr tmp_goal_node_;
 
-  bool solveWithRRT(PathPtr& solution,
-                    const unsigned int& max_iter = 100,
-                    const double &max_time = std::numeric_limits<double>::infinity());
-
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

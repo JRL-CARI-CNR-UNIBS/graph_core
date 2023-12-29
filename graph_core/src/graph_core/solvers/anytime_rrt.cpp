@@ -68,13 +68,6 @@ bool AnytimeRRT::importFromSolver(const TreeSolverPtr& solver)
   }
 }
 
-bool AnytimeRRT::solveWithRRT(PathPtr& solution,
-                              const unsigned int& max_iter,
-                              const double &max_time)
-{
-  return RRT::solve(solution,max_iter,max_time);
-}
-
 bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const double& max_time)
 {
   std::chrono::time_point<std::chrono::system_clock> tic = std::chrono::system_clock::now();
@@ -102,14 +95,15 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   time = (std::chrono::duration<double> (std::chrono::system_clock::now()-tic)).count();
   while(time<0.98*max_time && (not solved_) && n_failed_iter<FAILED_ITER)
   {
-    success = AnytimeRRT::solveWithRRT(solution,max_iter,(max_time-time));
+    success = RRT::solve(solution,max_iter,(max_time-time));
 
     CNR_DEBUG(logger_,"Tree has "<<start_tree_->getNumberOfNodes()<<" nodes");
 
-    if(!success)
+    if(not success)
       n_failed_iter++;
 
     time = (std::chrono::duration<double> (std::chrono::system_clock::now()-tic)).count();
+    CNR_DEBUG(logger_,"time "<<time);
   }
 
   if(not solved_)
@@ -125,17 +119,18 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   }
 
   // Informed trees to find better solutions
-  NodePtr start_node = start_tree_->getRoot();
-  NodePtr goal_node  = goal_node_;
+  NodePtr initial_start_node = start_tree_->getRoot();
+  NodePtr initial_goal_node  = goal_node_;
 
   bool improved;
+  bool better_solution_found = false;
   n_failed_iter = 0;
 
   time = (std::chrono::duration<double> (std::chrono::system_clock::now()-tic)).count();
-  while(time<0.98*max_time && completed_ == false && n_failed_iter<FAILED_ITER)
+  while(time<0.98*max_time && (not completed_) && n_failed_iter<FAILED_ITER)
   {
-    NodePtr tmp_start_node = std::make_shared<Node>(start_node->getConfiguration(),logger_);
-    NodePtr tmp_goal_node  = std::make_shared<Node>(goal_node->getConfiguration(),logger_);
+    NodePtr tmp_start_node = std::make_shared<Node>(initial_start_node->getConfiguration(),logger_);
+    NodePtr tmp_goal_node  = std::make_shared<Node>(initial_goal_node->getConfiguration(),logger_);
     improved = AnytimeRRT::improve(tmp_start_node,tmp_goal_node,solution,max_iter,(max_time-time));
 
     CNR_DEBUG(logger_,"New tree has "<<new_tree_->getNumberOfNodes()<<" nodes");
@@ -143,7 +138,21 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     improved? (n_failed_iter = 0):
               (n_failed_iter++);
 
-    assert(not (improved) or start_tree_==new_tree_);
+    if(improved)
+    {
+      better_solution_found = true;
+      CNR_DEBUG(logger_,"tmp_start "<<*tmp_start_node);
+      CNR_DEBUG(logger_,"tmp_goal  "<<*tmp_goal_node);
+
+      assert([&]() ->bool{
+               if(start_tree_ != new_tree_)
+               {
+                 CNR_DEBUG(logger_,"start tree "<<start_tree_<<" new tree "<<new_tree_);
+                 return false;
+               }
+               return true;
+             }());
+    }
 
     if(cost_ <= utopia_tolerance_ * best_utopia_)
     {
@@ -153,30 +162,50 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     }
 
     time = (std::chrono::duration<double> (std::chrono::system_clock::now()-tic)).count();
+    CNR_DEBUG(logger_,"time "<<time);
   }
 
-  if(goal_node_ != goal_node)
-  {
-    //Rewire the tree goal (set goal_node)
-    goal_node->disconnect();
+  CNR_DEBUG(logger_,"Better solution found? "<<better_solution_found);
 
-    ConnectionPtr conn = std::make_shared<Connection>(solution_->getConnections().back()->getParent(), goal_node, logger_);
+  // Start and goal ptr in start tree may be different from the ones given as input to the solver.
+  // Replace the actual start and goal ptr with the desired ones.
+
+  if(better_solution_found && goal_node_ != initial_goal_node)
+  {
+    CNR_DEBUG(logger_,"Rewiring goal node "<<goal_node_<<*goal_node_);
+    CNR_DEBUG(logger_,"Initial  goal node "<<initial_goal_node<<*initial_goal_node);
+
+    //Rewire the tree goal (set goal_node)
+    initial_goal_node->disconnect();
+
+    CNR_DEBUG(logger_,"Conn 2 goal\n"<<*solution_->getConnections().back());
+
+    ConnectionPtr conn = std::make_shared<Connection>(solution_->getConnections().back()->getParent(), initial_goal_node, logger_);
     conn->setCost(solution_->getConnections().back()->getCost());
     conn->setTimeCostUpdate(solution_->getConnections().back()->getTimeCostUpdate());
     conn->add();
 
-    start_tree_->removeNode(goal_node_);
-    goal_node_ = goal_node;
+    CNR_DEBUG(logger_,"New conn 2 goal\n"<<*conn);
+
+    start_tree_->removeNode(goal_node_); //tpm_goal_node
+    goal_node_ = initial_goal_node;
     start_tree_->addNode(goal_node_);
 
     solution_ = solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_, logger_);
     solution->setTree(start_tree_);
   }
 
-  if(start_tree_->getRoot() != start_node)
+  CNR_DEBUG(logger_,"Again new conn 2 goal\n"<<*solution_->getConnections().back());
+
+
+  if(better_solution_found && start_tree_->getRoot() != initial_start_node)
   {
+    CNR_DEBUG(logger_,"Rewiring start node "<<start_tree_->getRoot()<<*start_tree_->getRoot());
+    CNR_DEBUG(logger_,"Initial  start node "<<initial_start_node<<*initial_start_node);
+
     //Rewire the tree root (set start_node)
-    start_node->disconnect();
+    initial_start_node->disconnect();
+
     NodePtr root = start_tree_->getRoot();  //tmp_start_node
 
     std::vector<NodePtr> root_children;
@@ -192,34 +221,83 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
       assert(conn2child->getParent() == start_tree_->getRoot());
 
       if(conn2child->getChild() != root_child_on_path)
-      {
         root_children.push_back(conn2child->getChild());
-      }
     }
 
     start_tree_->changeRoot(goal_node_); //change root before removing the old root
-    start_tree_->removeNode(root);
 
+    CNR_DEBUG(logger_,"QUA1");
+
+    ConnectionPtr conn2node_on_path = std::make_shared<Connection>(root_child_on_path,initial_start_node,logger_);
+    CNR_DEBUG(logger_,"QUA2");
+
+    conn2node_on_path->setCost(cost_first_conn_on_path);
+    CNR_DEBUG(logger_,"QUA3");
+
+    conn2node_on_path->setTimeCostUpdate(conn_root_child_on_path->getTimeCostUpdate());
+    CNR_DEBUG(logger_,"QUA4");
+
+    conn2node_on_path->add();
+    CNR_DEBUG(logger_,"QUA5");
+
+    ConnectionPtr parent_conn;
     for(unsigned int i=0; i<root_children.size(); i++)
     {
-      ConnectionPtr conn = std::make_shared<Connection>(start_node,root_children.at(i),logger_);  //the parent of start_node is the node on the path, the others are children
-      conn->setCost(root_children.at(i)->getParentConnections().front()->getCost());
-      conn->setTimeCostUpdate(root_children.at(i)->getParentConnections().front()->getTimeCostUpdate());
+      CNR_DEBUG(logger_,"QUA6");
+
+      ConnectionPtr conn = std::make_shared<Connection>(initial_start_node,root_children.at(i),logger_);  //the parent of start_node is the node on the path, the others are children
+
+      CNR_DEBUG(logger_,"QUA7");
+      CNR_DEBUG(logger_,"child "<<*root_children.at(i));
+
+      parent_conn = root_children.at(i)->getParentConnections().front();
+      conn->setCost(parent_conn->getCost());
+
+      CNR_DEBUG(logger_,"QUA8");
+
+      conn->setTimeCostUpdate(parent_conn->getTimeCostUpdate());
+
+      CNR_DEBUG(logger_,"QUA9");
+
       conn->add();
+
+      CNR_DEBUG(logger_,"QUA10");
+
     }
+    CNR_DEBUG(logger_,"QUA10.5");
 
-    ConnectionPtr conn2node_on_path = std::make_shared<Connection>(root_child_on_path,start_node,logger_);
-    conn2node_on_path->setCost(cost_first_conn_on_path);
-    conn2node_on_path->add();
 
-    start_tree_->addNode(start_node);
-    start_tree_->changeRoot(start_node);
+    CNR_DEBUG(logger_,"root "<<root<<*root);
+    CNR_DEBUG(logger_,"start tree "<<start_tree_<<*start_tree_);
+
+
+    start_tree_->removeNode(root);
+    CNR_DEBUG(logger_,"QUA11");
+
+
+    start_tree_->addNode(initial_start_node);
+    CNR_DEBUG(logger_,"QUA12");
+
+    start_tree_->changeRoot(initial_start_node);
+    CNR_DEBUG(logger_,"QUA13");
+
 
     solution_ = solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_, logger_);
+
+    CNR_DEBUG(logger_,"QUA14");
+
     solution->setTree(start_tree_);
+
+    CNR_DEBUG(logger_,"QUA15");
   }
+  CNR_DEBUG(logger_,"QUA16");
+
+  CNR_DEBUG(logger_,"start tree"<<start_tree_);
 
   CNR_DEBUG(logger_,"Final tree has "<<start_tree_->getNumberOfNodes()<<" nodes");
+
+  CNR_DEBUG(logger_,"QUA17");
+
 
   return solved_;
 }
@@ -286,10 +364,8 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
     {
       CNR_DEBUG(logger_,"Improved path cost: "<<path_cost_);
 
-      if(solution->getTree() != solution_->getTree())
-        assert(0);
-      if(start_tree_ != new_tree_)
-        assert(0);
+      assert(solution->getTree() == solution_->getTree());
+      assert(start_tree_ == new_tree_);
 
       return true;
     }
@@ -356,13 +432,19 @@ bool AnytimeRRT::improveUpdate(const Eigen::VectorXd& point, PathPtr &solution)
       for(const ConnectionPtr& conn: conn2node)
         new_solution_cost += conn->getCost();
 
+      CNR_DEBUG(logger_,"A new solution with cost "<<new_solution_cost<<" was found");
+
       if(new_solution_cost<solution_->cost())
       {
+        CNR_DEBUG(logger_,"Its cost is less than that of current solution ");
+
         if(checker_->checkConnection(new_node->getConfiguration(), tmp_goal_node_->getConfiguration()))
         {
+          CNR_DEBUG(logger_,"Connection to goal collision free");
+
           assert(tmp_goal_node_->getParentConnectionsSize() == 0);
 
-          start_tree_->removeNode(goal_node_);
+          //          start_tree_->removeNode(goal_node_);
           goal_node_ = tmp_goal_node_;
           goal_cost_=goal_cost_fcn_->cost(goal_node_);
 
@@ -386,6 +468,9 @@ bool AnytimeRRT::improveUpdate(const Eigen::VectorXd& point, PathPtr &solution)
 
           return true;
         }
+        else
+          CNR_DEBUG(logger_,"Connection to goal not collision free, discarding the solution");
+
       }
     }
   }

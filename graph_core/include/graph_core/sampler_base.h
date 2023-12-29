@@ -65,7 +65,6 @@ protected:
    */
   const cnr_logger::TraceLoggerPtr& logger_;
 
-
   /**
    * @brief cost_ Cost associated with the sampler. The base implementation of the Sampler does not use the cost
    * in the sampling procedure.
@@ -113,6 +112,7 @@ public:
     cost_(cost),
     gen_{rd_()}
   {
+    srand((unsigned int)time(NULL)); //randomize seed
     ud_ = std::uniform_real_distribution<double>(0, 1);
   }
 

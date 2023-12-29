@@ -101,3 +101,13 @@ install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/graph_coreConfig.cmake
   ${CMAKE_CURRENT_BINARY_DIR}/graph_coreConfigVersion.cmake
   DESTINATION ${EXPORT_CONFIGDIR})
+
+# make uninstall
+add_custom_target("uninstall" COMMENT "Uninstall installed files")
+add_custom_command(
+    TARGET "uninstall"
+    POST_BUILD
+    COMMENT "Uninstall files with install_manifest.txt"
+    COMMAND xargs rm -vf < install_manifest.txt || echo Nothing in
+            install_manifest.txt to be uninstalled!
+)
