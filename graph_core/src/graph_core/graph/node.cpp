@@ -30,7 +30,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace graph_core
 {
 Node::Node(const Eigen::VectorXd& configuration):logger_(nullptr)
-{}
+{
+  configuration_ = configuration;
+  ndof_ = configuration_.size();
+
+  /*insert the defaults in flags_ here*/
+}
 
 Node::Node(const Eigen::VectorXd &configuration, const cnr_logger::TraceLoggerPtr &logger):
   logger_(logger)
@@ -89,6 +94,9 @@ void Node::addParentConnection(const ConnectionPtr &connection)
   }
 
   parent_connections_.push_back(connection);
+
+  //Set connection's child as valid
+  connection->flags_[Connection::idx_child_valid_] = true;
 }
 
 void Node::addChildConnection(const ConnectionPtr &connection)
@@ -100,6 +108,9 @@ void Node::addChildConnection(const ConnectionPtr &connection)
   }
 
   child_connections_.push_back(connection);
+
+  //Set connection's parent as valid
+  connection->flags_[Connection::idx_parent_valid_] = true;
 }
 
 void Node::addNetParentConnection(const ConnectionPtr &connection)
@@ -111,6 +122,9 @@ void Node::addNetParentConnection(const ConnectionPtr &connection)
   }
 
   net_parent_connections_.push_back(connection);
+
+  //Set connection's child as valid
+  connection->flags_[Connection::idx_child_valid_] = true;
 }
 
 void Node::addNetChildConnection(const ConnectionPtr &connection)
@@ -122,6 +136,9 @@ void Node::addNetChildConnection(const ConnectionPtr &connection)
   }
 
   net_child_connections_.push_back(connection);
+
+  //Set connection's parent as valid
+  connection->flags_[Connection::idx_parent_valid_] = true;
 }
 
 void Node::removeParentConnection(const ConnectionPtr &connection)
@@ -144,6 +161,9 @@ void Node::removeParentConnection(const ConnectionPtr &connection)
     //Remove connection from this node's parent connections vector
     parent_connections_.erase(it_conn);
 
+    //Set connection's child as not valid
+    conn->flags_[Connection::idx_child_valid_] = false;
+
     //Remove connection from parent's child_connections vector
     NodePtr parent = conn->getParent();
 
@@ -163,14 +183,15 @@ void Node::removeParentConnection(const ConnectionPtr &connection)
         for(const ConnectionPtr& c:parent->child_connections_)
           CNR_WARN(logger_,c);
         parent->child_connections_.erase(it_parent);
+
+        //Set connection's parent as not valid
+        conn->flags_[Connection::idx_parent_valid_] = false;
+
         CNR_DEBUG(logger_,"child conn vector size after erase "<<parent->child_connections_.size());
         for(const ConnectionPtr& c:parent->child_connections_)
           CNR_WARN(logger_,c);
       }
     }
-
-    //Set connection as not valid
-    conn->flags_[Connection::idx_valid_] = false;
   }
 }
 
@@ -191,6 +212,9 @@ void Node::removeNetParentConnection(const ConnectionPtr &connection)
     //Remove connection from this node's net parent connections vector
     net_parent_connections_.erase(it_conn);
 
+    //Set connection's child as not valid
+    conn->flags_[Connection::idx_child_valid_] = false;
+
     //Remove connection from parent's net child connections vector
     NodePtr parent = conn->getParent();
     if(parent)
@@ -204,11 +228,11 @@ void Node::removeNetParentConnection(const ConnectionPtr &connection)
       else
       {
         parent->net_child_connections_.erase(it_parent);
+
+        //Set connection's parent as not valid
+        conn->flags_[Connection::idx_parent_valid_] = false;
       }
     }
-
-    //Set connection as not valid
-    conn->flags_[Connection::idx_valid_] = false;
   }
 }
 
@@ -247,6 +271,10 @@ void Node::removeChildConnection(const ConnectionPtr &connection)
         for(const ConnectionWeakPtr& c:child->parent_connections_)
           CNR_ERROR(logger_,c.lock());
         child->parent_connections_.erase(it_child);
+
+        //Set connection's child as not valid
+        conn->flags_[Connection::idx_child_valid_] = false;
+
         CNR_DEBUG(logger_,"parent conn vector size after erase "<<child->parent_connections_.size());
         for(const ConnectionWeakPtr& c:child->parent_connections_)
           CNR_ERROR(logger_,c.lock());
@@ -256,8 +284,8 @@ void Node::removeChildConnection(const ConnectionPtr &connection)
     //Remove connection from this node's child connections vector
     child_connections_.erase(it_conn);
 
-    //Set connection as not valid
-    conn->flags_[Connection::idx_valid_] = false;
+    //Set connection's parent as not valid
+    conn->flags_[Connection::idx_parent_valid_] = false;
   }
 }
 
@@ -288,23 +316,26 @@ void Node::removeNetChildConnection(const ConnectionPtr &connection)
       else
       {
         child->net_parent_connections_.erase(it_child);
+
+        //Set connection's child as not valid
+        conn->flags_[Connection::idx_child_valid_] = false;
       }
     }
 
     //Remove connection from this node's net child connections vector
     net_child_connections_.erase(it_conn);
 
-    //Set connection as not valid
-    conn->flags_[Connection::idx_valid_] = false;
+    //Set connection's parent as not valid
+    conn->flags_[Connection::idx_parent_valid_] = false;
   }
 }
 
 void Node::disconnect()
 {
-  disconnectParentConnections();
-  disconnectNetParentConnections();
   disconnectChildConnections();
   disconnectNetChildConnections();
+  disconnectParentConnections();
+  disconnectNetParentConnections();
 }
 
 void Node::disconnectParentConnections()

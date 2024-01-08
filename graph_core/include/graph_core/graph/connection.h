@@ -106,24 +106,29 @@ public:
    */
 
   /**
-   * @brief Index of the validity flag in the flags_ array.
+   * @brief Index of the parent node's validity flag in the flags_ array.
    */
-  static constexpr unsigned int idx_valid_ = 0;
+  static constexpr unsigned int idx_parent_valid_ = 0;
+
+  /**
+   * @brief Index of the child node's validity flag in the flags_ array.
+   */
+  static constexpr unsigned int idx_child_valid_ = 1;
 
   /**
    * @brief Index of the net connection flag in the flags_ array.
    */
-  static constexpr unsigned int idx_net_ = 1;
+  static constexpr unsigned int idx_net_ = 2;
 
   /**
    * @brief Index of the recently checked flag in the flags_ array.
    */
-  static constexpr unsigned int idx_recently_checked_ = 2;
+  static constexpr unsigned int idx_recently_checked_ = 3;
 
   /**
    * @brief Number of reserved flags in the flags_ array.
    */
-  static constexpr unsigned int number_reserved_flags_ = 3;
+  static constexpr unsigned int number_reserved_flags_ = 4;
 
   /**
    * @brief Constructor for the Connection class.
@@ -182,13 +187,13 @@ public:
   }
 
   /**
-   * @brief Checks if the Connection is valid.
+   * @brief Checks if the Connection is valid, i.e. whether both the parent node and the child node are aware of this connection.
    *
    * @return Returns true if the Connection is valid, false otherwise.
    */
   bool isValid() const
   {
-    return flags_[idx_valid_];
+    return (flags_[idx_parent_valid_] && flags_[idx_child_valid_]);
   }
 
   /**
@@ -430,8 +435,6 @@ public:
 
   /**
    * @brief Destructor for the Connection class.
-   *
-   * The destructor checks if the connection is valid (flags_[idx_valid_] is true) and removes the connection if valid.
    */
   ~Connection();
 

@@ -186,6 +186,11 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
+   * @brief print_full_tree_ if false, the operator << will print number of nodes and root. Otherwise, it will also print the tree connections.
+   */
+  bool print_full_tree_ = false;
+
+  /**
    * @brief Constructor for the Tree class.
    *
    * Initializes a tree with the specified parameters, including the root node, maximum distance, collision checker, metrics,

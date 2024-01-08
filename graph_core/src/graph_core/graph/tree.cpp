@@ -1188,39 +1188,39 @@ void Tree::getLeaves(std::vector<NodePtr>& leaves)
 
 YAML::Node Tree::toYAML() const
 {
-    YAML::Node tree;
-    YAML::Node nodes;
-    YAML::Node connections;
+  YAML::Node tree;
+  YAML::Node nodes;
+  YAML::Node connections;
 
-    std::vector<NodePtr> nodes_vector = nodes_->getNodes();
-    for (std::size_t inode = 0; inode < nodes_vector.size(); ++inode)
+  std::vector<NodePtr> nodes_vector = nodes_->getNodes();
+  for (std::size_t inode = 0; inode < nodes_vector.size(); ++inode)
+  {
+    const NodePtr& n = nodes_vector.at(inode);
+    nodes.push_back(n->toYAML());
+
+    std::vector<NodePtr> children = n->getChildren();
+
+    for (std::size_t ichild = 0; ichild < children.size(); ++ichild)
     {
-        const NodePtr& n = nodes_vector.at(inode);
-        nodes.push_back(n->toYAML());
-
-        std::vector<NodePtr> children = n->getChildren();
-
-        for (std::size_t ichild = 0; ichild < children.size(); ++ichild)
+      for (std::size_t inodes = 0; inodes < nodes_vector.size(); ++inodes)
+      {
+        if (nodes_vector.at(inodes) == children.at(ichild))
         {
-            for (std::size_t inodes = 0; inodes < nodes_vector.size(); ++inodes)
-            {
-                if (nodes_vector.at(inodes) == children.at(ichild))
-                {
-                    YAML::Node connection;
-                    connection.SetStyle(YAML::EmitterStyle::Flow); // Set the style to flow style for a more compact representation
+          YAML::Node connection;
+          connection.SetStyle(YAML::EmitterStyle::Flow); // Set the style to flow style for a more compact representation
 
-                    connection.push_back(static_cast<int>(inode));
-                    connection.push_back(static_cast<int>(inodes));
-                    connections.push_back(connection);
-                    break;
-                }
-            }
+          connection.push_back(static_cast<int>(inode));
+          connection.push_back(static_cast<int>(inodes));
+          connections.push_back(connection);
+          break;
         }
+      }
     }
+  }
 
-    tree["nodes"] = nodes;
-    tree["connections"] = connections;
-    return tree;
+  tree["nodes"] = nodes;
+  tree["connections"] = connections;
+  return tree;
 }
 
 
@@ -1229,13 +1229,13 @@ void Tree::toYAML(const std::string& file_name) const
   std::ofstream out(file_name);
   if(out.is_open())
   {
-      out << toYAML();
-      out.close();
+    out << toYAML();
+    out.close();
   }
   else
   {
-      // Handle error opening the file
-      CNR_ERROR(logger_, "Error opening file: " << file_name);
+    // Handle error opening the file
+    CNR_ERROR(logger_, "Error opening file: " << file_name);
   }
 }
 
@@ -1243,16 +1243,36 @@ std::ostream& operator<<(std::ostream& os, const Tree& tree)
 {
   os << "number of nodes = " << tree.nodes_->size() << std::endl;
   os << "root = " << *tree.root_;
+
+  if(tree.print_full_tree_)
+  {
+    os << "\nConnection list:";
+
+    std::function<void(const NodePtr&)> fcn;
+    fcn = [&](const NodePtr& n) ->void{
+      for(const ConnectionPtr& c:n->getChildConnections())
+      {
+        os<<"\n"<<c<<" "<<c->getParent()->getConfiguration().transpose()<<" ("<<c->getParent()<<") --> "<<
+            c->getChild()->getConfiguration().transpose()<<" ("<<c->getChild()<<")";
+
+        fcn(c->getChild());
+      }
+      return;
+    };
+
+    fcn(tree.root_);
+  }
+
   return os;
 }
 
 TreePtr Tree::fromYAML(const YAML::Node& yaml,
-                        const double& max_distance,
-                        const CollisionCheckerPtr& checker,
-                        const MetricsPtr& metrics,
-                        const cnr_logger::TraceLoggerPtr& logger,
-                        const bool use_kdtree,
-                        const bool& lazy)
+                       const double& max_distance,
+                       const CollisionCheckerPtr& checker,
+                       const MetricsPtr& metrics,
+                       const cnr_logger::TraceLoggerPtr& logger,
+                       const bool use_kdtree,
+                       const bool& lazy)
 {
   if (!yaml["nodes"])
   {

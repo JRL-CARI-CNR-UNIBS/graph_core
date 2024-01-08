@@ -35,10 +35,13 @@ Connection::Connection(const NodePtr& parent, const NodePtr& child, const cnr_lo
   child_(child),
   logger_(logger)
 {
+  assert(getParent());
+  assert(getChild());
+
   euclidean_norm_ = (child->getConfiguration() - parent->getConfiguration()).norm();
   likelihood_ = 1.0;
 
-  flags_ = {false, is_net, false}; //valid, is_net, recently_checked
+  flags_ = {false, false, is_net, false}; //valid, is_net, recently_checked
   assert(number_reserved_flags_ == flags_.size());
 }
 
@@ -90,40 +93,91 @@ void Connection::add(const bool is_net)
 
 void Connection::add()
 {
-  if(flags_[idx_valid_])
-  {
-    CNR_INFO(logger_,"connection already added");
-    return;
-  }
-  else
-    flags_[idx_valid_] = true;
+  //  if(flags_[idx_parent_valid_] && flags_[idx_child_valid_])
+  //  {
+  //    CNR_INFO(logger_,"connection already added");
+  //    return;
+  //  }
+  //  else
+  //    flags_[idx_valid_] = true;
 
-  if(flags_[idx_net_])
+  //  if(flags_[idx_net_])
+  //  {
+  //    getParent()->addNetChildConnection(pointer());
+  //    getChild()->addNetParentConnection(pointer());
+  //  }
+  //  else
+  //  {
+  //    getParent()->addChildConnection(pointer());
+  //    getChild()->addParentConnection(pointer());
+  //  }
+
+  assert(getParent());
+  assert(getChild());
+
+  if(not flags_[idx_parent_valid_])
   {
-    getParent()->addNetChildConnection(pointer());
-    getChild()->addNetParentConnection(pointer());
+    if(flags_[idx_net_])
+      getParent()->addNetChildConnection(pointer()); //Set flags_[idx_parent_valid_] = true
+    else
+      getParent()->addChildConnection(pointer()); //Set flags_[idx_parent_valid_] = true
+
+    assert(flags_[idx_parent_valid_]);
   }
-  else
+
+  if(not flags_[idx_child_valid_])
   {
-    getParent()->addChildConnection(pointer());
-    getChild()->addParentConnection(pointer());
+    if(flags_[idx_net_])
+      getChild()->addNetParentConnection(pointer()); //Set flags_[idx_child_valid_] = true
+    else
+      getChild()->addParentConnection(pointer()); //Set flags_[idx_child_valid_] = true
+
+    assert(flags_[idx_child_valid_]);
   }
 }
 
 void Connection::remove()
 {
-  if(not flags_[idx_valid_])
+  //  if(not flags_[idx_valid_])
+  //    return;
+
+  //  flags_[idx_valid_] = false;
+  //  if(child_)
+  //  {
+  //    if(flags_[idx_net_])
+  //      getChild()->removeNetParentConnection(pointer()); //notifies the connection's parent too
+  //    else
+  //      getChild()->removeParentConnection(pointer());    //notifies the connection's parent too
+  //  }
+  //  else //if the connection can't be removed by the child node, try using the parent node
+  //  {
+  //    if(not (parent_.expired()))
+  //    {
+  //      if(flags_[idx_net_])
+  //        getParent()->removeNetChildConnection(pointer());
+  //      else
+  //        getParent()->removeChildConnection(pointer());
+  //    }
+  //    else
+  //      CNR_DEBUG(logger_,"parent already destroied");
+  //  }
+
+  if(not flags_[idx_parent_valid_] && not flags_[idx_child_valid_])
     return;
 
-  flags_[idx_valid_] = false;
-  if(child_)
+  if(flags_[idx_child_valid_])
   {
+    assert(child_);
+
     if(flags_[idx_net_])
       getChild()->removeNetParentConnection(pointer()); //notifies the connection's parent too
     else
       getChild()->removeParentConnection(pointer());    //notifies the connection's parent too
+
+    assert(not flags_[idx_child_valid_]);
   }
-  else //if the connection can't be removed by the child node, try using the parent node
+
+  if(flags_[idx_parent_valid_])
   {
     if(not (parent_.expired()))
     {
@@ -134,6 +188,8 @@ void Connection::remove()
     }
     else
       CNR_DEBUG(logger_,"parent already destroied");
+
+    assert(not flags_[idx_parent_valid_]);
   }
 }
 
@@ -203,9 +259,12 @@ Connection::~Connection()
 {
   CNR_DEBUG(logger_,"destroying connection "<<this<<" ("<<getParent()<<")-->("<<getChild()<<")");
 
-  if(flags_[idx_valid_])
+  if(flags_[idx_parent_valid_] || flags_[idx_child_valid_])
   {
     CNR_FATAL(logger_,"connection still valid!");
+    CNR_FATAL(logger_,"parent is valid? "<<flags_[idx_parent_valid_]);
+    CNR_FATAL(logger_,"child is valid? "<<flags_[idx_child_valid_]);
+
     remove();
   }
 }
