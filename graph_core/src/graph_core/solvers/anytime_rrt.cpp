@@ -172,37 +172,24 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
 
   if(better_solution_found && goal_node_ != initial_goal_node)
   {
-    CNR_DEBUG(logger_,"Rewiring goal node "<<goal_node_<<*goal_node_);
-    CNR_DEBUG(logger_,"Initial  goal node "<<initial_goal_node<<*initial_goal_node);
-
     //Rewire the tree goal (set goal_node)
     initial_goal_node->disconnect();
-
-    CNR_DEBUG(logger_,"Conn 2 goal\n"<<*solution_->getConnections().back());
 
     ConnectionPtr conn = std::make_shared<Connection>(solution_->getConnections().back()->getParent(), initial_goal_node, logger_);
     conn->setCost(solution_->getConnections().back()->getCost());
     conn->setTimeCostUpdate(solution_->getConnections().back()->getTimeCostUpdate());
     conn->add();
 
-    CNR_DEBUG(logger_,"New conn 2 goal\n"<<*conn);
-
     start_tree_->removeNode(goal_node_); //tpm_goal_node
     goal_node_ = initial_goal_node;
     start_tree_->addNode(goal_node_);
 
     solution_ = solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_, logger_);
-    solution->setTree(start_tree_);
+    solution_->setTree(start_tree_);
   }
-
-  CNR_DEBUG(logger_,"Again new conn 2 goal\n"<<*solution_->getConnections().back());
-
 
   if(better_solution_found && start_tree_->getRoot() != initial_start_node)
   {
-    CNR_DEBUG(logger_,"Rewiring start node "<<start_tree_->getRoot()<<*start_tree_->getRoot());
-    CNR_DEBUG(logger_,"Initial  start node "<<initial_start_node<<*initial_start_node);
-
     //Rewire the tree root (set start_node)
     initial_start_node->disconnect();
 
@@ -226,78 +213,29 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
 
     start_tree_->changeRoot(goal_node_); //change root before removing the old root
 
-    CNR_DEBUG(logger_,"QUA1");
-
     ConnectionPtr conn2node_on_path = std::make_shared<Connection>(root_child_on_path,initial_start_node,logger_);
-    CNR_DEBUG(logger_,"QUA2");
-
     conn2node_on_path->setCost(cost_first_conn_on_path);
-    CNR_DEBUG(logger_,"QUA3");
-
     conn2node_on_path->setTimeCostUpdate(conn_root_child_on_path->getTimeCostUpdate());
-    CNR_DEBUG(logger_,"QUA4");
-
     conn2node_on_path->add();
-    CNR_DEBUG(logger_,"QUA5");
 
     ConnectionPtr parent_conn;
     for(unsigned int i=0; i<root_children.size(); i++)
     {
-      CNR_DEBUG(logger_,"QUA6");
-
       ConnectionPtr conn = std::make_shared<Connection>(initial_start_node,root_children.at(i),logger_);  //the parent of start_node is the node on the path, the others are children
-
-      CNR_DEBUG(logger_,"QUA7");
-      CNR_DEBUG(logger_,"child "<<*root_children.at(i));
 
       parent_conn = root_children.at(i)->getParentConnections().front();
       conn->setCost(parent_conn->getCost());
-
-      CNR_DEBUG(logger_,"QUA8");
-
       conn->setTimeCostUpdate(parent_conn->getTimeCostUpdate());
-
-      CNR_DEBUG(logger_,"QUA9");
-
       conn->add();
-
-      CNR_DEBUG(logger_,"QUA10");
-
     }
-    CNR_DEBUG(logger_,"QUA10.5");
-
-
-    CNR_DEBUG(logger_,"root "<<root<<*root);
-    CNR_DEBUG(logger_,"start tree "<<start_tree_<<*start_tree_);
-
 
     start_tree_->removeNode(root);
-    CNR_DEBUG(logger_,"QUA11");
-
-
     start_tree_->addNode(initial_start_node);
-    CNR_DEBUG(logger_,"QUA12");
-
     start_tree_->changeRoot(initial_start_node);
-    CNR_DEBUG(logger_,"QUA13");
-
 
     solution_ = solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_, logger_);
-
-    CNR_DEBUG(logger_,"QUA14");
-
-    solution->setTree(start_tree_);
-
-    CNR_DEBUG(logger_,"QUA15");
+    solution_->setTree(start_tree_);
   }
-  CNR_DEBUG(logger_,"QUA16");
-
-  CNR_DEBUG(logger_,"start tree"<<start_tree_);
-
-  CNR_DEBUG(logger_,"Final tree has "<<start_tree_->getNumberOfNodes()<<" nodes");
-
-  CNR_DEBUG(logger_,"QUA17");
-
 
   return solved_;
 }

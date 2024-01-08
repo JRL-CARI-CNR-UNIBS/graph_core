@@ -125,7 +125,6 @@ void Connection::remove()
   }
   else //if the connection can't be removed by the child node, try using the parent node
   {
-    CNR_ERROR(logger_,"child already destroied");
     if(not (parent_.expired()))
     {
       if(flags_[idx_net_])
@@ -134,7 +133,7 @@ void Connection::remove()
         getParent()->removeChildConnection(pointer());
     }
     else
-      CNR_ERROR(logger_,"parent already destroied");
+      CNR_DEBUG(logger_,"parent already destroied");
   }
 }
 
@@ -202,8 +201,13 @@ void Connection::flip()
 
 Connection::~Connection()
 {
+  CNR_DEBUG(logger_,"destroying connection "<<this<<" ("<<getParent()<<")-->("<<getChild()<<")");
+
   if(flags_[idx_valid_])
+  {
+    CNR_FATAL(logger_,"connection still valid!");
     remove();
+  }
 }
 
 bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)
