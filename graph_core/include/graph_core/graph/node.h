@@ -111,7 +111,7 @@ protected:
    *
    * @param connection The ConnectionPtr representing the parent connection to be added.
    */
-  void addParentConnection(const ConnectionPtr& connection);
+  void addParentConnection(const ConnectionPtr &connection);
 
   /**
    * @brief Adds a child connection to the node.
@@ -142,6 +142,49 @@ protected:
    * @param connection The ConnectionPtr representing the net child connection to be added.
    */
   void addNetChildConnection(const ConnectionPtr& connection);
+
+  /**
+   * @brief Removes the specified parent connection from the node.
+   *
+   * This function removes the specified parent connection from the node. It searches for the connection
+   * in the parent connections vector and removes it. Additionally, it marks the connection's child flag as not valid.
+   *
+   * @param connection The ConnectionPtr representing the parent connection to be removed.
+   */
+  void removeParentConnection(const ConnectionPtr &connection);
+  void removeParentConnection(const std::vector<ConnectionWeakPtr>::iterator& it_conn);
+  /**
+   * @brief Removes the specified child connection from the node.
+   *
+   * This function removes the specified child connection from the node. It searches for the connection
+   * in the child connections vector and removes it. Additionally, it marks the connection's parent flag as not valid.
+   *
+   * @param connection The ConnectionPtr representing the child connection to be removed.
+   */
+  void removeChildConnection(const ConnectionPtr& connection);
+  void removeChildConnection(const std::vector<ConnectionPtr>::iterator& it_conn);
+
+  /**
+   * @brief Removes the specified net parent connection from the node.
+   *
+   * This function removes the specified net parent connection from the node. It searches for the connection
+   * in the net parent connections vector and removes it. Additionally, it marks the connection's child flag as not valid.
+   *
+   * @param connection The ConnectionPtr representing the net parent connection to be removed.
+   */
+  void removeNetParentConnection(const ConnectionPtr& connection);
+  void removeNetParentConnection(const std::vector<ConnectionWeakPtr>::iterator &it_conn);
+
+  /**
+   * @brief Removes the specified net child connection from the node.
+   *
+   * This function removes the specified net child connection from the node. It searches for the connection
+   * in the net child connections vector and removes it. Additionally, it marks the connection's parent flag as not valid.
+   *
+   * @param connection The ConnectionPtr representing the net child connection to be removed.
+   */
+  void removeNetChildConnection(const ConnectionPtr& connection);
+  void removeNetChildConnection(const std::vector<ConnectionPtr>::iterator &it_conn);
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -442,50 +485,6 @@ public:
    * their respective disconnect methods.
    */
   void disconnect();
-
-  /**
-   * @brief Removes the specified parent connection from the node.
-   *
-   * This function removes the specified parent connection from the node. It searches for the connection
-   * in the parent connections vector and removes it. Additionally, it marks the connection as not valid and
-   * removes the connection from the parent's child connections vector.
-   *
-   * @param connection The ConnectionPtr representing the parent connection to be removed.
-   */
-  void removeParentConnection(const ConnectionPtr& connection);
-
-  /**
-   * @brief Removes the specified child connection from the node.
-   *
-   * This function removes the specified child connection from the node. It searches for the connection
-   * in the child connections vector and removes it. Additionally, it marks the connection as not valid and
-   * removes the connection from the child's parent connections vector.
-   *
-   * @param connection The ConnectionPtr representing the child connection to be removed.
-   */
-  void removeChildConnection(const ConnectionPtr& connection);
-
-  /**
-   * @brief Removes the specified net parent connection from the node.
-   *
-   * This function removes the specified net parent connection from the node. It searches for the connection
-   * in the net parent connections vector and removes it. Additionally, it marks the connection as not valid and
-   * removes the connection from the parent's net child connections vector.
-   *
-   * @param connection The ConnectionPtr representing the net parent connection to be removed.
-   */
-  void removeNetParentConnection(const ConnectionPtr& connection);
-
-  /**
-   * @brief Removes the specified net child connection from the node.
-   *
-   * This function removes the specified net child connection from the node. It searches for the connection
-   * in the net child connections vector and removes it. Additionally, it marks the connection as not valid and
-   * removes the connection from the child's net parent connections vector.
-   *
-   * @param connection The ConnectionPtr representing the net child connection to be removed.
-   */
-  void removeNetChildConnection(const ConnectionPtr& connection);
 
   /**
    * @brief Switches a parent net connection with the existing parent connection of the node.

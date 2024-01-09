@@ -162,34 +162,27 @@ void Connection::remove()
   //      CNR_DEBUG(logger_,"parent already destroied");
   //  }
 
-  if(not flags_[idx_parent_valid_] && not flags_[idx_child_valid_])
-    return;
-
-  if(flags_[idx_child_valid_])
-  {
-    assert(child_);
-
-    if(flags_[idx_net_])
-      getChild()->removeNetParentConnection(pointer()); //notifies the connection's parent too
-    else
-      getChild()->removeParentConnection(pointer());    //notifies the connection's parent too
-
-    assert(not flags_[idx_child_valid_]);
-  }
+  assert(getParent());
+  assert(getChild());
 
   if(flags_[idx_parent_valid_])
   {
-    if(not (parent_.expired()))
-    {
-      if(flags_[idx_net_])
-        getParent()->removeNetChildConnection(pointer());
-      else
-        getParent()->removeChildConnection(pointer());
-    }
+    if(flags_[idx_net_])
+      getParent()->removeNetChildConnection(pointer()); //Set flags_[idx_parent_valid_] = false
     else
-      CNR_DEBUG(logger_,"parent already destroied");
+      getParent()->removeChildConnection(pointer());    //Set flags_[idx_parent_valid_] = false
 
     assert(not flags_[idx_parent_valid_]);
+  }
+
+  if(flags_[idx_child_valid_])
+  {
+    if(flags_[idx_net_])
+      getChild()->removeNetParentConnection(pointer());  //Set flags_[idx_child_valid_] = false
+    else
+      getChild()->removeParentConnection(pointer());     //Set flags_[idx_child_valid_] = false
+
+    assert(not flags_[idx_child_valid_]);
   }
 }
 
@@ -258,6 +251,7 @@ void Connection::flip()
 Connection::~Connection()
 {
   CNR_DEBUG(logger_,"destroying connection "<<this<<" ("<<getParent()<<")-->("<<getChild()<<")");
+  CNR_DEBUG(logger_,"is Net? "<<isNet());
 
   if(flags_[idx_parent_valid_] || flags_[idx_child_valid_])
   {
