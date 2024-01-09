@@ -134,8 +134,6 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     improved = AnytimeRRT::improve(tmp_start_node,tmp_goal_node,solution,max_iter,(max_time-time));
 
     CNR_DEBUG(logger_,"New tree has "<<new_tree_->getNumberOfNodes()<<" nodes");
-    new_tree_->print_full_tree_ = true;
-    CNR_DEBUG(logger_,*new_tree_);
 
     improved? (n_failed_iter = 0):
               (n_failed_iter++);
@@ -394,10 +392,6 @@ bool AnytimeRRT::improveUpdate(const Eigen::VectorXd& point, PathPtr &solution)
 
           new_tree_->addNode(goal_node_);
           start_tree_ = new_tree_;
-
-          new_tree_->print_full_tree_ = true;
-          CNR_DEBUG(logger_,*new_tree_);
-
 
           solution = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_, logger_);
           solution->setTree(start_tree_);

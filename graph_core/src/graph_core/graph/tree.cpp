@@ -1246,7 +1246,7 @@ std::ostream& operator<<(std::ostream& os, const Tree& tree)
 
   if(tree.print_full_tree_)
   {
-    os << "\nConnection list:";
+    os << "\nConnections list:";
 
     std::function<void(const NodePtr&)> fcn;
     fcn = [&](const NodePtr& n) ->void{

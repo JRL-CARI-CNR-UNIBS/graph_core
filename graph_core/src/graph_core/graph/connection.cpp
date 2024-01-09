@@ -93,96 +93,55 @@ void Connection::add(const bool is_net)
 
 void Connection::add()
 {
-  //  if(flags_[idx_parent_valid_] && flags_[idx_child_valid_])
-  //  {
-  //    CNR_INFO(logger_,"connection already added");
-  //    return;
-  //  }
-  //  else
-  //    flags_[idx_valid_] = true;
-
-  //  if(flags_[idx_net_])
-  //  {
-  //    getParent()->addNetChildConnection(pointer());
-  //    getChild()->addNetParentConnection(pointer());
-  //  }
-  //  else
-  //  {
-  //    getParent()->addChildConnection(pointer());
-  //    getChild()->addParentConnection(pointer());
-  //  }
-
-  assert(getParent());
   assert(getChild());
-
-  if(not flags_[idx_parent_valid_])
-  {
-    if(flags_[idx_net_])
-      getParent()->addNetChildConnection(pointer()); //Set flags_[idx_parent_valid_] = true
-    else
-      getParent()->addChildConnection(pointer()); //Set flags_[idx_parent_valid_] = true
-
-    assert(flags_[idx_parent_valid_]);
-  }
+  assert(getParent());
 
   if(not flags_[idx_child_valid_])
   {
     if(flags_[idx_net_])
       getChild()->addNetParentConnection(pointer()); //Set flags_[idx_child_valid_] = true
     else
-      getChild()->addParentConnection(pointer()); //Set flags_[idx_child_valid_] = true
+      getChild()->addParentConnection(pointer());    //Set flags_[idx_child_valid_] = true
 
     assert(flags_[idx_child_valid_]);
+  }
+
+  if(not flags_[idx_parent_valid_])
+  {
+    if(flags_[idx_net_])
+      getParent()->addNetChildConnection(pointer()); //Set flags_[idx_parent_valid_] = true
+    else
+      getParent()->addChildConnection(pointer());    //Set flags_[idx_parent_valid_] = true
+
+    assert(flags_[idx_parent_valid_]);
   }
 }
 
 void Connection::remove()
 {
-  //  if(not flags_[idx_valid_])
-  //    return;
-
-  //  flags_[idx_valid_] = false;
-  //  if(child_)
-  //  {
-  //    if(flags_[idx_net_])
-  //      getChild()->removeNetParentConnection(pointer()); //notifies the connection's parent too
-  //    else
-  //      getChild()->removeParentConnection(pointer());    //notifies the connection's parent too
-  //  }
-  //  else //if the connection can't be removed by the child node, try using the parent node
-  //  {
-  //    if(not (parent_.expired()))
-  //    {
-  //      if(flags_[idx_net_])
-  //        getParent()->removeNetChildConnection(pointer());
-  //      else
-  //        getParent()->removeChildConnection(pointer());
-  //    }
-  //    else
-  //      CNR_DEBUG(logger_,"parent already destroied");
-  //  }
-
-  assert(getParent());
-  assert(getChild());
-
-  if(flags_[idx_parent_valid_])
-  {
-    if(flags_[idx_net_])
-      getParent()->removeNetChildConnection(pointer()); //Set flags_[idx_parent_valid_] = false
-    else
-      getParent()->removeChildConnection(pointer());    //Set flags_[idx_parent_valid_] = false
-
-    assert(not flags_[idx_parent_valid_]);
-  }
-
+  // Detach the child before the parent to keep the connection alive during the process
   if(flags_[idx_child_valid_])
   {
+    assert(getChild());
+
     if(flags_[idx_net_])
       getChild()->removeNetParentConnection(pointer());  //Set flags_[idx_child_valid_] = false
     else
       getChild()->removeParentConnection(pointer());     //Set flags_[idx_child_valid_] = false
 
     assert(not flags_[idx_child_valid_]);
+  }
+
+  if(flags_[idx_parent_valid_])
+  {
+    assert(getParent());
+
+    if(flags_[idx_net_])
+      getParent()->removeNetChildConnection(pointer()); //Set flags_[idx_parent_valid_] = false
+    else
+      getParent()->removeChildConnection(pointer());    //Set flags_[idx_parent_valid_] = false
+
+    assert(not flags_[idx_parent_valid_]);
   }
 }
 
@@ -250,17 +209,16 @@ void Connection::flip()
 
 Connection::~Connection()
 {
-  CNR_DEBUG(logger_,"destroying connection "<<this<<" ("<<getParent()<<")-->("<<getChild()<<")");
-  CNR_DEBUG(logger_,"is Net? "<<isNet());
-
-  if(flags_[idx_parent_valid_] || flags_[idx_child_valid_])
-  {
-    CNR_FATAL(logger_,"connection still valid!");
-    CNR_FATAL(logger_,"parent is valid? "<<flags_[idx_parent_valid_]);
-    CNR_FATAL(logger_,"child is valid? "<<flags_[idx_child_valid_]);
-
-    remove();
-  }
+  assert([&]() ->bool{
+           if(flags_[idx_parent_valid_] || flags_[idx_child_valid_])
+           {
+             CNR_FATAL(logger_,"destroying a valid connection!\n "<<this<<" ("<<getParent()<<")-->("<<getChild()<<")");
+             CNR_FATAL(logger_,"parent is valid? "<<flags_[idx_parent_valid_]);
+             CNR_FATAL(logger_,"child is valid? "<<flags_[idx_child_valid_]);
+             return false;
+           }
+           return true;
+         }());
 }
 
 bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)

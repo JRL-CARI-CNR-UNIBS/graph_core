@@ -148,57 +148,6 @@ void Node::removeParentConnection(const ConnectionPtr &connection)
                    [&connection](const ConnectionWeakPtr& conn){return connection == conn.lock();});
 
   return removeParentConnection(it_conn);
-
-  //  std::vector<ConnectionWeakPtr>::iterator it_conn =
-  //      std::find_if(parent_connections_.begin(), parent_connections_.end(),
-  //                   [&connection](const ConnectionWeakPtr& conn){return connection == conn.lock();});
-
-  //  if (it_conn == parent_connections_.end())
-  //  {
-  //    CNR_FATAL(logger_,"connection is not in the parent vector");
-  //    throw std::invalid_argument("connection is not in the parent vector");
-  //  }
-  //  else
-  //  {
-  //    ConnectionPtr conn = (*it_conn).lock();
-
-  //    CNR_DEBUG(logger_, "removing conn from conn's child \"parent  conn vector\" "<<conn<<" ("<<conn->getParent()<<")-->"<<"("<<conn->getChild()<<")");
-
-  //    //Remove connection from this node's parent connections vector
-  //    parent_connections_.erase(it_conn);
-
-  //    //Set connection's child as not valid
-  //    conn->flags_[Connection::idx_child_valid_] = false;
-
-  //    //Remove connection from parent's child_connections vector
-  //    NodePtr parent = conn->getParent();
-
-  //    if(parent)
-  //    {
-  //      std::vector<ConnectionPtr>::iterator it_parent = std::find(parent->child_connections_.begin(),parent->child_connections_.end(),conn);
-  //      CNR_DEBUG(logger_, "removing it from conn's parent node "<<(*it_parent)<<" ("<<(*it_parent)->getParent()<<")-->"<<"("<<(*it_parent)->getChild()<<")");
-
-  //      if(it_parent == parent->child_connections_.end())
-  //      {
-  //        CNR_FATAL(logger_,"connection is not in the child vector");
-  //        throw std::runtime_error("connection is not in the child vector");
-  //      }
-  //      else
-  //      {
-  //        CNR_DEBUG(logger_,"child conn vector size before erase "<<parent->child_connections_.size());
-  //        for(const ConnectionPtr& c:parent->child_connections_)
-  //          CNR_WARN(logger_,c);
-  //        parent->child_connections_.erase(it_parent);
-
-  //        //Set connection's parent as not valid
-  //        conn->flags_[Connection::idx_parent_valid_] = false;
-
-  //        CNR_DEBUG(logger_,"child conn vector size after erase "<<parent->child_connections_.size());
-  //        for(const ConnectionPtr& c:parent->child_connections_)
-  //          CNR_WARN(logger_,c);
-  //      }
-  //    }
-  //  }
 }
 
 void Node::removeParentConnection(const std::vector<ConnectionWeakPtr>::iterator& it_conn)
@@ -210,15 +159,11 @@ void Node::removeParentConnection(const std::vector<ConnectionWeakPtr>::iterator
   }
   else
   {
-    ConnectionPtr conn = (*it_conn).lock();
-
-    CNR_DEBUG(logger_, "removing conn from conn's child \"parent  conn vector\" "<<conn<<" ("<<conn->getParent()<<")-->"<<"("<<conn->getChild()<<")");
+    //Set connection's child as not valid (before erasing)
+    (*it_conn).lock()->flags_[Connection::idx_child_valid_] = false;
 
     //Remove connection from this node's parent connections vector
     parent_connections_.erase(it_conn);
-
-    //Set connection's child as not valid
-    conn->flags_[Connection::idx_child_valid_] = false;
   }
 }
 
@@ -229,79 +174,22 @@ void Node::removeNetParentConnection(const ConnectionPtr &connection)
                    [&connection](const ConnectionWeakPtr& conn){return connection == conn.lock();});
 
   return removeNetParentConnection(it_conn);
-
-  //  if (it_conn == net_parent_connections_.end())
-  //  {
-  //    CNR_FATAL(logger_,"connection is not in the net parent vector");
-  //  }
-  //  else
-  //  {
-  //    ConnectionPtr conn = (*it_conn).lock();
-
-  //    //Remove connection from this node's net parent connections vector
-  //    net_parent_connections_.erase(it_conn);
-
-  //    //Set connection's child as not valid
-  //    conn->flags_[Connection::idx_child_valid_] = false;
-
-  //    //Remove connection from parent's net child connections vector
-  //    NodePtr parent = conn->getParent();
-  //    if(parent)
-  //    {
-  //      std::vector<ConnectionPtr>::iterator it_parent = std::find(parent->net_child_connections_.begin(),parent->net_child_connections_.end(),conn);
-
-  //      if(it_parent == parent->net_child_connections_.end())
-  //      {
-  //        CNR_FATAL(logger_,"connection is not in the net child vector");
-  //      }
-  //      else
-  //      {
-  //        parent->net_child_connections_.erase(it_parent);
-
-  //        //Set connection's parent as not valid
-  //        conn->flags_[Connection::idx_parent_valid_] = false;
-  //      }
-  //    }
-  //  }
 }
 
 void Node::removeNetParentConnection(const std::vector<ConnectionWeakPtr>::iterator &it_conn)
 {
-
-  //SISTEMA
-
   if (it_conn == net_parent_connections_.end())
   {
     CNR_FATAL(logger_,"connection is not in the net parent vector");
+    throw std::invalid_argument("connection is not in the net parent vector");
   }
   else
   {
-    ConnectionPtr conn = (*it_conn).lock();
+    //Set connection's child as not valid (before erasing)
+    (*it_conn).lock()->flags_[Connection::idx_child_valid_] = false;
 
     //Remove connection from this node's net parent connections vector
     net_parent_connections_.erase(it_conn);
-
-    //Set connection's child as not valid
-    conn->flags_[Connection::idx_child_valid_] = false;
-
-    //Remove connection from parent's net child connections vector
-    NodePtr parent = conn->getParent();
-    if(parent)
-    {
-      std::vector<ConnectionPtr>::iterator it_parent = std::find(parent->net_child_connections_.begin(),parent->net_child_connections_.end(),conn);
-
-      if(it_parent == parent->net_child_connections_.end())
-      {
-        CNR_FATAL(logger_,"connection is not in the net child vector");
-      }
-      else
-      {
-        parent->net_child_connections_.erase(it_parent);
-
-        //Set connection's parent as not valid
-        conn->flags_[Connection::idx_parent_valid_] = false;
-      }
-    }
   }
 }
 
@@ -310,56 +198,6 @@ void Node::removeChildConnection(const ConnectionPtr &connection)
   std::vector<ConnectionPtr>::iterator it_conn = std::find(child_connections_.begin(),child_connections_.end(),connection);
 
   return removeChildConnection(it_conn);
-
-  //  std::vector<ConnectionPtr>::iterator it_conn = std::find(child_connections_.begin(),child_connections_.end(),connection);
-
-  //  if (it_conn == child_connections_.end())
-  //  {
-  //    CNR_FATAL(logger_,"connection is not in the child vector");
-  //    throw std::invalid_argument("connection is not in the child vector");
-  //  }
-  //  else
-  //  {
-  //    ConnectionPtr conn = *it_conn;
-
-  //    CNR_DEBUG(logger_, "removing conn from conn's parent \"child  conn vector\" "<<conn<<" ("<<conn->getParent()<<")-->"<<"("<<conn->getChild()<<")");
-
-
-  //    //Remove connection from child's parent connections vector
-  //    NodePtr child = conn->getChild();
-  //    if(child)
-  //    {
-  //      std::vector<ConnectionWeakPtr>::iterator it_child = std::find_if(child->parent_connections_.begin(), child->parent_connections_.end(),
-  //                                                                       [&connection](const ConnectionWeakPtr& conn){return connection == conn.lock();});
-
-  //      CNR_DEBUG(logger_, "removing it from conn's child node "<<((*it_child).lock())<<" ("<<((*it_child).lock())->getParent()<<")-->"<<"("<<((*it_child).lock())->getChild()<<")");
-
-  //      if(it_child == child->parent_connections_.end())
-  //      {
-  //        CNR_FATAL(logger_,"connection is not in the parent vector");
-  //      }
-  //      else
-  //      {
-  //        CNR_DEBUG(logger_,"parent conn vector size before erase "<<child->parent_connections_.size());
-  //        for(const ConnectionWeakPtr& c:child->parent_connections_)
-  //          CNR_ERROR(logger_,c.lock());
-  //        child->parent_connections_.erase(it_child);
-
-  //        //Set connection's child as not valid
-  //        conn->flags_[Connection::idx_child_valid_] = false;
-
-  //        CNR_DEBUG(logger_,"parent conn vector size after erase "<<child->parent_connections_.size());
-  //        for(const ConnectionWeakPtr& c:child->parent_connections_)
-  //          CNR_ERROR(logger_,c.lock());
-  //      }
-  //    }
-
-  //    //Remove connection from this node's child connections vector
-  //    child_connections_.erase(it_conn);
-
-  //    //Set connection's parent as not valid
-  //    conn->flags_[Connection::idx_parent_valid_] = false;
-  //  }
 }
 
 void Node::removeChildConnection(const std::vector<ConnectionPtr>::iterator &it_conn)
@@ -371,15 +209,11 @@ void Node::removeChildConnection(const std::vector<ConnectionPtr>::iterator &it_
   }
   else
   {
-    ConnectionPtr conn = *it_conn;
-
-    CNR_DEBUG(logger_, "removing conn from conn's parent \"child  conn vector\" "<<conn<<" ("<<conn->getParent()<<")-->"<<"("<<conn->getChild()<<")");
+    //Set connection's parent as not valid (before erasing)
+    (*it_conn)->flags_[Connection::idx_parent_valid_] = false;
 
     //Remove connection from this node's child connections vector
     child_connections_.erase(it_conn);
-
-    //Set connection's parent as not valid
-    conn->flags_[Connection::idx_parent_valid_] = false;
   }
 }
 
@@ -388,84 +222,23 @@ void Node::removeNetChildConnection(const ConnectionPtr &connection)
   std::vector<ConnectionPtr>::iterator it_conn = std::find(net_child_connections_.begin(),net_child_connections_.end(),connection);
 
   return removeNetChildConnection(it_conn);
-
-  //  if (it_conn == net_child_connections_.end())
-  //  {
-  //    CNR_FATAL(logger_,"connection is not in the child vector");
-  //    throw std::invalid_argument("connection is not in the child vector");
-  //  }
-  //  else
-  //  {
-  //    ConnectionPtr conn = *it_conn;
-
-  //    //Remove connection from child's net parent connections vector
-  //    NodePtr child = conn->getChild();
-  //    if(child)
-  //    {
-  //      std::vector<ConnectionWeakPtr>::iterator it_child = std::find_if(child->net_parent_connections_.begin(), child->net_parent_connections_.end(),
-  //                                                                       [&connection](const ConnectionWeakPtr& conn){return connection == conn.lock();});
-
-  //      if(it_child == child->net_parent_connections_.end())
-  //      {
-  //        CNR_FATAL(logger_,"connection is not in the net parent vector");
-  //      }
-  //      else
-  //      {
-  //        child->net_parent_connections_.erase(it_child);
-
-  //        //Set connection's child as not valid
-  //        conn->flags_[Connection::idx_child_valid_] = false;
-  //      }
-  //    }
-
-  //    //Remove connection from this node's net child connections vector
-  //    net_child_connections_.erase(it_conn);
-
-  //    //Set connection's parent as not valid
-  //    conn->flags_[Connection::idx_parent_valid_] = false;
-  //  }
 }
 
 void Node::removeNetChildConnection(const std::vector<ConnectionPtr>::iterator& it_conn)
 {
+  if (it_conn == net_child_connections_.end())
+  {
+    CNR_FATAL(logger_,"connection is not in the net child vector");
+    throw std::invalid_argument("connection is not in the net child vector");
+  }
+  else
+  {
+    //Set connection's parent as not valid (before erasing)
+    (*it_conn)->flags_[Connection::idx_parent_valid_] = false;
 
-  //SISTEMA
-
-//  if (it_conn == net_child_connections_.end())
-//  {
-//    CNR_FATAL(logger_,"connection is not in the child vector");
-//    throw std::invalid_argument("connection is not in the child vector");
-//  }
-//  else
-//  {
-//    ConnectionPtr conn = *it_conn;
-
-//    //Remove connection from child's net parent connections vector
-//    NodePtr child = conn->getChild();
-//    if(child)
-//    {
-//      std::vector<ConnectionWeakPtr>::iterator it_child = std::find_if(child->net_parent_connections_.begin(), child->net_parent_connections_.end(),
-//                                                                       [&connection](const ConnectionWeakPtr& conn){return connection == conn.lock();});
-
-//      if(it_child == child->net_parent_connections_.end())
-//      {
-//        CNR_FATAL(logger_,"connection is not in the net parent vector");
-//      }
-//      else
-//      {
-//        child->net_parent_connections_.erase(it_child);
-
-//        //Set connection's child as not valid
-//        conn->flags_[Connection::idx_child_valid_] = false;
-//      }
-//    }
-
-//    //Remove connection from this node's net child connections vector
-//    net_child_connections_.erase(it_conn);
-
-//    //Set connection's parent as not valid
-//    conn->flags_[Connection::idx_parent_valid_] = false;
-//  }
+    //Remove connection from this node's child connections vector
+    net_child_connections_.erase(it_conn);
+  }
 }
 
 void Node::disconnect()
@@ -478,139 +251,58 @@ void Node::disconnect()
 
 void Node::disconnectParentConnections()
 {
-  //  CNR_DEBUG(logger_,"this node is a child "<<this<<" conf "<<getConfiguration().transpose());
-  //  CNR_DEBUG(logger_,"1) parent vector size "<<parent_connections_.size());
-  //  for(const ConnectionWeakPtr& c: parent_connections_)
-  //    CNR_DEBUG(logger_,"before parent conn "<<c.lock());
-
-  //    ConnectionPtr conn;
-
-  //    // Use reverse iterator because during the process the vector size decreases
-  //    for(std::vector<ConnectionWeakPtr>::reverse_iterator it = parent_connections_.rbegin(); it != parent_connections_.rend(); ++it)
-  //    {
-  //      conn = (*it).lock();
-
-  //      CNR_DEBUG(logger_,"destroying parent connection "<<conn<<" ("<<conn->getParent()<<")-->"<<"("<<conn->getChild()<<")");
-
-
-  //      if(conn)
-  //      {
-  //        if(conn->getParent())
-  //          conn->getParent()->removeChildConnection(conn); //the element pointed by it is deleted here
-  //        else
-  //          throw std::runtime_error("connection has no parent");
-  //      }
-  //      else
-  //        CNR_DEBUG(logger_,"parent connection does not exist");
-  //    }
-
-  //    CNR_DEBUG(logger_,"2) parent vector size "<<parent_connections_.size());
-  //    for(const ConnectionWeakPtr& c: parent_connections_)
-  //      CNR_DEBUG(logger_,"parent conn "<<c.lock());
-
-  //    parent_connections_.clear();
-
-  CNR_DEBUG(logger_,"this node is a child "<<this<<" conf "<<getConfiguration().transpose());
-  CNR_DEBUG(logger_,"1) parent vector size "<<parent_connections_.size());
-  for(const ConnectionWeakPtr& c: parent_connections_)
-    CNR_DEBUG(logger_,"before parent conn "<<c.lock());
-
   ConnectionPtr conn;
 
   // Use reverse iterator because during the process the vector size decreases
   for(std::vector<ConnectionWeakPtr>::reverse_iterator it = parent_connections_.rbegin(); it != parent_connections_.rend(); ++it)
   {
     conn = (*it).lock();
-
-    CNR_DEBUG(logger_,"destroying parent connection "<<conn<<" ("<<conn->getParent()<<")-->"<<"("<<conn->getChild()<<")");
-
-
     if(conn)
       conn->remove();
   }
 
-  CNR_DEBUG(logger_,"2) parent vector size "<<parent_connections_.size());
-  for(const ConnectionWeakPtr& c: parent_connections_)
-    CNR_DEBUG(logger_,"parent conn "<<c.lock());
-
-  //    assert(parent_connections_.empty());
-  parent_connections_.clear();
+  assert(parent_connections_.empty());
+  //  parent_connections_.clear();
 }
 
 void Node::disconnectNetParentConnections()
 {
-  //SISTEMA
-
   ConnectionPtr conn;
+
+  // Use reverse iterator because during the process the vector size decreases
   for(std::vector<ConnectionWeakPtr>::reverse_iterator it = net_parent_connections_.rbegin(); it != net_parent_connections_.rend(); ++it)
   {
     conn = (*it).lock();
-    if (conn)
-      if (conn->getParent())
-        conn->getParent()->removeNetChildConnection(conn);
-      else
-        throw std::runtime_error("connection has no parent");
+    if(conn)
+      conn->remove();
   }
-  net_parent_connections_.clear();
+
+  assert(net_parent_connections_.empty());
+  //  net_parent_connections_.clear();
 }
 
 void Node::disconnectChildConnections()
 {
-  //    CNR_DEBUG(logger_,"this node is a parent "<<this<<" conf "<<getConfiguration().transpose());
-  //    CNR_DEBUG(logger_,"1) child vector size "<<child_connections_.size());
-  //    for(const ConnectionPtr& c: child_connections_)
-  //      CNR_DEBUG(logger_,"before child conn "<<c);
-
-  //    for(std::vector<ConnectionPtr>::reverse_iterator it = child_connections_.rbegin(); it != child_connections_.rend(); ++it)
-  //    {
-  //      CNR_DEBUG(logger_,"destroying child connection "<<(*it)<<" ("<<(*it)->getParent()<<")-->"<<"("<<(*it)->getChild()<<")");
-
-  //      if (*it)
-  //      {
-  //        if ((*it)->getChild())
-  //          (*it)->getChild()->removeParentConnection(*it);
-  //        else
-  //          throw std::runtime_error("connection has no child");
-  //      }
-  //    }
-  //    CNR_DEBUG(logger_,"2) child vector size "<<child_connections_.size());
-  //    for(const ConnectionPtr& c: child_connections_)
-  //      CNR_DEBUG(logger_,"child conn "<<c);
-
-  //    assert(child_connections_.empty());
-  //    child_connections_.clear();
-
-  CNR_DEBUG(logger_,"this node is a parent "<<this<<" conf "<<getConfiguration().transpose());
-  CNR_DEBUG(logger_,"1) child vector size "<<child_connections_.size());
-  for(const ConnectionPtr& c: child_connections_)
-    CNR_DEBUG(logger_,"before child conn "<<c);
-
   for(std::vector<ConnectionPtr>::reverse_iterator it = child_connections_.rbegin(); it != child_connections_.rend(); ++it)
   {
-    CNR_DEBUG(logger_,"destroying child connection "<<(*it)<<" ("<<(*it)->getParent()<<")-->"<<"("<<(*it)->getChild()<<")");
-
-    if(*it)
+    if(*it != nullptr)
       (*it)->remove();
   }
 
-  CNR_DEBUG(logger_,"2) child vector size "<<child_connections_.size());
-  for(const ConnectionPtr& c: child_connections_)
-    CNR_DEBUG(logger_,"child conn "<<c);
-
-  child_connections_.clear();
+  assert(child_connections_.empty());
+  //  child_connections_.clear();
 }
 
 void Node::disconnectNetChildConnections()
-{
+{ 
   for(std::vector<ConnectionPtr>::reverse_iterator it = net_child_connections_.rbegin(); it != net_child_connections_.rend(); ++it)
   {
-    if (*it)
-      if ((*it)->getChild())
-        (*it)->getChild()->removeNetParentConnection(*it);
-      else
-        throw std::runtime_error("connection has no child");
+    if(*it != nullptr)
+      (*it)->remove();
   }
-  net_child_connections_.clear();
+
+  assert(net_child_connections_.empty());
+  //  net_child_connections_.clear();
 }
 
 bool Node::switchParentConnection(const ConnectionPtr& net_connection)
@@ -649,15 +341,50 @@ bool Node::switchParentConnection(const ConnectionPtr& net_connection)
 
 Node::~Node()
 {
-  CNR_DEBUG(logger_, "destroying node "<<this<<" parents: "<<parent_connections_.size()<<" children: "<<child_connections_.size());
-  CNR_DEBUG(logger_,"before disconnecting parent and child connections of node "<<this);
-  for(const auto c:parent_connections_)
-    CNR_DEBUG(logger_,"parent conn "<<c.lock()<<"("<<(c.lock())->getParent()<<")-->("<<(c.lock())->getChild()<<")");
-  for(const auto c:child_connections_)
-    CNR_DEBUG(logger_,"child conn "<<c<<"("<<c->getParent()<<")-->("<<c->getChild()<<")");
+  /* Note: cannot use disconnect() because it calls connection->remove()
+   * which needs the object's pointer and it is not available at this point
+   * since the object is being destroyed. */
+  ConnectionPtr conn;
+  for(std::vector<ConnectionWeakPtr>::reverse_iterator it = parent_connections_.rbegin(); it != parent_connections_.rend(); ++it)
+  {
+    conn = (*it).lock();
+    this->removeParentConnection(std::next(it).base()); //detach connection
+    conn->getParent()->removeChildConnection(conn); //update connection's parent node
 
-  disconnect();
+    assert(not conn->flags_[Connection::idx_parent_valid_] && not conn->flags_[Connection::idx_child_valid_]);
+  }
+
+  for(std::vector<ConnectionWeakPtr>::reverse_iterator it = net_parent_connections_.rbegin(); it != net_parent_connections_.rend(); ++it)
+  {
+    conn = (*it).lock();
+    this->removeNetParentConnection(std::next(it).base()); //detach connection
+    conn->getParent()->removeNetChildConnection(conn); //update connection's parent node
+
+    assert(not conn->flags_[Connection::idx_parent_valid_] && not conn->flags_[Connection::idx_child_valid_]);
+  }
+
+  for(std::vector<ConnectionPtr>::reverse_iterator it = child_connections_.rbegin(); it != child_connections_.rend(); ++it)
+  {
+    conn = *it;
+    conn->getChild()->removeParentConnection(conn); //update connection's child node
+    this->removeChildConnection(std::next(it).base()); //detach connection
+
+    assert(not conn->flags_[Connection::idx_parent_valid_] && not conn->flags_[Connection::idx_child_valid_]);
+  }
+
+  for(std::vector<ConnectionPtr>::reverse_iterator it = net_child_connections_.rbegin(); it != net_child_connections_.rend(); ++it)
+  {
+    conn = *it;
+    conn->getChild()->removeNetParentConnection(conn); //update connection's child node
+    this->removeNetChildConnection(std::next(it).base()); //detach connection
+
+    assert(not conn->flags_[Connection::idx_parent_valid_] && not conn->flags_[Connection::idx_child_valid_]);
+  }
+
+  assert(parent_connections_.empty() && net_parent_connections_.empty() &&
+         child_connections_ .empty() && net_child_connections_ .empty());
 }
+
 const int Node::getParentConnectionsSize() const
 {
   return parent_connections_.size();
