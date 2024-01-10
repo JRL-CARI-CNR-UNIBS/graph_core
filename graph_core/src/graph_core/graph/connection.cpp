@@ -53,7 +53,7 @@ unsigned int Connection::setFlag(const bool flag)
   return idx;
 }
 
-bool Connection::setFlag(const int& idx, const bool flag)
+bool Connection::setFlag(const size_t& idx, const bool flag)
 {
   if(idx == flags_.size()) //new flag to add
     flags_.push_back(flag);
@@ -77,7 +77,7 @@ bool Connection::setFlag(const int& idx, const bool flag)
   return true;
 }
 
-bool Connection::getFlag(const int& idx, const bool default_value)
+bool Connection::getFlag(const size_t &idx, const bool default_value)
 {
   if(idx<flags_.size())
     return flags_[idx];

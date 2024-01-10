@@ -255,7 +255,7 @@ public:
    * @param flag The value to set for the flag.
    * @return Returns true if the flag is successfully set, and false otherwise.
    */
-  bool setFlag(const int& idx, const bool flag);
+  bool setFlag(const size_t &idx, const bool flag);
 
   /**
    * @brief Sets a new flag with the provided value and returns its index.
@@ -279,7 +279,7 @@ public:
    * @param default_value The default value to return if the flag at the specified index does not exist.
    * @return Returns the value of the flag at the specified index or the default value if the index is out of range.
    */
-  bool getFlag(const int& idx, const bool default_value);
+  bool getFlag(const size_t& idx, const bool default_value);
 
   /**
    * @brief Retrieves a pointer to the TraceLogger associated with the node.
@@ -299,28 +299,28 @@ public:
    *
    * @return Returns the number of parent connections associated with the node.
    */
-  const int getParentConnectionsSize() const;
+  const size_t getParentConnectionsSize() const;
 
   /**
    * @brief Retrieves the number of net parent connections for the node.
    *
    * @return Returns the number of net parent connections associated with the node.
    */
-  const int getNetParentConnectionsSize() const;
+  const size_t getNetParentConnectionsSize() const;
 
   /**
    * @brief Retrieves the number of child connections for the node.
    *
    * @return Returns the number of child connections associated with the node.
    */
-  const int getChildConnectionsSize() const;
+  const size_t getChildConnectionsSize() const;
 
   /**
    * @brief Retrieves the number of net child connections for the node.
    *
    * @return Returns the number of net child connections associated with the node.
    */
-  const int getNetChildConnectionsSize() const;
+  const size_t getNetChildConnectionsSize() const;
 
   /**
    * @brief Retrieves the i-th parent connection associated with the node.

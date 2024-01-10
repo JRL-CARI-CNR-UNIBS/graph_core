@@ -86,10 +86,9 @@ Subtree::Subtree(const TreePtr& parent_tree,
                  const double& cost,
                  const std::vector<NodePtr>& black_list,
                  const bool node_check):
-  parent_tree_(parent_tree),
   Tree(root,parent_tree->getMaximumDistance(),
-       parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getLogger(),parent_tree->getUseKdTree())
-
+       parent_tree->getChecker(),parent_tree->getMetrics(),parent_tree->getLogger(),parent_tree->getUseKdTree()),
+  parent_tree_(parent_tree)
 {
   populateTreeFromNodeConsideringCost(root,goal,cost,black_list,node_check);
 }

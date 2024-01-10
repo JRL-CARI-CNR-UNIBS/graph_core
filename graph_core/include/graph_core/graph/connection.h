@@ -301,7 +301,7 @@ public:
    * @param flag The value to set for the flag.
    * @return Returns true if the flag is successfully set, and false otherwise.
    */
-  bool setFlag(const int& idx, const bool flag);
+  bool setFlag(const size_t &idx, const bool flag);
 
   /**
    * @brief Sets a new flag with the provided value and returns its index.
@@ -332,7 +332,7 @@ public:
    * @param default_value The default value to return if the flag at the specified index does not exist.
    * @return Returns the value of the flag at the specified index or the default value if the index is out of range.
    */
-  bool getFlag(const int& idx, const bool default_value);
+  bool getFlag(const size_t& idx, const bool default_value);
 
   /**
    * @brief Adds the Connection to the corresponding nodes' connection vectors.

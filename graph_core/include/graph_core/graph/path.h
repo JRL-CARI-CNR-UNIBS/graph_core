@@ -115,7 +115,7 @@ protected:
    *
    * @param connection_idx The index of the connection to mark as changed.
    */
-  void setChanged(const unsigned int& connection_idx);
+  void setChanged(const size_t &connection_idx);
 
   /**
    * @brief Perform bisection to improve the path between two connections.
@@ -130,7 +130,7 @@ protected:
    * @param min_distance The minimum distance for bisection.
    * @return Returns true if the bisection process results in an improvement, false otherwise.
    */
-  bool bisection(const unsigned int& connection_idx,
+  bool bisection(const size_t& connection_idx,
                  const Eigen::VectorXd& center,
                  const Eigen::VectorXd& direction,
                  double max_distance,
@@ -245,8 +245,8 @@ public:
    * @param toll The tolerance for considering two connections as parallel.
    * @return True if the node removal is successful, false otherwise.
    */
-  bool removeNode(const NodePtr &node, const int& idx_conn, const std::vector<NodePtr> &white_list, ConnectionPtr &new_conn, const double &toll = 1e-06);
-  bool removeNode(const NodePtr &node, const int& idx_conn, const std::vector<NodePtr> &white_list);
+  bool removeNode(const NodePtr &node, const size_t &idx_conn, const std::vector<NodePtr> &white_list, ConnectionPtr &new_conn, const double &toll = 1e-06);
+  bool removeNode(const NodePtr &node, const size_t& idx_conn, const std::vector<NodePtr> &white_list);
   bool removeNode(const NodePtr& node, const std::vector<NodePtr> &white_list, ConnectionPtr &new_conn);
   bool removeNode(const NodePtr& node, const std::vector<NodePtr> &white_list);
 
@@ -277,7 +277,7 @@ public:
    * @param verbose If true, print additional information for debugging.
    * @return The found connection or nullptr if not found.
    */
-  ConnectionPtr findConnection(const Eigen::VectorXd& configuration, int& idx, bool verbose = false);
+  ConnectionPtr findConnection(const Eigen::VectorXd& configuration, size_t &idx, bool verbose = false);
   ConnectionPtr findConnection(const Eigen::VectorXd& configuration);
 
   /**
@@ -373,11 +373,11 @@ public:
   /**
    * @brief Compute the curvilinear abscissa of a point on the path.
    *
-   * @param conf The configuration of the point.
+   * @param conf The configuration of the point.W
    * @param idx Outputs the index of the connection on which the point lies.
    * @return The curvilinear abscissa of the point.
    */
-  double curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf, int& idx);
+  double curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf, size_t &idx);
   double curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf);
 
   /**
@@ -387,7 +387,7 @@ public:
    * @param conn_idx The index of the connection on which the point lies.
    * @return The curvilinear abscissa of the point on the specified connection.
    */
-  double curvilinearAbscissaOfPointGivenConnection(const Eigen::VectorXd& conf,const int& conn_idx);
+  double curvilinearAbscissaOfPointGivenConnection(const Eigen::VectorXd& conf,const size_t& conn_idx);
 
   /**
    * @brief Get the cost of the path from a specific configuration.
@@ -687,9 +687,9 @@ public:
    * @param this_checker Optional custom collision checker.
    * @return True if the path is collision-free from the given configuration, false otherwise.
    */
-  bool isValidFromConf(const Eigen::VectorXd &conf, const int &conn_idx, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker = nullptr);
+  bool isValidFromConf(const Eigen::VectorXd &conf, const size_t &conn_idx, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker = nullptr);
   bool isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker = nullptr);
-  bool isValidFromConf(const Eigen::VectorXd &conf, const int& conn_idx, const CollisionCheckerPtr &this_checker = nullptr);
+  bool isValidFromConf(const Eigen::VectorXd &conf, const size_t& conn_idx, const CollisionCheckerPtr &this_checker = nullptr);
   bool isValidFromConf(const Eigen::VectorXd &conf, const CollisionCheckerPtr &this_checker = nullptr);
 
   /**

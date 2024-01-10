@@ -1147,7 +1147,7 @@ void Tree::populateTreeFromNodeConsideringCost(const NodePtr& node, const Eigen:
   NodePtr child;
   ConnectionPtr conn;
   double cost_to_child;
-  for(unsigned int i=0; i<node->getChildConnectionsSize();i++)
+  for(size_t i=0; i<node->getChildConnectionsSize();i++)
   {
     conn = node->childConnection(i);
     child = conn->getChild();
@@ -1330,7 +1330,7 @@ TreePtr Tree::fromYAML(const YAML::Node& yaml,
   }
 
   ConnectionPtr conn;
-  for (int ic=0;ic<connections.size();ic++)
+  for(size_t ic=0;ic<connections.size();ic++)
   {
     int in1 = connections[ic][0].as<int>();
     int in2 = connections[ic][1].as<int>();

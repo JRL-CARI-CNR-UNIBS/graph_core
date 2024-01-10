@@ -54,7 +54,7 @@ unsigned int Node::setFlag(const bool flag)
   return idx;
 }
 
-bool Node::setFlag(const int& idx, const bool flag)
+bool Node::setFlag(const size_t& idx, const bool flag)
 {
   if(idx == flags_.size()) //new flag to add
     flags_.push_back(flag);
@@ -77,7 +77,7 @@ bool Node::setFlag(const int& idx, const bool flag)
   return true;
 }
 
-bool Node::getFlag(const int& idx, const bool default_value)
+bool Node::getFlag(const size_t& idx, const bool default_value)
 {
   if(idx<flags_.size())
     return flags_[idx];
@@ -385,19 +385,19 @@ Node::~Node()
          child_connections_ .empty() && net_child_connections_ .empty());
 }
 
-const int Node::getParentConnectionsSize() const
+const size_t Node::getParentConnectionsSize() const
 {
   return parent_connections_.size();
 }
-const int Node::getNetParentConnectionsSize() const
+const size_t Node::getNetParentConnectionsSize() const
 {
   return net_parent_connections_.size();
 }
-const int Node::getChildConnectionsSize() const
+const size_t Node::getChildConnectionsSize() const
 {
   return child_connections_.size();
 }
-const int Node::getNetChildConnectionsSize() const
+const size_t Node::getNetChildConnectionsSize() const
 {
   return net_child_connections_.size();
 }
@@ -536,7 +536,7 @@ NodePtr Node::fromYAML(const YAML::Node& yaml, const cnr_logger::TraceLoggerPtr&
   }
 
   Eigen::VectorXd conf(yaml.size());
-  for (int idx=0;idx<yaml.size();idx++)
+  for (size_t idx=0;idx<yaml.size();idx++)
   {
     conf(idx)=yaml[idx].as<double>();
   }

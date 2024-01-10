@@ -185,7 +185,7 @@ Eigen::VectorXd Path::pointOnCurvilinearAbscissa(const double& abscissa, Connect
   return goal_node_->getConfiguration();
 }
 
-double Path::curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf, int& idx)
+double Path::curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf, size_t& idx)
 {
   double abscissa = std::numeric_limits<double>::infinity();
 
@@ -205,25 +205,24 @@ double Path::curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf, int& idx)
 
 double Path::curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf)
 {
-  int idx;
+  size_t idx;
   return curvilinearAbscissaOfPoint(conf,idx);
 }
 
-double Path::curvilinearAbscissaOfPointGivenConnection(const Eigen::VectorXd& conf, const int& conn_idx)
+double Path::curvilinearAbscissaOfPointGivenConnection(const Eigen::VectorXd& conf, const size_t &conn_idx)
 {
   double abscissa = std::numeric_limits<double>::infinity();
 
-  if(conn_idx < 0 || conn_idx >= int(connections_.size()))
+  if(conn_idx >= connections_.size())
   {
     CNR_ERROR(logger_,"The connection does not belong to the path -> the curvilinear abscissa can not be computed");
     CNR_INFO (logger_,"conn_idx: "<<conn_idx);
-    assert(0);
     return abscissa;
   }
 
   double euclidean_norm = 0.0;
   double euclidean_norm_to_parent = -1.0;
-  for(int i=0;i<int(connections_.size());i++)
+  for(size_t i=0;i<connections_.size();i++)
   {
     if(i == conn_idx)
       euclidean_norm_to_parent = euclidean_norm;
@@ -243,7 +242,7 @@ double Path::getCostFromConf(const Eigen::VectorXd &conf)
 {
   computeCost();
   double cost = 0;
-  int idx;
+  size_t idx;
   ConnectionPtr this_conn = findConnection(conf,idx);
 
   if(this_conn == nullptr)
@@ -289,7 +288,7 @@ double Path::getCostFromConf(const Eigen::VectorXd &conf)
 double Path::getNormFromConf(const Eigen::VectorXd &conf)
 {
   double norm = 0;
-  int idx;
+  size_t idx;
   ConnectionPtr this_conn = findConnection(conf,idx);
 
   if(this_conn == nullptr)
@@ -303,7 +302,8 @@ double Path::getNormFromConf(const Eigen::VectorXd &conf)
     norm += (conf-this_conn->getChild()->getConfiguration()).norm();
     if(idx < connections_.size()-1)
     {
-      for(unsigned int i=idx+1;i<connections_.size();i++) norm += connections_.at(i)->norm();
+      for(unsigned int i=idx+1;i<connections_.size();i++)
+        norm += connections_.at(i)->norm();
     }
   }
 
@@ -318,12 +318,12 @@ void Path::computeCost()
     cost_ += conn->getCost();
 }
 
-void Path::setChanged(const unsigned int &connection_idx)
+void Path::setChanged(const size_t &connection_idx)
 {
   change_warp_.at(connection_idx) = 1;
 }
 
-bool Path::bisection(const unsigned int &connection_idx,
+bool Path::bisection(const size_t &connection_idx,
                      const Eigen::VectorXd &center,
                      const Eigen::VectorXd &direction,
                      double max_distance,
@@ -343,7 +343,7 @@ bool Path::bisection(const unsigned int &connection_idx,
   unsigned int iter = 0;
   double distance;
 
-  while (iter++ < 5 & (max_distance - min_distance) > min_length_)
+  while ((iter++ < 5) && ((max_distance - min_distance) > min_length_))
   {
     if (iter > 0)
       distance = 0.5 * (max_distance + min_distance);
@@ -502,14 +502,13 @@ void Path::setConnections(const std::vector<ConnectionPtr>& conn)
 
 ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration)
 {
-  int idx;
+  size_t idx;
   return findConnection(configuration,idx);
 }
 
-ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, int& idx, bool verbose)
+ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, size_t& idx, bool verbose)
 {
   ConnectionPtr conn = nullptr;
-  idx = -1;
 
   // Check if a node corresponds to configuration. This is useful when you have overlapping connections
   std::vector<NodePtr> nodes = getNodes();
@@ -696,7 +695,7 @@ bool Path::removeNodes(const std::vector<NodePtr> &white_list, const double& tol
   return removeNodes(white_list,deleted_nodes,toll);
 }
 
-bool Path::removeNode(const NodePtr& node, const int& idx_conn, const std::vector<NodePtr> &white_list, ConnectionPtr& new_conn, const double& toll)
+bool Path::removeNode(const NodePtr& node, const size_t& idx_conn, const std::vector<NodePtr> &white_list, ConnectionPtr& new_conn, const double& toll)
 {
   if(node == start_node_ || node == goal_node_)
     return false;
@@ -747,7 +746,7 @@ bool Path::removeNode(const NodePtr& node, const int& idx_conn, const std::vecto
   return false;
 }
 
-bool Path::removeNode(const NodePtr& node, const int& idx_conn, const std::vector<NodePtr> &white_list)
+bool Path::removeNode(const NodePtr& node, const size_t& idx_conn, const std::vector<NodePtr> &white_list)
 {
   ConnectionPtr new_conn;
   return removeNode(node,idx_conn,white_list,new_conn);
@@ -867,7 +866,7 @@ bool Path::removeNodes(const std::vector<NodePtr> &white_list, std::vector<NodeP
   {
     removed = false;
 
-    for(unsigned int i=0;i<connections_.size()-1;i++)
+    for(size_t i=0;i<connections_.size()-1;i++)
     {
       conn_parent_node = connections_.at(i);
       conn_node_child  = connections_.at(i+1);
@@ -1108,15 +1107,16 @@ PathPtr Path::getSubpathToConf(const Eigen::VectorXd& conf, const bool clone)
   //Conf is not a path waypoint
   PathPtr subpath;
   NodePtr node;
-  int idx_conn;
+  size_t idx_conn;
   ConnectionPtr conn = findConnection(conf,idx_conn);
-  bool is_net = conn->isNet();
 
   if(not conn)
   {
-    CNR_ERROR(logger_,"Conf does not belong to the path, subpath to conf can not be computed");
-    assert(0);
+    CNR_FATAL(logger_,"Conf does not belong to the path, subpath to conf can not be computed");
+    throw std::invalid_argument("Conf does not belong to the path, subpath to conf can not be computed");
   }
+
+  bool is_net = conn->isNet();
 
   if(not clone)
   {
@@ -1130,7 +1130,7 @@ PathPtr Path::getSubpathToConf(const Eigen::VectorXd& conf, const bool clone)
     NodePtr parent;
     PathPtr path_to_parent;
     std::vector<ConnectionPtr> connections_to_parent;
-    if(idx_conn > 0)
+    if(idx_conn > 0) //conf is not on the first connection
     {
       path_to_parent = (getSubpathToNode(conn->getParent()))->clone();
       connections_to_parent = path_to_parent->getConnections();
@@ -1188,7 +1188,7 @@ PathPtr Path::getSubpathFromConf(const Eigen::VectorXd& conf, const bool clone)
   //Conf is not a path waypoint
   PathPtr subpath;
   NodePtr node;
-  int idx_conn;
+  size_t idx_conn;
   ConnectionPtr conn = findConnection(conf,idx_conn);
   if(not conn)
   {
@@ -1210,7 +1210,7 @@ PathPtr Path::getSubpathFromConf(const Eigen::VectorXd& conf, const bool clone)
     NodePtr child;
     PathPtr path_from_child;
     std::vector<ConnectionPtr> connections_from_child;
-    if(idx_conn < connections_.size()-1)
+    if(idx_conn < connections_.size()-1) //conf is not on the last connection
     {
       path_from_child = getSubpathFromNode(conn->getChild())->clone();
       connections_from_child = path_from_child->getConnections();
@@ -1454,13 +1454,13 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const CollisionCheckerPt
   return isValidFromConf(conf,pos_closest_obs_from_goal,this_checker);
 }
 
-bool Path::isValidFromConf(const Eigen::VectorXd &conf, const int& conn_idx, const CollisionCheckerPtr &this_checker)
+bool Path::isValidFromConf(const Eigen::VectorXd &conf, const size_t &conn_idx, const CollisionCheckerPtr &this_checker)
 {
   int pos_closest_obs_from_goal = -1;
   return isValidFromConf(conf,conn_idx,pos_closest_obs_from_goal,this_checker);
 }
 
-bool Path::isValidFromConf(const Eigen::VectorXd &conf, const int& conn_idx, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker)
+bool Path::isValidFromConf(const Eigen::VectorXd &conf, const size_t& conn_idx, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker)
 {
   assert(conn_idx >= 0);
 
@@ -1479,7 +1479,7 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const int& conn_idx, int
 
     if(not validity)
     {
-      for(int i = (connections_.size()-1);i>=conn_idx;i--)
+      for(size_t i = (connections_.size()-1);i>=conn_idx;i--)
       {
         if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity())
           pos_closest_obs_from_goal = connections_.size()-1-i;
@@ -1494,7 +1494,7 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const int& conn_idx, int
 
       if(not validity)
       {
-        for(int i = (connections_.size()-1);i>=conn_idx+1;i--)
+        for(size_t i = (connections_.size()-1);i>=conn_idx+1;i--)
         {
           if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity())
             pos_closest_obs_from_goal = connections_.size()-1-i;
@@ -1526,7 +1526,7 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const int& conn_idx, int
       if(not isValidFromConn(connections_.at(conn_idx+1),checker))
       {
         validity = false;
-        for(int i = (connections_.size()-1);i>=conn_idx+1;i--)
+        for(size_t i = (connections_.size()-1);i>=conn_idx+1;i--)
         {
           if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity())
             pos_closest_obs_from_goal = connections_.size()-1-i;
@@ -1540,7 +1540,7 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const int& conn_idx, int
 
 bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker)
 {
-  int conn_idx;
+  size_t conn_idx;
   findConnection(conf,conn_idx);
   return isValidFromConf(conf,conn_idx,pos_closest_obs_from_goal,this_checker);
 }
