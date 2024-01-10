@@ -171,8 +171,6 @@ std::vector<double> GoalSelectionManager::calculateProbabilities(const std::vect
     }
   }
 
-//  ROS_WARN("updated state");
-
   goal_probabilities_ = policy_->getProbabilities();
   return goal_probabilities_;
 }
