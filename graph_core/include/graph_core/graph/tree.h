@@ -980,6 +980,8 @@ public:
    * 'nodes' representing a sequence of Nodes and 'connections' defining connections by specifying the indices
    * of nodes in the 'nodes' sequence to connect.
    *
+   * @note Among the sequence of nodes, it searches for the one without parents to locate the root of the tree.
+   *
    * @param yaml The YAML::Node containing 'nodes' and 'connections' fields.
    * @param max_distance The maximum distance for the Tree.
    * @param checker The CollisionCheckerPtr for collision checking.

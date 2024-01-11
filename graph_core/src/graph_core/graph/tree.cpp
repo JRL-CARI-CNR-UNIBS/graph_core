@@ -1301,21 +1301,23 @@ TreePtr Tree::fromYAML(const YAML::Node& yaml,
     return nullptr;
   }
 
-  NodePtr root = Node::fromYAML(nodes[0],logger);
-  if (not lazy)
-  {
-    if (not checker->check(root->getConfiguration()))
-    {
-      CNR_DEBUG(logger,"Root is in collision");
-      return nullptr;
-    }
-  }
+  //  NodePtr root = Node::fromYAML(nodes[0],logger);
+  //  if (not lazy)
+  //  {
+  //    if (not checker->check(root->getConfiguration()))
+  //    {
+  //      CNR_DEBUG(logger,"Root is in collision");
+  //      return nullptr;
+  //    }
+  //  }
+
+  //  std::vector<NodePtr> nodes_vector(nodes.size());
+  //  nodes_vector[0] = root;
 
   std::vector<NodePtr> nodes_vector(nodes.size());
-  nodes_vector[0] = root;
 
   NodePtr node;
-  for(size_t in = 1; in<nodes.size(); in++)
+  for(size_t in = 0; in<nodes.size(); in++)
   {
     node = Node::fromYAML(nodes[in],logger);
 
@@ -1329,19 +1331,38 @@ TreePtr Tree::fromYAML(const YAML::Node& yaml,
     nodes_vector[in] = node;
   }
 
+  int in1, in2;
+  NodePtr n1, n2;
   ConnectionPtr conn;
+  YAML::Node connection;
   for(size_t ic=0;ic<connections.size();ic++)
   {
-    int in1 = connections[ic][0].as<int>();
-    int in2 = connections[ic][1].as<int>();
+    connection = connections[ic];
+    if(!connection.IsSequence())
+    {
+      CNR_ERROR(logger,"Cannot load connections from YAML::Node if the field connections is not a sequence of sequence");
+      return nullptr;
+    }
 
-    NodePtr& n1 = nodes_vector.at(in1);
-    NodePtr& n2 = nodes_vector.at(in2);
+    in1 = connection[0].as<int>();
+    in2 = connection[1].as<int>();
+
+    n1 = nodes_vector.at(in1);
+    n2 = nodes_vector.at(in2);
 
     conn = std::make_shared<Connection>(n1, n2, logger);
     conn->setCost(metrics->cost(n1, n2));
-
     conn->add();
+  }
+
+  NodePtr root;
+  for(const NodePtr& n: nodes_vector)
+  {
+    if(n->getParentConnectionsSize() == 0)
+    {
+      root = n;
+      break;
+    }
   }
 
   TreePtr tree = std::make_shared<Tree>(root, max_distance, checker, metrics, logger, use_kdtree);
