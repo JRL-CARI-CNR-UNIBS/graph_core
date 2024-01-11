@@ -34,21 +34,47 @@ PSEUDO CODE :
 namespace graph_core
 {
 
-
+/**
+ * @class NearestNeighbors
+ * @brief Abstract base class for handling nearest neighbor search in a graph.
+ */
 class NearestNeighbors: public std::enable_shared_from_this<NearestNeighbors>
 {
 public:
+
+  /**
+   * @brief Constructor for the NearestNeighbors class.
+   */
   NearestNeighbors()
   {
     delete_nodes_=0;
     size_=0;
   }
 
+  /**
+   * @brief Pure virtual function to insert a node into the nearest neighbors data structure.
+   *
+   * @param node The node to be inserted.
+   */
   virtual void insert(const NodePtr& node)=0;
+
+  /**
+   * @brief Pure virtual function to find the nearest neighbor to a given configuration.
+   *
+   * @param configuration The configuration for which the nearest neighbor needs to be found.
+   * @param best Reference to the pointer to the best-matching node.
+   * @param best_distance Reference to the distance to the best-matching node.
+   */
   virtual void nearestNeighbor(const Eigen::VectorXd& configuration,
                           NodePtr &best,
                           double &best_distance)=0;
 
+  /**
+   * @brief Function to find the nearest neighbor to a given configuration.
+   *
+   * @param configuration The configuration for which the nearest neighbor needs to be found.
+   * @return The nearest neighbor node.
+   */
   virtual NodePtr nearestNeighbor(const Eigen::VectorXd& configuration)
   {
     {
@@ -59,30 +85,85 @@ public:
     }
   }
 
+  /**
+   * @brief Pure virtual function to find nodes within a specified radius of a given configuration.
+   *
+   * @param configuration The reference configuration.
+   * @param radius The search radius.
+   * @return A multimap containing nodes and their distances within the specified radius.
+   */
   virtual std::multimap<double, NodePtr> near(const Eigen::VectorXd& configuration,
                             const double& radius)=0;
 
+  /**
+   * @brief Pure virtual function to find k nearest neighbors to a given configuration.
+   *
+   * @param configuration The reference configuration.
+   * @param k The number of nearest neighbors to find.
+   * @return A multimap containing k nodes and their distances.
+   */
   virtual std::multimap<double,NodePtr> kNearestNeighbors(const Eigen::VectorXd& configuration,
                                  const size_t& k)=0;
 
+  /**
+   * @brief Pure virtual function to check if a node exists in the nearest neighbors data structure.
+   *
+   * @param node The node to check.
+   * @return True if the node exists, false otherwise.
+   */
   virtual bool findNode(const NodePtr& node)=0;
 
+  /**
+   * @brief Pure virtual function to delete a node from the nearest neighbors data structure.
+   *
+   * @param node The node to delete.
+   * @param disconnect_node If true, disconnect the node also from the graph/tree.
+   * @return True if the deletion is successful, false otherwise.
+   */
   virtual bool deleteNode(const NodePtr& node,
                   const bool& disconnect_node=false)=0;
 
+  /**
+   * @brief Pure virtual function to restore a previously deleted node from the data structure.
+   *
+   * @param node The node to restore.
+   * @return True if the restoration is successful, false otherwise.
+   */
   virtual bool restoreNode(const NodePtr& node)=0;
 
+  /**
+   * @brief Function to get the size (number of nodes) in the nearest neighbors data structure.
+   *
+   * @return The size of the nearest neighbors data structure.
+   */
   virtual unsigned int size(){return size_;}
 
+  /**
+   * @brief Pure virtual function to get a vector of all nodes in the nearest neighbors data structure.
+   *
+   * @return A vector containing all nodes in the nearest neighbors data structure.
+   */
   virtual std::vector<NodePtr> getNodes()=0;
 
+  /**
+   * @brief Pure virtual function to disconnect nodes in the given white list from the graph.
+   *
+   * @param white_list A vector of nodes to be excluded from the disconnection process.
+   */
   virtual void disconnectNodes(const std::vector<NodePtr>& white_list)=0;
 
 protected:
+  /**
+   * @brief size_ Number of nodes in the nearest neighbors data structure.
+   */
   unsigned int size_;
+
+  /**
+   * @brief delete_nodes_ Number of deleted nodes.
+   */
   unsigned int delete_nodes_;
 };
 
 typedef std::shared_ptr<NearestNeighbors> NearestNeighborsPtr;
 
-}  // namespace pathplan
+}  // namespace graph_core
