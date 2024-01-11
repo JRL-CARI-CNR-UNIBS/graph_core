@@ -40,6 +40,7 @@ class KdTree;
 typedef std::shared_ptr<KdTree> KdTreePtr;
 class KdNode;
 typedef std::shared_ptr<KdNode> KdNodePtr;
+typedef std::weak_ptr<KdNode> KdNodeWeakPtr;
 
 enum SearchDirection {Left,Right};
 
@@ -54,6 +55,8 @@ enum SearchDirection {Left,Right};
  */
 class KdNode: public std::enable_shared_from_this<KdNode>
 {
+  friend class KdTree;
+
 public:
 
   /**
@@ -63,7 +66,8 @@ public:
    * @param dimension The dimension along which the tree is split.
    */
   KdNode(const NodePtr& node,
-         const int& dimension);
+         const int& dimension,
+         const cnr_logger::TraceLoggerPtr& logger);
 
   /**
    * @brief Get the stored node.
@@ -99,6 +103,12 @@ public:
   KdNodePtr right();
 
   /**
+   * @brief Get the parent of the node.
+   * @return The parent of the node.
+   */
+  KdNodeWeakPtr parent();
+
+  /**
    * @brief Set the left child of the node.
    * @param kdnode The left child to set.
    */
@@ -111,13 +121,19 @@ public:
   void right(const KdNodePtr& kdnode);
 
   /**
+   * @brief Set the parent of the node.
+   * @param kdnode The parent to set.
+   */
+  void parent(const KdNodeWeakPtr &kdnode);
+
+  /**
    * @brief Delete the node from the tree.
-   * @param disconnect_node Flag indicating whether to disconnect the node.
+   * @param disconnect_node Flag indicating whether to disconnect the node from the graph/tree.
    */
   void deleteNode(const bool& disconnect_node=false);
 
   /**
-   * @brief Restore the node in the tree.
+   * @brief Restore the node in the tree setting deleted_ flag false.
    */
   void restoreNode();
 
@@ -192,6 +208,11 @@ protected:
   NodePtr node_;
 
   /**
+   * @brief parent_ Weak pointer to the parent KdNode.
+   */
+  KdNodeWeakPtr parent_;
+
+  /**
    * @brief left_ Shared pointer to the left child KdNode.
    */
   KdNodePtr left_;
@@ -212,6 +233,15 @@ protected:
    * like getNodes or nearestNeighbor based on this flag.
    */
   bool deleted_;
+
+  /**
+   * @brief Pointer to a TraceLogger instance for logging.
+   *
+   * This member variable represents a pointer to a TraceLogger instance, allowing
+   * to perform logging operations. TraceLogger is a part of the cnr_logger library.
+   * Ensure that the logger is properly configured and available for use.
+   */
+  const cnr_logger::TraceLoggerPtr& logger_;
 };
 
 /**
@@ -220,12 +250,14 @@ protected:
  */
 class KdTree: public NearestNeighbors
 {
+  friend class KdNode;
+
 public:
 
   /**
    * @brief Constructor for the KdTree class.
    */
-  KdTree();
+  KdTree(const cnr_logger::TraceLoggerPtr &logger);
 
   /**
    * @brief Implementation of the insert function for adding a node to the k-d tree.
@@ -328,6 +360,9 @@ public:
    * @param white_list A vector of nodes to be excluded from the disconnection process.
    */
   virtual void disconnectNodes(const std::vector<NodePtr>& white_list) override;
+
+  bool removeNode(const NodePtr& node,
+                  const bool& disconnect_node=false);
 protected:
   /**
    * @brief root_ Root node of the k-d tree.

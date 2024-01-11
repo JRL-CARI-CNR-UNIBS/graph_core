@@ -32,10 +32,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace graph_core
 {
 
-Vector::Vector():
-  NearestNeighbors()
+Vector::Vector(const cnr_logger::TraceLoggerPtr &logger):
+  NearestNeighbors(logger)
 {
-
 }
 
 void Vector::insert(const NodePtr& node)

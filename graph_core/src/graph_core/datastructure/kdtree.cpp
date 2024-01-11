@@ -33,9 +33,11 @@ namespace graph_core
 {
 
 KdNode::KdNode(const NodePtr& node,
-               const int &dimension):
+               const int &dimension,
+               const cnr_logger::TraceLoggerPtr &logger):
   node_(node),
-  dimension_(dimension)
+  dimension_(dimension),
+  logger_(logger)
 {
   deleted_=false;
 }
@@ -55,6 +57,11 @@ KdNodePtr KdNode::right()
   return right_;
 }
 
+KdNodeWeakPtr KdNode::parent()
+{
+  return parent_;
+}
+
 void KdNode::left(const KdNodePtr& kdnode)
 {
   left_=kdnode;
@@ -63,6 +70,11 @@ void KdNode::left(const KdNodePtr& kdnode)
 void KdNode::right(const KdNodePtr& kdnode)
 {
   right_=kdnode;
+}
+
+void KdNode::parent(const KdNodeWeakPtr& kdnode)
+{
+  parent_=kdnode;
 }
 
 int KdNode::dimension()
@@ -77,14 +89,20 @@ void KdNode::insert(const NodePtr& node)
   if (node->getConfiguration()(dimension_)>=node_->getConfiguration()(dimension_))  // goRight
   {
     if (not right_)
-      right_=std::make_shared<KdNode>(node,next_dim);
+    {
+      right_=std::make_shared<KdNode>(node,next_dim,logger_);
+      right_->parent(pointer());
+    }
     else
       right_->insert(node);
   }
   else //goLeft
   {
     if (not left_)
-      left_=std::make_shared<KdNode>(node,next_dim);
+    {
+      left_=std::make_shared<KdNode>(node,next_dim,logger_);
+      left_->parent(pointer());
+    }
     else
       left_->insert(node);
   }
@@ -101,18 +119,31 @@ KdNodePtr KdNode::findMin(const int& dim)
   }
   else
   {
-    KdNodePtr min_left  = left_->findMin(dim);
-    KdNodePtr min_right = right_->findMin(dim);
-    if (min_left->node()->getConfiguration()(dim)<min_right->node()->getConfiguration()(dim))
-      return min_left;
-    else
-      return min_right;
+    if(not left_ and not right_)
+      return pointer();
+
+    KdNodePtr min_left, min_right;
+
+    if(left_)
+      min_left  = left_->findMin(dim);
+
+    if(right_)
+      min_right = right_->findMin(dim);
+
+    KdNodePtr min_kdnode = pointer();
+
+    if(min_left && (min_left->node()->getConfiguration()(dim)<min_kdnode->node()->getConfiguration()(dim)))
+      min_kdnode = min_left;
+    if(min_right && (min_right->node()->getConfiguration()(dim)<min_kdnode->node()->getConfiguration()(dim)))
+      min_kdnode = min_right;
+
+    return min_kdnode;
   }
 }
 
 void KdNode::nearestNeighbor(const Eigen::VectorXd& configuration,
-                                NodePtr& best,
-                                double& best_distance)
+                             NodePtr& best,
+                             double& best_distance)
 {
   double distance=(configuration-node_->getConfiguration()).norm();
   if ((not deleted_) and distance<best_distance)
@@ -177,8 +208,8 @@ void KdNode::near(const Eigen::VectorXd& configuration,
 }
 
 void KdNode::kNearestNeighbors(const Eigen::VectorXd& configuration,
-                   const size_t& k,
-                   std::multimap<double, NodePtr> &nodes)
+                               const size_t& k,
+                               std::multimap<double, NodePtr> &nodes)
 {
   double last_distance;
   if (nodes.empty())
@@ -287,8 +318,8 @@ void KdNode::disconnectNodes(const std::vector<NodePtr>& white_list)
     right_->disconnectNodes(white_list);
 }
 
-KdTree::KdTree():
-  NearestNeighbors()
+KdTree::KdTree(const cnr_logger::TraceLoggerPtr &logger):
+  NearestNeighbors(logger)
 {
 }
 
@@ -298,7 +329,7 @@ void KdTree::insert(const NodePtr& node)
   // if not root, initialize it
   if (not root_)
   {
-    root_=std::make_shared<KdNode>(node,0);
+    root_=std::make_shared<KdNode>(node,0,logger_); //parent_=nullptr by default
     return;
   }
   root_->insert(node);
@@ -324,7 +355,7 @@ void KdTree::nearestNeighbor(const Eigen::VectorXd& configuration,
 
 
 std::multimap<double, graph_core::NodePtr> KdTree::near(const Eigen::VectorXd& configuration,
-                                  const double& radius)
+                                                        const double& radius)
 {
   std::multimap<double, graph_core::NodePtr> nodes;
   if (not root_)
@@ -335,7 +366,7 @@ std::multimap<double, graph_core::NodePtr> KdTree::near(const Eigen::VectorXd& c
 }
 
 std::multimap<double, NodePtr> KdTree::kNearestNeighbors(const Eigen::VectorXd& configuration,
-                                        const size_t& k)
+                                                         const size_t& k)
 {
   std::multimap<double, NodePtr> nodes;
   if (not root_)
@@ -346,7 +377,7 @@ std::multimap<double, NodePtr> KdTree::kNearestNeighbors(const Eigen::VectorXd& 
 }
 
 bool KdTree::findNode(const NodePtr& node,
-              KdNodePtr& kdnode)
+                      KdNodePtr& kdnode)
 {
   if (not root_)
     return false;
@@ -398,6 +429,78 @@ std::vector<NodePtr> KdTree::getNodes()
 void KdTree::disconnectNodes(const std::vector<NodePtr>& white_list)
 {
   root_->disconnectNodes(white_list);
+}
+
+bool KdTree::removeNode(const NodePtr& node, const bool& disconnect_node)
+{
+  if(node == root_->node_)
+  {
+    CNR_ERROR(logger_,"Cannot remove root of KDTree");
+    return false;
+  }
+
+  KdNodePtr kdnode;
+  if (not findNode(node,kdnode))
+    return false;
+
+  KdNodePtr parent = kdnode->parent_.lock();
+  if(not parent)
+  {
+    CNR_FATAL(logger_,"KDNode has no parent");
+    throw std::runtime_error("KDNode has no parent");
+  }
+
+  if (disconnect_node)
+    kdnode->node_->disconnect();
+
+  size_--;
+  delete_nodes_++;
+
+  // Case 1: Node to remove is a leaf
+  if (not kdnode->left_ && not kdnode->right_)
+  {
+    // Update the parent's pointer
+    if (parent->left_ == kdnode)
+    {
+      parent->left_ = nullptr;
+    }
+    else
+    {
+      assert(parent->right_ == kdnode);
+      parent->right_ = nullptr;
+    }
+
+    return true;
+  }
+
+  // Case 2: Node has a right subtree
+  KdNodePtr replacement = kdnode->findMin(kdnode->dimension_);
+  assert(not replacement->left_);
+
+  if (parent->left_ == kdnode)
+  {
+    parent->left_ = replacement;
+  }
+  else
+  {
+    assert(parent->right_ == kdnode);
+    parent->right_ = replacement;
+  }
+
+  KdNodePtr replacement_old_parent = replacement->parent_.lock();
+  if (replacement_old_parent->left_ == replacement)
+  {
+    replacement_old_parent->left_ = nullptr;
+  }
+  else
+  {
+    assert(replacement_old_parent->right_ == replacement);
+    replacement_old_parent->right_ = nullptr;
+  }
+
+  replacement->parent_ = kdnode->parent_;
+
+
 }
 
 }  // namespace graph_core
