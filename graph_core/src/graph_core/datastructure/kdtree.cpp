@@ -400,4 +400,5 @@ void KdTree::disconnectNodes(const std::vector<NodePtr>& white_list)
   root_->disconnectNodes(white_list);
 }
 
-}  // namespace pathplan
+}  // namespace graph_core
+

@@ -138,4 +138,4 @@ protected:
   KdNodePtr root_;
 };
 
-}  // namespace pathplan
+}  // namespace graph_core
