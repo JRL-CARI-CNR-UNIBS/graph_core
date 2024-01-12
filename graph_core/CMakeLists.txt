@@ -65,6 +65,12 @@ target_link_libraries(node_connection_test PUBLIC
   ${PROJECT_NAME}
 )
 
+add_executable(kdtree_test tests/kdtree_test.cpp)
+target_link_libraries(kdtree_test PUBLIC
+  ${cnr_logger_LIBRARIES}
+  ${PROJECT_NAME}
+)
+
 # Install
 install(DIRECTORY include/${PROJECT_NAME}
   DESTINATION include)

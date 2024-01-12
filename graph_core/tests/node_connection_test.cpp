@@ -12,7 +12,7 @@ int main(int argc, char **argv)
       / "cari_motion_planning/graph_core/tests/logger_param.yaml";
 
   // Create the logger
-  cnr_logger::TraceLoggerPtr logger=std::make_shared<cnr_logger::TraceLogger>("graph_test", file_path.string());
+  cnr_logger::TraceLoggerPtr logger=std::make_shared<cnr_logger::TraceLogger>("node_connection_test", file_path.string());
 
   //Tests
   CNR_INFO(logger, cnr_logger::RESET() << cnr_logger::WHITE() << " --- Create random configurations ---");

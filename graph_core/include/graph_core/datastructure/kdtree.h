@@ -68,6 +68,10 @@ public:
   KdNode(const NodePtr& node,
          const int& dimension,
          const cnr_logger::TraceLoggerPtr& logger);
+  /**
+   * @brief Destructor for the KdNode class.
+   */
+  ~KdNode();
 
   /**
    * @brief Get the stored node.
@@ -157,7 +161,7 @@ public:
    * @param best_distance The distance to the nearest neighbor.
    */
   void nearestNeighbor(const Eigen::VectorXd& configuration,
-                          NodePtr &best,
+                       NodePtr &best,
                        double &best_distance);
 
   /**
@@ -177,8 +181,8 @@ public:
    * @param nodes Multimap to store k-nearest neighbors.
    */
   void kNearestNeighbors(const Eigen::VectorXd& configuration,
-             const size_t& k,
-             std::multimap<double,NodePtr>& nodes);
+                         const size_t& k,
+                         std::multimap<double,NodePtr>& nodes);
 
   /**
    * @brief Find a specific node in the tree.
@@ -186,7 +190,7 @@ public:
    * @param kdnode A reference to a pointer that will store the found KdNode.
    * @return True if the node is found, false otherwise.
    */  bool findNode(const NodePtr& node,
-                KdNodePtr& kdnode);
+                     KdNodePtr& kdnode);
 
   /**
    * @brief Get all nodes in the tree.
@@ -199,6 +203,19 @@ public:
    * @param white_list Vector of nodes to keep connected.
    */
   void disconnectNodes(const std::vector<NodePtr>& white_list);
+
+  /**
+   * @brief Output stream operator for a KdNode.
+   *
+   * This operator allows streaming a textual representation of the KdNode to an output stream.
+   *
+   * @param os The output stream where the KdNode information will be printed.
+   * @param kdnode The KdNode to be printed.
+   * @return A reference to the output stream for chaining.
+   */
+  friend std::ostream& operator<<(std::ostream& os, const KdNode& kdnode);
+
+  friend std::ostream& operator<<(std::ostream& os, const KdTree& kdtree);
 
 protected:
 
@@ -255,9 +272,19 @@ class KdTree: public NearestNeighbors
 public:
 
   /**
+   * @brief print_deleted_nodes_ Flag to decide whether to also consider deleted nodes when the << operator is used.
+   */
+  bool print_deleted_nodes_;
+
+  /**
    * @brief Constructor for the KdTree class.
    */
   KdTree(const cnr_logger::TraceLoggerPtr &logger);
+
+  /**
+   * @brief Destructor for the KdTree class.
+   */
+  ~KdTree();
 
   /**
    * @brief Implementation of the insert function for adding a node to the k-d tree.
@@ -286,8 +313,8 @@ public:
    * @param best_distance Reference to the distance to the best-matching node.
    */
   virtual void nearestNeighbor(const Eigen::VectorXd& configuration,
-                          NodePtr &best,
-                          double &best_distance) override;
+                               NodePtr &best,
+                               double &best_distance) override;
 
   /**
    * @brief Implementation of the near function for finding nodes within a specified radius in the k-d tree.
@@ -297,7 +324,7 @@ public:
    * @return A multimap containing nodes and their distances within the specified radius.
    */
   virtual std::multimap<double, NodePtr> near(const Eigen::VectorXd& configuration,
-                            const double& radius) override;
+                                              const double& radius) override;
 
   /**
    * @brief Implementation of the kNearestNeighbors function for finding k nearest neighbors in the k-d tree.
@@ -307,7 +334,7 @@ public:
    * @return A multimap containing k nodes and their distances.
    */
   virtual std::multimap<double,NodePtr> kNearestNeighbors(const Eigen::VectorXd& configuration,
-                                 const size_t& k) override;
+                                                          const size_t& k) override;
 
   /**
    * @brief Implementation of the findNode function for checking if a node exists in the k-d tree.
@@ -332,12 +359,17 @@ public:
   /**
    * @brief Implementation of the deleteNode function for deleting a node from the k-d tree.
    *
+   * This function removes the specified node from the KdTree. Optionally, it can disconnect the associate NodePtr
+   * If the number of deleted nodes surpasses the threshold defined by deleted_nodes_threshold_,
+   * the KdTree is entirely reconstructed. During the reconstruction, all nodes marked with the "deleted_"
+   * flag set to true are excluded, except for the root node, which is retained as is regardless of its deleted_ status.
+   *
    * @param node The node to delete.
    * @param disconnect_node If true, disconnect the node from the graph.
    * @return True if the deletion is successful, false otherwise.
    */
   virtual bool deleteNode(const NodePtr& node,
-                  const bool& disconnect_node=false) override;
+                          const bool& disconnect_node=false) override;
 
   /**
    * @brief Implementation of the restoreNode function for restoring a previously deleted node.
@@ -361,13 +393,41 @@ public:
    */
   virtual void disconnectNodes(const std::vector<NodePtr>& white_list) override;
 
-  bool removeNode(const NodePtr& node,
-                  const bool& disconnect_node=false);
+  /**
+   * @brief deletedNodesThreshold Returns the deleted_nodes_threshold_,
+   * which represents the number of nodes set as deleted beyond which the kdtree is built from scratch.
+   * @return deleted_nodes_threshold_
+   */
+  unsigned int deletedNodesThreshold();
+
+  /**
+   * @brief deletedNodesThreshold Sets the value of deleted_nodes_threshold_
+   * @param t The value of deleted_nodes_threshold_ to set.
+   */
+  void deletedNodesThreshold(const unsigned int t);
+
+  /**
+   * @brief Output stream operator for a KdTree.
+   *
+   * This operator allows streaming a textual representation of the KdTree to an output stream.
+   *
+   * @param os The output stream where the KdTree information will be printed.
+   * @param kdtree The KdTree to be printed.
+   * @return A reference to the output stream for chaining.
+   */
+  friend std::ostream& operator<<(std::ostream& os, const KdTree& kdtree);
+
 protected:
   /**
    * @brief root_ Root node of the k-d tree.
    */
   KdNodePtr root_;
+
+  /**
+   * @brief deleted_nodes_threshold_ When the number of (nodes for which deleted_ == true) > deleted_nodes_threshold_
+   * the KdTree is built from scratch
+   */
+  unsigned int deleted_nodes_threshold_;
 };
 
 }  // namespace graph_core

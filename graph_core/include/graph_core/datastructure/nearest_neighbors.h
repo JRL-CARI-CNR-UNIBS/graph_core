@@ -47,7 +47,7 @@ public:
    */
   NearestNeighbors(const cnr_logger::TraceLoggerPtr& logger):logger_(logger)
   {
-    delete_nodes_=0;
+    deleted_nodes_=0;
     size_=0;
   }
 
@@ -161,7 +161,7 @@ protected:
   /**
    * @brief delete_nodes_ Number of deleted nodes.
    */
-  unsigned int delete_nodes_;
+  unsigned int deleted_nodes_;
 
   /**
    * @brief Pointer to a TraceLogger instance for logging.

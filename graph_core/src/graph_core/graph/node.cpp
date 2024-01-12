@@ -348,7 +348,7 @@ Node::~Node()
   for(std::vector<ConnectionWeakPtr>::reverse_iterator it = parent_connections_.rbegin(); it != parent_connections_.rend(); ++it)
   {
     conn = (*it).lock();
-    this->removeParentConnection(std::next(it).base()); //detach connection
+    this->removeParentConnection(std::next(it).base()); //detach connection. Note: std::next(it).base() to convert reverse iterator into iterator
     conn->getParent()->removeChildConnection(conn); //update connection's parent node
 
     assert(not conn->flags_[Connection::idx_parent_valid_] && not conn->flags_[Connection::idx_child_valid_]);

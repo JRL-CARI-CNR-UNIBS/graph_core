@@ -44,11 +44,11 @@ Tree::Tree(const NodePtr& root,
 {
   if (use_kdtree)
   {
-    nodes_=std::make_shared<KdTree>();
+    nodes_=std::make_shared<KdTree>(logger_);
   }
   else
   {
-    nodes_=std::make_shared<Vector>();
+    nodes_=std::make_shared<Vector>(logger_);
   }
   nodes_->insert(root);
   double dimension=root->getConfiguration().size();

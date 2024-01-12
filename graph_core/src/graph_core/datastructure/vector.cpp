@@ -44,7 +44,6 @@ void Vector::insert(const NodePtr& node)
   return;
 }
 
-
 void Vector::nearestNeighbor(const Eigen::VectorXd& configuration,
                              NodePtr &best,
                              double &best_distance)
@@ -108,7 +107,7 @@ bool Vector::deleteNode(const NodePtr& node,
     return false;
 
   size_--;
-  delete_nodes_++;
+  deleted_nodes_++;
 
   nodes_.erase(it);
 

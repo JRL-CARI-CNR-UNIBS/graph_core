@@ -31,6 +31,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace graph_core
 {
+/*
+ *        ---- KdNode ----
+ */
 
 KdNode::KdNode(const NodePtr& node,
                const int &dimension,
@@ -40,6 +43,14 @@ KdNode::KdNode(const NodePtr& node,
   logger_(logger)
 {
   deleted_=false;
+}
+
+KdNode::~KdNode()
+{
+  CNR_DEBUG(logger_,"destroying kdnode "<<this);
+  left_  = nullptr;
+  right_ = nullptr;
+  node_  = nullptr;
 }
 
 NodePtr KdNode::node()
@@ -318,9 +329,29 @@ void KdNode::disconnectNodes(const std::vector<NodePtr>& white_list)
     right_->disconnectNodes(white_list);
 }
 
+std::ostream& operator<<(std::ostream& os, const KdNode& kdnode)
+{
+  os << "node-> "<<kdnode.node_->getConfiguration().transpose()<<" ("<<kdnode.node_<<")"<<std::endl;
+  os << "dimension-> "<<kdnode.dimension_<<" deleted-> "<<kdnode.deleted_<<std::endl;
+  os << "parent-> "<<kdnode.parent_.lock()<<" left child-> "<<kdnode.left_<<" right child-> "<<kdnode.right_<<std::endl;
+  return os;
+}
+
+/*
+ *        ---- KdTree ----
+ */
+
 KdTree::KdTree(const cnr_logger::TraceLoggerPtr &logger):
   NearestNeighbors(logger)
 {
+  print_deleted_nodes_ = false;
+  deleted_nodes_threshold_ = std::numeric_limits<unsigned int>::max();
+}
+
+KdTree::~KdTree()
+{
+  CNR_DEBUG(logger_,"destroying kdtree "<<this);
+  root_ = nullptr;
 }
 
 void KdTree::insert(const NodePtr& node)
@@ -400,9 +431,41 @@ bool KdTree::deleteNode(const NodePtr& node,
     return false;
 
   size_--;
-  delete_nodes_++;
+  deleted_nodes_++;
   kdnode->deleteNode(disconnect_node);
+
+  if(deleted_nodes_>deleted_nodes_threshold_ && size_>0)
+  {
+    CNR_DEBUG(logger_,"number of deleted nodes ("<<deleted_nodes_<<") is greater than the threshold ("
+              <<deleted_nodes_threshold_<<"), kdtree is built from scratch");
+
+    bool root_was_deleted = root_->deleted_;
+    root_->restoreNode(); //set deleted_ to false to have it into nodes vector below (we want the root regardless its "deleted_" flag)
+    std::vector<NodePtr> nodes = getNodes();
+
+    root_ = nullptr; //clear the KdTree
+
+    size_ = 0;
+    deleted_nodes_ = 0;
+
+    for(const NodePtr& n:nodes)
+      insert(n);
+
+    if(root_was_deleted)
+      deleteNode(root_->node_,disconnect_node);
+  }
+
   return true;
+}
+
+unsigned int KdTree::deletedNodesThreshold()
+{
+  return deleted_nodes_threshold_;
+}
+
+void KdTree::deletedNodesThreshold(const unsigned int t)
+{
+  deleted_nodes_threshold_ = t;
 }
 
 bool KdTree::restoreNode(const NodePtr& node)
@@ -411,7 +474,7 @@ bool KdTree::restoreNode(const NodePtr& node)
   if (not findNode(node,kdnode))
     return false;
   size_++;
-  delete_nodes_--;
+  deleted_nodes_--;
   kdnode->restoreNode();
   return true;
 }
@@ -431,76 +494,30 @@ void KdTree::disconnectNodes(const std::vector<NodePtr>& white_list)
   root_->disconnectNodes(white_list);
 }
 
-bool KdTree::removeNode(const NodePtr& node, const bool& disconnect_node)
+std::ostream& operator<<(std::ostream& os, const KdTree& kdtree)
 {
-  if(node == root_->node_)
-  {
-    CNR_ERROR(logger_,"Cannot remove root of KDTree");
-    return false;
-  }
+  os<<"root-> "<<kdtree.root_<<std::endl;
+  os<<"size-> "<<kdtree.size_<<" deleted nodes-> "<<kdtree.deleted_nodes_<<" print deleted nodes-> "<<kdtree.print_deleted_nodes_<<"\n"<<std::endl;
 
-  KdNodePtr kdnode;
-  if (not findNode(node,kdnode))
-    return false;
-
-  KdNodePtr parent = kdnode->parent_.lock();
-  if(not parent)
-  {
-    CNR_FATAL(logger_,"KDNode has no parent");
-    throw std::runtime_error("KDNode has no parent");
-  }
-
-  if (disconnect_node)
-    kdnode->node_->disconnect();
-
-  size_--;
-  delete_nodes_++;
-
-  // Case 1: Node to remove is a leaf
-  if (not kdnode->left_ && not kdnode->right_)
-  {
-    // Update the parent's pointer
-    if (parent->left_ == kdnode)
+  std::function<void(const KdNodePtr&)> fcn;
+  fcn = [&](const KdNodePtr& root) ->void{
+    if(root)
     {
-      parent->left_ = nullptr;
+      if((kdtree.print_deleted_nodes_) || (not kdtree.print_deleted_nodes_ && not root->deleted_))
+      {
+        os << "   --- kdnode "<<root<<" ---"<<std::endl;
+        os<<*root<<std::endl;
+      }
+
+      fcn(root->left_);
+      fcn(root->right_);
     }
-    else
-    {
-      assert(parent->right_ == kdnode);
-      parent->right_ = nullptr;
-    }
+    return;
+  };
 
-    return true;
-  }
+  fcn(kdtree.root_);
 
-  // Case 2: Node has a right subtree
-  KdNodePtr replacement = kdnode->findMin(kdnode->dimension_);
-  assert(not replacement->left_);
-
-  if (parent->left_ == kdnode)
-  {
-    parent->left_ = replacement;
-  }
-  else
-  {
-    assert(parent->right_ == kdnode);
-    parent->right_ = replacement;
-  }
-
-  KdNodePtr replacement_old_parent = replacement->parent_.lock();
-  if (replacement_old_parent->left_ == replacement)
-  {
-    replacement_old_parent->left_ = nullptr;
-  }
-  else
-  {
-    assert(replacement_old_parent->right_ == replacement);
-    replacement_old_parent->right_ = nullptr;
-  }
-
-  replacement->parent_ = kdnode->parent_;
-
-
+  return os;
 }
 
 }  // namespace graph_core
