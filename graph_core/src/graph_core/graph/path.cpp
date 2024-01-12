@@ -1339,23 +1339,25 @@ bool Path::simplify(const double& distance)
 
   if(connections_.size()>1)
   {
-    double dist = (connections_.at(0)->getParent()->getConfiguration() - connections_.at(0)->getChild()->getConfiguration()).norm();
-    if(dist < distance)
+    if(connections_.front()->norm() < distance)
       reconnect_first_conn = true;
   }
 
   unsigned int ic = 1;
   while (ic < connections_.size())
   {
-    double dist = (connections_.at(ic)->getParent()->getConfiguration() - connections_.at(ic)->getChild()->getConfiguration()).norm();
-    if (dist > distance )
+    if (connections_.at(ic)->norm() > distance) //connection longer than the threshold, skip
     {
-      if(!(ic == 1 && reconnect_first_conn))
+      /* If the connection at pos 1 is longer than the threshold but the first connection
+       * was shorter than the threshold, simplify the conneection.*/
+      if(not (ic == 1 && reconnect_first_conn))
       {
         ic++;
         continue;
       }
     }
+
+    /* If connection from previous parent and current child is possible connect them and remove the middle node (current parent)*/
     if (checker_->checkConnection(connections_.at(ic - 1)->getParent()->getConfiguration(),
                                   connections_.at(ic)->getChild()->getConfiguration()))
     {
@@ -1388,7 +1390,6 @@ bool Path::simplify(const double& distance)
 
   return simplified;
 }
-
 
 bool Path::isValid(const CollisionCheckerPtr &this_checker)
 {
@@ -1563,7 +1564,7 @@ YAML::Node Path::toYAML(bool reverse) const
 }
 
 PathPtr Path::fromYAML(const YAML::Node& yaml, const MetricsPtr& metrics,
-                              const CollisionCheckerPtr& checker, const cnr_logger::TraceLoggerPtr& logger)
+                       const CollisionCheckerPtr& checker, const cnr_logger::TraceLoggerPtr& logger)
 {
   if (!yaml.IsSequence())
   {

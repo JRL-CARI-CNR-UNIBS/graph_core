@@ -650,8 +650,8 @@ public:
   /**
    * @brief Simplify the path by removing redundant nodes.
    *
-   * This method simplifies the path by removing nodes that are close to each other and do not violate collision constraints.
-   * The distance parameter determines the threshold for node removal.
+   * This method simplifies the path by removing connections shorter than a threshold. If the length of a connection is
+   * shorter than "distance", the algorithm simplify the path connecting the previous path with the current children, if possible.
    *
    * @param distance The distance threshold for node removal.
    * @return True if the path is simplified, false otherwise.
@@ -738,12 +738,12 @@ public:
   Eigen::VectorXd projectOnPath(const Eigen::VectorXd& point, const bool& verbose = false);
 
   /**
-   * @brief Attempt to warp the path by adjusting configurations along connections.
+   * @brief Attempt to bevel the path by adjusting configurations.
    *
-   * This function attempts to warp the path by adjusting configurations along connections
+   * This function attempts to warp the path by moving configurations along connections
    * where the norm of the connection is greater than the specified minimum distance. The
-   * warping process is controlled by the change_warp_ vector, and the maximum time limit
-   * for warping is given by max_time.
+   * warping process aims to smooth the path and it is controlled by the change_warp_ vector,
+   * and the maximum time limit for warping is given by max_time.
    *
    * @param min_dist The minimum distance threshold for considering a connection for warping.
    * @param max_time The maximum time limit for the warping process (set to 0 for no time limit).

@@ -47,7 +47,7 @@ KdNode::KdNode(const NodePtr& node,
 
 KdNode::~KdNode()
 {
-  CNR_DEBUG(logger_,"destroying kdnode "<<this);
+//  CNR_DEBUG(logger_,"destroying kdnode "<<this);
   left_  = nullptr;
   right_ = nullptr;
   node_  = nullptr;
@@ -350,7 +350,7 @@ KdTree::KdTree(const cnr_logger::TraceLoggerPtr &logger):
 
 KdTree::~KdTree()
 {
-  CNR_DEBUG(logger_,"destroying kdtree "<<this);
+//  CNR_DEBUG(logger_,"destroying kdtree "<<this);
   root_ = nullptr;
 }
 
