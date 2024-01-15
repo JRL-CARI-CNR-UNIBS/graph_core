@@ -30,9 +30,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/graph/subtree.h>
 #include <functional>
 
-namespace graph_core
+namespace graph
 {
-
+namespace core
+{
 /**
  * @class Net
  * @brief Class for defining a net, i.e. a graph that extends the tree allowing for multiple parent connections for the same node.
@@ -263,4 +264,5 @@ public:
   std::multimap<double,std::vector<ConnectionPtr>>& getConnectionBetweenNodes(const NodePtr& start_node, const NodePtr& goal_node, const std::vector<NodePtr> &black_list = {}, const double& max_time = std::numeric_limits<double>::infinity());
 };
 
-}
+} //end namespace core
+} // end namespace graph

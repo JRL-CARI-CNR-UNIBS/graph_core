@@ -28,8 +28,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/node.h>
 
-namespace graph_core
+namespace graph
 {
+namespace core
+{
+
 /**
  * @class Connection
  * @brief Class for defining connection between nodes of a graph.
@@ -274,7 +277,7 @@ public:
    */
   NodePtr getParent() const
   {
-//    assert(not parent_.expired());
+    //    assert(not parent_.expired());
     return parent_.lock();
   }
 
@@ -453,4 +456,5 @@ public:
  */
 std::ostream& operator<<(std::ostream& os, const Connection& connection);
 
-}
+} //end namespace core
+} //end namespace graph

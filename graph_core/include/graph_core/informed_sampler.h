@@ -32,7 +32,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/util.h>
 #include <random>
 
-namespace graph_core
+namespace graph
+{
+namespace core
 {
 
 /**
@@ -268,4 +270,5 @@ public:
 
 };
 
-}  // namespace graph_core
+} //end namespace core
+} // end namespace graph

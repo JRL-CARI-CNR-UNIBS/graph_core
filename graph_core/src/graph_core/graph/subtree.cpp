@@ -27,7 +27,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/subtree.h>
 
-namespace graph_core
+namespace graph
+{
+namespace core
 {
 Subtree::Subtree(const TreePtr& parent_tree,
                  const NodePtr& root):
@@ -221,4 +223,6 @@ SubtreePtr Subtree::createSubtree(const TreePtr& parent_tree,
 {
   return std::make_shared<Subtree>(parent_tree,root,goal,cost,black_list,node_check);
 }
-}
+
+} //end namespace core
+} // end namespace graph

@@ -29,8 +29,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/rrt.h>
 
-namespace graph_core
+namespace graph
 {
+namespace core
+{
+
 class RRTStar;
 typedef std::shared_ptr<RRTStar> RRTStarPtr;
 
@@ -63,4 +66,6 @@ public:
   bool importFromSolver(const TreeSolverPtr& solver) override;
 
 };
-}
+
+} //end namespace core
+} // end namespace graph

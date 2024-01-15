@@ -29,15 +29,15 @@ int main(int argc, char **argv)
   if(argc>3)
     CNR_WARN(logger, cnr_logger::RESET() << cnr_logger::BOLDYELLOW() << "Number of inputs to the program should be 3");
 
-  graph_core::KdTreePtr kdtree = std::make_shared<graph_core::KdTree>(logger);
+  graph::core::KdTreePtr kdtree = std::make_shared<graph::core::KdTree>(logger);
   kdtree->deletedNodesThreshold(threshold);
 
-  std::vector<graph_core::NodePtr> nodes;
+  std::vector<graph::core::NodePtr> nodes;
   for(int i=0;i<n_kdnodes;i++)
   {
     Eigen::VectorXd q(3);
     q.setRandom();
-    graph_core::NodePtr node = std::make_shared<graph_core::Node>(q,logger);
+    graph::core::NodePtr node = std::make_shared<graph::core::Node>(q,logger);
     nodes.push_back(node);
 
     CNR_INFO(logger, cnr_logger::RESET() << cnr_logger::WHITE() << " Random node -> "<<q.transpose()<<" ("<<node<<")");
@@ -57,7 +57,7 @@ int main(int argc, char **argv)
   while(n3 == n1 || n3 == n2)
     n3 = dist(rng);
 
-  graph_core::KdNodePtr kdn1, kdn2, kdn3;
+  graph::core::KdNodePtr kdn1, kdn2, kdn3;
   kdtree->findNode(nodes.at(n1),kdn1);
   kdtree->findNode(nodes.at(n2),kdn2);
   kdtree->findNode(nodes.at(n3),kdn3);

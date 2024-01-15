@@ -28,7 +28,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/util.h>
 #include <graph_core/graph/node.h>
-namespace graph_core
+namespace graph
+{
+namespace core
 {
 
 /**
@@ -68,4 +70,5 @@ public:
 
 typedef std::shared_ptr<GoalCostFunction> GoalCostFunctionPtr;
 
-}
+} //end namespace core
+} // end namespace graph

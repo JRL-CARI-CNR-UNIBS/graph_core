@@ -28,7 +28,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/tree.h>
 
-namespace graph_core
+namespace graph
+{
+namespace core
 {
 /**
  * @class Subtree
@@ -313,4 +315,6 @@ public:
                                   const bool node_check = false);
 
 };
-}
+
+} //end namespace core
+} // end namespace graph

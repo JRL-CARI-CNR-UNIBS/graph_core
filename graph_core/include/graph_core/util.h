@@ -41,9 +41,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define Reminder __FILE__ "(" $Line ") : Reminder: "
 
 
-namespace graph_core
+namespace graph
 {
-
+namespace core
+{
 class Connection;
 class Node;
 typedef std::shared_ptr<Connection> ConnectionPtr;
@@ -52,4 +53,5 @@ typedef std::weak_ptr<Connection> ConnectionWeakPtr;
 typedef std::weak_ptr<Node> NodeWeakPtr;
 
 static const double TOLERANCE = 1e-06;
-}
+} //end namespace core
+} // end namespace graph

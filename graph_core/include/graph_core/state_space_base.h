@@ -31,29 +31,28 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <xmlrpcpp/XmlRpcValue.h>
 #include <random>
 
-namespace pathplan
+namespace graph
+{
+namespace core
 {
 
+//class StateSpaceBase;
+//typedef std::shared_ptr<StateSpaceBase> StateSpacePtr;
 
+//class StateSpaceBase: public std::enable_shared_from_this<StateSpaceBase>
+//{
+//protected:
+//  std::vector<std::string> names_;
+//  std::string type_;
+//  StateSpaceProjectorPtr projector_;
 
-class StateSpaceBase;
-typedef std::shared_ptr<StateSpaceBase> StateSpacePtr;
+//public:
+//  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+//  StateSpaceBase();
+//  const std::vector<std::string>& getNames(){return names_};
+//  const std::string& getType(){return type_;}
+//  const StateSpaceProjectorPtr& getProjector(){return projector_;}
+//};
 
-class StateSpaceBase: public std::enable_shared_from_this<StateSpaceBase>
-{
-protected:
-  std::vector<std::string> names_;
-  std::string type_;
-  StateSpaceProjectorPtr projector_;
-
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  StateSpaceBase();
-  const std::vector<std::string>& getNames(){return names_};
-  const std::string& getType(){return type_;}
-  const StateSpaceProjectorPtr& getProjector(){return projector_;}
-};
-
-
-
-}  // namespace pathplan
+} //end namespace core
+} // end namespace graph

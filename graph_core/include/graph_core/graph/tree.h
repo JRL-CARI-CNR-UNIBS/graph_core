@@ -36,7 +36,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/datastructure/vector.h>
 #include <fstream>
 
-namespace graph_core
+namespace graph
+{
+namespace core
 {
 /**
  * @class Tree
@@ -1000,4 +1002,5 @@ public:
 
 };
 
-}
+} //end namespace core
+} // end namespace graph

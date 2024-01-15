@@ -26,9 +26,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include <iostream>
 #include <graph_core/graph/path.h>
-namespace graph_core
-{
 
+namespace graph
+{
+namespace core
+{
 Path::Path(std::vector<ConnectionPtr> connections,
            const MetricsPtr& metrics,
            const CollisionCheckerPtr& checker,
@@ -721,7 +723,7 @@ bool Path::removeNode(const NodePtr& node, const size_t& idx_conn, const std::ve
     assert(not tree_ || node != tree_->getRoot()); //node must have 1 parent (root must have zero) and 1 child (root may have many)
 
     bool is_net = conn_node_child->isNet();
-    new_conn = std::make_shared<graph_core::Connection>(conn_parent_node->getParent(),conn_node_child->getChild(),logger_,is_net);
+    new_conn = std::make_shared<Connection>(conn_parent_node->getParent(),conn_node_child->getChild(),logger_,is_net);
     double cost = conn_parent_node->getCost()+conn_node_child->getCost();
     new_conn->setCost(cost);
     new_conn->setTimeCostUpdate(std::min(conn_parent_node->getTimeCostUpdate(),conn_node_child->getTimeCostUpdate())); //consider the min between the two internal times
@@ -1631,4 +1633,6 @@ std::ostream& operator<<(std::ostream& os, const Path& path)
 
   return os;
 }
-}
+
+} //end namespace core
+} // end namespace graph

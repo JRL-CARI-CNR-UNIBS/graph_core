@@ -28,7 +28,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/birrt.h>
 
-namespace graph_core
+namespace graph
+{
+namespace core
 {
 
 bool BiRRT::importFromSolver(const BiRRTPtr& solver)
@@ -52,7 +54,7 @@ bool BiRRT::importFromSolver(const BiRRTPtr& solver)
 
 bool BiRRT::importFromSolver(const TreeSolverPtr& solver)
 {
-  if(std::dynamic_pointer_cast<graph_core::BiRRT>(solver) != nullptr)
+  if(std::dynamic_pointer_cast<BiRRT>(solver) != nullptr)
   {
     return BiRRT::importFromSolver(std::static_pointer_cast<BiRRT>(solver));
   }
@@ -211,5 +213,5 @@ bool BiRRT::update(const NodePtr& n, PathPtr& solution)
   return false;
 }
 
-
-}
+} //end namespace core
+} // end namespace graph

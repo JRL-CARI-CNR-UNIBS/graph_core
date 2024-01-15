@@ -28,8 +28,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/tube_informed_sampler.h>
 
-namespace graph_core
+namespace graph
 {
+namespace core
+{
+
 Eigen::VectorXd TubeInformedSampler::sample()
 {
   if (ud_(gen_)>local_bias_)
@@ -155,4 +158,6 @@ SamplerPtr TubeInformedSampler::clone()
 {
   return std::make_shared<TubeInformedSampler>(sampler_->clone(),metrics_);
 }
-}  // namespace pathplan
+
+} //end namespace core
+} // end namespace graph

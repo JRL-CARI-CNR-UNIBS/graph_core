@@ -27,7 +27,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/rrt_star.h>
 
-namespace graph_core
+namespace graph
+{
+namespace core
 {
 
 bool RRTStar::addStartTree(const TreePtr &start_tree, const double &max_time)
@@ -75,7 +77,7 @@ bool RRTStar::importFromSolver(const RRTStarPtr& solver)
 
 bool RRTStar::importFromSolver(const TreeSolverPtr& solver)
 {
-  if(std::dynamic_pointer_cast<graph_core::RRTStar>(solver) != nullptr)
+  if(std::dynamic_pointer_cast<RRTStar>(solver) != nullptr)
   {
     return RRTStar::importFromSolver(std::static_pointer_cast<RRTStar>(solver));
   }
@@ -270,4 +272,5 @@ bool RRTStar::solve(PathPtr &solution, const unsigned int& max_iter, const doubl
   return solved;
 }
 
-}
+} //end namespace core
+} // end namespace graph

@@ -31,7 +31,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/sampler_base.h>
 #include <graph_core/goal_cost_function.h>
 
-namespace graph_core
+namespace graph
+{
+namespace core
 {
 
 class TreeSolver;
@@ -639,4 +641,5 @@ public:
  */
 inline std::ostream& operator<<(std::ostream& os, const TreeSolver& solver){solver.printMyself(os);return os;}
 
-}  // namespace graph_core
+} //end namespace core
+} // end namespace graph

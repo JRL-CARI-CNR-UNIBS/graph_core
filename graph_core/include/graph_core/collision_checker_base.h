@@ -29,7 +29,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Core>
 #include <graph_core/graph/connection.h>
 
-namespace graph_core
+namespace graph
+{
+namespace core
 {
 
 /**
@@ -261,4 +263,5 @@ public:
 
 };
 
-}
+} //end namespace core
+} // end namespace graph

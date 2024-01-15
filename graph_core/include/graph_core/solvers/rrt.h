@@ -28,8 +28,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/tree_solver.h>
 
-namespace graph_core
+namespace graph
 {
+namespace core
+{
+
 class RRT;
 typedef std::shared_ptr<RRT> RRTPtr;
 
@@ -54,7 +57,8 @@ public:
   virtual bool update(PathPtr& solution) override;
 };
 
-}
+} //end namespace core
+} // end namespace graph
 
 //# pragma message("nel cpp?")
 //#if defined(PLUGINLIB_AVAILABLE)

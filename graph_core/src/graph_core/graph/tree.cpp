@@ -27,7 +27,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/tree.h>
 
-namespace graph_core
+namespace graph
+{
+namespace core
 {
 Tree::Tree(const NodePtr& root,
            const double &max_distance,
@@ -1420,4 +1422,5 @@ bool Tree::recheckCollisionFromNode(NodePtr& n)
   return true;
 }
 
-}  // end namespace pathplan
+} //end namespace core
+} // end namespace graph

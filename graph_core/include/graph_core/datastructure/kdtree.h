@@ -32,9 +32,10 @@ PSEUDO CODE :
 #pragma once
 
 #include <graph_core/datastructure/nearest_neighbors.h>
-namespace graph_core
+namespace graph
 {
-
+namespace core
+{
 
 class KdTree;
 typedef std::shared_ptr<KdTree> KdTreePtr;
@@ -430,4 +431,5 @@ protected:
   unsigned int deleted_nodes_threshold_;
 };
 
-}  // namespace graph_core
+} //end namespace core
+} // end namespace graph

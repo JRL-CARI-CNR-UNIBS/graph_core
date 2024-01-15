@@ -27,9 +27,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/connection.h>
 
-namespace graph_core
+namespace graph
 {
-
+namespace core
+{
 Connection::Connection(const NodePtr& parent, const NodePtr& child, const cnr_logger::TraceLoggerPtr &logger, const bool is_net):
   parent_(parent),
   child_(child),
@@ -291,4 +292,5 @@ std::ostream& operator<<(std::ostream& os, const Connection& connection)
   return os;
 }
 
-}
+} //end namespace core
+} // end namespace graph

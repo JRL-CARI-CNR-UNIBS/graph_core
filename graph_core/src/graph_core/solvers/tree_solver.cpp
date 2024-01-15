@@ -27,7 +27,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/tree_solver.h>
 
-namespace graph_core
+namespace graph
+{
+namespace core
 {
 
 bool TreeSolver::config(const YAML::Node &config)
@@ -334,5 +336,5 @@ void TreeSolver::printMyself(std::ostream &os) const
   }
 
 }
-
-}
+} //end namespace core
+} // end namespace graph

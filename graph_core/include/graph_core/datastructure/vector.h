@@ -31,9 +31,10 @@ PSEUDO CODE :
 */
 
 #include <graph_core/datastructure/nearest_neighbors.h>
-namespace graph_core
+namespace graph
 {
-
+namespace core
+{
 /**
  * @class Vector
  * @brief NearestNeighbors implementation using a vector data structure for storing nodes.
@@ -128,4 +129,5 @@ protected:
   std::vector<NodePtr> nodes_;
 };
 
-}  // namespace pathplan
+} //end namespace core
+} // end namespace graph

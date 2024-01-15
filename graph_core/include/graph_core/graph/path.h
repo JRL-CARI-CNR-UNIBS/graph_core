@@ -29,7 +29,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/graph/tree.h>
 #include <math.h>
 
-namespace graph_core
+namespace graph
+{
+namespace core
 {
 /**
  * @class Path
@@ -796,4 +798,5 @@ public:
  */
 std::ostream& operator<<(std::ostream& os, const Path& path);
 
-}
+} //end namespace core
+} // end namespace graph

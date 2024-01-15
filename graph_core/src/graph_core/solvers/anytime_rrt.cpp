@@ -27,7 +27,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/anytime_rrt.h>
 
-namespace graph_core
+namespace graph
+{
+namespace core
 {
 
 bool AnytimeRRT::importFromSolver(const AnytimeRRTPtr& solver)
@@ -58,7 +60,7 @@ bool AnytimeRRT::importFromSolver(const AnytimeRRTPtr& solver)
 
 bool AnytimeRRT::importFromSolver(const TreeSolverPtr& solver)
 {
-  if(std::dynamic_pointer_cast<graph_core::AnytimeRRT>(solver) != nullptr)
+  if(std::dynamic_pointer_cast<AnytimeRRT>(solver) != nullptr)
   {
     return AnytimeRRT::importFromSolver(std::static_pointer_cast<AnytimeRRT>(solver));
   }
@@ -290,7 +292,7 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
   bias_ = bias_-delta_;
   if(bias_<0.1) bias_ = 0.1;
 
-  improve_sampler_ = std::make_shared<graph_core::InformedSampler>(start_node->getConfiguration(),
+  improve_sampler_ = std::make_shared<InformedSampler>(start_node->getConfiguration(),
                                                                    goal_node->getConfiguration(),
                                                                    sampler_->getLB(),sampler_->getUB(),
                                                                    logger_);
@@ -421,7 +423,7 @@ bool AnytimeRRT::update(const NodePtr& n, PathPtr &solution)
   return false;
 }
 
-
-}
+} //end namespace core
+} // end namespace graph
 
 

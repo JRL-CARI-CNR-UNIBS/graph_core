@@ -36,8 +36,6 @@ add_library(${PROJECT_NAME} SHARED
   src/${PROJECT_NAME}/graph/path.cpp
   src/${PROJECT_NAME}/graph/net.cpp
 
-  src/${PROJECT_NAME}/metrics.cpp
-  src/${PROJECT_NAME}/goal_cost_function.cpp
   src/${PROJECT_NAME}/informed_sampler.cpp
   src/${PROJECT_NAME}/tube_informed_sampler.cpp
 

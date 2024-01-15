@@ -30,7 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/util.h>
 #include <graph_core/graph/connection.h>
 
-namespace graph_core
+namespace graph
+{
+namespace core
 {
 /**
  * @class Node
@@ -566,4 +568,5 @@ public:
  */
 std::ostream& operator<<(std::ostream& os, const Node& node);
 
-}
+} //end namespace core
+} // end namespace graph

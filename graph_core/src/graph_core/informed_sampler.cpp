@@ -28,7 +28,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/informed_sampler.h>
 
-namespace graph_core
+namespace graph
+{
+namespace core
 {
 
 void InformedSampler::init()
@@ -237,4 +239,5 @@ SamplerPtr InformedSampler::clone()
   return std::make_shared<InformedSampler>(focus_1_,focus_2_,lower_bound_,upper_bound_,scale_,logger_,cost_);
 }
 
-}
+} //end namespace core
+} // end namespace graph

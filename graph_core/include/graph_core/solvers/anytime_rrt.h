@@ -28,8 +28,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/rrt.h>
 
-namespace graph_core
+namespace graph
 {
+namespace core
+{
+
 #define FAILED_ITER 3
 class AnytimeRRT;
 typedef std::shared_ptr<AnytimeRRT> AnytimeRRTPtr;
@@ -136,4 +139,5 @@ public:
 
 };
 
-}
+} //end namespace core
+} // end namespace graph

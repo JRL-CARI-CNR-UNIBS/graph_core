@@ -27,7 +27,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/node.h>
 
-namespace graph_core
+namespace graph
+{
+namespace core
 {
 Node::Node(const Eigen::VectorXd& configuration):logger_(nullptr)
 {
@@ -559,4 +561,6 @@ std::ostream& operator<<(std::ostream& os, const Node& node)
 
   return os;
 }
-}
+
+} //end namespace core
+} // end namespace graph

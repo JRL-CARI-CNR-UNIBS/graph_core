@@ -27,7 +27,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <graph_core/graph/node.h>
-namespace graph_core
+
+namespace graph
+{
+namespace core
 {
 
 /**
@@ -57,7 +60,7 @@ public:
    * @brief Constructs a Metrics object.
    * @param logger A shared pointer to a TraceLogger for logging.
    */
-  Metrics(const cnr_logger::TraceLoggerPtr& logger);
+  Metrics(const cnr_logger::TraceLoggerPtr& logger):logger_(logger){}
 
   /**
    * @brief Calculates the cost between two configurations.
@@ -66,9 +69,15 @@ public:
    * @return The cost between the two configurations.
    */
   virtual double cost(const Eigen::VectorXd& configuration1,
-                      const Eigen::VectorXd& configuration2);
+                      const Eigen::VectorXd& configuration2)
+  {
+    return (configuration1 - configuration2).norm();
+  }
   virtual double cost(const NodePtr& node1,
-                      const NodePtr& node2);
+                      const NodePtr& node2)
+  {
+    return cost(node1->getConfiguration(), node2->getConfiguration());
+  }
 
   /**
    * @brief Calculates the utopia (ideal minimum cost) between two configurations.
@@ -77,16 +86,26 @@ public:
    * @return The utopia distance between the two configurations.
    */
   virtual double utopia(const Eigen::VectorXd& configuration1,
-                        const Eigen::VectorXd& configuration2);
+                        const Eigen::VectorXd& configuration2)
+  {
+    return (configuration1 - configuration2).norm();
+  }
   virtual double utopia(const NodePtr& node1,
-                        const NodePtr& node2);
+                        const NodePtr& node2)
+  {
+    return utopia(node1->getConfiguration(), node2->getConfiguration());
+  }
 
   /**
    * @brief Creates a clone of the Metrics object.
    * @return A shared pointer to the cloned Metrics object.
    */
-  virtual MetricsPtr clone();
+  virtual MetricsPtr clone()
+  {
+    return std::make_shared<Metrics>(logger_);
+  }
 
 };
 
-}
+} //end namespace core
+} // end namespace graph

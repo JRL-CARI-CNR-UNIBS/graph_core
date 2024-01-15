@@ -31,9 +31,10 @@ PSEUDO CODE :
 */
 #pragma once
 #include <graph_core/graph/node.h>
-namespace graph_core
+namespace graph
 {
-
+namespace core
+{
 /**
  * @class NearestNeighbors
  * @brief Abstract base class for handling nearest neighbor search in a graph.
@@ -175,4 +176,5 @@ protected:
 
 typedef std::shared_ptr<NearestNeighbors> NearestNeighborsPtr;
 
-}  // namespace graph_core
+} //end namespace core
+} // end namespace graph

@@ -27,8 +27,8 @@ int main(int argc, char **argv)
 
   CNR_INFO(logger, cnr_logger::RESET() << cnr_logger::WHITE() << "--- Create nodes on these configurations ---");
 
-  graph_core::NodePtr parent = std::make_shared<graph_core::Node>(q1,logger);
-  graph_core::NodePtr child  = std::make_shared<graph_core::Node>(q2,logger);
+  graph::core::NodePtr parent = std::make_shared<graph::core::Node>(q1,logger);
+  graph::core::NodePtr child  = std::make_shared<graph::core::Node>(q2,logger);
 
   CNR_INFO(logger, cnr_logger::RESET() << cnr_logger::BOLDGREEN() << "Done!");
 
@@ -40,7 +40,7 @@ int main(int argc, char **argv)
   CNR_INFO(logger, cnr_logger::RESET() << cnr_logger::BOLDGREEN() << "Done!");
 
   CNR_INFO(logger, cnr_logger::RESET() << cnr_logger::WHITE() << "--- Create and add a connection between the nodes ---");
-  graph_core::ConnectionPtr connection = std::make_shared<graph_core::Connection>(parent,child,logger);
+  graph::core::ConnectionPtr connection = std::make_shared<graph::core::Connection>(parent,child,logger);
   double cost = (parent->getConfiguration()-child->getConfiguration()).norm();
   connection->setCost(cost);
   connection->add();
@@ -70,8 +70,8 @@ int main(int argc, char **argv)
   Eigen::VectorXd q3(6); q3.setRandom();
   CNR_INFO(logger, cnr_logger::RESET() << cnr_logger::GREEN() <<"q3 "<<q3.transpose());
 
-  graph_core::NodePtr net_parent = std::make_shared<graph_core::Node>(q3,logger);
-  graph_core::ConnectionPtr net_connection = std::make_shared<graph_core::Connection>(net_parent,child,logger,true);
+  graph::core::NodePtr net_parent = std::make_shared<graph::core::Node>(q3,logger);
+  graph::core::ConnectionPtr net_connection = std::make_shared<graph::core::Connection>(net_parent,child,logger,true);
   cost = (net_parent->getConfiguration()-child->getConfiguration()).norm();
   net_connection->setCost(cost);
   net_connection->add();
@@ -190,8 +190,8 @@ int main(int argc, char **argv)
   }
 
   Eigen::VectorXd q_mid = (q1-q2)/2;
-  graph_core::NodePtr node_mid = std::make_shared<graph_core::Node>(q_mid,logger);
-  graph_core::ConnectionPtr connection_parallel = std::make_shared<graph_core::Connection>(parent,node_mid,logger);
+  graph::core::NodePtr node_mid = std::make_shared<graph::core::Node>(q_mid,logger);
+  graph::core::ConnectionPtr connection_parallel = std::make_shared<graph::core::Connection>(parent,node_mid,logger);
 
   if(connection->isParallel(connection_parallel))
   {

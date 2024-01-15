@@ -1,10 +1,12 @@
-#ifndef CUBE_3D_COLLISION_CHECKER_H
-#define CUBE_3D_COLLISION_CHECKER_H
+#pragma once
 
 #include "graph_core/collision_checker_base.h"
 
-namespace graph_core
+namespace graph
 {
+namespace core
+{
+
 /**
  * @class Cube3dCollisionChecker
  * @brief Collision checker for a 3D cube-shaped environment.
@@ -51,5 +53,7 @@ public:
     return std::make_shared<Cube3dCollisionChecker>(logger_,min_distance_);
   }
 };
-}
-#endif // CUBE_3D_COLLISION_CHECKER_H
+
+} //end namespace core
+} // end namespace graph
+

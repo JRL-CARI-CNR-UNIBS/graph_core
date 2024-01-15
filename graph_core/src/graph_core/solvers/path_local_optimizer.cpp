@@ -27,9 +27,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/path_local_optimizer.h>
 
-namespace graph_core
+namespace graph
 {
-
+namespace core
+{
 PathLocalOptimizer::PathLocalOptimizer(const CollisionCheckerPtr &checker,
                                        const MetricsPtr &metrics,
                                        const cnr_logger::TraceLoggerPtr &logger):
@@ -139,5 +140,5 @@ bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iterat
   return solved_;
 }
 
-
-}
+} //end namespace core
+} // end namespace graph
