@@ -352,7 +352,6 @@ KdTree::KdTree(const cnr_logger::TraceLoggerPtr &logger):
 
 KdTree::~KdTree()
 {
-//  CNR_DEBUG(logger_,"destroying kdtree "<<this);
   root_ = nullptr;
 }
 
@@ -443,7 +442,7 @@ bool KdTree::deleteNode(const NodePtr& node,
 
     bool root_was_deleted = root_->deleted_;
     root_->restoreNode(); //set deleted_ to false to have it into nodes vector below (we want the root regardless its "deleted_" flag)
-    std::vector<NodePtr> nodes = getNodes();
+    std::vector<NodePtr> nodes = getNodes(); //contains also the root
 
     root_ = nullptr; //clear the KdTree
 
@@ -467,6 +466,11 @@ unsigned int KdTree::deletedNodesThreshold()
 
 void KdTree::deletedNodesThreshold(const unsigned int t)
 {
+  if(t<=1)
+  {
+    CNR_WARN(logger_, "deleted_nodes_threshold_ cannot bet set because it should be at least 2 and you are trying to set "<<t);
+    return;
+  }
   deleted_nodes_threshold_ = t;
 }
 

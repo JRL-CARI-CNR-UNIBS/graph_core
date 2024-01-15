@@ -47,6 +47,9 @@ namespace core
 {
 class Connection;
 class Node;
+class Path;
+class PathOptimizerBase;
+
 typedef std::shared_ptr<Connection> ConnectionPtr;
 typedef std::shared_ptr<Node> NodePtr;
 typedef std::weak_ptr<Connection> ConnectionWeakPtr;

@@ -51,7 +51,6 @@ Path::Path(std::vector<ConnectionPtr> connections,
   for (const ConnectionPtr& conn : connections_)
   {
     cost_ += conn->getCost();
-    change_warp_.push_back(true);
 
     if(previous_child)
     {
@@ -66,7 +65,6 @@ Path::Path(std::vector<ConnectionPtr> connections,
     }
     previous_child = conn->getChild();
   }
-  change_warp_.at(0) = false;
 }
 
 Path::Path(std::vector<NodePtr> nodes,
@@ -101,10 +99,7 @@ Path::Path(std::vector<NodePtr> nodes,
     connections_.push_back(conn);
 
     cost_ += cost;
-    change_warp_.push_back(true);
   }
-
-  change_warp_.at(0) = false;
 }
 
 PathPtr Path::clone()
@@ -138,7 +133,6 @@ PathPtr Path::clone()
   //  PathPtr new_path = std::make_shared<Path>(new_conn_vector,metrics_,checker_);
   PathPtr new_path = std::make_shared<Path>(new_conn_vector,metrics_->clone(),checker_->clone(),logger_);
 
-  new_path->setChangeWarp(change_warp_);
   new_path->setTree(nullptr);  //nodes are cloned, so the cloned path does not belong to the original tree
 
   return new_path;
@@ -320,127 +314,6 @@ void Path::computeCost()
     cost_ += conn->getCost();
 }
 
-void Path::setChanged(const size_t &connection_idx)
-{
-  change_warp_.at(connection_idx) = 1;
-}
-
-bool Path::bisection(const size_t &connection_idx,
-                     const Eigen::VectorXd &center,
-                     const Eigen::VectorXd &direction,
-                     double max_distance,
-                     double min_distance)
-{
-  assert(connection_idx < connections_.size());
-  assert(connection_idx > 0);
-  ConnectionPtr& conn12 = connections_.at(connection_idx - 1);
-  ConnectionPtr& conn23 = connections_.at(connection_idx);
-
-  NodePtr parent = conn12->getParent();
-  NodePtr child = conn23->getChild();
-
-  bool improved = false;
-  double cost = conn12->getCost() + conn23->getCost();
-
-  unsigned int iter = 0;
-  double distance;
-
-  while ((iter++ < 5) && ((max_distance - min_distance) > min_length_))
-  {
-    if (iter > 0)
-      distance = 0.5 * (max_distance + min_distance);
-    else
-      distance = min_distance;
-
-    Eigen::VectorXd p = center + direction * distance;
-    assert(p.size() == center.size());
-    double cost_pn = metrics_->cost(parent->getConfiguration(), p);
-    double cost_nc = metrics_->cost(p, child->getConfiguration());
-    double cost_n = cost_pn + cost_nc;
-
-    if (cost_n >= cost)
-    {
-      min_distance = distance;
-      continue;
-    }
-    bool is_valid = checker_->checkConnection(parent->getConfiguration(), p) && checker_->checkConnection(p, child->getConfiguration());
-    if (!is_valid)
-    {
-      min_distance = distance;
-      continue;
-    }
-
-    improved = true;
-    max_distance = distance;
-    cost = cost_n;
-    //    conn12->remove(); // keep this connection, it could be useful in case of tree
-
-    bool is_net = conn23->isNet();
-    conn23->remove();
-
-    NodePtr n = std::make_shared<Node>(p,logger_);
-    conn12 = std::make_shared<Connection>(parent, n,logger_);
-
-    is_net? (conn23 = std::make_shared<Connection>(n, child, logger_, true)):
-            (conn23 = std::make_shared<Connection>(n, child, logger_, false));
-
-    conn12->setCost(cost_pn);
-    conn23->setCost(cost_nc);
-    conn12->add();
-    conn23->add();
-
-    assert(child->getParentConnectionsSize() == 1);
-    assert(conn23->getChild()->getParentConnectionsSize() == 1);
-
-    if (tree_)
-      tree_->addNode(n, false);
-  }
-
-  if (improved)
-    computeCost();
-  return improved;
-}
-
-bool Path::warp(const double &min_dist, const double &max_time)
-{
-  if(max_time > 0)
-  {
-    std::chrono::time_point<std::chrono::system_clock> tic = std::chrono::system_clock::now();
-    for (unsigned int idx = 1; idx < connections_.size(); idx++)
-    {
-      if(connections_.at(idx-1)->norm()>min_dist && connections_.at(idx)->norm()>min_dist)
-      {
-        if (change_warp_.at(idx - 1) || change_warp_.at(idx))
-        {
-          Eigen::VectorXd center = 0.5 * (connections_.at(idx - 1)->getParent()->getConfiguration() +
-                                          connections_.at(idx)->getChild()->getConfiguration());
-          Eigen::VectorXd direction = connections_.at(idx - 1)->getChild()->getConfiguration() - center;
-          double max_distance = direction.norm();
-          double min_distance = 0;
-
-          direction.normalize();
-
-          if(!bisection(idx, center, direction, max_distance, min_distance))
-          {
-            change_warp_.at(idx) = 0;
-          }
-          else
-            setChanged(idx);
-        }
-      }
-
-      std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
-      std::chrono::duration<double> difference = now - tic;
-      if(difference.count() >= 0.98*max_time) break;
-    }
-  }
-
-  return std::any_of(change_warp_.cbegin(), change_warp_.cend(), [](bool i)
-  {
-    return i;
-  });
-}
-
 std::vector<NodePtr> Path::getNodes() const
 {
   std::vector<NodePtr> nodes;
@@ -467,9 +340,18 @@ std::vector<Eigen::VectorXd> Path::getWaypoints() const
   return wp;
 }
 
+ConnectionPtr Path::getConnection(const size_t& i)const
+{
+  if(i<0 || i>=connections_.size())
+  {
+    CNR_WARN(logger_,"idx exceeds 'connections_' bounds");
+    return nullptr;
+  }
+  return connections_.at(i);
+}
+
 void Path::setConnections(const std::vector<ConnectionPtr>& conn)
 {
-  change_warp_.clear();
   cost_ = 0;
 
   NodePtr child = nullptr;
@@ -477,7 +359,6 @@ void Path::setConnections(const std::vector<ConnectionPtr>& conn)
   for(const ConnectionPtr& connection : conn)
   {
     cost_ += connection->getCost();
-    change_warp_.push_back(true);
 
     if(child)
     {
@@ -494,7 +375,6 @@ void Path::setConnections(const std::vector<ConnectionPtr>& conn)
     }
     child = connection->getChild();
   }
-  change_warp_.at(0) = false;
 
   start_node_ = conn.front()->getParent();
   goal_node_  = conn.back ()->getChild ();
@@ -1334,65 +1214,6 @@ PathPtr Path::getSubpathFromNode(const Eigen::VectorXd& conf)
   return nullptr;
 }
 
-bool Path::simplify(const double& distance)
-{
-  bool simplified=false;
-  bool reconnect_first_conn = false;
-
-  if(connections_.size()>1)
-  {
-    if(connections_.front()->norm() < distance)
-      reconnect_first_conn = true;
-  }
-
-  unsigned int ic = 1;
-  while (ic < connections_.size())
-  {
-    if (connections_.at(ic)->norm() > distance) //connection longer than the threshold, skip
-    {
-      /* If the connection at pos 1 is longer than the threshold but the first connection
-       * was shorter than the threshold, simplify the conneection.*/
-      if(not (ic == 1 && reconnect_first_conn))
-      {
-        ic++;
-        continue;
-      }
-    }
-
-    /* If connection from previous parent and current child is possible connect them and remove the middle node (current parent)*/
-    if (checker_->checkConnection(connections_.at(ic - 1)->getParent()->getConfiguration(),
-                                  connections_.at(ic)->getChild()->getConfiguration()))
-    {
-      simplified = true;
-      double cost = metrics_->cost(connections_.at(ic - 1)->getParent(),
-                                   connections_.at(ic)->getChild());
-
-      bool is_net = connections_.at(ic)->isNet();
-      ConnectionPtr conn = std::make_shared<Connection>(connections_.at(ic - 1)->getParent(),
-                                                        connections_.at(ic)->getChild(),
-                                                        logger_,is_net);
-      conn->setCost(cost);
-      conn->add();
-
-      connections_.at(ic)->remove();
-      assert(conn->getChild()->getParentConnectionsSize() == 1);
-
-      connections_.erase(connections_.begin() + (ic - 1), connections_.begin() + ic + 1);
-      connections_.insert(connections_.begin() + (ic - 1), conn);
-
-      change_warp_.erase(change_warp_.begin() + ic);
-      if (ic>1)
-      {
-        change_warp_.at(ic - 1) = 1;
-      }
-    }
-    else
-      ic++;
-  }
-
-  return simplified;
-}
-
 bool Path::isValid(const CollisionCheckerPtr &this_checker)
 {
   CollisionCheckerPtr checker = checker_;
@@ -1548,7 +1369,22 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, int &pos_closest_obs_fro
   return isValidFromConf(conf,conn_idx,pos_closest_obs_from_goal,this_checker);
 }
 
-YAML::Node Path::toYAML(bool reverse) const
+void Path::toYAML(const std::string& file_name, const bool reverse) const
+{
+  std::ofstream out(file_name);
+  if(out.is_open())
+  {
+    out << toYAML(reverse);
+    out.close();
+  }
+  else
+  {
+    // Handle error opening the file
+    CNR_ERROR(logger_, "Error opening file: " << file_name);
+  }
+}
+
+YAML::Node Path::toYAML(const bool reverse) const
 {
   YAML::Node yaml;
   if (connections_.empty())

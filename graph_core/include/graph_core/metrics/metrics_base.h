@@ -44,7 +44,7 @@ namespace core
 class MetricsBase;
 typedef std::shared_ptr<MetricsBase> MetricsPtr;
 
-class MetricsBase
+class MetricsBase: public std::enable_shared_from_this<MetricsBase>
 {
 protected:
   /**

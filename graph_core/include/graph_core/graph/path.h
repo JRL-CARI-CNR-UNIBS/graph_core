@@ -33,14 +33,18 @@ namespace graph
 {
 namespace core
 {
+
+//class Path; //Defined in util.h
+typedef std::shared_ptr<Path> PathPtr;
+
 /**
  * @class Path
  * @brief Class for defining a path as a vector of connections.
  */
-class Path;
-typedef std::shared_ptr<Path> PathPtr;
 class Path: public std::enable_shared_from_this<Path>
 {
+  friend class PathOptimizerBase;
+
 protected:
 
   /**
@@ -74,25 +78,9 @@ protected:
   double cost_;
 
   /**
-   * @brief The minimum length of a connection in the path.
-   *
-   * This is a threshold for bisection function.
-   */
-  double min_length_ = 0.04;
-
-  /**
    * @brief The tree associated with the path.
    */
   TreePtr tree_;
-
-  /**
-   * @brief Vector indicating whether warping changes are needed for each connection in the path.
-   *
-   * The change_warp_ vector is used to mark connections where warping changes are needed.
-   * Each element in the vector corresponds to a connection in the path, and a value of true
-   * indicates that warping changes are required for the corresponding connection.
-   */
-  std::vector<bool> change_warp_;
 
   /**
    * @brief Pointer to a TraceLogger instance for logging.
@@ -109,34 +97,6 @@ protected:
    * This method calculates the total cost of the path by summing the costs of individual connections.
    */
   void computeCost();
-
-  /**
-   * @brief Set the changed flag for the specified connection index.
-   *
-   * This method sets the "change_warp" flag to true for the specified connection index in the path.
-   *
-   * @param connection_idx The index of the connection to mark as changed.
-   */
-  void setChanged(const size_t &connection_idx);
-
-  /**
-   * @brief Perform bisection to improve the path between two connections.
-   *
-   * This method applies bisection to refine the path between two connections in the path.
-   * It adjusts the configuration of an intermediate node to improve the overall cost of the path.
-   *
-   * @param connection_idx The index of the connection in the path where bisection is applied.
-   * @param center The center point for bisection.
-   * @param direction The direction vector for bisection.
-   * @param max_distance The maximum distance for bisection.
-   * @param min_distance The minimum distance for bisection.
-   * @return Returns true if the bisection process results in an improvement, false otherwise.
-   */
-  bool bisection(const size_t& connection_idx,
-                 const Eigen::VectorXd& center,
-                 const Eigen::VectorXd& direction,
-                 double max_distance,
-                 double min_distance);
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -452,20 +412,6 @@ public:
   }
 
   /**
-   * @brief Get the change warp vector.
-   *
-   * This method retrieves the vector indicating changes in the warp status along the path.
-   * Each element in the vector corresponds to a connection in the path, and a value of `true`
-   * indicates that the warp has changed at that connection.
-   *
-   * @return A vector of boolean values indicating changes in warp status.
-   */
-  std::vector<bool> getChangeWarp()
-  {
-    return change_warp_;
-  }
-
-  /**
    * @brief Get the associated tree.
    *
    * This method retrieves the tree associated with the path.
@@ -541,18 +487,6 @@ public:
   }
 
   /**
-   * @brief Set the change warp vector for the path.
-   *
-   * This method sets the change warp vector, which indicates whether each connection in the path has undergone a change.
-   *
-   * @param change_warp A vector of boolean values representing the change warp for each connection.
-   */
-  void setChangeWarp(const std::vector<bool>& change_warp)
-  {
-    change_warp_ = change_warp;
-  }
-
-  /**
    * @brief Set the tree associated with the path.
    *
    * This method sets the tree associated with the path.
@@ -575,6 +509,15 @@ public:
   {
     return connections_;
   }
+
+  /**
+   * @brief Get the i-th connection that composes the path.
+   *
+   * @param i The index of the desired connection.
+   *
+   * @return The shared pointers to i-th Connection object, nullptr if 'i' exceeds the vector bounds.
+   */
+  ConnectionPtr getConnection(const size_t &i)const;
 
   /**
    * @brief Get a constant reference to the connections that compose the path.
@@ -613,7 +556,7 @@ public:
    * @brief Set the connections of the path.
    *
    * This method sets the connections of the path using the provided vector of connections. It updates the cost,
-   * change_warp_, start_node_, and goal_node_ attributes based on the input connections.
+   * start_node_, and goal_node_ attributes based on the input connections.
    *
    * @param conn A vector of ConnectionPtr representing the connections to set for the path.
    */
@@ -648,17 +591,6 @@ public:
    * @return True if the restoration is successful, false otherwise.
    */
   bool restoreConnection(const ConnectionPtr& conn, const NodePtr& node2remove);
-
-  /**
-   * @brief Simplify the path by removing redundant nodes.
-   *
-   * This method simplifies the path by removing connections shorter than a threshold. If the length of a connection is
-   * shorter than "distance", the algorithm simplify the path connecting the previous path with the current children, if possible.
-   *
-   * @param distance The distance threshold for node removal.
-   * @return True if the path is simplified, false otherwise.
-   */
-  bool simplify(const double& distance = 0.02);
 
   /**
    * @brief Checks if the path is valid, taking into account collision checking.
@@ -740,20 +672,6 @@ public:
   Eigen::VectorXd projectOnPath(const Eigen::VectorXd& point, const bool& verbose = false);
 
   /**
-   * @brief Attempt to bevel the path by adjusting configurations.
-   *
-   * This function attempts to warp the path by moving configurations along connections
-   * where the norm of the connection is greater than the specified minimum distance. The
-   * warping process aims to smooth the path and it is controlled by the change_warp_ vector,
-   * and the maximum time limit for warping is given by max_time.
-   *
-   * @param min_dist The minimum distance threshold for considering a connection for warping.
-   * @param max_time The maximum time limit for the warping process (set to 0 for no time limit).
-   * @return Returns true if any warping changes were made, false otherwise.
-   */
-  bool warp(const double& min_dist = 0.1, const double& max_time = std::numeric_limits<double>::infinity());
-
-  /**
    * @brief Flips the path by reversing the order of connections.
    *
    * This function reverses the order of connections in the path and updates the start and goal nodes accordingly.
@@ -766,10 +684,21 @@ public:
    * This function converts the Path to a YAML::Node.
    * It creates a YAML sequence with each element representing a connection in the path.
    *
+   * @param file_name The name of the file to write the YAML representation to.
    * @param reverse If true, the path connections will be listed in reverse order.
    * @return A YAML::Node representing the Path.
    */
-  YAML::Node toYAML(bool reverse=false) const;
+  YAML::Node toYAML(const bool reverse=false) const;
+
+  /**
+   * @brief Write the Path to a YAML file.
+   *
+   * This function writes the YAML representation of the Path to a file with the specified name.
+   *
+   * @param file_name The name of the file to write the YAML representation to.
+   * @param reverse If true, the path connections will be listed in reverse order.
+   */
+  void toYAML(const std::string& file_name, const bool reverse=false) const;
 
   /**
    * @brief Create a Path from a YAML::Node.

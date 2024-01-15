@@ -360,10 +360,10 @@ public:
   /**
    * @brief Implementation of the deleteNode function for deleting a node from the k-d tree.
    *
-   * This function removes the specified node from the KdTree. Optionally, it can disconnect the associate NodePtr
-   * If the number of deleted nodes surpasses the threshold defined by deleted_nodes_threshold_,
-   * the KdTree is entirely reconstructed. During the reconstruction, all nodes marked with the "deleted_"
-   * flag set to true are excluded, except for the root node, which is retained as is regardless of its deleted_ status.
+   * This function removes the specified node from the KdTree. Optionally, it can disconnect the associate NodePtr.
+   * If the number of deleted nodes surpasses the threshold defined by 'deleted_nodes_threshold_',
+   * the KdTree is entirely reconstructed. During the reconstruction, all nodes marked with the 'deleted_'
+   * flag set to true are excluded, except for the root node, which is retained as is regardless of its 'deleted_' status.
    *
    * @param node The node to delete.
    * @param disconnect_node If true, disconnect the node from the graph.

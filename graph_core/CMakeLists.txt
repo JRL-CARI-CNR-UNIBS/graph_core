@@ -47,7 +47,9 @@ add_library(${PROJECT_NAME} SHARED
   src/${PROJECT_NAME}/solvers/birrt.cpp
   src/${PROJECT_NAME}/solvers/rrt_star.cpp
   src/${PROJECT_NAME}/solvers/anytime_rrt.cpp
-  src/${PROJECT_NAME}/solvers/path_local_optimizer.cpp
+
+  src/${PROJECT_NAME}/solvers/path_optimizers/path_optimizer_base.cpp
+  src/${PROJECT_NAME}/solvers/path_optimizers/path_local_optimizer.cpp
   )
 
 

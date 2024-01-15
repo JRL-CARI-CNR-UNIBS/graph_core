@@ -25,23 +25,25 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/solvers/path_local_optimizer.h>
+#include <graph_core/solvers/path_optimizers/path_optimizer_base.h>
 
 namespace graph
 {
 namespace core
 {
-PathLocalOptimizer::PathLocalOptimizer(const CollisionCheckerPtr &checker,
+
+PathOptimizerBase::PathOptimizerBase(const CollisionCheckerPtr &checker,
                                        const MetricsPtr &metrics,
                                        const cnr_logger::TraceLoggerPtr &logger):
   checker_(checker),
   metrics_(metrics),
   logger_(logger)
 {
+  solved_ = false;
   configured_ = false;
 }
 
-void PathLocalOptimizer::config(const YAML::Node& config)
+void PathOptimizerBase::config(const YAML::Node& config)
 {
   config_ = config;
 
@@ -59,57 +61,25 @@ void PathLocalOptimizer::config(const YAML::Node& config)
   configured_ = true;
 }
 
-void PathLocalOptimizer::setPath(const PathPtr &path)
+void PathOptimizerBase::setPath(const PathPtr &path)
 {
-  assert(path);
+  if(not path)
+  {
+    CNR_WARN(logger_,"path is null");
+    return;
+  }
+
   solved_ = false;
   stall_gen_ = 0;
   path_ = path;
 }
 
-bool PathLocalOptimizer::step(PathPtr& solution)
+PathPtr PathOptimizerBase::getPath()
 {
-  if (!path_)
-    return false;
-  solution = path_;
-
-  bool improved = false;
-  if (solved_)
-    return false;
-
-  double cost = path_->cost();
-
-  bool solved = !path_->warp();
-
-  if (cost <= (1.001 * path_->cost()))
-  {
-    if (stall_gen_ == 0)
-    {
-      if (!path_->simplify())
-      {
-        stall_gen_++;
-      }
-      else
-      {
-        solved = false;
-      }
-    }
-    else
-    {
-      stall_gen_++;
-    }
-  }
-  else
-  {
-    improved = true;
-    stall_gen_ = 0;
-  }
-  solved_ = solved || (stall_gen_ >= max_stall_gen_);
-  return improved;
-
+  return path_;
 }
 
-bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iteration, const double& max_time)
+bool PathOptimizerBase::solve(const unsigned int &max_iteration, const double& max_time)
 {
   if(not configured_)
   {
@@ -122,7 +92,6 @@ bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iterat
     return false;
 
   unsigned int iter = 0;
-  solution = path_;
   while (iter++ < max_iteration)
   {
     if (solved_)
@@ -130,7 +99,7 @@ bool PathLocalOptimizer::solve(PathPtr& solution, const unsigned int &max_iterat
       CNR_DEBUG(logger_,"solved in %u iterations", iter);
       return true;
     }
-    step(solution);
+    step();
 
     std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
     std::chrono::duration<double> difference = now - tic;

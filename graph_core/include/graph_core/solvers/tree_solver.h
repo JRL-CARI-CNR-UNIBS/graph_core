@@ -164,7 +164,11 @@ protected:
   double best_utopia_ = std::numeric_limits<double>::infinity();
 
   /**
-   * @brief Logger for trace logging.
+   * @brief Pointer to a TraceLogger instance for logging.
+   *
+   * This member variable represents a pointer to a TraceLogger instance, allowing
+   * to perform logging operations. TraceLogger is a part of the cnr_logger library.
+   * Ensure that the logger is properly configured and available for use.
    */
   const cnr_logger::TraceLoggerPtr& logger_;
 

@@ -46,7 +46,7 @@ namespace core
 class CollisionCheckerBase;
 typedef std::shared_ptr<CollisionCheckerBase> CollisionCheckerPtr;
 
-class CollisionCheckerBase
+class CollisionCheckerBase:  public std::enable_shared_from_this<CollisionCheckerBase>
 {
 protected:
   /**
