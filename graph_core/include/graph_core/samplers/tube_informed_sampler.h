@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#include <graph_core/sampler_base.h>
+#include <graph_core/samplers/sampler_base.h>
 #include <graph_core/graph/path.h>
 
 namespace graph

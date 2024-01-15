@@ -34,15 +34,17 @@ namespace core
 {
 
 /**
- * @class Metrics
- * @brief Base class for defining metrics to measure costs.
+ * @class MetricsBase
+ * @brief Base class for defining metrics to measure costs between configurations.
+ *
+ * The MetricsBase class provides an interface for cost evaluation
+ * in path planning. Users can derive from this class to implement custom
+ * metrics.
  */
-class Metrics;
-typedef std::shared_ptr<Metrics> MetricsPtr;
+class MetricsBase;
+typedef std::shared_ptr<MetricsBase> MetricsPtr;
 
-
-// Euclidean metrics
-class Metrics
+class MetricsBase
 {
 protected:
   /**
@@ -57,10 +59,10 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
-   * @brief Constructs a Metrics object.
+   * @brief Constructs a MetricsBase object.
    * @param logger A shared pointer to a TraceLogger for logging.
    */
-  Metrics(const cnr_logger::TraceLoggerPtr& logger):logger_(logger){}
+  MetricsBase(const cnr_logger::TraceLoggerPtr& logger):logger_(logger){}
 
   /**
    * @brief Calculates the cost between two configurations.
@@ -69,15 +71,9 @@ public:
    * @return The cost between the two configurations.
    */
   virtual double cost(const Eigen::VectorXd& configuration1,
-                      const Eigen::VectorXd& configuration2)
-  {
-    return (configuration1 - configuration2).norm();
-  }
+                      const Eigen::VectorXd& configuration2) = 0;
   virtual double cost(const NodePtr& node1,
-                      const NodePtr& node2)
-  {
-    return cost(node1->getConfiguration(), node2->getConfiguration());
-  }
+                      const NodePtr& node2) = 0;
 
   /**
    * @brief Calculates the utopia (ideal minimum cost) between two configurations.
@@ -86,24 +82,14 @@ public:
    * @return The utopia distance between the two configurations.
    */
   virtual double utopia(const Eigen::VectorXd& configuration1,
-                        const Eigen::VectorXd& configuration2)
-  {
-    return (configuration1 - configuration2).norm();
-  }
+                        const Eigen::VectorXd& configuration2) = 0;
   virtual double utopia(const NodePtr& node1,
-                        const NodePtr& node2)
-  {
-    return utopia(node1->getConfiguration(), node2->getConfiguration());
-  }
-
+                        const NodePtr& node2) = 0;
   /**
-   * @brief Creates a clone of the Metrics object.
+   * @brief Creates a clone of the MetricsBase object.
    * @return A shared pointer to the cloned Metrics object.
    */
-  virtual MetricsPtr clone()
-  {
-    return std::make_shared<Metrics>(logger_);
-  }
+  virtual MetricsPtr clone() = 0;
 
 };
 

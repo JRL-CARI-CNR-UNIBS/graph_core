@@ -26,7 +26,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/sampler_base.h>
+#include <graph_core/samplers/sampler_base.h>
 
 #include <eigen3/Eigen/Core>
 #include <graph_core/util.h>

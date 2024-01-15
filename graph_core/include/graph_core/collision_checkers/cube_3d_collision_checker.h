@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graph_core/collision_checker_base.h"
+#include "graph_core/collision_checkers/collision_checker_base.h"
 
 namespace graph
 {

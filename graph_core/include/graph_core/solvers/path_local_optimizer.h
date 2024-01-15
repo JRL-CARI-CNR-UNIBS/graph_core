@@ -27,8 +27,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <graph_core/graph/path.h>
-#include <graph_core/collision_checker_base.h>
-#include <graph_core/metrics.h>
+#include <graph_core/collision_checkers/collision_checker_base.h>
+#include <graph_core/metrics/metrics_base.h>
 
 namespace graph
 {

@@ -28,8 +28,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/tree.h>
 #include <graph_core/graph/path.h>
-#include <graph_core/sampler_base.h>
-#include <graph_core/goal_cost_function.h>
+#include <graph_core/samplers/sampler_base.h>
+#include <graph_core/metrics/goal_cost_function.h>
 
 namespace graph
 {

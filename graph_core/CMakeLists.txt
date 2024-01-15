@@ -36,8 +36,8 @@ add_library(${PROJECT_NAME} SHARED
   src/${PROJECT_NAME}/graph/path.cpp
   src/${PROJECT_NAME}/graph/net.cpp
 
-  src/${PROJECT_NAME}/informed_sampler.cpp
-  src/${PROJECT_NAME}/tube_informed_sampler.cpp
+  src/${PROJECT_NAME}/samplers/informed_sampler.cpp
+  src/${PROJECT_NAME}/samplers/tube_informed_sampler.cpp
 
   src/${PROJECT_NAME}/datastructure/kdtree.cpp
   src/${PROJECT_NAME}/datastructure/vector.cpp

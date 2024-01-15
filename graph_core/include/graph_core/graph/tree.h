@@ -27,10 +27,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <graph_core/util.h>
-#include <graph_core/collision_checker_base.h>
-#include <graph_core/sampler_base.h>
-#include <graph_core/informed_sampler.h>
-#include <graph_core/metrics.h>
+#include <graph_core/collision_checkers/collision_checker_base.h>
+#include <graph_core/samplers/informed_sampler.h>
+#include <graph_core/metrics/metrics_base.h>
 #include <graph_core/datastructure/nearest_neighbors.h>
 #include <graph_core/datastructure/kdtree.h>
 #include <graph_core/datastructure/vector.h>
@@ -44,6 +43,10 @@ namespace core
  * @class Tree
  * @brief Class for defining a tree.
  */
+
+class MetricsBase;
+typedef std::shared_ptr<MetricsBase> MetricsPtr;
+
 
 class Tree;
 typedef std::shared_ptr<Tree> TreePtr;

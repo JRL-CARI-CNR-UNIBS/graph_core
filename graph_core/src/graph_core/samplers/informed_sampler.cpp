@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include <graph_core/informed_sampler.h>
+#include <graph_core/samplers/informed_sampler.h>
 
 namespace graph
 {
