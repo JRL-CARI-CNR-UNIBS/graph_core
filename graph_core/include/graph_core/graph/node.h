@@ -198,7 +198,7 @@ public:
    * The map uses strings as keys and vectors of std::any as values to store heterogeneous data types.
    * Store in properties_ any object you need to customize the node.
    */
-  std::map<std::string, std::vector<std::any>> properties_;
+  std::unordered_map<std::string, std::vector<std::any>> properties_;
 
   /**
    * @brief Constructor for the Node class.

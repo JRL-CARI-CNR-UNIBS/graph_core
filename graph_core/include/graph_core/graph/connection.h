@@ -134,6 +134,15 @@ public:
   static constexpr unsigned int number_reserved_flags_ = 4;
 
   /**
+   * @brief Map of properties associated with the connection.
+   *
+   * This member variable represents a map of properties associated with the connection.
+   * The map uses strings as keys and vectors of std::any as values to store heterogeneous data types.
+   * Store in properties_ any object you need to customize the connection.
+   */
+  std::unordered_map<std::string, std::vector<std::any>> properties_;
+
+  /**
    * @brief Constructor for the Connection class.
    *
    * This constructor initializes a Connection object with the provided parent and child Nodes.
