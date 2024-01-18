@@ -65,7 +65,7 @@ protected:
    * to perform logging operations. TraceLogger is a part of the cnr_logger library.
    * Ensure that the logger is properly configured and available for use.
    */
-  const cnr_logger::TraceLoggerPtr& logger_;
+  cnr_logger::TraceLoggerPtr logger_;
 
   /**
    * @brief cost_ Cost associated with the sampler. The base implementation of the Sampler does not use the cost
@@ -93,8 +93,27 @@ protected:
    */
   std::uniform_real_distribution<double> ud_;
 
+  /**
+   * @brief init_ Flag to indicate whether the object is initialised, i.e. whether its members have been defined correctly.
+   * It is false when the object is created with an empty constructor. In this case, call the 'init' function to initialise it.
+   * The other constructors automatically initialise the object.
+   * As long as the object is not initialised, it cannot perform its main functions.
+   */
+  bool init_;
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+  /**
+   * @brief Empty constructor for SamplerBase. The function init() must be called afterwards.
+   */
+  SamplerBase():
+    gen_{rd_()}
+  {
+    srand((unsigned int)time(NULL)); //randomize seed
+    ud_ = std::uniform_real_distribution<double>(0, 1);
+    init_ = false;
+  }
 
   /**
    * @brief Constructor for the SamplerBase class.
@@ -116,6 +135,44 @@ public:
   {
     srand((unsigned int)time(NULL)); //randomize seed
     ud_ = std::uniform_real_distribution<double>(0, 1);
+    init_ = true;
+  }
+
+  /**
+   * @brief init Initialise the object, defining its main attributes. At the end of the function, the flag 'init_' is set to true and the object can execute its main functions.
+   * @param lower_bound Lower bounds for configuration sampling.
+   * @param upper_bound Upper bounds for configuration sampling.
+   * @param logger Pointer to a TraceLogger instance for logging.
+   * @param cost Cost associated with the sampler (default: infinity).
+   * @return True if correctly initialised, False if already initialised.
+   */
+  virtual bool init(const Eigen::VectorXd& lower_bound,
+                    const Eigen::VectorXd& upper_bound,
+                    const cnr_logger::TraceLoggerPtr& logger,
+                    const double& cost = std::numeric_limits<double>::infinity())
+  {
+    if(init_)
+    {
+      CNR_WARN(logger_,"Sampler already initialised!");
+      return false;
+    }
+
+    lower_bound_ = lower_bound;
+    upper_bound_ = upper_bound;
+    logger_ = logger;
+    cost_ = cost;
+    init_ = true;
+
+    return true;
+  }
+
+  /**
+   * @brief getInit tells if the object has been initialised.
+   * @return the 'init_' flag.
+   */
+  bool getInit()
+  {
+    return init_;
   }
 
   /**

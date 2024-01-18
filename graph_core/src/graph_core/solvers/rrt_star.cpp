@@ -98,7 +98,7 @@ bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 {
   CNR_DEBUG(logger_,"RRT*::update");
 
-  if (!init_)
+  if (!problem_set_)
   {
     CNR_DEBUG(logger_,"RRT* -> not init");
 
@@ -173,7 +173,7 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
 {
   CNR_DEBUG(logger_,"RRT*::update");
 
-  if (!init_)
+  if (!problem_set_)
   {
     CNR_DEBUG(logger_,"RRT* -> not init");
 

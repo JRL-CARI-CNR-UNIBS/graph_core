@@ -33,8 +33,14 @@ namespace graph
 namespace core
 {
 
-void InformedSampler::init()
+void InformedSampler::config()
 {
+  if(not init_)
+  {
+    CNR_ERROR(logger_,"Informed sampler not initialised, cannot configure");
+    return;
+  }
+
   if(cost_ < 0.0)
   {
     CNR_FATAL(logger_,"cost should be >= 0");

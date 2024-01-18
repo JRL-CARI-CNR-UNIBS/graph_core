@@ -98,6 +98,12 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
+   * @brief Empty constructor for TubeInformedSampler. The function init() must be called afterwards.
+   */
+  TubeInformedSampler():SamplerBase() //set init_ false
+  {}
+
+  /**
    * @brief Constructor for TubeInformedSampler.
    * @param sampler Pointer to the underlying sampler.
    * @param metrics Pointer to the metrics for evaluating costs.
@@ -107,13 +113,21 @@ public:
     SamplerBase(sampler->getLB(),
                 sampler->getUB(),
                 sampler->getLogger(),
-                sampler->getCost())
+                sampler->getCost()) //set init_ true
   {
     length_ = 0;
     radius_=0;
     sampler_=sampler;
     metrics_=metrics;
   }
+
+  /**
+   * @brief init Initialise the object, defining its main attributes. At the end of the function, the flag 'init_' is set to true and the object can execute its main functions.
+   * @param sampler Pointer to the underlying sampler.
+   * @param metrics Pointer to the metrics for evaluating costs.
+   * @return True if correctly initialised, False if already initialised.
+   */
+  virtual bool init(const SamplerPtr& sampler, const MetricsPtr& metrics);
 
   /**
    * @brief Set the path for path-informed sampling.

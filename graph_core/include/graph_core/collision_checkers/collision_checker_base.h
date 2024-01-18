@@ -52,12 +52,20 @@ protected:
   /**
    * @brief min_distance_ Defines the distance between configurations checked for collisions along a connection.
    */
-  double min_distance_ = 0.01;
+  double min_distance_;
 
   /**
    * @brief verbose_ Flag for enabling verbose output.
    */
   bool verbose_ = false;
+
+  /**
+   * @brief init_ Flag to indicate whether the object is initialised, i.e. whether its members have been defined correctly.
+   * It is false when the object is created with an empty constructor. In this case, call the 'init' function to initialise it.
+   * The other constructors automatically initialise the object.
+   * As long as the object is not initialised, it cannot perform its main functions.
+   */
+  bool init_;
 
   /**
    * @brief Pointer to a TraceLogger instance for logging.
@@ -66,10 +74,19 @@ protected:
    * to perform logging operations. TraceLogger is a part of the cnr_logger library.
    * Ensure that the logger is properly configured and available for use.
    */
-  const cnr_logger::TraceLoggerPtr& logger_;
+  cnr_logger::TraceLoggerPtr logger_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+  /**
+   * @brief Empty constructor for CollisionCheckerBase. The function init() must be called afterwards.
+   */
+  CollisionCheckerBase()
+  {
+    init_ = false;
+    verbose_ = false;
+  }
 
   /**
    * @brief Constructor for CollisionCheckerBase.
@@ -80,7 +97,29 @@ public:
     min_distance_(min_distance),
     logger_(logger)
   {
+    init_ = true;
     verbose_ = false;
+  }
+
+  /**
+   * @brief init Initialise the object, defining its main attributes. At the end of the function, the flag 'init_' is set to true and the object can execute its main functions.
+   * @param logger Pointer to a TraceLogger for logging.
+   * @param min_distance Distance between configurations checked for collisions along a connection.
+   * @return True if correctly initialised, False if already initialised.
+   */
+  virtual bool init(const cnr_logger::TraceLoggerPtr& logger, const double& min_distance = 0.01)
+  {
+    if(init_)
+    {
+      CNR_WARN(logger_,"Collision checker already initialised!");
+      return false;
+    }
+
+    logger_ = logger;
+    min_distance_ = min_distance;
+    init_ = true;
+
+    return true;
   }
 
   /**
@@ -99,6 +138,15 @@ public:
   virtual std::string getGroupName()
   {
     return "";
+  }
+
+  /**
+   * @brief getInit tells if the object has been initialised.
+   * @return the 'init_' flag.
+   */
+  bool getInit()
+  {
+    return init_;
   }
 
   /**

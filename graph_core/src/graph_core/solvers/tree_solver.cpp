@@ -56,16 +56,6 @@ bool TreeSolver::config(const YAML::Node &config)
     use_kdtree_ = config_["use_kdtree"].as<bool>();
   }
 
-  if (!config_["informed"])
-  {
-    CNR_WARN(logger_,"informed is not set, using true");
-    informed_ = true;
-  }
-  else
-  {
-    informed_ = config_["informed"].as<bool>();
-  }
-
   if (!config_["extend"])
   {
     CNR_WARN(logger_,"extend is not set, using false (connect algorithm)");
@@ -74,33 +64,6 @@ bool TreeSolver::config(const YAML::Node &config)
   else
   {
     extend_ = config_["extend"].as<bool>();
-  }
-
-  if (!config["warp"])
-  {
-    CNR_DEBUG(logger_,"%s/warp is not set, using false");
-    warp_ = false;
-  }
-  else
-  {
-    warp_ = config_["warp"].as<bool>();
-  }
-
-  if (!warp_)
-  {
-    if (!config_["warp_once"])
-    {
-      CNR_DEBUG(logger_,"%warp_once is not set. using false");
-      first_warp_ = false;
-    }
-    else
-    {
-      first_warp_ = config_["warp_once"].as<bool>();
-    }
-  }
-  else
-  {
-    first_warp_ = true;
   }
 
   if (!config_["utopia_tolerance"])
@@ -127,7 +90,7 @@ bool TreeSolver::config(const YAML::Node &config)
 
 bool TreeSolver::setProblem(const double &max_time)
 {
-  init_ = false;
+  problem_set_ = false;
   if (!start_tree_)
     return false;
   if (!goal_node_)
@@ -135,7 +98,7 @@ bool TreeSolver::setProblem(const double &max_time)
   goal_cost_ = goal_cost_fcn_->cost(goal_node_);
 
   best_utopia_ = goal_cost_+metrics_->utopia(start_tree_->getRoot()->getConfiguration(),goal_node_->getConfiguration());
-  init_ = true;
+  problem_set_ = true;
 
   if (start_tree_->isInTree(goal_node_))
   {
@@ -263,7 +226,7 @@ bool TreeSolver::setSolution(const PathPtr &solution)
 
     sampler_->setCost(path_cost_);
 
-    init_ = true;
+    problem_set_ = true;
 
     CNR_DEBUG(logger_,"Solution set. Solved %d, completed %d, cost %f, utopia %f",solved_,completed_,cost_,best_utopia_*utopia_tolerance_);
     return true;
@@ -291,7 +254,7 @@ bool TreeSolver::importFromSolver(const TreeSolverPtr& solver)
   goal_cost_fcn_ = solver->goal_cost_fcn_;
   solved_ = solver->solved_;
   completed_ = solver->completed_;
-  init_ = solver->init_;
+  problem_set_ = solver->init_;
   configured_ = solver->configured_;
   start_tree_ = solver->start_tree_;
   dof_ = solver->dof_;
@@ -300,9 +263,6 @@ bool TreeSolver::importFromSolver(const TreeSolverPtr& solver)
   extend_ = solver->extend_;
   utopia_tolerance_ = solver->utopia_tolerance_;
   use_kdtree_ = solver->use_kdtree_;
-  informed_ = solver->informed_;
-  warp_ = solver->warp_;
-  first_warp_ = solver->first_warp_;
   goal_node_ = solver->goal_node_;
   path_cost_ = solver->path_cost_;
   goal_cost_ = solver->goal_cost_;

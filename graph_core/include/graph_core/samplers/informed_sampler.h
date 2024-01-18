@@ -134,12 +134,18 @@ protected:
   Eigen::MatrixXd computeRotationMatrix(const Eigen::VectorXd& x1, const Eigen::VectorXd&  x2);
 
   /**
-   * @brief Initialize the informed sampler parameters.
+   * @brief Configure the informed sampler parameters.
    */
-  virtual void init();
+  virtual void config();
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+  /**
+   * @brief Empty constructor for InformedSampler. The function init() must be called afterwards.
+   */
+  InformedSampler():SamplerBase() //set init_ false
+  {}
 
   /**
    * @brief Constructor for InformedSampler.
@@ -161,10 +167,10 @@ public:
     SamplerBase(lower_bound,
                 upper_bound,
                 logger,
-                cost),
+                cost), //set init_ true
     focus_1_(focus_1),focus_2_(focus_2),scale_(scale)
   {
-    init();
+    config();
   }
   InformedSampler(const Eigen::VectorXd& focus_1,
                   const Eigen::VectorXd& focus_2,
@@ -175,11 +181,61 @@ public:
     SamplerBase(lower_bound,
                 upper_bound,
                 logger,
-                cost),
+                cost), //set init_ true
     focus_1_(focus_1),focus_2_(focus_2)
   {
     scale_.setOnes(lower_bound_.rows(),1);
-    init();
+    config();
+  }
+
+  /**
+   * @brief init Initialise the object, defining its main attributes. At the end of the function, the flag 'init_' is set to true and the object can execute its main functions.
+   * @param focus_1 focus 1 for the ellipse.
+   * @param focus_2 focus 2 for the ellipse.
+   * @param lower_bound Lower bounds for each dimension.
+   * @param upper_bound Upper bounds for each dimension.
+   * @param scale Scaling factors for each dimension (default: 1).
+   * @param logger TraceLogger for logging.
+   * @param cost Cost of the path (default: infinity).
+   * @return True if correctly initialised, False if already initialised.
+   */
+  virtual bool init(const Eigen::VectorXd& focus_1,
+                    const Eigen::VectorXd& focus_2,
+                    const Eigen::VectorXd& lower_bound,
+                    const Eigen::VectorXd& upper_bound,
+                    const Eigen::VectorXd& scale,
+                    const cnr_logger::TraceLoggerPtr& logger,
+                    const double& cost = std::numeric_limits<double>::infinity())
+  {
+    if(not SamplerBase::init(lower_bound,upper_bound,logger,cost))
+      return false;
+
+    focus_1_ = focus_1;
+    focus_2_ = focus_2;
+    scale_ = scale;
+
+    config();
+
+    return true;
+  }
+
+  virtual bool init(const Eigen::VectorXd& focus_1,
+                    const Eigen::VectorXd& focus_2,
+                    const Eigen::VectorXd& lower_bound,
+                    const Eigen::VectorXd& upper_bound,
+                    const cnr_logger::TraceLoggerPtr& logger,
+                    const double& cost = std::numeric_limits<double>::infinity())
+  {
+    if(not SamplerBase::init(lower_bound,upper_bound,logger,cost))
+      return false;
+
+    focus_1_ = focus_1;
+    focus_2_ = focus_2;
+    scale_.setOnes(lower_bound_.rows(),1);
+
+    config();
+
+    return true;
   }
 
   /**
@@ -201,7 +257,7 @@ public:
   void setScale(const Eigen::VectorXd& scale)
   {
     scale_ = scale;
-    init();
+    config();
   }
 
   /**

@@ -50,10 +50,17 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
+   * @brief Empty constructor for EuclideanMetrics. The function MetricsBase::init() must be called afterwards.
+   */
+  EuclideanMetrics():MetricsBase() //set init_ false
+  {}
+
+  /**
    * @brief Constructs a EuclideanMetrics object.
    * @param logger A shared pointer to a TraceLogger for logging.
    */
-  EuclideanMetrics(const cnr_logger::TraceLoggerPtr& logger):MetricsBase(logger){}
+  EuclideanMetrics(const cnr_logger::TraceLoggerPtr& logger):MetricsBase(logger) //set init_ true
+  {}
 
   /**
    * @brief Calculates the cost between two configurations.

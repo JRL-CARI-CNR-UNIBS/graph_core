@@ -33,6 +33,20 @@ namespace graph
 namespace core
 {
 
+bool TubeInformedSampler::init(const SamplerPtr& sampler,
+                  const MetricsPtr& metrics)
+{
+  if(not SamplerBase::init(sampler->getLB(),sampler->getUB(),sampler->getLogger(),sampler->getCost()))
+    return false;
+
+  length_ = 0;
+  radius_=0;
+  sampler_=sampler;
+  metrics_=metrics;
+
+  return true;
+}
+
 Eigen::VectorXd TubeInformedSampler::sample()
 {
   if (ud_(gen_)>local_bias_)
@@ -156,7 +170,7 @@ bool TubeInformedSampler::couldImprove(const Eigen::VectorXd& q)
 
 SamplerPtr TubeInformedSampler::clone()
 {
-  return std::make_shared<TubeInformedSampler>(sampler_->clone(),metrics_);
+  return std::make_shared<TubeInformedSampler>(sampler_->clone(),metrics_->clone());
 }
 
 } //end namespace core

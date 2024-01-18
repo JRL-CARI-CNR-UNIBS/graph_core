@@ -85,12 +85,12 @@ protected:
   /**
    * @brief Flag indicating whether the problem has been defined, i.e., start and goal node defined.
    */
-  bool init_ = false;
+  bool problem_set_ = false;
 
   /**
    * @brief Flag indicating whether the solver is configured, i.e, parameters read from YAML.
    */
-  bool configured_=false;
+  bool configured_ = false;
 
   /**
    * @brief Pointer to the tree of the path planning problem.
@@ -127,11 +127,13 @@ protected:
    */
   bool use_kdtree_;
 
-  //SPOSTARE IN MULTIGOAL?
-  bool informed_;
-  bool warp_;
-  bool first_warp_;
-  //
+  /**
+   * @brief init_ Flag to indicate whether the object is initialised, i.e. whether its members have been defined correctly.
+   * It is false when the object is created with an empty constructor. In this case, call the 'init' function to initialise it.
+   * The other constructors automatically initialise the object.
+   * As long as the object is not initialised, it cannot perform its main functions.
+   */
+  bool init_;
 
   /**
    * @brief Pointer to the goal node of the path planning problem.
@@ -170,7 +172,7 @@ protected:
    * to perform logging operations. TraceLogger is a part of the cnr_logger library.
    * Ensure that the logger is properly configured and available for use.
    */
-  const cnr_logger::TraceLoggerPtr& logger_;
+  cnr_logger::TraceLoggerPtr logger_;
 
   /**
    * @brief Set the path planning problem and attempt to find a solution.
@@ -190,6 +192,18 @@ protected:
   virtual void printMyself(std::ostream& os) const;
 
 public:
+
+  TreeSolver():
+    metrics_(metrics),
+    checker_(checker),
+    sampler_(sampler),
+    logger_(logger)
+  {
+    path_cost_ = std::numeric_limits<double>::infinity();
+    goal_cost_ = 0.0;
+    cost_ = std::numeric_limits<double>::infinity();
+    goal_cost_fcn_=std::make_shared<GoalCostFunction>();
+  }
 
   /**
    * @brief Constructor for TreeSolver class.
@@ -403,7 +417,7 @@ public:
    */
   const bool& init()const
   {
-    return init_;
+    return problem_set_;
   }
 
   /**

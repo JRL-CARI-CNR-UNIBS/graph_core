@@ -138,7 +138,7 @@ protected:
    * to perform logging operations. TraceLogger is a part of the cnr_logger library.
    * Ensure that the logger is properly configured and available for use.
    */
-  const cnr_logger::TraceLoggerPtr& logger_;
+  cnr_logger::TraceLoggerPtr logger_;
 
   /**
    * @brief Searches for paths in the net from a start node to a goal node.
