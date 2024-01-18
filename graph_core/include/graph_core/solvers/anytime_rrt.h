@@ -51,12 +51,61 @@ protected:
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+  AnytimeRRT():RRT(){} //set init_ false
+
   AnytimeRRT(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
              const SamplerPtr& sampler,
-             const cnr_logger::TraceLoggerPtr& logger): RRT(metrics, checker, sampler, logger)
+             const GoalCostFunctionPtr& goal_cost_fcn,
+             const cnr_logger::TraceLoggerPtr& logger):
+    RRT(metrics, checker, sampler, goal_cost_fcn, logger) //set init_ true
   {
     setParameters();
+  }
+
+  AnytimeRRT(const MetricsPtr& metrics,
+             const CollisionCheckerPtr& checker,
+             const SamplerPtr& sampler,
+             const cnr_logger::TraceLoggerPtr& logger):
+    RRT(metrics, checker, sampler, logger) //set init_ true
+  {
+    setParameters();
+  }
+
+  /**
+   * @brief init Initialise the object, defining its main attributes. At the end of the function, the flag 'init_' is set to true and the object can execute its main functions.
+   * @param metrics The metrics used to evaluate paths.
+   * @param checker The collision checker for checking collisions.
+   * @param sampler The sampler for generating random configurations.
+   * @param goal_cost_fcn The function used to assign the cost of the goal. If it is not defined, the default cost function does not assign any cost to the goal.
+   * @param logger The logger for logging messages.
+   * @return True if correctly initialised, False if already initialised.
+   */
+  virtual bool init(const MetricsPtr& metrics,
+                    const CollisionCheckerPtr& checker,
+                    const SamplerPtr& sampler,
+                    const GoalCostFunctionPtr& goal_cost_fcn,
+                    const cnr_logger::TraceLoggerPtr& logger) override
+  {
+    if(not RRT::init(metrics,checker,sampler,goal_cost_fcn,logger)) //set init_ true
+      return false;
+
+    setParameters();
+
+    return true;
+  }
+
+  virtual bool init(const MetricsPtr& metrics,
+                    const CollisionCheckerPtr& checker,
+                    const SamplerPtr& sampler,
+                    const cnr_logger::TraceLoggerPtr& logger) override
+  {
+    if(not RRT::init(metrics,checker,sampler,logger)) //set init_ true
+      return false;
+
+    setParameters();
+
+    return true;
   }
 
   double getBias()

@@ -92,6 +92,7 @@ void RRT::resetProblem()
 {
   goal_node_.reset();
   start_tree_.reset();
+  problem_set_ = false;
   solved_=false;
 }
 

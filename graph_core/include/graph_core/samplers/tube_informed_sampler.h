@@ -101,7 +101,10 @@ public:
    * @brief Empty constructor for TubeInformedSampler. The function init() must be called afterwards.
    */
   TubeInformedSampler():SamplerBase() //set init_ false
-  {}
+  {
+    length_ = 0;
+    radius_=0;
+  }
 
   /**
    * @brief Constructor for TubeInformedSampler.

@@ -193,16 +193,17 @@ protected:
 
 public:
 
-  TreeSolver():
-    metrics_(metrics),
-    checker_(checker),
-    sampler_(sampler),
-    logger_(logger)
+  /**
+   * @brief Empty constructor for TreeSolver. The function init() must be called afterwards.
+   */
+  TreeSolver()
   {
     path_cost_ = std::numeric_limits<double>::infinity();
     goal_cost_ = 0.0;
     cost_ = std::numeric_limits<double>::infinity();
     goal_cost_fcn_=std::make_shared<GoalCostFunction>();
+
+    init_ = false;
   }
 
   /**
@@ -211,8 +212,27 @@ public:
    * @param metrics The metrics used to evaluate paths.
    * @param checker The collision checker for checking collisions.
    * @param sampler The sampler for generating random configurations.
+   * @param goal_cost_fcn The function used to assign the cost of the goal. If it is not defined, the default cost function does not assign any cost to the goal.
    * @param logger The logger for logging messages.
    */
+  TreeSolver(const MetricsPtr& metrics,
+             const CollisionCheckerPtr& checker,
+             const SamplerPtr& sampler,
+             const GoalCostFunctionPtr& goal_cost_fcn,
+             const cnr_logger::TraceLoggerPtr& logger):
+    metrics_(metrics),
+    checker_(checker),
+    sampler_(sampler),
+    goal_cost_fcn_(goal_cost_fcn),
+    logger_(logger)
+  {
+    path_cost_ = std::numeric_limits<double>::infinity();
+    goal_cost_ = 0.0;
+    cost_ = std::numeric_limits<double>::infinity();
+
+    init_ = true;
+  }
+
   TreeSolver(const MetricsPtr& metrics,
              const CollisionCheckerPtr& checker,
              const SamplerPtr& sampler,
@@ -226,6 +246,60 @@ public:
     goal_cost_ = 0.0;
     cost_ = std::numeric_limits<double>::infinity();
     goal_cost_fcn_=std::make_shared<GoalCostFunction>();
+
+    init_ = true;
+  }
+
+  /**
+   * @brief init Initialise the object, defining its main attributes. At the end of the function, the flag 'init_' is set to true and the object can execute its main functions.
+   * @param metrics The metrics used to evaluate paths.
+   * @param checker The collision checker for checking collisions.
+   * @param sampler The sampler for generating random configurations.
+   * @param goal_cost_fcn The function used to assign the cost of the goal. If it is not defined, the default cost function does not assign any cost to the goal.
+   * @param logger The logger for logging messages.
+   * @return True if correctly initialised, False if already initialised.
+   */
+  virtual bool init(const MetricsPtr& metrics,
+                    const CollisionCheckerPtr& checker,
+                    const SamplerPtr& sampler,
+                    const GoalCostFunctionPtr& goal_cost_fcn,
+                    const cnr_logger::TraceLoggerPtr& logger)
+  {
+    if(init_)
+    {
+      CNR_WARN(logger_,"Collision checker already initialised!");
+      return false;
+    }
+
+    path_cost_ = std::numeric_limits<double>::infinity();
+    goal_cost_ = 0.0;
+    cost_ = std::numeric_limits<double>::infinity();
+    goal_cost_fcn_ = goal_cost_fcn;
+
+    init_ = true;
+
+    return true;
+  }
+
+  virtual bool init(const MetricsPtr& metrics,
+                    const CollisionCheckerPtr& checker,
+                    const SamplerPtr& sampler,
+                    const cnr_logger::TraceLoggerPtr& logger)
+  {
+    if(init_)
+    {
+      CNR_WARN(logger_,"Collision checker already initialised!");
+      return false;
+    }
+
+    path_cost_ = std::numeric_limits<double>::infinity();
+    goal_cost_ = 0.0;
+    cost_ = std::numeric_limits<double>::infinity();
+    goal_cost_fcn_=std::make_shared<GoalCostFunction>();
+
+    init_ = true;
+
+    return true;
   }
 
   /**

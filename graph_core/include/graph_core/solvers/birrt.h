@@ -43,11 +43,21 @@ protected:
   TreePtr goal_tree_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+  BiRRT():RRT(){} //set init_ false
+
+  BiRRT(const MetricsPtr& metrics,
+        const CollisionCheckerPtr& checker,
+        const SamplerPtr& sampler,
+        const GoalCostFunctionPtr& goal_cost_fcn,
+        const cnr_logger::TraceLoggerPtr& logger):
+    RRT(metrics, checker, sampler, goal_cost_fcn, logger) {} //set init_ true
+
   BiRRT(const MetricsPtr& metrics,
         const CollisionCheckerPtr& checker,
         const SamplerPtr& sampler,
         const cnr_logger::TraceLoggerPtr& logger):
-    RRT(metrics, checker, sampler, logger) {}
+    RRT(metrics, checker, sampler, logger) {} //set init_ true
 
   virtual bool addGoal(const NodePtr &goal_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
   virtual bool update(PathPtr& solution) override;

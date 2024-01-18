@@ -246,6 +246,9 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
 
 bool RRTStar::solve(PathPtr &solution, const unsigned int& max_iter, const double &max_time)
 {
+  if(not init_)
+    return false;
+
   std::chrono::time_point<std::chrono::system_clock> tic = std::chrono::system_clock::now();
   bool solved = false;
   unsigned int n_iter = 0;
