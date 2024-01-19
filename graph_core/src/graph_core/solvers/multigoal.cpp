@@ -514,6 +514,7 @@ bool MultigoalSolver::update(PathPtr& solution)
         if (start_tree_->costToNode(goal_nodes_.at(igoal)) >= (path_costs_.at(igoal) - 1e-8))
           continue;
 
+        // Often breaks here with many collision objcts (getConnectionToNode)
         solutions_.at(igoal) = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_nodes_.at(igoal)), metrics_, checker_);
         solutions_.at(igoal)->setTree(start_tree_);
         double cost_1=solutions_.at(igoal)->cost();

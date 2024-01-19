@@ -734,6 +734,7 @@ double Tree::costToNode(NodePtr node)
   return cost;
 }
 
+// Often breaks here with many collision objcts
 std::vector<ConnectionPtr> Tree::getConnectionToNode(NodePtr node)
 {
   std::vector<ConnectionPtr> connections;
