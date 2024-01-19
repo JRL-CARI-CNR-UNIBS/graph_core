@@ -144,7 +144,7 @@ public:
   /**
    * @brief Empty constructor for InformedSampler. The function init() must be called afterwards.
    */
-  InformedSampler():SamplerBase() //set init_ false
+  InformedSampler():SamplerBase() //set initialized_ false
   {}
 
   /**
@@ -167,7 +167,7 @@ public:
     SamplerBase(lower_bound,
                 upper_bound,
                 logger,
-                cost), //set init_ true
+                cost), //set initialized_ true
     focus_1_(focus_1),focus_2_(focus_2),scale_(scale)
   {
     config();
@@ -181,7 +181,7 @@ public:
     SamplerBase(lower_bound,
                 upper_bound,
                 logger,
-                cost), //set init_ true
+                cost), //set initialized_ true
     focus_1_(focus_1),focus_2_(focus_2)
   {
     scale_.setOnes(lower_bound_.rows(),1);
@@ -189,7 +189,7 @@ public:
   }
 
   /**
-   * @brief init Initialise the object, defining its main attributes. At the end of the function, the flag 'init_' is set to true and the object can execute its main functions.
+   * @brief init Initialise the object, defining its main attributes. At the end of the function, the flag 'initialized_' is set to true and the object can execute its main functions.
    * @param focus_1 focus 1 for the ellipse.
    * @param focus_2 focus 2 for the ellipse.
    * @param lower_bound Lower bounds for each dimension.

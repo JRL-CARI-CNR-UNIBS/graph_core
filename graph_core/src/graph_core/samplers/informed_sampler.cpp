@@ -35,7 +35,7 @@ namespace core
 
 void InformedSampler::config()
 {
-  if(not init_)
+  if(not initialized_)
   {
     CNR_ERROR(logger_,"Informed sampler not initialised, cannot configure");
     return;

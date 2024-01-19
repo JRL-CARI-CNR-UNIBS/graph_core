@@ -43,20 +43,20 @@ protected:
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  RRT():TreeSolver(){} //set init_ false
+  RRT():TreeSolver(){} //set initialized_ false
 
   RRT(const MetricsPtr& metrics,
       const CollisionCheckerPtr& checker,
       const SamplerPtr& sampler,
       const GoalCostFunctionPtr& goal_cost_fcn,
       const cnr_logger::TraceLoggerPtr& logger):
-    TreeSolver(metrics, checker, sampler, goal_cost_fcn, logger) {} //set init_ true
+    TreeSolver(metrics, checker, sampler, goal_cost_fcn, logger) {} //set initialized_ true
 
   RRT(const MetricsPtr& metrics,
       const CollisionCheckerPtr& checker,
       const SamplerPtr& sampler,
       const cnr_logger::TraceLoggerPtr& logger):
-    TreeSolver(metrics, checker, sampler, logger) {} //set init_ true
+    TreeSolver(metrics, checker, sampler, logger) {} //set initialized_ true
 
   virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
   virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity()) override;

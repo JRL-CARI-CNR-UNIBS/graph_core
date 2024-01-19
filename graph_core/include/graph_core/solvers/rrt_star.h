@@ -45,20 +45,20 @@ protected:
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  RRTStar():RRT(){} //set init_ false
+  RRTStar():RRT(){} //set initialized_ false
 
   RRTStar(const MetricsPtr& metrics,
           const CollisionCheckerPtr& checker,
           const SamplerPtr& sampler,
           const GoalCostFunctionPtr& goal_cost_fcn,
           const cnr_logger::TraceLoggerPtr& logger):
-    RRT(metrics, checker, sampler, goal_cost_fcn, logger) {}  //set init_ true
+    RRT(metrics, checker, sampler, goal_cost_fcn, logger) {}  //set initialized_ true
 
   RRTStar(const MetricsPtr& metrics,
           const CollisionCheckerPtr& checker,
           const SamplerPtr& sampler,
           const cnr_logger::TraceLoggerPtr& logger):
-    RRT(metrics, checker, sampler, logger) {}  //set init_ true
+    RRT(metrics, checker, sampler, logger) {}  //set initialized_ true
 
   virtual bool config(const YAML::Node& config) override;
   virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity()) override;

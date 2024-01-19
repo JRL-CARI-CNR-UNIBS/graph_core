@@ -60,12 +60,12 @@ protected:
   bool verbose_ = false;
 
   /**
-   * @brief init_ Flag to indicate whether the object is initialised, i.e. whether its members have been defined correctly.
+   * @brief initialized_ Flag to indicate whether the object is initialised, i.e. whether its members have been defined correctly.
    * It is false when the object is created with an empty constructor. In this case, call the 'init' function to initialise it.
    * The other constructors automatically initialise the object.
    * As long as the object is not initialised, it cannot perform its main functions.
    */
-  bool init_;
+  bool initialized_;
 
   /**
    * @brief Pointer to a TraceLogger instance for logging.
@@ -84,7 +84,7 @@ public:
    */
   CollisionCheckerBase()
   {
-    init_ = false;
+    initialized_ = false;
     verbose_ = false;
   }
 
@@ -97,19 +97,19 @@ public:
     min_distance_(min_distance),
     logger_(logger)
   {
-    init_ = true;
+    initialized_ = true;
     verbose_ = false;
   }
 
   /**
-   * @brief init Initialise the object, defining its main attributes. At the end of the function, the flag 'init_' is set to true and the object can execute its main functions.
+   * @brief init Initialise the object, defining its main attributes. At the end of the function, the flag 'initialized_' is set to true and the object can execute its main functions.
    * @param logger Pointer to a TraceLogger for logging.
    * @param min_distance Distance between configurations checked for collisions along a connection.
    * @return True if correctly initialised, False if already initialised.
    */
   virtual bool init(const cnr_logger::TraceLoggerPtr& logger, const double& min_distance = 0.01)
   {
-    if(init_)
+    if(initialized_)
     {
       CNR_WARN(logger_,"Collision checker already initialised!");
       return false;
@@ -117,7 +117,7 @@ public:
 
     logger_ = logger;
     min_distance_ = min_distance;
-    init_ = true;
+    initialized_ = true;
 
     return true;
   }
@@ -141,12 +141,12 @@ public:
   }
 
   /**
-   * @brief getInit tells if the object has been initialised.
-   * @return the 'init_' flag.
+   * @brief getInitialized tells if the object has been initialised.
+   * @return the 'initialized_' flag.
    */
-  bool getInit()
+  bool getInitialized()
   {
-    return init_;
+    return initialized_;
   }
 
   /**
@@ -165,8 +165,8 @@ public:
    * @return True if the connection is collision-free, false otherwise.
    */
   virtual bool checkConnection(const Eigen::VectorXd& configuration1,
-                         const Eigen::VectorXd& configuration2,
-                         Eigen::VectorXd& conf)
+                               const Eigen::VectorXd& configuration2,
+                               Eigen::VectorXd& conf)
   {
     if (!check(configuration1))
       return false;
@@ -195,7 +195,7 @@ public:
   }
 
   virtual bool checkConnection(const Eigen::VectorXd& configuration1,
-                         const Eigen::VectorXd& configuration2)
+                               const Eigen::VectorXd& configuration2)
   {
     if (!check(configuration1))
     {

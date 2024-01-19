@@ -72,7 +72,7 @@ bool AnytimeRRT::importFromSolver(const TreeSolverPtr& solver)
 
 bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const double& max_time)
 {
-  if(not init_)
+  if(not initialized_)
     return false;
 
   std::chrono::time_point<std::chrono::system_clock> tic = std::chrono::system_clock::now();

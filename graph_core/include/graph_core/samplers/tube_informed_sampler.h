@@ -100,7 +100,7 @@ public:
   /**
    * @brief Empty constructor for TubeInformedSampler. The function init() must be called afterwards.
    */
-  TubeInformedSampler():SamplerBase() //set init_ false
+  TubeInformedSampler():SamplerBase() //set initialized_ false
   {
     length_ = 0;
     radius_=0;
@@ -116,7 +116,7 @@ public:
     SamplerBase(sampler->getLB(),
                 sampler->getUB(),
                 sampler->getLogger(),
-                sampler->getCost()) //set init_ true
+                sampler->getCost()) //set initialized_ true
   {
     length_ = 0;
     radius_=0;
@@ -125,7 +125,7 @@ public:
   }
 
   /**
-   * @brief init Initialise the object, defining its main attributes. At the end of the function, the flag 'init_' is set to true and the object can execute its main functions.
+   * @brief init Initialise the object, defining its main attributes. At the end of the function, the flag 'initialized_' is set to true and the object can execute its main functions.
    * @param sampler Pointer to the underlying sampler.
    * @param metrics Pointer to the metrics for evaluating costs.
    * @return True if correctly initialised, False if already initialised.

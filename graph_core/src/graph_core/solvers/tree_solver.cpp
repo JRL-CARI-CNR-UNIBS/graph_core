@@ -138,7 +138,7 @@ bool TreeSolver::setProblem(const double &max_time)
 
 bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const double& max_time)
 {
-  if(not init_)
+  if(not initialized_)
     return false;
 
   std::chrono::time_point<std::chrono::system_clock> tic = std::chrono::system_clock::now();
@@ -257,7 +257,8 @@ bool TreeSolver::importFromSolver(const TreeSolverPtr& solver)
   goal_cost_fcn_ = solver->goal_cost_fcn_;
   solved_ = solver->solved_;
   completed_ = solver->completed_;
-  problem_set_ = solver->init_;
+  initialized_ = solver->initialized_;
+  problem_set_ = solver->problem_set_;
   configured_ = solver->configured_;
   start_tree_ = solver->start_tree_;
   dof_ = solver->dof_;
@@ -279,20 +280,20 @@ bool TreeSolver::importFromSolver(const TreeSolverPtr& solver)
 void TreeSolver::printMyself(std::ostream &os) const
 {
   os << "Configured: " << configured();
-  os << ". Problem set: " << init();
+  os << ". Problem set: " << problemStatus();
 
-  if(init())
+  if(problemStatus())
   {
-    os << ".\n Start node: " << *start_tree_->getRoot();
-    os << "\n Goal node: " << *goal_node_;
+    os << ".\nStart node: " << *start_tree_->getRoot();
+    os << ".\nGoal node: " << *goal_node_;
   }
 
-  os << "\nSolved: " << solved();
-  os << "\nCompleted: " << completed();
+  os << ".\nSolved: " << solved();
+  os << ". Completed: " << completed();
 
   if(solved())
   {
-    os << "Cost: " << cost_;
+    os << ". Cost: " << cost_;
     os << ". Path cost: " << path_cost_;
     os << ". Goal cost: " << goal_cost_;
     os << ".\n Path: " << *getSolution();

@@ -49,12 +49,12 @@ class MetricsBase: public std::enable_shared_from_this<MetricsBase>
 protected:
 
   /**
-   * @brief init_ Flag to indicate whether the object is initialised, i.e. whether its members have been defined correctly.
+   * @brief initialized_ Flag to indicate whether the object is initialised, i.e. whether its members have been defined correctly.
    * It is false when the object is created with an empty constructor. In this case, call the 'init' function to initialise it.
    * The other constructors automatically initialise the object.
    * As long as the object is not initialised, it cannot perform its main functions.
    */
-  bool init_;
+  bool initialized_;
 
   /**
    * @brief Pointer to a TraceLogger instance for logging.
@@ -73,7 +73,7 @@ public:
    */
   MetricsBase()
   {
-    init_ = false;
+    initialized_ = false;
   }
 
   /**
@@ -82,35 +82,35 @@ public:
    */
   MetricsBase(const cnr_logger::TraceLoggerPtr& logger):logger_(logger)
   {
-    init_ = true;
+    initialized_ = true;
   }
 
   /**
-   * @brief init Initialise the object, defining its main attributes. At the end of the function, the flag 'init_' is set to true and the object can execute its main functions.
+   * @brief init Initialise the object, defining its main attributes. At the end of the function, the flag 'initialized_' is set to true and the object can execute its main functions.
    * @param logger Pointer to a TraceLogger for logging.
    * @return True if correctly initialised, False if already initialised.
    */
   virtual bool init(const cnr_logger::TraceLoggerPtr& logger)
   {
-    if(init_)
+    if(initialized_)
     {
       CNR_WARN(logger_,"Metrics already initialised!");
       return false;
     }
 
     logger_ = logger;
-    init_ = true;
+    initialized_ = true;
 
     return true;
   }
 
   /**
-   * @brief getInit tells if the object has been initialised.
-   * @return the 'init_' flag.
+   * @brief getInitialized tells if the object has been initialised.
+   * @return the 'initialized_' flag.
    */
-  bool getInit()
+  bool getInitialized()
   {
-    return init_;
+    return initialized_;
   }
 
   /**

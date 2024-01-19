@@ -128,12 +128,12 @@ protected:
   bool use_kdtree_;
 
   /**
-   * @brief init_ Flag to indicate whether the object is initialised, i.e. whether its members have been defined correctly.
+   * @brief initialized_ Flag to indicate whether the object is initialised, i.e. whether its members have been defined correctly.
    * It is false when the object is created with an empty constructor. In this case, call the 'init' function to initialise it.
    * The other constructors automatically initialise the object.
    * As long as the object is not initialised, it cannot perform its main functions.
    */
-  bool init_;
+  bool initialized_;
 
   /**
    * @brief Pointer to the goal node of the path planning problem.
@@ -189,6 +189,10 @@ protected:
    */
   virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity());
 
+  /**
+   * @brief printMyself
+   * @param os
+   */
   virtual void printMyself(std::ostream& os) const;
 
 public:
@@ -203,7 +207,7 @@ public:
     cost_ = std::numeric_limits<double>::infinity();
     goal_cost_fcn_=std::make_shared<GoalCostFunction>();
 
-    init_ = false;
+    initialized_ = false;
   }
 
   /**
@@ -230,7 +234,7 @@ public:
     goal_cost_ = 0.0;
     cost_ = std::numeric_limits<double>::infinity();
 
-    init_ = true;
+    initialized_ = true;
   }
 
   TreeSolver(const MetricsPtr& metrics,
@@ -247,11 +251,11 @@ public:
     cost_ = std::numeric_limits<double>::infinity();
     goal_cost_fcn_=std::make_shared<GoalCostFunction>();
 
-    init_ = true;
+    initialized_ = true;
   }
 
   /**
-   * @brief init Initialise the object, defining its main attributes. At the end of the function, the flag 'init_' is set to true and the object can execute its main functions.
+   * @brief init Initialise the object, defining its main attributes. At the end of the function, the flag 'initialized_' is set to true and the object can execute its main functions.
    * @param metrics The metrics used to evaluate paths.
    * @param checker The collision checker for checking collisions.
    * @param sampler The sampler for generating random configurations.
@@ -265,18 +269,23 @@ public:
                     const GoalCostFunctionPtr& goal_cost_fcn,
                     const cnr_logger::TraceLoggerPtr& logger)
   {
-    if(init_)
+    if(initialized_)
     {
       CNR_WARN(logger_,"Collision checker already initialised!");
       return false;
     }
 
+    metrics_ = metrics;
+    checker_ = checker;
+    sampler_ = sampler;
+    goal_cost_fcn_ = goal_cost_fcn;
+    logger_ = logger;
+
     path_cost_ = std::numeric_limits<double>::infinity();
     goal_cost_ = 0.0;
     cost_ = std::numeric_limits<double>::infinity();
-    goal_cost_fcn_ = goal_cost_fcn;
 
-    init_ = true;
+    initialized_ = true;
 
     return true;
   }
@@ -286,18 +295,23 @@ public:
                     const SamplerPtr& sampler,
                     const cnr_logger::TraceLoggerPtr& logger)
   {
-    if(init_)
+    if(initialized_)
     {
       CNR_WARN(logger_,"Collision checker already initialised!");
       return false;
     }
+
+    metrics_ = metrics;
+    checker_ = checker;
+    sampler_ = sampler;
+    logger_ = logger;
 
     path_cost_ = std::numeric_limits<double>::infinity();
     goal_cost_ = 0.0;
     cost_ = std::numeric_limits<double>::infinity();
     goal_cost_fcn_=std::make_shared<GoalCostFunction>();
 
-    init_ = true;
+    initialized_ = true;
 
     return true;
   }
@@ -311,6 +325,12 @@ public:
    * @return true if configuration is successful, false otherwise.
    */
   virtual bool config(const YAML::Node& config);
+
+  /**
+   * @brief getInitialized tells if the object has been initialised.
+   * @return the 'initialized_' flag.
+   */
+  bool getInitialized(){return initialized_;}
 
   /**
    * @brief Update is the single step of the search for a solution.
@@ -483,13 +503,11 @@ public:
   }
 
   /**
-   * @brief Check if the solver is initialized, i.e., the setProblem function has been executed successfully.
+   * @brief Check if the problem has been set, i.e., the setProblem function has been executed successfully.
    *
-   * This function returns a constant reference indicating whether the solver is initialized.
-   *
-   * @return A constant reference to the initialization status.
+   * @return A constant reference to the problem status.
    */
-  const bool& init()const
+  const bool& problemStatus()const
   {
     return problem_set_;
   }

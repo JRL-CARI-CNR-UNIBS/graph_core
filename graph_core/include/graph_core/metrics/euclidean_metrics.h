@@ -52,14 +52,14 @@ public:
   /**
    * @brief Empty constructor for EuclideanMetrics. The function MetricsBase::init() must be called afterwards.
    */
-  EuclideanMetrics():MetricsBase() //set init_ false
+  EuclideanMetrics():MetricsBase() //set initialized_ false
   {}
 
   /**
    * @brief Constructs a EuclideanMetrics object.
    * @param logger A shared pointer to a TraceLogger for logging.
    */
-  EuclideanMetrics(const cnr_logger::TraceLoggerPtr& logger):MetricsBase(logger) //set init_ true
+  EuclideanMetrics(const cnr_logger::TraceLoggerPtr& logger):MetricsBase(logger) //set initialized_ true
   {}
 
   /**
