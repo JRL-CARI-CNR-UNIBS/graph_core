@@ -295,6 +295,13 @@ public:
   virtual void insert(const NodePtr& node) override;
 
   /**
+   * @brief Implementation of the clear function to clear the nearest neighbors data structure.
+   * Additionally, it sets size_ and delted_nodes_ to zero and root_ to nullptr;
+   * @return True if successful, false otherwise.
+   */
+  virtual bool clear();
+
+  /**
    * @brief Find the node with the minimum value in the specified dimension.
    *
    * This function searches the k-d tree to find the node with the minimum value

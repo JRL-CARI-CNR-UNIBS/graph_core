@@ -368,6 +368,16 @@ void KdTree::insert(const NodePtr& node)
   return;
 }
 
+bool KdTree::clear()
+{
+  size_=0;
+  deleted_nodes_=0;
+
+  root_ = nullptr;
+
+  return true;
+}
+
 NodePtr KdTree::findMin(const int& dim)
 {
   if (not root_)
@@ -444,10 +454,7 @@ bool KdTree::deleteNode(const NodePtr& node,
     root_->restoreNode(); //set deleted_ to false to have it into nodes vector below (we want the root regardless its "deleted_" flag)
     std::vector<NodePtr> nodes = getNodes(); //contains also the root
 
-    root_ = nullptr; //clear the KdTree
-
-    size_ = 0;
-    deleted_nodes_ = 0;
+    clear(); //clear the KdTree
 
     for(const NodePtr& n:nodes)
       insert(n);

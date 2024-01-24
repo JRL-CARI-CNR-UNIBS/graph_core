@@ -45,6 +45,16 @@ void Vector::insert(const NodePtr& node)
   return;
 }
 
+bool Vector::clear()
+{
+  size_=0;
+  deleted_nodes_=0;
+
+  nodes_.clear();
+
+  return true;
+}
+
 void Vector::nearestNeighbor(const Eigen::VectorXd& configuration,
                              NodePtr &best,
                              double &best_distance)

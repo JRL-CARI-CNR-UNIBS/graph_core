@@ -281,7 +281,7 @@ bool Tree::informedExtend(const Eigen::VectorXd &configuration, NodePtr &new_nod
   Eigen::VectorXd new_configuration;
   std::multimap<double,extension> best_nodes_map;
 
-    for(const std::pair<const double,NodePtr>& n: closest_nodes_map)
+  for(const std::pair<const double,NodePtr>& n: closest_nodes_map)
   {
     distance = selectNextConfiguration(configuration,new_configuration,n.second);
     cost2node = costToNode(n.second);
@@ -847,10 +847,11 @@ bool Tree::keepOnlyThisBranch(const std::vector<ConnectionPtr>& connections)
   }
 
   nodes_->disconnectNodes(branch_nodes);
-  NearestNeighborsPtr nodes;
+  nodes_->clear();
   for (const NodePtr& n : branch_nodes)
-    nodes->insert(n);
-  nodes_=nodes;
+    nodes_->insert(n);
+
+  assert(nodes_->size() == branch_nodes.size());
 
   return true;
 }

@@ -56,6 +56,13 @@ public:
   virtual void insert(const NodePtr& node) override;
 
   /**
+   * @brief Implementation of the clear function to clear the nearest neighbors data structure.
+   * Additionally, it sets size_ and delted_nodes_ to zero.
+   * @return True if successful, false otherwise.
+   */
+  virtual bool clear();
+
+  /**
    * @brief Implementation of the nearestNeighbor function for finding the nearest neighbor in the vector.
    *
    * @param configuration The configuration for which the nearest neighbor needs to be found.

@@ -60,6 +60,12 @@ public:
   virtual void insert(const NodePtr& node)=0;
 
   /**
+   * @brief  Pure virtual function to clear the nearest neighbors data structure. Additionally, it should set size_ and delted_nodes_ to zero.
+   * @return True if successful, false otherwise.
+   */
+  virtual bool clear()=0;
+
+  /**
    * @brief Pure virtual function to find the nearest neighbor to a given configuration.
    *
    * @param configuration The configuration for which the nearest neighbor needs to be found.
