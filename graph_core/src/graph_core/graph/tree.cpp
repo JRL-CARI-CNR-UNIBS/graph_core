@@ -281,7 +281,7 @@ bool Tree::informedExtend(const Eigen::VectorXd &configuration, NodePtr &new_nod
   Eigen::VectorXd new_configuration;
   std::multimap<double,extension> best_nodes_map;
 
-  for(const std::pair<double,NodePtr>& n: closest_nodes_map)
+    for(const std::pair<const double,NodePtr>& n: closest_nodes_map)
   {
     distance = selectNextConfiguration(configuration,new_configuration,n.second);
     cost2node = costToNode(n.second);
@@ -298,7 +298,7 @@ bool Tree::informedExtend(const Eigen::VectorXd &configuration, NodePtr &new_nod
 
   bool extend_ok = false;
   extension ext;
-  for(const std::pair<double,extension>& n: best_nodes_map)
+  for(const std::pair<const double,extension>& n: best_nodes_map)
   {
     ext = n.second;
     if(ext.distance < TOLERANCE)
@@ -452,7 +452,7 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const std::vector<NodePtr>
   if(rewire_parent)
   {
     NodePtr nearest_node = node->getParents()[0];
-    for(const std::pair<double,NodePtr>& p : near_nodes)
+    for(const std::pair<const double,NodePtr>& p : near_nodes)
     {
       const NodePtr& n = p.second;
 
@@ -489,7 +489,7 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const std::vector<NodePtr>
   NodePtr parent = node->getParents()[0];
   if(rewire_children)
   {
-    for (const std::pair<double,NodePtr>& p : near_nodes)
+    for (const std::pair<const double,NodePtr>& p : near_nodes)
     {
       const NodePtr& n = p.second;
 
@@ -591,7 +591,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
   if(rewire_parent)
   {
     NodePtr nearest_node = node->getParents()[0];
-    for (const std::pair<double,NodePtr>& p : near_nodes)
+    for (const std::pair<const double,NodePtr>& p : near_nodes)
     {
       const NodePtr& n = p.second;
 
@@ -636,7 +636,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
 
   if(rewire_children)
   {
-    for (const std::pair<double,NodePtr>& p : near_nodes)
+    for (const std::pair<const double,NodePtr>& p : near_nodes)
     {
       const NodePtr& n = p.second;
 
@@ -848,7 +848,7 @@ bool Tree::keepOnlyThisBranch(const std::vector<ConnectionPtr>& connections)
 
   nodes_->disconnectNodes(branch_nodes);
   NearestNeighborsPtr nodes;
-  for (NodePtr& n : branch_nodes)
+  for (const NodePtr& n : branch_nodes)
     nodes->insert(n);
   nodes_=nodes;
 
