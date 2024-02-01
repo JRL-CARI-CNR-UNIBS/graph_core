@@ -164,6 +164,20 @@ public:
                      const int &static_id,
                      const std::string& ns="pathplan",
                      const std::vector<double>& marker_color= {1,0,0,1.0});
+  
+  int displayEllipsoid(const NodePtr& start,
+                       const NodePtr& goal,
+                       const double& best_cost,
+                       const double& utopia,
+                       const std::string& ns="pathplan",
+                       const std::vector<double>& marker_color= {0,1,0,0.5}); 
+  int displayEllipsoid(const NodePtr& start,
+                       const NodePtr& goal,
+                       const double& best_cost,
+                       const double& utopia,
+                       const int &static_id,
+                       const std::string& ns="pathplan",
+                       const std::vector<double>& marker_color= {0,1,0,0.5});
 
   void nextButton(const std::string& string="Press Next");
 

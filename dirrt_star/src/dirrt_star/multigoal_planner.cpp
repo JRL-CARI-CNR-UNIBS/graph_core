@@ -96,7 +96,12 @@ MultigoalPlanner::MultigoalPlanner ( const std::string& name,
     ROS_DEBUG("display_tree is not set, default=false");
     display_tree_=false;
   }
-  if (display_tree_)
+  if (!m_nh.getParam("display_ellipsoids",display_ellipsoids_))
+  {
+    ROS_DEBUG("display_ellipsoids is not set, default=false");
+    display_ellipsoids_=false;
+  }
+  if (display_tree_ || display_ellipsoids_)
   {
     if (!m_nh.getParam("display_tree_period",display_tree_period_))
     {
@@ -234,7 +239,7 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
   }
 
 
-  if (display_flag_ || display_tree_)
+  if (display_flag_ || display_tree_ || display_ellipsoids_)
   {
     if (!display)
       display=std::make_shared<pathplan::Display>(planning_scene_,group_);
@@ -244,8 +249,8 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
 
   planning_scene::PlanningScenePtr ptr=planning_scene::PlanningScene::clone(planning_scene_);
 
-  //checker=std::make_shared<pathplan::ParallelMoveitCollisionChecker>(ptr,group_,collision_thread_,collision_distance_);
-  checker=std::make_shared<pathplan::MoveitCollisionChecker>(ptr,group_,collision_distance_);
+  checker=std::make_shared<pathplan::ParallelMoveitCollisionChecker>(ptr,group_,collision_thread_,collision_distance_);
+  //checker=std::make_shared<pathplan::MoveitCollisionChecker>(ptr,group_,collision_distance_);
 
 
 
@@ -453,17 +458,33 @@ bool MultigoalPlanner::solve ( planning_interface::MotionPlanDetailedResponse& r
     performace_msg.data.push_back(iteration);
     performace_msg.data.push_back(solver->getCost());
 
-    if (display_tree_)
+    if (display_tree_ || display_ellipsoids_)
     {
       if ((ros::WallTime::now()-display_time).toSec()>display_tree_period_)
       {
         display_time = ros::WallTime::now();
-        display->displayTree(solver->getStartTree());
-        std::vector<TreePtr> goal_trees = solver->getGoalTrees();
-        for (auto& goal_tree: goal_trees)
-          display->displayTree(goal_tree);
+        if (display_tree_)
+        {
+          display->displayTree(solver->getStartTree());
+          std::vector<TreePtr> goal_trees = solver->getGoalTrees();
+          for (auto& goal_tree: goal_trees)
+            display->displayTree(goal_tree);
+        }
+        if (display_ellipsoids_)
+        {
+          std::string ns = "ellipsoids";
+          display->clearMarkers(ns);
+          std::vector<TreePtr> goal_trees = solver->getGoalTrees();
+          for (auto& goal_tree: goal_trees)
+          {
+            //double utopia = (solver->getStartTree()->getRoot()->getConfiguration(),goal_tree->getRoot()->getConfiguration()).norm(); 
+            double utopia =metrics_->cost(solver->getStartTree()->getRoot(),goal_tree->getRoot());
+            display->displayEllipsoid(solver->getStartTree()->getRoot(),goal_tree->getRoot(), solver->getCost(), utopia, ns);
+          }
+        }
       }
     }
+
     iteration++;
     if (m_stop)
     {

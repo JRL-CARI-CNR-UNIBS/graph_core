@@ -559,6 +559,97 @@ void Display::displayNetNode(const NodePtr &n,
   }
 }
 
+int Display::displayEllipsoid(const NodePtr& start, 
+                              const NodePtr& goal, 
+                              const double& best_cost, 
+                              const double& utopia,
+                              const std::string& ns, 
+                              const std::vector<double>& marker_color)
+{
+  int static_id = marker_id_++;
+  return displayEllipsoid(start,goal,best_cost,utopia,static_id,ns,marker_color);
+}
+
+int Display::displayEllipsoid(const NodePtr& start, 
+                              const NodePtr& goal, 
+                              const double& best_cost, 
+                              const double& utopia,
+                              const int &static_id,
+                              const std::string& ns, 
+                              const std::vector<double>& marker_color)
+{  
+  visualization_msgs::Marker marker;
+  marker.type = visualization_msgs::Marker::SPHERE;
+
+  int dim = goal->getConfiguration().rows();
+  if (dim>3)
+  {
+    ROS_ERROR("cannot plot ellipsoid with N>3");
+    return -1;
+  }
+
+  marker.ns = ns;
+
+  // compute quaternion aligned with each start-goal
+  // orientations[i] = ??
+  // compute center of each start-goal
+  Eigen::VectorXd center = 0.5*(goal->getConfiguration() + start->getConfiguration());
+  Eigen::VectorXd axis(2);
+
+  // compute axis length
+  // axis[i][1] = best_cost
+  // axis[i][2] = sqrt(best_cost^2 - utopia[i]^2) //check equations for n=2 and n=3
+  axis(0) = best_cost;
+  axis(1) = std::sqrt(std::pow(best_cost,2) - std::pow(utopia,2));
+
+  marker.header.frame_id="world";
+  marker.header.stamp=ros::Time::now();
+  marker.action = visualization_msgs::Marker::ADD;
+  marker.id= static_id;
+
+  marker.scale.x = axis(0);
+  marker.scale.y = axis(1);
+  marker.scale.z = axis(1);    
+
+  marker.pose.position.x = center(0);
+  marker.pose.position.y = center(1);
+  marker.pose.position.z = (dim < 3) ? 0.0 : center(2);
+
+  Eigen::VectorXd v1 = goal->getConfiguration() - start->getConfiguration();
+  std::cout << "v = " << v1.transpose() << std::endl;
+
+  v1.normalize();
+  Eigen::VectorXd v2(3);
+  v2 << 1.0, 0.0, 0.0;
+  Eigen::Quaterniond q = Eigen::Quaterniond::FromTwoVectors(v2.head(dim),v1);
+
+  //q= Eigen::AngleAxis<double>(M_PI, v);
+  std::cout << "v = " << q.x() << ", " << q.y()<< ", " << q.z()<< ", " << q.w() << std::endl;
+  //Eigen::Vector3d 
+  //q.FromTwoVectors()
+
+  //marker.pose.orientation.x = 0.0; //orientations
+  //marker.pose.orientation.y = 0.0; //orientations
+  //marker.pose.orientation.z = 0.0; //orientations
+  //marker.pose.orientation.w = 1.0; //orientations
+
+  marker.pose.orientation.x = q.x();
+  marker.pose.orientation.y = q.y(); //orientations
+  marker.pose.orientation.z = q.z(); //orientations
+  marker.pose.orientation.w = q.w(); //orientations
+
+
+
+  marker.color.r = marker_color.at(0);
+  marker.color.g = marker_color.at(1);
+  marker.color.b = marker_color.at(2);
+  marker.color.a = marker_color.at(3);
+
+  marker_pub_.publish(marker);
+  ros::Duration(DISPLAY_TIME).sleep();
+  return marker_id_;
+}
+
 void Display::nextButton(const std::string& string)
 {
   moveit_visual_tools::MoveItVisualToolsPtr visual_tools = std::make_shared<moveit_visual_tools::MoveItVisualTools>("/rviz_visual_tools");

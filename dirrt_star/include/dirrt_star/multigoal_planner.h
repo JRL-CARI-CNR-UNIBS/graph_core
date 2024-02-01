@@ -95,6 +95,7 @@ protected:
   std::string group_;
   bool display_flag_=false;
   bool display_tree_=false;
+  bool display_ellipsoids_=false;
   double display_tree_period_=1.0;
 
   pathplan::MetricsPtr metrics_;
