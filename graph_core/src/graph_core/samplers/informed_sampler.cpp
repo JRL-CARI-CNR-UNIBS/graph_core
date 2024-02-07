@@ -49,22 +49,22 @@ void InformedSampler::config()
 
   ndof_ = lower_bound_.rows();
 
-  if(focus_1_.rows() != ndof_)
+  if(focus_1_not_scaled_.rows() != ndof_)
   {
     CNR_FATAL(logger_,"focus 1 should have the same size of ndof");
     throw std::invalid_argument("focus 1 should have the same size of ndof");
   }
-  if(focus_2_.rows() != ndof_)
+  if(focus_2_not_scaled_.rows() != ndof_)
   {
     CNR_FATAL(logger_,"focus 2 should have the same size of ndof");
     throw std::invalid_argument("focus 2 should have the same size of ndof");
   }
-  if(upper_bound_.rows() != ndof_)
+  if(upper_bound_not_scaled_.rows() != ndof_)
   {
     CNR_FATAL(logger_,"upper bound should have the same size of ndof");
     throw std::invalid_argument("upper bound should have the same size of ndof");
   }
-  if(lower_bound_.rows() != ndof_)
+  if(lower_bound_not_scaled_.rows() != ndof_)
   {
     CNR_FATAL(logger_,"lower bound should have the same size of ndof");
     throw std::invalid_argument("lower bound should have the same size of ndof");
@@ -79,11 +79,11 @@ void InformedSampler::config()
 
   inv_scale_=scale_.cwiseInverse();
 
-  focus_1_ = focus_1_.cwiseProduct(scale_);
-  focus_2_  = focus_2_ .cwiseProduct(scale_);
+  focus_1_ = focus_1_not_scaled_.cwiseProduct(scale_);
+  focus_2_ = focus_2_not_scaled_.cwiseProduct(scale_);
 
-  lower_bound_ = lower_bound_.cwiseProduct(scale_);
-  upper_bound_ = upper_bound_.cwiseProduct(scale_);
+  lower_bound_ = lower_bound_not_scaled_.cwiseProduct(scale_);
+  upper_bound_ = upper_bound_not_scaled_.cwiseProduct(scale_);
 
   ellipse_center_ = 0.5 * (focus_1_ + focus_2_);
   focii_distance_ = (focus_1_ - focus_2_).norm();

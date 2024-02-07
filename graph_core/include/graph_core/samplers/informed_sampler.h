@@ -63,6 +63,26 @@ protected:
   Eigen::VectorXd focus_2_;
 
   /**
+   * @brief focus_1_not_scaled_ Focus 1 of the ellipse not scaled.
+   */
+  Eigen::VectorXd focus_1_not_scaled_;
+
+  /**
+   * @brief focus_2_not_scaled_ Focus 2 of the ellipse not scaled.
+   */
+  Eigen::VectorXd focus_2_not_scaled_;
+
+  /**
+   * @brief lower_bound_not_scaled_ Lower bounds not scaled for configuration sampling.
+   */
+  Eigen::VectorXd lower_bound_not_scaled_;
+
+  /**
+   * @brief upper_bound_not_scaled_ Upper bounds not scaled for configuration sampling.
+   */
+  Eigen::VectorXd upper_bound_not_scaled_;
+
+  /**
    * @brief scale_ A vector containing a scaling for each element of a configuration.
    * Each configuration in the scaled space is computed as the component-wise product between the configuration
    * and scale_.
@@ -168,7 +188,11 @@ public:
                 upper_bound,
                 logger,
                 cost), //set initialized_ true
-    focus_1_(focus_1),focus_2_(focus_2),scale_(scale)
+    //at this point lower_bound, upper_bound, focus_1, focus_2 are not scaled yet, they will be scaled and
+    //assigned to lower_bound_, upper_bound_, focus_1_, focus_2_ in config()
+    focus_1_not_scaled_(focus_1),focus_2_not_scaled_(focus_2),
+    lower_bound_not_scaled_(lower_bound),upper_bound_not_scaled_(upper_bound),
+    scale_(scale)
   {
     config();
   }
@@ -182,7 +206,10 @@ public:
                 upper_bound,
                 logger,
                 cost), //set initialized_ true
-    focus_1_(focus_1),focus_2_(focus_2)
+    //at this point lower_bound, upper_bound, focus_1, focus_2 are not scaled yet, they will be scaled and
+    //assigned to lower_bound_, upper_bound_, focus_1_, focus_2_ in config()
+    focus_1_not_scaled_(focus_1),focus_2_not_scaled_(focus_2),
+    lower_bound_not_scaled_(lower_bound),upper_bound_not_scaled_(upper_bound)
   {
     scale_.setOnes(lower_bound_.rows(),1);
     config();
@@ -292,25 +319,25 @@ public:
    * @brief Get the lower bounds of the informed sampler in the unscaled space.
    * @return Lower bounds of the informed sampler in the unscaled space.
    */
-  const Eigen::VectorXd getLB() override {return lower_bound_.cwiseProduct(inv_scale_);}
+  const Eigen::VectorXd& getLB() override {return lower_bound_not_scaled_;}
 
   /**
    * @brief Get the upper bounds of the informed sampler in the unscaled space.
    * @return Upper bounds of the informed sampler in the unscaled space.
    */
-  const Eigen::VectorXd getUB() override {return upper_bound_.cwiseProduct(inv_scale_);}
+  const Eigen::VectorXd& getUB() override {return upper_bound_not_scaled_;}
 
   /**
    * @brief Get the focus 1 of the informed sampler in the unscaled space.
    * @return Focus 1 of the informed sampler in the unscaled space.
    */
-  const Eigen::VectorXd getFocus1(){return focus_1_.cwiseProduct(inv_scale_);}
+  const Eigen::VectorXd& getFocus1(){return focus_1_not_scaled_;}
 
   /**
    * @brief Get the focus 2 of the informed sampler in the unscaled space.
    * @return Focus 2 of the informed sampler in the unscaled space.
    */
-  const Eigen::VectorXd getFocus2(){return focus_2_.cwiseProduct(inv_scale_);}
+  const Eigen::VectorXd& getFocus2(){return focus_2_not_scaled_;}
 
   /**
    * @brief Creates a clone of the InformedSampler object.
