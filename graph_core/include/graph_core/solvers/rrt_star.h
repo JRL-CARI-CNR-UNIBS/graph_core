@@ -42,6 +42,8 @@ class RRTStar: public RRT
 protected:
   double r_rewire_;
 
+  void updateRewireRadius();
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

@@ -87,6 +87,13 @@ bool RRTStar::importFromSolver(const TreeSolverPtr& solver)
   }
 }
 
+void RRTStar::updateRewireRadius()
+{
+  //TO DO: update rewire radius as stated by RRT* paper
+  //r_rewire_ =
+  return;
+}
+
 bool RRTStar::update(PathPtr& solution)
 {
   CNR_DEBUG(logger_,"RRT*::update");
@@ -112,6 +119,8 @@ bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
     completed_=true;
     return true;
   }
+
+  updateRewireRadius();
 
   if(not solved_)
   {

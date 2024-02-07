@@ -292,13 +292,13 @@ public:
    * @brief Get the lower bounds of the informed sampler in the unscaled space.
    * @return Lower bounds of the informed sampler in the unscaled space.
    */
-  const Eigen::VectorXd getLB(){return lower_bound_.cwiseProduct(inv_scale_);}
+  const Eigen::VectorXd getLB() override {return lower_bound_.cwiseProduct(inv_scale_);}
 
   /**
    * @brief Get the upper bounds of the informed sampler in the unscaled space.
    * @return Upper bounds of the informed sampler in the unscaled space.
    */
-  const Eigen::VectorXd getUB(){return upper_bound_.cwiseProduct(inv_scale_);}
+  const Eigen::VectorXd getUB() override {return upper_bound_.cwiseProduct(inv_scale_);}
 
   /**
    * @brief Get the focus 1 of the informed sampler in the unscaled space.
@@ -311,12 +311,6 @@ public:
    * @return Focus 2 of the informed sampler in the unscaled space.
    */
   const Eigen::VectorXd getFocus2(){return focus_2_.cwiseProduct(inv_scale_);}
-
-  /**
-   * @brief Get the dimension of the informed sampler.
-   * @return Dimension of the informed sampler.
-   */
-  const unsigned int& getDimension()const {return ndof_;}
 
   /**
    * @brief Creates a clone of the InformedSampler object.

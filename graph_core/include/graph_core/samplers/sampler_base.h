@@ -48,10 +48,6 @@ class SamplerBase: public std::enable_shared_from_this<SamplerBase>
 {
 protected:
 
-  //ADD TREE
-  //add path
-  //metrics
-
   /**
    * @brief lower_bound_ Lower bounds for configuration sampling.
    */
@@ -104,6 +100,8 @@ protected:
    * As long as the object is not initialised, it cannot perform its main functions.
    */
   bool initialized_;
+
+  //add tree, path, metrics?
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -235,13 +233,13 @@ public:
    * @brief Get the lower bounds of the sampler.
    * @return Lower bounds of the sampler.
    */
-  const Eigen::VectorXd& getLB(){return lower_bound_;}
+  virtual const Eigen::VectorXd& getLB(){return lower_bound_;}
 
   /**
    * @brief Get the upper bounds of the sampler.
    * @return Upper bounds of the sampler.
    */
-  const Eigen::VectorXd& getUB(){return upper_bound_;}
+  virtual const Eigen::VectorXd& getUB(){return upper_bound_;}
 
   /**
    * @brief Get the dimension of the sampler.
