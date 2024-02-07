@@ -48,6 +48,10 @@ class SamplerBase: public std::enable_shared_from_this<SamplerBase>
 {
 protected:
 
+  //ADD TREE
+  //add path
+  //metrics
+
   /**
    * @brief lower_bound_ Lower bounds for configuration sampling.
    */

@@ -195,10 +195,10 @@ public:
    * @brief Map of properties associated with the node.
    *
    * This member variable represents a map of properties associated with the node.
-   * The map uses strings as keys and vectors of std::any as values to store heterogeneous data types.
+   * The map uses strings as keys and std::any as values to store heterogeneous data types.
    * Store in properties_ any object you need to customize the node.
    */
-  std::unordered_map<std::string, std::vector<std::any>> properties_;
+  std::unordered_map<std::string, std::any> properties_;
 
   /**
    * @brief Constructor for the Node class.
