@@ -95,11 +95,11 @@ public:
     ROS_DEBUG_STREAM("center_bound_" << center_bound_.transpose());
     ROS_DEBUG_STREAM("bound_width_" << bound_width_.transpose());
 
-
+    setCost(cost);
     if (cost_ < std::numeric_limits<double>::infinity())
     {
       inf_cost_ = false;
-      setCost(cost);
+      
     }
     else
       inf_cost_ = true;

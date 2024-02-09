@@ -499,11 +499,12 @@ bool MultigoalSolver::update(PathPtr& solution)
 
       if (not knearest_)
       {
-        //        double r_rrt=1.1*  std::pow(2.0*(1.0+1.0/dimension_),1.0/dimension_)*std::pow(sampler_->getSpecificVolume(),1.0/dimension_);
-        //        double cardDbl=start_tree_->getNumberOfNodes()+1.0;
-        //        r_rewire_=r_rrt * std::pow(log(cardDbl) / cardDbl, 1.0 /dimension_);
+        double dimension_ = (double) dof_;
+        double r_rrt=1.1*  std::pow(2.0*(1.0+1.0/dimension_),1.0/dimension_)*std::pow(samplers_.at(igoal)->getSpecificVolume(),1.0/dimension_);
+        double cardDbl=start_tree_->getNumberOfNodes()+1.0;
+        r_rewire_=r_rrt * std::pow(log(cardDbl) / cardDbl, 1.0 /dimension_);
+        //ROS_WARN_THROTTLE(0.1,"dof = %f, r_rrt =%f, cardDbl=%f, spec vol =%f, rewire radius %f", dimension_,r_rrt, cardDbl, samplers_.at(igoal)->getSpecificVolume(), r_rewire_);
         improved=start_tree_->rewire(configuration, r_rewire_,new_start_node);
-
       }
       else
       {
