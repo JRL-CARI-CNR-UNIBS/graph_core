@@ -99,11 +99,9 @@ void InformedSampler::config()
   CNR_DEBUG(logger_,"center_bound_: " << center_bound_.transpose());
   CNR_DEBUG(logger_,"bound_width_: " << bound_width_.transpose());
 
+  setCost(cost_);
   if (cost_ < std::numeric_limits<double>::infinity())
-  {
     inf_cost_ = false;
-    setCost(cost_);
-  }
   else
     inf_cost_ = true;
 }
@@ -221,7 +219,7 @@ void InformedSampler::setCost(const double &cost)
 
   if (inf_cost_)
   {
-    specific_volume_=std::tgamma(ndof_*0.5+1)/std::pow(M_PI,ndof_*0.5);  // inverse of the volume of unit ball
+    specific_volume_=std::tgamma( ((double) ndof_)*0.5+1.0)/std::pow(M_PI,(double)ndof_*0.5);  // inverse of the volume of unit ball
 
     for (unsigned int idx=0;idx<ndof_;idx++)
     {
@@ -231,8 +229,9 @@ void InformedSampler::setCost(const double &cost)
   else
     specific_volume_=max_radius_*std::pow(min_radius_,ndof_-1);
 
-  if (specific_volume_>0.0)
-    specific_volume_=std::pow(specific_volume_,1./ndof_);
+  // probably not necessary
+  //if (specific_volume_>0.0)
+  //  specific_volume_=std::pow(specific_volume_,1.0/(double) ndof_);
 }
 
 double InformedSampler::getSpecificVolume()

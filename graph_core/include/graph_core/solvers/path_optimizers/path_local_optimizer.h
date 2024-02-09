@@ -122,10 +122,9 @@ public:
                      const cnr_logger::TraceLoggerPtr& logger);
 
   /**
-   * @brief Configure the optimizer with parameters from a YAML node.
-   * @param config YAML node containing configuration parameters.
+   * @brief Configure the optimizer reading parameters with cnr_param library.
    */
-  virtual void config(const YAML::Node& config);
+  virtual void config();
 
   /**
    * @brief Set the input path for optimization. It calls base class setPath and resets 'change_warp_'.

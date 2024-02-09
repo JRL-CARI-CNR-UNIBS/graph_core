@@ -52,12 +52,7 @@ class PathOptimizerBase: public std::enable_shared_from_this<PathOptimizerBase>
 
 protected:
 
-  /**
-   * @brief config_ Configuration parameters for the optimizer.
-   */
-  YAML::Node config_;
-
-  /**
+ /**
    * @brief path_ The input path to be optimized.
    */
   PathPtr path_;
@@ -134,10 +129,9 @@ public:
   virtual PathPtr getPath();
 
   /**
-   * @brief Configure the optimizer with parameters from a YAML node.
-   * @param config YAML node containing configuration parameters.
+   * @brief Configure the optimizer reading parameters with cnr_param library.
    */
-  virtual void config(const YAML::Node& config);
+  virtual void config();
 
   /**
    * @brief Solve the optimization problem. Use 'getPath' to get the processed path.

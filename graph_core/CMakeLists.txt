@@ -7,6 +7,7 @@ set(CMAKE_BUILD_TYPE Debug)
 
 find_package(Eigen3 REQUIRED)
 find_package(cnr_logger REQUIRED)
+find_package(cnr_param REQUIRED)
 find_package(Boost REQUIRED COMPONENTS date_time filesystem)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
@@ -24,6 +25,7 @@ include_directories(
   include
   ${EIGEN3_INCLUDE_DIRS}
   ${cnr_logger_INCLUDE_DIRS}
+  ${cnr_param_INCLUDE_DIRS}
   ${YAML_CPP_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
  )
@@ -56,18 +58,21 @@ add_library(${PROJECT_NAME} SHARED
 target_link_libraries(${PROJECT_NAME} PUBLIC
   ${YAML_CPP_LIBRARIES}
   ${cnr_logger_LIBRARIES}
+  ${cnr_param_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
 add_executable(node_connection_test tests/node_connection_test.cpp)
 target_link_libraries(node_connection_test PUBLIC
   ${cnr_logger_LIBRARIES}
+  ${cnr_param_LIBRARIES}
   ${PROJECT_NAME}
 )
 
 add_executable(kdtree_test tests/kdtree_test.cpp)
 target_link_libraries(kdtree_test PUBLIC
   ${cnr_logger_LIBRARIES}
+  ${cnr_param_LIBRARIES}
   ${PROJECT_NAME}
 )
 

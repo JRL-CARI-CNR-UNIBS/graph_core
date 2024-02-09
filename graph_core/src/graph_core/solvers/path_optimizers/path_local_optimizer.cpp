@@ -38,38 +38,27 @@ PathLocalOptimizer::PathLocalOptimizer(const CollisionCheckerPtr &checker,
 {
 }
 
-void PathLocalOptimizer::config(const YAML::Node& config)
+void PathLocalOptimizer::config()
 {
-  PathOptimizerBase::config(config);
+  PathOptimizerBase::config();
 
-  if (!config_["simplify_max_conn_length"])
+  std::string what;
+  if(!cnr::param::get("simplify_max_conn_length",simplify_max_conn_length_,what))
   {
-    CNR_WARN(logger_,"simplify_max_conn_length is not set, using 0.1");
+    CNR_WARN(logger_,what<<"\nDefault value for simplify_max_conn_length: 0.1");
     simplify_max_conn_length_ = 0.1;
   }
-  else
-  {
-    simplify_max_conn_length_ = config_["simplify_max_conn_length"].as<double>();
-  }
 
-  if (!config_["warp_min_conn_length"])
+  if(!cnr::param::get("warp_min_conn_length",warp_min_conn_length_,what))
   {
-    CNR_WARN(logger_,"warp_min_conn_length is not set, using 0.01");
+    CNR_WARN(logger_,what<<"\nDefault value for warp_min_conn_length: 0.01");
     warp_min_conn_length_ = 0.01;
   }
-  else
-  {
-    warp_min_conn_length_ = config_["warp_min_conn_length"].as<double>();
-  }
 
-  if (!config_["warp_min_step_size"])
+  if(!cnr::param::get("warp_min_step_size",warp_min_step_size_,what))
   {
-    CNR_WARN(logger_,"warp_min_step_size is not set, using 0.01");
+    CNR_WARN(logger_,what<<"\nDefault value for warp_min_step_size: 0.01");
     warp_min_step_size_ = 0.01;
-  }
-  else
-  {
-    warp_min_step_size_ = config_["warp_min_step_size"].as<double>();
   }
 }
 

@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Core>
 #include <memory>
 #include <vector>
+#include <cnr_param/cnr_param.h>
 #include <cnr_logger/cnr_logger.h>
 #include <chrono>
 #include <any>
