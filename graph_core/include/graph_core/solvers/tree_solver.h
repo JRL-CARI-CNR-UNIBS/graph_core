@@ -736,6 +736,18 @@ public:
     return cost_;
   }
 
+  /**
+   * @brief Computes the rewire radius.
+   *
+   * This function calculates the rewire radius based on the dimensionality
+   * of the problem space and the specific volume of the sampler.
+   *
+   * @param sampler A shared pointer to a sampler object.
+   * @return The computed rewire radius.
+   */
+  double computeRewireRadius();
+  double computeRewireRadius(const SamplerPtr &sampler);
+
   friend std::ostream& operator<<(std::ostream& os, const TreeSolver& solver);
 
 };

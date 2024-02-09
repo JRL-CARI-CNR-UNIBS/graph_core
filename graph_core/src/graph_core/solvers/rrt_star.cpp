@@ -196,7 +196,9 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
     completed_=true;
     return true;
   }
-  
+
+  r_rewire_ = computeRewireRadius();
+
   if(not solved_)
   {
     CNR_DEBUG(logger_,"RRT* -> solving");

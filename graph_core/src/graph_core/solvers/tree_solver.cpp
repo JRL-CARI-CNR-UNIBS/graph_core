@@ -241,6 +241,20 @@ bool TreeSolver::setSolution(const PathPtr &solution)
   }
 }
 
+double TreeSolver::computeRewireRadius()
+{
+  return computeRewireRadius(sampler_);
+}
+
+double TreeSolver::computeRewireRadius(const SamplerPtr& sampler)
+{
+  double dimension = (double) dof_;
+  double r_rrt=1.1* std::pow(2.0*(1.0+1.0/dimension),1.0/dimension)*std::pow(sampler->getSpecificVolume(),1.0/dimension);
+  double cardDbl=start_tree_->getNumberOfNodes()+1.0;
+  return (r_rrt * std::pow(log(cardDbl) / cardDbl, 1.0 /dimension));
+}
+
+
 bool TreeSolver::importFromSolver(const TreeSolverPtr& solver)
 {
   CNR_DEBUG(logger_,"Import from Tree solver");

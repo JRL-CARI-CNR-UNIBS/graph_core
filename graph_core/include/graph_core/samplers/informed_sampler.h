@@ -140,12 +140,6 @@ protected:
   bool inf_cost_;
 
   /**
-   * @brief specific_volume_ The sepecific volume of the ellipsoid,
-   *  measured as ndof-th root of volume of the hyperellipsoid divided by the volume of unit sphere.
-   */
-  double specific_volume_;
-
-  /**
    * @brief Compute the rotation matrix for the ellipse.
    * @param x1 Configuration 1.
    * @param x2 Configuration 2.
@@ -308,12 +302,6 @@ public:
    * @return Focii distance.
    */
   const double& getFociiDistance(){return focii_distance_;}
-
-  /**
-   * @brief Get the specific volume of the informed bounds.
-   * @return Specific volume.
-   */
-  double getSpecificVolume();
 
   /**
    * @brief Get the lower bounds of the informed sampler in the unscaled space.

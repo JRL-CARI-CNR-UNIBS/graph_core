@@ -101,6 +101,12 @@ protected:
    */
   bool initialized_;
 
+  /**
+   * @brief specific_volume_ The sepecific volume of the sampling space,
+   *  measured as ndof-th root of volume of the space divided by the volume of unit sphere.
+   */
+  double specific_volume_;
+
   //add tree, path, metrics?
 
 public:
@@ -114,6 +120,11 @@ public:
   {
     srand((unsigned int)time(NULL)); //randomize seed
     ud_ = std::uniform_real_distribution<double>(0, 1);
+
+    specific_volume_=std::tgamma( ((double) ndof_)*0.5+1.0)/std::pow(M_PI,(double)ndof_*0.5);  // inverse of the volume of unit ball
+    for (unsigned int idx=0;idx<ndof_;idx++)
+      specific_volume_*=(upper_bound_(idx)-lower_bound_(idx));
+
     initialized_ = false;
   }
 
@@ -137,6 +148,11 @@ public:
   {
     srand((unsigned int)time(NULL)); //randomize seed
     ud_ = std::uniform_real_distribution<double>(0, 1);
+
+    specific_volume_=std::tgamma( ((double) ndof_)*0.5+1.0)/std::pow(M_PI,(double)ndof_*0.5);  // inverse of the volume of unit ball
+    for (unsigned int idx=0;idx<ndof_;idx++)
+      specific_volume_*=(upper_bound_(idx)-lower_bound_(idx));
+
     initialized_ = true;
   }
 
@@ -182,6 +198,12 @@ public:
    * @return Cost associated with the sampler.
    */
   const double& getCost(){return cost_;}
+
+  /**
+   * @brief Get the specific volume of the sampling space.
+   * @return Specific volume.
+   */
+  double getSpecificVolume(){return specific_volume_;}
 
   /**
    * @brief Set the cost associated with the sampler.

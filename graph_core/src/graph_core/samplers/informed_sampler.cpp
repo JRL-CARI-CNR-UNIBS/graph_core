@@ -173,7 +173,6 @@ Eigen::VectorXd InformedSampler::sample()
       if(in_of_bounds)
         return q.cwiseProduct(inv_scale_); //q = q_scaled/scale
     }
-    //    ROS_DEBUG_THROTTLE(0.1, "unable to find a feasible point in the ellipse");
 
     return center_bound_ + Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(bound_width_);
   }
@@ -220,11 +219,8 @@ void InformedSampler::setCost(const double &cost)
   if (inf_cost_)
   {
     specific_volume_=std::tgamma( ((double) ndof_)*0.5+1.0)/std::pow(M_PI,(double)ndof_*0.5);  // inverse of the volume of unit ball
-
     for (unsigned int idx=0;idx<ndof_;idx++)
-    {
       specific_volume_*=(upper_bound_(idx)-lower_bound_(idx));
-    }
   }
   else
     specific_volume_=max_radius_*std::pow(min_radius_,ndof_-1);
@@ -232,11 +228,6 @@ void InformedSampler::setCost(const double &cost)
   // probably not necessary
   //if (specific_volume_>0.0)
   //  specific_volume_=std::pow(specific_volume_,1.0/(double) ndof_);
-}
-
-double InformedSampler::getSpecificVolume()
-{
-  return specific_volume_;
 }
 
 SamplerPtr InformedSampler::clone()
