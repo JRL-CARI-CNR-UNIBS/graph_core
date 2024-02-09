@@ -36,10 +36,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/multi_goal_selection/policies/policy_mab_egreedy.h>
 #include <graph_core/multi_goal_selection/policies/policy_mab_ucb.h>
 #include <graph_core/multi_goal_selection/policies/policy_mab_ts.h>
+#include <graph_core/multi_goal_selection/policies/policy_mab_bestsofar.h>
 
 #include <graph_core/multi_goal_selection/rewards/reward_relative_improvement.h>
 #include <graph_core/multi_goal_selection/rewards/reward_bernoulli.h>
 #include <graph_core/multi_goal_selection/rewards/reward_best_cost.h>
+#include <graph_core/multi_goal_selection/rewards/reward_best_so_far.h>
+
 
 
 namespace multi_goal_selection
@@ -90,6 +93,21 @@ GoalSelectionManager::GoalSelectionManager(const std::string& name, const unsign
     else if (!policy_name_.compare("Thomson"))
     {
       policy_ = std::make_shared<multi_goal_selection::PolicyMABTS>(nh_.getNamespace(),goal_number_);
+      ROS_INFO_STREAM("Policy name: " << policy_name_);
+    }
+    else if (!policy_name_.compare("BestSoFar"))
+    {
+      policy_ = std::make_shared<multi_goal_selection::PolicyMABBestSoFar>(nh_.getNamespace(),goal_number_);
+      if (reward_fcn_name_.compare("BestSoFar"))
+      {
+        reward_fcn_name_ = "BestSoFar";
+        ROS_WARN("Reward fcn automatically set to BestSoFar because policy required by BestSoFar policy.");
+      }
+      if (!do_warm_start_)
+      {
+        do_warm_start_ = true;
+        ROS_WARN("Warm start automatically set because required by BestSoFar policy.");
+      }
       ROS_INFO_STREAM("Policy name: " << policy_name_);
     }
     else if (!policy_name_.compare("PolicyUniformOnGoals"))
@@ -150,6 +168,11 @@ GoalSelectionManager::GoalSelectionManager(const std::string& name, const unsign
     reward_fcn_ = std::make_shared<multi_goal_selection::RewardBestCost>();
     ROS_INFO("Reward name: BestCost");
   }
+  else if (!reward_fcn_name_.compare("BestSoFar"))
+  {
+    reward_fcn_ = std::make_shared<multi_goal_selection::RewardBestSoFar>();
+    ROS_INFO("Reward name: BestSoFar");
+  }
   else
   {
     ROS_FATAL_STREAM("unexpected reward_fcn_name_ : " << reward_fcn_name_);
@@ -161,13 +184,12 @@ std::vector<double> GoalSelectionManager::calculateProbabilities(const std::vect
                                                                const std::vector<double>& utopias,
                                                                const double& best_cost)
 {
-  double reward = reward_fcn_->getReward(costs,utopias,best_cost);
 
   for (unsigned int i_goal=0; i_goal<goal_number_;i_goal++)
   {
     if (were_goals_selected.at(i_goal))
     {
-      policy_->updateState(i_goal,reward);
+      policy_->updateState(i_goal,reward_fcn_->getReward(costs,utopias,best_cost,i_goal));
     }
   }
 
@@ -179,9 +201,14 @@ void GoalSelectionManager::warmStart(const std::vector<double>& costs, const std
 {
   for (unsigned int i_goal=0; i_goal<goal_number_;i_goal++)
   {
-    double reward = reward_fcn_->getReward(costs,utopias,utopias.at(i_goal));
+    double reward = reward_fcn_->getReward(utopias,utopias,utopias.at(i_goal),i_goal);
     policy_->updateState(i_goal,reward);
   }
+}
+
+std::vector<int> GoalSelectionManager::getPullStatistics()
+{
+  return policy_->getPullStatistics();
 }
 
 

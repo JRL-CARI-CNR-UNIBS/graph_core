@@ -112,7 +112,7 @@ public:
   }
 
 
-  std::vector<int> getPullCounters(){return pull_counter_;}
+  std::vector<int> getPullStatistics(){return pull_counter_;}
 
 protected:
   std::vector<int> pull_counter_;

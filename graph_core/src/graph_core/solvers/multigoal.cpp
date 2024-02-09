@@ -342,6 +342,22 @@ bool MultigoalSolver::update(PathPtr& solution)
 
     were_goals_sampled_.at(igoal) = true;
 
+    int cont=0;
+    for (int i_cont=0;i_cont<were_goals_sampled_.size();i_cont++)
+    {
+      if (were_goals_sampled_[i_cont])
+        cont++;
+    }
+    if (cont>1)
+    {
+      ROS_ERROR("cont greater than 1");
+      for (int i_cont=0;i_cont<were_goals_sampled_.size();i_cont++)
+      {
+        std::cout << were_goals_sampled_[i_cont] << " ";
+      }
+      std::cout << std::endl;
+    }
+
     NodePtr new_start_node, new_goal_node;
     bool add_to_start, add_to_goal;
     Eigen::VectorXd configuration;
@@ -621,6 +637,12 @@ void MultigoalSolver::printMyself(std::ostream &os) const
   os << " goal cost: " << goal_cost_;
   os << ". Nodes of start tree: " << start_tree_->getNumberOfNodes() << "\nGoals:\n";
 
+  unsigned int n_nodes=start_tree_->getNumberOfNodes();
+  for (unsigned int igoal=0;igoal<goal_nodes_.size();igoal++)
+  {
+    n_nodes+=goal_trees_[igoal]->getNumberOfNodes();
+  }
+
   for (unsigned int igoal=0;igoal<goal_nodes_.size();igoal++)
   {
     os << igoal <<". Status: ";
@@ -645,9 +667,18 @@ void MultigoalSolver::printMyself(std::ostream &os) const
     os << ". utopia = " << utopias_.at(igoal);
     os << ". ellisse = " << path_cost_+goal_cost_-goal_costs_.at(igoal);
     os << ". volume = " << std::scientific <<tube_samplers_.at(igoal)->getSpecificVolume()<< std::defaultfloat;
+    os << ". % samples = " << ( (double) goal_manager_->getPullStatistics()[igoal]/ (double) n_nodes );
 
     os<<std::endl;
   }
+
+  int n_goal_samples = 0;
+  for (const auto& n: goal_manager_->getPullStatistics())
+  {
+    n_goal_samples+=n;
+  }
+  
+  std::cout << "number of nodes = " << start_tree_->getNumberOfNodes() << " , number of goal samples = " << n_goal_samples << std::endl;
 }
 
 void MultigoalSolver::cleanTree()

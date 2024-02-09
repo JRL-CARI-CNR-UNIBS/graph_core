@@ -48,6 +48,7 @@ public:
   virtual std::vector<double> getProbabilities() = 0;
   virtual void updateState(const int& i_goal, const double& reward) = 0;
   virtual std::string toString() = 0;
+  virtual std::vector<int> getPullStatistics(){};
 
 protected:
   ros::NodeHandle nh_;

@@ -37,7 +37,7 @@ class RewardRelativeImprovement: public RewardBase
 public:
   RewardRelativeImprovement(){};
 
-  double getReward(const std::vector<double>& costs, const std::vector<double>& utopias, const double& best_cost)
+  virtual double getReward(const std::vector<double>& costs, const std::vector<double>& utopias, const double& best_cost, const int& last_arm_id)
   {
     double reward = 0.0;
     if (last_best_cost_!=std::numeric_limits<double>::infinity())

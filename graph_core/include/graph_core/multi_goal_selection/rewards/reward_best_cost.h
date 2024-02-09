@@ -37,7 +37,7 @@ class RewardBestCost: public RewardBase
 public:
   RewardBestCost(){};
 
-  double getReward(const std::vector<double>& costs, const std::vector<double>& utopias, const double& best_cost)
+  virtual double getReward(const std::vector<double>& costs, const std::vector<double>& utopias, const double& best_cost, const int& last_arm_id)
   {
     last_best_cost_ = best_cost;
     return -best_cost;

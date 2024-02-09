@@ -11,6 +11,8 @@ class PolicyMABTS : public PolicyMAB
 
 protected:
   std::vector<double> alphas_, betas_, thetas_;
+  double mab_forgetting_factor_{0.0};
+  double reward_gain_{1.0};
 
 public:
   PolicyMABTS(const std::string& name, const int& n_goals) : PolicyMAB(name, n_goals)
@@ -28,6 +30,16 @@ public:
     if (!nh_.getParam("ts_beta", beta))
     {
       ROS_DEBUG("%s/ts_beta is not set. Deafult: 1.0",nh_.getNamespace().c_str());
+    }
+
+    if (!nh_.getParam("mab_forgetting_factor", mab_forgetting_factor_))
+    {
+      ROS_DEBUG("%s/mab_forgetting_factor is not set. Deafult: %f",nh_.getNamespace().c_str(), mab_forgetting_factor_);
+    }
+
+    if (!nh_.getParam("reward_gain", reward_gain_))
+    {
+      ROS_DEBUG("%s/reward_gain is not set. Deafult: %f",nh_.getNamespace().c_str(), reward_gain_);
     }
 
     alphas_ = std::vector<double>(n_goals_, alpha);
@@ -48,10 +60,22 @@ public:
   virtual void updateState(const int& i_goal, const double& reward)
   {
     pull_counter_[i_goal]+=1;
-    if (reward>0.5)
-      alphas_[i_goal]+=1;
-    else
-      betas_[i_goal] +=1;
+
+    if (mab_forgetting_factor_==0.0) 
+    {
+      if (reward>0.5)
+        alphas_[i_goal]+=1.0*reward_gain_;
+      else
+        betas_[i_goal] +=1.0;
+    }
+    else // time-varying reward. use exponential average to forget.
+    {
+      if (reward>0.5)
+        alphas_[i_goal]=(pull_counter_[i_goal]+1)/(pull_counter_[i_goal])*(alphas_[i_goal]*(1.0-mab_forgetting_factor_)+1.0*mab_forgetting_factor_*reward_gain_);
+      else
+        betas_[i_goal]=(pull_counter_[i_goal]+1)/(pull_counter_[i_goal])*(betas_[i_goal]*(1.0-mab_forgetting_factor_)+1.0*mab_forgetting_factor_);
+    }
+    
   }
 
   virtual std::string toString()

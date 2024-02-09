@@ -27,22 +27,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <ros/ros.h>
+#include <graph_core/multi_goal_selection/rewards/reward_base.h>
 
 namespace multi_goal_selection
 {
 
-class RewardBase
+class RewardBestSoFar: public RewardBase
 {
 public:
-  RewardBase(){};
+  RewardBestSoFar(){};
 
-  virtual double getReward(const std::vector<double>& costs, const std::vector<double>& utopias, const double& best_cost, const int& last_arm_id) = 0;
-
-protected:
-  double last_best_cost_ = std::numeric_limits<double>::infinity();
+  virtual double getReward(const std::vector<double>& costs, const std::vector<double>& utopias, const double& best_cost, const int& last_arm_id)
+  {
+    last_best_cost_ = best_cost;
+    return -costs[last_arm_id];
+  };
 
 };
-typedef std::shared_ptr<RewardBase> RewardBasePtr;
+typedef std::shared_ptr<RewardBestSoFar> RewardBestSoFarPtr;
 
 
 }
