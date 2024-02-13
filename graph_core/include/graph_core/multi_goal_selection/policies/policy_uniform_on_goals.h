@@ -41,10 +41,12 @@ public:
   {
     return std::uniform_int_distribution<int>(0,n_goals_-1)(gen_);
   };
+
   void updateState(const int& i_goal, const double& reward)
   {
-  // nothing to do here
+    pull_counter_[i_goal]++;
   };
+
   std::string toString()
   {
     std::string str = "uniform on goals";
