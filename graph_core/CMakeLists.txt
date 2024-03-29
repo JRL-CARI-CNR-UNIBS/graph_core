@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8.0)
+cmake_minimum_required(VERSION 3.16.0)
 project(graph_core)
 
 
@@ -64,13 +64,15 @@ target_include_directories(graph_core
     ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
-target_link_libraries(graph_core PUBLIC
-  Eigen3::Eigen # target automatically import all the staff that is needed
-  Boost::date_time
-  Boost::filesystem
-  PkgConfig::YAML_CPP
-  ${cnr_logger_LIBRARIES}
-  ${cnr_param_LIBRARIES}
+target_link_libraries(graph_core
+  PUBLIC
+    Eigen3::Eigen # target automatically import all the staff that is needed
+    Boost::date_time
+    Boost::filesystem
+    ${cnr_logger_LIBRARIES}
+    ${cnr_param_LIBRARIES}
+  #PRIVATE
+    PkgConfig::YAML_CPP
 )
 
 
@@ -126,17 +128,13 @@ install(EXPORT graph_coreTargets
   FILE graph_coreTargets.cmake
 )
 
-#export(
-#  EXPORT graph_coreTargets
-#  FILE "${PROJECT_BINARY_DIR}/graph_coreTargets.cmake")
-
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/graph_coreConfigVersion.cmake
   VERSION 0.0.1
   COMPATIBILITY AnyNewerVersion)
 
 install(FILES
-  ${CMAKE_SOURCE_DIR}/cmake_config/GraphCoreConfig.cmake
+  ${CMAKE_SOURCE_DIR}/cmake_config/graph_coreConfig.cmake
   ${CMAKE_CURRENT_BINARY_DIR}/graph_coreConfigVersion.cmake
   DESTINATION ${EXPORT_CONFIGDIR})
 
