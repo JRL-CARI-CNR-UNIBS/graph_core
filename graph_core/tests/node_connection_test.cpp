@@ -11,8 +11,10 @@ int main(int argc, char **argv)
   std::filesystem::path file_path = std::filesystem::read_symlink("/proc/self/exe").parent_path().parent_path().parent_path()
       / "cari_motion_planning/graph_core/tests/logger_param.yaml";
 
+  std::cout << "running test. Logger config is in: " << file_path.c_str() <<std::endl;
   // Create the logger
   cnr_logger::TraceLoggerPtr logger=std::make_shared<cnr_logger::TraceLogger>("node_connection_test", file_path.string());
+  //logger->init():
 
   //Tests
   CNR_INFO(logger, cnr_logger::RESET() << cnr_logger::WHITE() << " --- Create random configurations ---");
@@ -201,6 +203,6 @@ int main(int argc, char **argv)
   else
 
   CNR_INFO(logger, cnr_logger::RESET() << cnr_logger::BOLDGREEN() << "Done!");
-
+  std::cout << "done!" << std::endl;
   return 0;
 }

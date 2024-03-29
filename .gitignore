@@ -1,7 +1,21 @@
 *~
 *.kdev4
-kdev4/
+*.user
+*.user*
+*.creator
+*.creator*
+*.files*
+*.includes*
+*.qtcreator*
+*.kate-swp
+*.vscode
+*.orig
+*.autosave 
 *.txt.user*
-*.orig*
-*.autosave*
 
+build/
+.vscode/
+.cache/
+kdev4/
+
+compile_commands.json
