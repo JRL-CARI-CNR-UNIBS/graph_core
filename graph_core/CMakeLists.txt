@@ -75,37 +75,43 @@ target_link_libraries(graph_core PUBLIC
 
 
 
-# DEFINE TARGET executable
-add_executable(node_connection_test tests/node_connection_test.cpp)
-set_target_properties(node_connection_test PROPERTIES
-            CXX_STANDARD 17
-            CXX_EXTENSIONS OFF
-            )
-target_compile_options(node_connection_test PRIVATE
-  -funroll-loops -Ofast
-  )
-target_link_libraries(node_connection_test PUBLIC
-  graph_core::graph_core
-)
+## DEFINE TARGET executable
+#add_executable(node_connection_test tests/node_connection_test.cpp)
+#set_target_properties(node_connection_test PROPERTIES
+#            CXX_STANDARD 17
+#            CXX_EXTENSIONS OFF
+#            )
+#target_compile_options(node_connection_test PRIVATE
+#  -funroll-loops -Ofast
+#  )
+#target_link_libraries(node_connection_test PUBLIC
+#  graph_core::graph_core
 
-add_executable(kdtree_test tests/kdtree_test.cpp)
-set_target_properties(kdtree_test PROPERTIES
-            CXX_STANDARD 17
-            CXX_EXTENSIONS OFF
-            )
-target_compile_options(kdtree_test PRIVATE
-  -funroll-loops -Ofast
-  )
-target_link_libraries(kdtree_test PUBLIC
-  graph_core::graph_core
-)
+#  ${cnr_logger_LIBRARIES}
+#  ${cnr_param_LIBRARIES}
+#)
+
+#add_executable(kdtree_test tests/kdtree_test.cpp)
+#set_target_properties(kdtree_test PROPERTIES
+#            CXX_STANDARD 17
+#            CXX_EXTENSIONS OFF
+#            )
+#target_compile_options(kdtree_test PRIVATE
+#  -funroll-loops -Ofast
+#  )
+#target_link_libraries(kdtree_test PUBLIC
+#  graph_core::graph_core
+
+#  ${cnr_logger_LIBRARIES}
+#  ${cnr_param_LIBRARIES}
+#)
 
 # Install
 install(DIRECTORY include/${PROJECT_NAME}
   DESTINATION include)
 
 install(
-  TARGETS graph_core node_connection_test kdtree_test
+  TARGETS graph_core #node_connection_test kdtree_test
   EXPORT graph_coreTargets
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
@@ -130,7 +136,7 @@ write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/graph_coreConfigVer
   COMPATIBILITY AnyNewerVersion)
 
 install(FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/cmake_config/graph_coreConfig.cmake
+  ${CMAKE_SOURCE_DIR}/cmake_config/GraphCoreConfig.cmake
   ${CMAKE_CURRENT_BINARY_DIR}/graph_coreConfigVersion.cmake
   DESTINATION ${EXPORT_CONFIGDIR})
 
