@@ -180,7 +180,7 @@ public:
   virtual bool solve(PathPtr& solution,
                      const unsigned int& max_iter = 100,
                      const double &max_time = std::numeric_limits<double>::infinity()) override;
-  virtual bool config(const YAML::Node &config) override;
+  virtual bool config(const std::string &param_ns) override;
   virtual void resetProblem() override;
   virtual bool improveUpdate(const Eigen::VectorXd& point, PathPtr& solution);
   virtual bool improveUpdate(PathPtr& solution);

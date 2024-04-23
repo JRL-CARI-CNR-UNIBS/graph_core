@@ -32,51 +32,15 @@ namespace graph
 namespace core
 {
 
-bool TreeSolver::config(const YAML::Node &config)
+bool TreeSolver::config(const std::string &param_ns)
 {
-  config_ = config;
+  param_ns_ = param_ns;
+  get_param(logger_,param_ns_,"max_distance",max_distance_,1.0);
+  get_param(logger_,param_ns_,"use_kdtree",use_kdtree_, true);
+  get_param(logger_,param_ns_,"extend",extend_, false);
+  get_param(logger_,param_ns_,"utopia_tolerance",utopia_tolerance_, 0.01);
 
-  if (!config_["max_distance"])
-  {
-    CNR_WARN(logger_,"max_distance is not set, using 1.0");
-    max_distance_ = 1.0;
-  }
-  else
-  {
-    max_distance_ = config_["max_distance"].as<double>();
-  }
-
-  if (!config_["use_kdtree"])
-  {
-    CNR_WARN(logger_,"use_kdtree is not set, using true");
-    use_kdtree_ = true;
-  }
-  else
-  {
-    use_kdtree_ = config_["use_kdtree"].as<bool>();
-  }
-
-  if (!config_["extend"])
-  {
-    CNR_WARN(logger_,"extend is not set, using false (connect algorithm)");
-    extend_ = false;
-  }
-  else
-  {
-    extend_ = config_["extend"].as<bool>();
-  }
-
-  if (!config_["utopia_tolerance"])
-  {
-    CNR_WARN(logger_,"utopia_tolerance is not set. using 0.01");
-    utopia_tolerance_ = 0.01;
-  }
-  else
-  {
-    utopia_tolerance_ = config_["utopia_tolerance"].as<double>();
-  }
-
-  if (utopia_tolerance_ <= 0.0)
+  if(utopia_tolerance_ <= 0.0)
   {
     CNR_WARN(logger_,"utopia_tolerance cannot be negative, set equal to 0.0");
     utopia_tolerance_ = 0.0;
@@ -162,18 +126,18 @@ bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const do
   return false;
 }
 
-bool TreeSolver::computePath(const Eigen::VectorXd& start_conf, const Eigen::VectorXd& goal_conf, const YAML::Node& config, PathPtr &solution, const double &max_time, const unsigned int &max_iter)
+bool TreeSolver::computePath(const Eigen::VectorXd& start_conf, const Eigen::VectorXd& goal_conf, const std::string& param_ns, PathPtr &solution, const double &max_time, const unsigned int &max_iter)
 {
   NodePtr start_node = std::make_shared<Node>(start_conf,logger_);
   NodePtr goal_node  = std::make_shared<Node>(goal_conf ,logger_);
 
-  return computePath(start_node,goal_node,config,solution,max_time,max_iter);
+  return computePath(start_node,goal_node,param_ns,solution,max_time,max_iter);
 }
 
-bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node, const YAML::Node& config, PathPtr &solution, const double &max_time, const unsigned int& max_iter)
+bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node, const std::string& param_ns, PathPtr &solution, const double &max_time, const unsigned int& max_iter)
 {
   resetProblem();
-  this->config(config);
+  this->config(param_ns);
   if(not addStart(start_node))
     return false;
   if(not addGoal(goal_node))
@@ -202,7 +166,7 @@ bool TreeSolver::setSolution(const PathPtr &solution)
     return false;
   }
 
-  if(not config_)
+  if(not configured_)
   {
     CNR_WARN(logger_,"Solver not configured");
     return false;
@@ -262,7 +226,7 @@ bool TreeSolver::importFromSolver(const TreeSolverPtr& solver)
   if(this == solver.get())// Avoid self-assignment
     return true;
 
-  if(not config(solver->getConfig()))
+  if(not config(solver->param_ns_))
   {
     CNR_ERROR(logger_,"Cannot import from the solver because the configuration failed");
     return false;
@@ -276,7 +240,7 @@ bool TreeSolver::importFromSolver(const TreeSolverPtr& solver)
   configured_ = solver->configured_;
   start_tree_ = solver->start_tree_;
   dof_ = solver->dof_;
-  config_ = solver->config_;
+  param_ns_ = solver->param_ns_;
   max_distance_ = solver->max_distance_;
   extend_ = solver->extend_;
   utopia_tolerance_ = solver->utopia_tolerance_;

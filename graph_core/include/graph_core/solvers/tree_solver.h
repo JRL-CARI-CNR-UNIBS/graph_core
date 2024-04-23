@@ -88,7 +88,7 @@ protected:
   bool problem_set_ = false;
 
   /**
-   * @brief Flag indicating whether the solver is configured, i.e, parameters read from YAML.
+   * @brief Flag indicating whether the solver is configured, i.e, parameters retrived.
    */
   bool configured_ = false;
 
@@ -103,9 +103,9 @@ protected:
   unsigned int dof_;
 
   /**
-   * @brief YAML configuration node storing parameters for the solver.
+   * @brief The namespace under which the parameters are searched for.
    */
-  YAML::Node config_;
+  std::string param_ns_;
 
   /**
    * @brief Maximum distance considered by the solver for tree expansion.
@@ -317,14 +317,14 @@ public:
   }
 
   /**
-   * @brief Configure the solver with parameters from a YAML configuration.
+   * @brief Configure the solver with parameters.
    *
-   * This function reads parameters from a YAML configuration and configures the solver accordingly.
+   * This function reads parameters using cnr_param and configures the solver accordingly.
    *
-   * @param config The YAML configuration node.
+   * @param param_ns The namespace under which the parameters are searched for.
    * @return true if configuration is successful, false otherwise.
    */
-  virtual bool config(const YAML::Node& config);
+  virtual bool config(const std::string& param_ns);
 
   /**
    * @brief getInitialized tells if the object has been initialised.
@@ -399,14 +399,14 @@ public:
    *
    * @param start_conf The start configuration.
    * @param goal_conf The goal configuration.
-   * @param config The YAML configuration node.
+   * @param param_ns The namespace under which the parameters should be searched for.
    * @param solution The output solution path.
    * @param max_time The maximum allowed time for solving.
    * @param max_iter The maximum number of iterations.
    * @return true if a solution is found, false otherwise.
    */
-  virtual bool computePath(const NodePtr &start_node, const NodePtr &goal_node, const YAML::Node& config, PathPtr &solution, const double &max_time = std::numeric_limits<double>::infinity(), const unsigned int &max_iter = 10000);
-  virtual bool computePath(const Eigen::VectorXd& start_conf, const Eigen::VectorXd& goal_conf, const YAML::Node& config, PathPtr &solution, const double &max_time = std::numeric_limits<double>::infinity(), const unsigned int &max_iter = 10000);
+  virtual bool computePath(const NodePtr &start_node, const NodePtr &goal_node, const std::string& param_ns, PathPtr &solution, const double &max_time = std::numeric_limits<double>::infinity(), const unsigned int &max_iter = 10000);
+  virtual bool computePath(const Eigen::VectorXd& start_conf, const Eigen::VectorXd& goal_conf, const std::string& param_ns, PathPtr &solution, const double &max_time = std::numeric_limits<double>::infinity(), const unsigned int &max_iter = 10000);
 
   /**
    * @brief Reset the path planning problem.
@@ -570,16 +570,6 @@ public:
   PathPtr getSolution() const
   {
     return solution_;
-  }
-
-  /**
-   * @brief Get the solver configuration file.
-   *
-   * @return The configuration file.
-   */
-  const YAML::Node& getConfig() const
-  {
-    return config_;
   }
 
   /**

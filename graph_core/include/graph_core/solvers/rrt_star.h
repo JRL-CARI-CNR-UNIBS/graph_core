@@ -62,7 +62,7 @@ public:
           const cnr_logger::TraceLoggerPtr& logger):
     RRT(metrics, checker, sampler, logger) {}  //set initialized_ true
 
-  virtual bool config(const YAML::Node& config) override;
+  virtual bool config(const std::string& param_ns) override;
   virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity()) override;
   virtual bool update(PathPtr& solution) override;
   virtual bool solve(PathPtr &solution, const unsigned int& max_iter=100, const double &max_time = std::numeric_limits<double>::infinity()) override;

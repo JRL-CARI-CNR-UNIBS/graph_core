@@ -43,14 +43,10 @@ PathOptimizerBase::PathOptimizerBase(const CollisionCheckerPtr &checker,
   configured_ = false;
 }
 
-void PathOptimizerBase::config()
+void PathOptimizerBase::config(const std::string& param_ns)
 {
-  std::string what;
-  if(!cnr::param::get("max_stall_gen",max_stall_gen_,what))
-  {
-    CNR_WARN(logger_,what<<"\nDefault value for max_stall_gen: 10");
-    max_stall_gen_ = 10;
-  }
+  param_ns_ = param_ns;
+  get_param(logger_,param_ns_,"max_stall_gen",max_stall_gen_,(unsigned int) 10);
 
   stall_gen_ = 0;
   configured_ = true;

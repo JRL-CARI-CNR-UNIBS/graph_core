@@ -124,7 +124,7 @@ public:
   /**
    * @brief Configure the optimizer reading parameters with cnr_param library.
    */
-  virtual void config();
+  virtual void config(const std::string& param_ns) override;
 
   /**
    * @brief Set the input path for optimization. It calls base class setPath and resets 'change_warp_'.

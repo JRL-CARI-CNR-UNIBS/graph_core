@@ -39,20 +39,12 @@ bool RRTStar::addStartTree(const TreePtr &start_tree, const double &max_time)
   return setProblem(max_time);
 }
 
-bool RRTStar::config(const YAML::Node &config)
+bool RRTStar::config(const std::string &param_ns)
 {
-  RRT::config(config);
+  RRT::config(param_ns);
 
   solved_ = false;
-  if (!config["rewire_radius"])
-  {
-    CNR_WARN(logger_,"rewire_radius is not set. using 2.0*max_distance");
-    r_rewire_=2.0*max_distance_;
-  }
-  else
-  {
-    r_rewire_ = config_["rewire_radius"].as<double>();
-  }
+  get_param(logger_,param_ns_,"rewire_radius",r_rewire_,2.0*max_distance_);
   return true;
 }
 

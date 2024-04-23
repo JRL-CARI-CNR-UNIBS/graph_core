@@ -9,24 +9,12 @@ find_package(Eigen3 REQUIRED)
 find_package(cnr_logger REQUIRED)
 find_package(cnr_param REQUIRED)
 find_package(Boost REQUIRED COMPONENTS date_time filesystem)
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
-
-#find_package(pluginlib)
-#if (pluginlib_FOUND)
-#  message("pluginlib found")
-#  add_definitions(-DPLUGINLIB_AVAILABLE)
-#else()
-#  message("pluginlib not found")
-#  set(pluginlib_INCLUDE_DIRS "")
-#endif()
 
 include_directories(
   include
   ${EIGEN3_INCLUDE_DIRS}
   ${cnr_logger_INCLUDE_DIRS}
   ${cnr_param_INCLUDE_DIRS}
-  ${YAML_CPP_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
  )
 
@@ -53,26 +41,25 @@ add_library(${PROJECT_NAME} SHARED
   src/${PROJECT_NAME}/solvers/path_optimizers/path_optimizer_base.cpp
   src/${PROJECT_NAME}/solvers/path_optimizers/path_local_optimizer.cpp
   )
-
-
 target_link_libraries(${PROJECT_NAME} PUBLIC
-  ${YAML_CPP_LIBRARIES}
-  ${cnr_logger_LIBRARIES}
+  cnr_logger::cnr_logger #${cnr_logger_LIBRARIES}
   ${cnr_param_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
-add_executable(node_connection_test tests/node_connection_test.cpp)
-target_link_libraries(node_connection_test PUBLIC
-  ${cnr_logger_LIBRARIES}
+add_executable(kdtree_test tests/kdtree_test.cpp)
+target_link_libraries(kdtree_test PUBLIC
+  cnr_logger::cnr_logger #${cnr_logger_LIBRARIES}
   ${cnr_param_LIBRARIES}
+  ${Boost_LIBRARIES}
   ${PROJECT_NAME}
 )
 
-add_executable(kdtree_test tests/kdtree_test.cpp)
-target_link_libraries(kdtree_test PUBLIC
-  ${cnr_logger_LIBRARIES}
+add_executable(node_connection_test tests/node_connection_test.cpp)
+target_link_libraries(node_connection_test PUBLIC
+  cnr_logger::cnr_logger #${cnr_logger_LIBRARIES}
   ${cnr_param_LIBRARIES}
+  ${Boost_LIBRARIES}
   ${PROJECT_NAME}
 )
 

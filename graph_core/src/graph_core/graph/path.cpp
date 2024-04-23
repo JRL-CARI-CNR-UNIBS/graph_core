@@ -427,7 +427,7 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, size_t&
     err  = std::abs(dist-distP-distC);
 
     if(verbose)
-      CNR_INFO(logger_,"dist %f, distP %f, distC %f, err %lf",dist,distP,distC,err);
+      CNR_INFO(logger_,"dist %f, distP %f, distC %f, err %f",dist,distP,distC,err);
 
     if(err<1e-10)
     {

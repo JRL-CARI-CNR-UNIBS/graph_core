@@ -88,6 +88,11 @@ protected:
   bool solved_;
 
   /**
+   * @brief The namespace under which the parameters are searched for.
+   */
+  std::string param_ns_;
+
+  /**
    * @brief Pointer to a TraceLogger instance for logging.
    *
    * This member variable represents a pointer to a TraceLogger instance, allowing
@@ -131,7 +136,7 @@ public:
   /**
    * @brief Configure the optimizer reading parameters with cnr_param library.
    */
-  virtual void config();
+  virtual void config(const std::string& param_ns);
 
   /**
    * @brief Solve the optimization problem. Use 'getPath' to get the processed path.

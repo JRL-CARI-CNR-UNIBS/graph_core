@@ -57,5 +57,68 @@ typedef std::weak_ptr<Connection> ConnectionWeakPtr;
 typedef std::weak_ptr<Node> NodeWeakPtr;
 
 static const double TOLERANCE = 1e-06;
+
+/**
+ * @brief Retrieves a parameter of type T from a given namespace and parameter name.
+ *
+ * This function attempts to retrieve a parameter specified by `param_name` within a namespace `param_ns`.
+ * The function first checks if the parameter exists under the specified namespace, and if so, attempts to retrieve it.
+ * If any step fails, it logs an error message using the provided logger and returns false.
+ *
+ * @tparam T The data type of the parameter to retrieve. This type should be compatible with the types
+ * supported by the `cnr::param::get` function.
+ * @param logger A shared pointer to a `cnr_logger::TraceLogger` used for logging errors when the parameter
+ * cannot be loaded or is not available.
+ * @param ns The namespace under which the parameter is categorized.
+ * @param param_name The name of the parameter to retrieve.
+ * @param[out] param Reference to a variable where the retrieved parameter value will be stored if successful.
+ *
+ * @return bool Returns true if the parameter is successfully retrieved and stored in `param`, otherwise false
+ * if the parameter does not exist or cannot be retrieved.
+ *
+ * @note This function uses the `cnr::param` namespace functions `has` and `get` to check for the existence
+ * and retrieve the parameter, respectively. Error messages include the full parameter name for clarity.
+ */
+template<typename T>
+inline bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string param_ns, const std::string param_name, T& param)
+{
+  std::string what, full_param_name = param_ns+param_name;
+  if(cnr::param::has(full_param_name, what))
+  {
+    if(not cnr::param::get(full_param_name, param, what))
+    {
+      CNR_ERROR(logger, "Cannot load " << full_param_name + " parameter.\n"<<what);
+      throw std::invalid_argument("Cannot load " + full_param_name + " parameter.");
+    }
+  }
+  else
+  {
+    CNR_WARN(logger, full_param_name + " parameter not available.\n"<<what);
+    return false;
+  }
+  return true;
+}
+
+template<typename T>
+inline bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string param_ns, const std::string param_name, T& param, const T& default_value)
+{
+  std::string what, full_param_name = param_ns+param_name;
+  if(cnr::param::has(full_param_name, what))
+  {
+    if(not cnr::param::get(full_param_name, param, what))
+    {
+      CNR_ERROR(logger, "Cannot load " << full_param_name + " parameter.\n"<<what);
+      throw std::invalid_argument("Cannot load " + full_param_name + " parameter.");
+    }
+  }
+  else
+  {
+    param = default_value;
+    CNR_WARN(logger, full_param_name<<" parameter not available.\n"<<what<<"\nUsing "<<param_name<<": = "<<default_value);
+    return false;
+  }
+  return true;
+}
+
 } //end namespace core
 } // end namespace graph

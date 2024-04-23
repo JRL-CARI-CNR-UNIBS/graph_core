@@ -320,11 +320,10 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
   return false;
 }
 
-bool AnytimeRRT::config(const YAML::Node& config)
+bool AnytimeRRT::config(const std::string& param_ns)
 {
   setParameters();
-
-  return RRT::config(config);
+  return RRT::config(param_ns);
 }
 
 void AnytimeRRT::resetProblem()
