@@ -4,9 +4,7 @@ project(graph_core)
 
 find_package(Eigen3 REQUIRED COMPONENTS core)
 find_package(Boost REQUIRED COMPONENTS date_time filesystem)
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(YAML_CPP REQUIRED yaml-cpp IMPORTED_TARGET)
-#NOTE: New in version 3.6: The IMPORTED_TARGET argument will create an imported target named PkgConfig::<prefix> that can be passed directly as an argument to target_link_libraries().
+find_package(cnr_param REQUIRED)
 
 find_package(cnr_logger REQUIRED)
 find_package(cnr_param REQUIRED)
@@ -14,7 +12,6 @@ find_package(cnr_param REQUIRED)
 
 include_directories(
   ${cnr_logger_INCLUDE_DIRS}
-  ${cnr_param_INCLUDE_DIRS}
  )
 
 
@@ -69,10 +66,9 @@ target_link_libraries(graph_core
     Eigen3::Eigen # target automatically import all the staff that is needed
     Boost::date_time
     Boost::filesystem
+    cnr_param::cnr_param_utilities
+    cnr_param::cnr_param_server_utilities
     ${cnr_logger_LIBRARIES}
-    ${cnr_param_LIBRARIES}
-  #PRIVATE
-    PkgConfig::YAML_CPP
 )
 
 
