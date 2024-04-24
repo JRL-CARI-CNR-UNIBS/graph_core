@@ -5,10 +5,8 @@ include(CMakeFindDependencyMacro)
 
 find_dependency(Eigen3     REQUIRED)
 find_dependency(Boost      REQUIRED COMPONENTS date_time filesystem)
-find_dependency(PkgConfig  REQUIRED)
 find_dependency(cnr_logger REQUIRED)
 find_dependency(cnr_param REQUIRED)
-find_dependency(yaml-cpp   REQUIRED)
 
 include("${graph_core_CMAKE_DIR}/graph_coreTargets.cmake")
 
@@ -19,13 +17,11 @@ set(graph_core_INCLUDE_DIRS
   ${EIGEN3_INCLUDE_DIRS}
   ${cnr_logger_INCLUDE_DIRS}
   ${cnr_param_INCLUDE_DIRS}
-  ${YAML_CPP_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   )
   
 set(graph_core_LIBRARIES
   graph_core # libraries defined in this package (in this case, there is one)
-  ${YAML_CPP_LIBRARIES}
   ${cnr_logger_LIBRARIES}
   ${cnr_param_LIBRARIES}
   ${Boost_LIBRARIES})

@@ -42,14 +42,14 @@ add_library(${PROJECT_NAME} SHARED
   src/${PROJECT_NAME}/solvers/path_optimizers/path_local_optimizer.cpp
   )
 target_link_libraries(${PROJECT_NAME} PUBLIC
-  cnr_logger::cnr_logger #${cnr_logger_LIBRARIES}
+  ${cnr_logger_LIBRARIES} #cnr_logger::cnr_logger
   ${cnr_param_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
 add_executable(kdtree_test tests/kdtree_test.cpp)
 target_link_libraries(kdtree_test PUBLIC
-  cnr_logger::cnr_logger #${cnr_logger_LIBRARIES}
+  ${cnr_logger_LIBRARIES} #cnr_logger::cnr_logger
   ${cnr_param_LIBRARIES}
   ${Boost_LIBRARIES}
   ${PROJECT_NAME}
@@ -57,7 +57,7 @@ target_link_libraries(kdtree_test PUBLIC
 
 add_executable(node_connection_test tests/node_connection_test.cpp)
 target_link_libraries(node_connection_test PUBLIC
-  cnr_logger::cnr_logger #${cnr_logger_LIBRARIES}
+  ${cnr_logger_LIBRARIES} #cnr_logger::cnr_logger
   ${cnr_param_LIBRARIES}
   ${Boost_LIBRARIES}
   ${PROJECT_NAME}

@@ -121,10 +121,6 @@ public:
     srand((unsigned int)time(NULL)); //randomize seed
     ud_ = std::uniform_real_distribution<double>(0, 1);
 
-    specific_volume_=std::tgamma( ((double) ndof_)*0.5+1.0)/std::pow(M_PI,(double)ndof_*0.5);  // inverse of the volume of unit ball
-    for (unsigned int idx=0;idx<ndof_;idx++)
-      specific_volume_*=(upper_bound_(idx)-lower_bound_(idx));
-
     initialized_ = false;
   }
 
@@ -149,7 +145,10 @@ public:
     srand((unsigned int)time(NULL)); //randomize seed
     ud_ = std::uniform_real_distribution<double>(0, 1);
 
+    ndof_ = lower_bound_.rows();
+
     specific_volume_=std::tgamma( ((double) ndof_)*0.5+1.0)/std::pow(M_PI,(double)ndof_*0.5);  // inverse of the volume of unit ball
+
     for (unsigned int idx=0;idx<ndof_;idx++)
       specific_volume_*=(upper_bound_(idx)-lower_bound_(idx));
 
@@ -179,6 +178,13 @@ public:
     upper_bound_ = upper_bound;
     logger_ = logger;
     cost_ = cost;
+
+    ndof_ = lower_bound_.rows();
+
+    specific_volume_=std::tgamma( ((double) ndof_)*0.5+1.0)/std::pow(M_PI,(double)ndof_*0.5);  // inverse of the volume of unit ball
+    for (unsigned int idx=0;idx<ndof_;idx++)
+      specific_volume_*=(upper_bound_(idx)-lower_bound_(idx));
+
     initialized_ = true;
 
     return true;

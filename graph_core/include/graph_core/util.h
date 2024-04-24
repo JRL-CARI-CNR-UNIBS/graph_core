@@ -34,7 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cnr_logger/cnr_logger.h>
 #include <chrono>
 #include <any>
-#include <yaml-cpp/yaml.h>
+#include <type_traits>
 
 #define Stringize( L )     #L
 #define MakeString( M, L ) M(L)
@@ -57,6 +57,40 @@ typedef std::weak_ptr<Connection> ConnectionWeakPtr;
 typedef std::weak_ptr<Node> NodeWeakPtr;
 
 static const double TOLERANCE = 1e-06;
+
+/**
+ * @brief Overload of the insertion operator for std::vector.
+ *
+ * This template function overloads the insertion (<<) operator to handle
+ * std::vector of any type T. It outputs the elements of the vector in a
+ * formatted string enclosed in square brackets and separated by commas.
+ * For example, a vector with elements 1, 2, 3 would be output as "[1, 2, 3]".
+ *
+ * @tparam T The data type of the elements stored in the vector. This type must
+ *           support insertion into a std::ostream itself, as the function relies
+ *           on the insertion operator for individual element output.
+ * @param os The output stream to which the content is to be written. This is typically
+ *           std::cout, but can be any stream derived from std::ostream.
+ * @param v The vector whose contents are to be output to the stream. The elements of the
+ *          vector are output in the order they appear in the vector.
+ * @return Returns a reference to the output stream `os` after the vector content
+ *         has been written to it. This allows for chaining of output operations.
+ */
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
+{
+  os << "[";
+  for (size_t i = 0; i < v.size(); ++i)
+  {
+    if (i != 0)
+      os << " ";
+    os << v[i];
+  }
+  os << "]";
+  return os;
+}
+
+// Get param utilities
 
 /**
  * @brief Retrieves a parameter of type T from a given namespace and parameter name.
@@ -82,7 +116,7 @@ static const double TOLERANCE = 1e-06;
 template<typename T>
 inline bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string param_ns, const std::string param_name, T& param)
 {
-  std::string what, full_param_name = param_ns+param_name;
+  std::string what, full_param_name = param_ns+"/"+param_name;
   if(cnr::param::has(full_param_name, what))
   {
     if(not cnr::param::get(full_param_name, param, what))
@@ -99,10 +133,20 @@ inline bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::strin
   return true;
 }
 
+// Specialize for Eigen::Vector
+// Trait to check if a type is an Eigen vector
+template<typename T, typename = void>
+struct is_eigen_vector : std::false_type {};
+
+// Specialize for types that are Eigen matrices but with one column (Eigen::Vector)
+template<typename T>
+struct is_eigen_vector<T, std::enable_if_t<T::ColsAtCompileTime == 1>> : std::true_type {};
+//
+
 template<typename T>
 inline bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string param_ns, const std::string param_name, T& param, const T& default_value)
 {
-  std::string what, full_param_name = param_ns+param_name;
+  std::string what, full_param_name = param_ns+"/"+param_name;
   if(cnr::param::has(full_param_name, what))
   {
     if(not cnr::param::get(full_param_name, param, what))
@@ -114,11 +158,22 @@ inline bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::strin
   else
   {
     param = default_value;
-    CNR_WARN(logger, full_param_name<<" parameter not available.\n"<<what<<"\nUsing "<<param_name<<": = "<<default_value);
+    if constexpr (is_eigen_vector<T>::value)
+    {
+      CNR_WARN(logger, full_param_name << " parameter not available.\n" << what
+               << "\nUsing " << param_name << ": = " << default_value.transpose());
+    }
+    else
+    {
+      CNR_WARN(logger, full_param_name << " parameter not available.\n" << what
+               << "\nUsing " << param_name << ": = " << default_value);
+    }
+
     return false;
   }
   return true;
 }
+
 
 } //end namespace core
 } // end namespace graph
