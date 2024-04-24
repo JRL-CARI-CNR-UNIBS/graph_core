@@ -1,7 +1,8 @@
 include(CMakeFindDependencyMacro)
-find_package(Eigen3 REQUIRED COMPONENTS core)
-find_package(Boost REQUIRED COMPONENTS date_time filesystem)
-find_package(PkgConfig REQUIRED)
+
+find_dependency(Eigen3 REQUIRED COMPONENTS core)
+find_dependency(Boost REQUIRED COMPONENTS date_time filesystem)
+find_dependency(PkgConfig REQUIRED)
 pkg_check_modules(YAML_CPP REQUIRED yaml-cpp IMPORTED_TARGET)
 
 find_package(cnr_logger REQUIRED)

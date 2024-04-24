@@ -77,7 +77,7 @@ target_link_libraries(graph_core
 
 
 
-## DEFINE TARGET executable
+### DEFINE TARGET executable
 #add_executable(node_connection_test tests/node_connection_test.cpp)
 #set_target_properties(node_connection_test PROPERTIES
 #            CXX_STANDARD 17
