@@ -586,7 +586,7 @@ bool get_param<NodePtr>(const cnr_logger::TraceLoggerPtr& logger, const std::str
   if(cnr::param::has(full_param_name, what))
   {
     YAML::Node yaml_node;
-    if(not cnr::param::mapped_file::recover(full_param_name, yaml_node, what))
+    if(not cnr::param::get(full_param_name, yaml_node, what))
     {
       CNR_ERROR(logger, "Cannot load " << full_param_name + " parameter.\n"<<what);
       throw std::invalid_argument("Cannot load " + full_param_name + " parameter.");
