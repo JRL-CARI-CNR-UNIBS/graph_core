@@ -472,6 +472,27 @@ public:
   }
 
   /**
+   * @brief Retrieves a pointer to the TraceLogger associated with the path.
+   *
+   * This member function provides read-only access to the TraceLogger instance associated
+   * with the path, allowing external components to access and utilize the logging capabilities.
+   *
+   * @return A constant reference to the TraceLogger pointer.
+   */
+  const cnr_logger::TraceLoggerPtr& getLogger() const
+  {
+    return logger_;
+  }
+
+  /**
+   * @brief Sets the TraceLogger associated with the path.
+   */
+  void  setLogger(const cnr_logger::TraceLoggerPtr& logger)
+  {
+    logger_ = logger;
+  }
+
+  /**
    * @brief Set the collision checker for the path and its associated tree.
    *
    * This method sets the collision checker for the path. If a tree is associated with the path,
@@ -712,6 +733,8 @@ public:
    */
   static PathPtr fromYAML(const YAML::Node& yaml, const MetricsPtr& metrics,
                           const CollisionCheckerPtr& checker, const cnr_logger::TraceLoggerPtr& logger);
+  static PathPtr fromYAML(const YAML::Node& yaml, const MetricsPtr& metrics,
+                          const CollisionCheckerPtr& checker, std::string& what);
 
   friend std::ostream& operator<<(std::ostream& os, const Path& path);
 };
@@ -726,6 +749,27 @@ public:
  * @return Reference to the output stream.
  */
 std::ostream& operator<<(std::ostream& os, const Path& path);
+
+/**
+ * @brief Static inline function to get a parameter from the parameter server and set it to a given PathPtr.
+ *
+ * This function attempts to retrieve a parameter named `param_name` from the parameter namespace `param_ns`,
+ * and assigns its value to the PathPtr `param`. If the parameter is found, it is set to the PathPtr and
+ * the function returns true. If the parameter is not found, a warning is logged and the function returns false.
+ * If an error occurs while retrieving the parameter, an error is logged and an invalid_argument exception is thrown.
+ * Additionally, it sets the logger, metrics, and collision checker for the retrieved PathPtr.
+ *
+ * @param logger A pointer to a TraceLogger object used for logging messages.
+ * @param param_ns The namespace of the parameter on the parameter server.
+ * @param param_name The name of the parameter to retrieve.
+ * @param param Reference to the PathPtr where the parameter value will be assigned.
+ * @param metrics A pointer to the Metrics object to be set for the retrieved PathPtr.
+ * @param checker A pointer to the CollisionChecker object to be set for the retrieved PathPtr.
+ * @return True if the parameter is successfully retrieved and assigned, false otherwise.
+ * @throws std::invalid_argument if an error occurs while retrieving the parameter.
+ */
+inline bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string param_ns, const std::string param_name, PathPtr& param,
+                             const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
 
 } //end namespace core
 } // end namespace graph

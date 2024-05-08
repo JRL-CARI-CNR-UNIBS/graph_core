@@ -194,7 +194,7 @@ public:
   /**
    * @brief Map of properties associated with the node.
    *
-   * This member variable represents a map of properties associated with the node.
+   * This member variable represents a map of propeFties associated with the node.
    * The map uses strings as keys and std::any as values to store heterogeneous data types.
    * Store in properties_ any object you need to customize the node.
    */
@@ -294,6 +294,14 @@ public:
   const cnr_logger::TraceLoggerPtr& getLogger() const
   {
     return logger_;
+  }
+
+  /**
+   * @brief Sets the TraceLogger associated with the node.
+   */
+  void  setLogger(const cnr_logger::TraceLoggerPtr& logger)
+  {
+    logger_ = logger;
   }
 
   /**
@@ -553,6 +561,7 @@ public:
    *  If the YAML::Node is not a sequence or if an error occurs during construction, returns nullptr.
    */
   static NodePtr fromYAML(const YAML::Node& yaml, const cnr_logger::TraceLoggerPtr& logger);
+  static NodePtr fromYAML(const YAML::Node& yaml, std::string& what);
 
   friend std::ostream& operator<<(std::ostream& os, const Node& node);
 };
@@ -568,5 +577,26 @@ public:
  */
 std::ostream& operator<<(std::ostream& os, const Node& node);
 
+/**
+ * @brief Template function to get a graph::core::Node from the parameter server.
+ *
+ * This function attempts to retrieve a parameter named `param_name` from the parameter namespace `param_ns`,
+ * and assigns its value to the pointer `param`. If the parameter is found, it is set to the pointer and
+ * the function returns true. If the parameter is not found, a warning is logged and the function returns false.
+ * If an error occurs while retrieving the parameter, an error is logged and an invalid_argument exception is thrown.
+ *
+ * @tparam NodePtr The pointer type to which the parameter value will be assigned.
+ * @param logger A pointer to a TraceLogger object used for logging messages.
+ * @param param_ns The namespace of the parameter on the parameter server.
+ * @param param_name The name of the parameter to retrieve.
+ * @param param Reference to the pointer where the parameter value will be assigned.
+ * @return True if the parameter is successfully retrieved and assigned, false otherwise.
+ * @throws std::invalid_argument if an error occurs while retrieving the parameter.
+ */
+template<>
+inline bool get_param<NodePtr>(const cnr_logger::TraceLoggerPtr& logger, const std::string param_ns, const std::string param_name, NodePtr& param);
+
 } //end namespace core
 } // end namespace graph
+
+

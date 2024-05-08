@@ -266,12 +266,6 @@ public:
    * @param node The node to be set as the new root of the tree.
    * @return Returns true if the root is successfully changed, and false otherwise.
    */
-
-  const cnr_logger::TraceLoggerPtr& getLogger()
-  {
-    return logger_;
-  }
-
   bool changeRoot(const NodePtr& node);
 
   /**
@@ -940,6 +934,27 @@ public:
   }
 
   /**
+   * @brief Retrieves a pointer to the TraceLogger associated with the path.
+   *
+   * This member function provides read-only access to the TraceLogger instance associated
+   * with the path, allowing external components to access and utilize the logging capabilities.
+   *
+   * @return A constant reference to the TraceLogger pointer.
+   */
+  const cnr_logger::TraceLoggerPtr& getLogger() const
+  {
+    return logger_;
+  }
+
+  /**
+   * @brief Sets the TraceLogger associated with the path.
+   */
+  void  setLogger(const cnr_logger::TraceLoggerPtr& logger)
+  {
+    logger_ = logger;
+  }
+
+  /**
    * @brief Retrieves the flag indicating the use of a Kd-tree in the tree structure.
    *
    * @return Returns true if a Kd-tree is used in the tree structure, and false otherwise.
@@ -988,22 +1003,37 @@ public:
    * @note Among the sequence of nodes, it searches for the one without parents to locate the root of the tree.
    *
    * @param yaml The YAML::Node containing 'nodes' and 'connections' fields.
-   * @param max_distance The maximum distance for the Tree.
-   * @param checker The CollisionCheckerPtr for collision checking.
    * @param metrics The MetricsPtr for computing connection costs.
+   * @param checker The CollisionCheckerPtr for collision checking.
    * @param logger The TraceLoggerPtr for logging error messages.
-   * @param lazy If true, collision checking is deferred until necessary.
    * @return A TreePtr constructed from the YAML::Node. If an error occurs during construction, returns nullptr.
    */
   static TreePtr fromYAML(const YAML::Node& yaml,
-                          const double& max_distance,
-                          const CollisionCheckerPtr& checker,
                           const MetricsPtr& metrics,
-                          const cnr_logger::TraceLoggerPtr& logger,
-                          const bool use_kdtree,
-                          const bool& lazy=false);
+                          const CollisionCheckerPtr& checker,
+                          const cnr_logger::TraceLoggerPtr& logger);
 
 };
 
+/**
+ * @brief Static inline function to get a parameter from the parameter server and set it to a given TreePtr.
+ *
+ * This function attempts to retrieve a parameter named `param_name` from the parameter namespace `param_ns`,
+ * and assigns its value to the TreePtr `param`. If the parameter is found, it is set to the TreePtr and
+ * the function returns true. If the parameter is not found, a warning is logged and the function returns false.
+ * If an error occurs while retrieving the parameter, an error is logged and an invalid_argument exception is thrown.
+ * Additionally, it sets the logger, metrics, and collision checker for the retrieved TreePtr.
+ *
+ * @param logger A pointer to a TraceLogger object used for logging messages.
+ * @param param_ns The namespace of the parameter on the parameter server.
+ * @param param_name The name of the parameter to retrieve.
+ * @param param Reference to the PathPtr where the parameter value will be assigned.
+ * @param metrics A pointer to the Metrics object to be set for the retrieved TreePtr.
+ * @param checker A pointer to the CollisionChecker object to be set for the retrieved TreePtr.
+ * @return True if the parameter is successfully retrieved and assigned, false otherwise.
+ * @throws std::invalid_argument if an error occurs while retrieving the parameter.
+ */
+inline bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string param_ns, const std::string param_name, TreePtr& param,
+                             const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
 } //end namespace core
 } // end namespace graph

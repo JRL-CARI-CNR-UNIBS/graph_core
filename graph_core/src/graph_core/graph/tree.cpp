@@ -1221,6 +1221,8 @@ YAML::Node Tree::toYAML() const
     }
   }
 
+  tree["max_distance"] = max_distance_;
+  tree["use_kdtree"] = use_kdtree_;
   tree["nodes"] = nodes;
   tree["connections"] = connections;
   return tree;
@@ -1270,12 +1272,9 @@ std::ostream& operator<<(std::ostream& os, const Tree& tree)
 }
 
 TreePtr Tree::fromYAML(const YAML::Node& yaml,
-                       const double& max_distance,
-                       const CollisionCheckerPtr& checker,
                        const MetricsPtr& metrics,
-                       const cnr_logger::TraceLoggerPtr& logger,
-                       const bool use_kdtree,
-                       const bool& lazy)
+                       const CollisionCheckerPtr& checker,
+                       const cnr_logger::TraceLoggerPtr& logger)
 {
   if (!yaml["nodes"])
   {
@@ -1288,6 +1287,22 @@ TreePtr Tree::fromYAML(const YAML::Node& yaml,
     CNR_ERROR(logger, "Cannot load a tree from a YAML without 'connections' field");
     return nullptr;
   }
+
+  bool use_kdtree = true;
+  if (!yaml["use_kdtree"])
+    CNR_WARN(logger, "No field 'use_kdtree' field found in YAML, set to true");
+  else
+    use_kdtree = yaml["use_kdtree"].as<bool>();
+
+  int max_distance = -1;
+  bool compute_max_distance = false;
+  if (!yaml["max_distance"])
+  {
+    CNR_WARN(logger, "No field 'max_distance' field found in YAML, computed from the tree");
+    compute_max_distance = true;
+  }
+  else
+    max_distance = yaml["max_distance"].as<int>();
 
   YAML::Node nodes = yaml["nodes"];
   YAML::Node connections = yaml["connections"];
@@ -1303,19 +1318,6 @@ TreePtr Tree::fromYAML(const YAML::Node& yaml,
     CNR_ERROR(logger, "Cannot load a tree from YAML::Node where 'connections' is not a sequence");
     return nullptr;
   }
-
-  //  NodePtr root = Node::fromYAML(nodes[0],logger);
-  //  if (not lazy)
-  //  {
-  //    if (not checker->check(root->getConfiguration()))
-  //    {
-  //      CNR_DEBUG(logger,"Root is in collision");
-  //      return nullptr;
-  //    }
-  //  }
-
-  //  std::vector<NodePtr> nodes_vector(nodes.size());
-  //  nodes_vector[0] = root;
 
   std::vector<NodePtr> nodes_vector(nodes.size());
 
@@ -1334,6 +1336,7 @@ TreePtr Tree::fromYAML(const YAML::Node& yaml,
     nodes_vector[in] = node;
   }
 
+  double length;
   int in1, in2;
   NodePtr n1, n2;
   ConnectionPtr conn;
@@ -1356,6 +1359,13 @@ TreePtr Tree::fromYAML(const YAML::Node& yaml,
     conn = std::make_shared<Connection>(n1, n2, logger);
     conn->setCost(metrics->cost(n1, n2));
     conn->add();
+
+    if(compute_max_distance)
+    {
+      length = conn->norm();
+      if(length>max_distance)
+        max_distance = length;
+    }
   }
 
   NodePtr root;
@@ -1373,11 +1383,6 @@ TreePtr Tree::fromYAML(const YAML::Node& yaml,
   for (size_t inode = 1; inode < nodes_vector.size(); inode++)
   {
     tree->addNode(nodes_vector[inode], false);
-  }
-
-  if (!lazy)
-  {
-    tree->recheckCollision();
   }
 
   return tree;
@@ -1419,6 +1424,30 @@ bool Tree::recheckCollisionFromNode(NodePtr& n)
     }
     if(not recheckCollisionFromNode(child))
       return false;
+  }
+  return true;
+}
+
+bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string param_ns, const std::string param_name, TreePtr& param,
+               const MetricsPtr& metrics, const CollisionCheckerPtr& checker)
+{
+
+  std::string what, full_param_name = param_ns+"/"+param_name;
+  if(cnr::param::has(full_param_name, what))
+  {
+    YAML::Node yaml_node;
+    if(not cnr::param::mapped_file::recover(full_param_name, yaml_node, what))
+    {
+      CNR_ERROR(logger, "Cannot load " << full_param_name + " parameter.\n"<<what);
+      throw std::invalid_argument("Cannot load " + full_param_name + " parameter.");
+    }
+    else
+      param = graph::core::Tree::fromYAML(yaml_node,metrics,checker,logger);
+  }
+  else
+  {
+    CNR_WARN(logger, full_param_name + " parameter not available.\n"<<what);
+    return false;
   }
   return true;
 }

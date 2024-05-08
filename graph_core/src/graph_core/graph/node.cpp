@@ -546,6 +546,23 @@ NodePtr Node::fromYAML(const YAML::Node& yaml, const cnr_logger::TraceLoggerPtr&
   return std::make_shared<Node>(conf,logger);
 }
 
+NodePtr Node::fromYAML(const YAML::Node& yaml, std::string& what)
+{
+  if (!yaml.IsSequence())
+  {
+    what += "\nCannot load a node from YAML::Node which does not contain a sequence";
+    return nullptr;
+  }
+
+  Eigen::VectorXd conf(yaml.size());
+  for (size_t idx=0;idx<yaml.size();idx++)
+  {
+    conf(idx)=yaml[idx].as<double>();
+  }
+
+  return std::make_shared<Node>(conf,nullptr);
+}
+
 unsigned int Node::getReservedFlagsNumber()
 {
   return number_reserved_flags_;
@@ -560,6 +577,29 @@ std::ostream& operator<<(std::ostream& os, const Node& node)
   os << "net child connections = " << node.net_child_connections_.size() << std::endl;
 
   return os;
+}
+
+template<>
+bool get_param<NodePtr>(const cnr_logger::TraceLoggerPtr& logger, const std::string param_ns, const std::string param_name, NodePtr& param)
+{
+  std::string what, full_param_name = param_ns+"/"+param_name;
+  if(cnr::param::has(full_param_name, what))
+  {
+    YAML::Node yaml_node;
+    if(not cnr::param::mapped_file::recover(full_param_name, yaml_node, what))
+    {
+      CNR_ERROR(logger, "Cannot load " << full_param_name + " parameter.\n"<<what);
+      throw std::invalid_argument("Cannot load " + full_param_name + " parameter.");
+    }
+    else
+      param = graph::core::Node::fromYAML(yaml_node,logger);
+  }
+  else
+  {
+    CNR_WARN(logger, full_param_name + " parameter not available.\n"<<what);
+    return false;
+  }
+  return true;
 }
 
 } //end namespace core
