@@ -1386,6 +1386,7 @@ void Path::toYAML(const std::string& file_name, const bool reverse) const
 
 YAML::Node Path::toYAML(const bool reverse) const
 {
+
   YAML::Node yaml;
   if (connections_.empty())
     return yaml;
@@ -1430,36 +1431,6 @@ PathPtr Path::fromYAML(const YAML::Node& yaml, const MetricsPtr& metrics,
   return std::make_shared<Path>(nodes,metrics,checker,logger);
 }
 
-PathPtr Path::fromYAML(const YAML::Node& yaml, const MetricsPtr& metrics,
-                       const CollisionCheckerPtr& checker, std::string& what)
-{
-  if (!yaml.IsSequence())
-  {
-    what += "\nCannot load a path from YAML::Node which does not contain a sequence";
-    return nullptr;
-  }
-
-  std::vector<NodePtr> nodes;
-
-  for (const YAML::Node& node_yaml : yaml)
-  {
-    NodePtr node = Node::fromYAML(node_yaml, what);
-    if(!node)
-    {
-      // Error creating a Node from YAML
-      what += "\nError creating a Node from YAML";
-      return nullptr;
-    }
-
-    nodes.push_back(node);
-  }
-
-  what+="\nPath created from yaml but no tree is available, remember to add it!";
-
-  return std::make_shared<Path>(nodes,nullptr,nullptr,nullptr);
-}
-
-
 void Path::flip()
 {
   std::reverse(connections_.begin(),connections_.end()); //must be before connections flip
@@ -1501,7 +1472,7 @@ std::ostream& operator<<(std::ostream& os, const Path& path)
 }
 
 bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string param_ns, const std::string param_name, PathPtr& param,
-                             const MetricsPtr& metrics, const CollisionCheckerPtr& checker)
+               const MetricsPtr& metrics, const CollisionCheckerPtr& checker)
 {
 
   std::string what, full_param_name = param_ns+"/"+param_name;

@@ -2,10 +2,8 @@
 #include <cnr_logger/cnr_logger.h>
 #include <random>
 
-
 int main(int argc, char **argv)
 {
-
   std::string file_path = std::string(TEST_DIR) + "/logger_param.yaml";
   std::cout << "file_path = " << file_path << std::endl;
   // Create the logger

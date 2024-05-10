@@ -1225,9 +1225,9 @@ YAML::Node Tree::toYAML() const
   tree["use_kdtree"] = use_kdtree_;
   tree["nodes"] = nodes;
   tree["connections"] = connections;
+
   return tree;
 }
-
 
 void Tree::toYAML(const std::string& file_name) const
 {

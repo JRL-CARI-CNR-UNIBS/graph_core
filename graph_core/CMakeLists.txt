@@ -60,7 +60,6 @@ target_compile_definitions(node_connection_test
                            TEST_DIR="${CMAKE_CURRENT_LIST_DIR}/tests")
 target_link_libraries(node_connection_test PUBLIC
   "${PROJECT_NAME}::${PROJECT_NAME}"
-  cnr_logger::cnr_logger
 )
 
 # Install

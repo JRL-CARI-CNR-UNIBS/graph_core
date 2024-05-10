@@ -733,8 +733,6 @@ public:
    */
   static PathPtr fromYAML(const YAML::Node& yaml, const MetricsPtr& metrics,
                           const CollisionCheckerPtr& checker, const cnr_logger::TraceLoggerPtr& logger);
-  static PathPtr fromYAML(const YAML::Node& yaml, const MetricsPtr& metrics,
-                          const CollisionCheckerPtr& checker, std::string& what);
 
   friend std::ostream& operator<<(std::ostream& os, const Path& path);
 };
