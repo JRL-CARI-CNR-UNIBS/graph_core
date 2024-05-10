@@ -1,22 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(graph_core)
 
-add_compile_options(-std=c++17 -funroll-loops -Wall -Ofast)
 #set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_BUILD_TYPE Debug)
 
-find_package(Eigen3 REQUIRED)
 find_package(cnr_logger REQUIRED)
 find_package(cnr_param REQUIRED)
-find_package(Boost REQUIRED COMPONENTS date_time filesystem)
-
-include_directories(
-  include
-  ${EIGEN3_INCLUDE_DIRS}
-  ${cnr_logger_INCLUDE_DIRS}
-  ${cnr_param_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
- )
 
 add_library(${PROJECT_NAME} SHARED
   src/${PROJECT_NAME}/graph/node.cpp
@@ -41,64 +30,71 @@ add_library(${PROJECT_NAME} SHARED
   src/${PROJECT_NAME}/solvers/path_optimizers/path_optimizer_base.cpp
   src/${PROJECT_NAME}/solvers/path_optimizers/path_local_optimizer.cpp
   )
-target_link_libraries(${PROJECT_NAME} PUBLIC
-  ${cnr_logger_LIBRARIES} #cnr_logger::cnr_logger
-  ${cnr_param_LIBRARIES}
-  ${Boost_LIBRARIES}
+target_include_directories(${PROJECT_NAME} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
 )
+target_compile_options(${PROJECT_NAME} PUBLIC -std=c++17 -funroll-loops -Wall -Ofast)
+
+target_link_libraries(${PROJECT_NAME} PUBLIC
+  cnr_param::cnr_param
+  cnr_logger::cnr_logger
+)
+
+add_library("${PROJECT_NAME}::${PROJECT_NAME}" ALIAS ${PROJECT_NAME})
 
 add_executable(kdtree_test tests/kdtree_test.cpp)
+target_compile_definitions(kdtree_test
+  PRIVATE
+  TEST_DIR="${CMAKE_CURRENT_LIST_DIR}/tests")
+
 target_link_libraries(kdtree_test PUBLIC
-  ${cnr_logger_LIBRARIES} #cnr_logger::cnr_logger
-  ${cnr_param_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${PROJECT_NAME}
+  "${PROJECT_NAME}::${PROJECT_NAME}"
 )
 
+
 add_executable(node_connection_test tests/node_connection_test.cpp)
+message(${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/tests)
+target_compile_definitions(node_connection_test
+                           PRIVATE
+                           TEST_DIR="${CMAKE_CURRENT_LIST_DIR}/tests")
 target_link_libraries(node_connection_test PUBLIC
-  ${cnr_logger_LIBRARIES} #cnr_logger::cnr_logger
-  ${cnr_param_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${PROJECT_NAME}
+  "${PROJECT_NAME}::${PROJECT_NAME}"
+  cnr_logger::cnr_logger
 )
 
 # Install
 install(DIRECTORY include/${PROJECT_NAME}
   DESTINATION include)
 
+install(FILES tests/logger_param.yaml
+  DESTINATION "share/${PROJECT_NAME}/tests")
+
+
 install(
-  TARGETS ${PROJECT_NAME}
+  TARGETS ${PROJECT_NAME} kdtree_test node_connection_test
   EXPORT ${PROJECT_NAME}Targets
-  ARCHIVE DESTINATION lib#/${PROJECT_NAME}
-  LIBRARY DESTINATION lib#/${PROJECT_NAME}
-  RUNTIME DESTINATION bin#/${PROJECT_NAME}
+  ARCHIVE DESTINATION lib/${PROJECT_NAME}
+  LIBRARY DESTINATION lib/${PROJECT_NAME}
+  RUNTIME DESTINATION bin/${PROJECT_NAME}
 )
 
-set(EXPORT_CONFIGDIR "share/${PROJECT_NAME}/cmake")
-
-install(EXPORT graph_coreTargets
-  DESTINATION ${EXPORT_CONFIGDIR}
-  FILE graph_coreTargets.cmake
+install(EXPORT ${PROJECT_NAME}Targets
+  DESTINATION "share/${PROJECT_NAME}/cmake"
+  NAMESPACE ${PROJECT_NAME}::
+  FILE ${PROJECT_NAME}Targets.cmake
 )
-
-export(
-  EXPORT graph_coreTargets
-  FILE "${PROJECT_BINARY_DIR}/graph_coreTargets.cmake")
 
 include(CMakePackageConfigHelpers)
-set(INCLUDE_DIR include)
-configure_package_config_file(${CMAKE_CURRENT_LIST_DIR}/graph_coreConfig.cmake.in
-  ${CMAKE_CURRENT_BINARY_DIR}/graph_coreConfig.cmake
-  INSTALL_DESTINATION ${EXPORT_CONFIGDIR})
-write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/graph_coreConfigVersion.cmake
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
   VERSION 0.0.1
   COMPATIBILITY AnyNewerVersion)
 
 install(FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/graph_coreConfig.cmake
-  ${CMAKE_CURRENT_BINARY_DIR}/graph_coreConfigVersion.cmake
-  DESTINATION ${EXPORT_CONFIGDIR})
+  ${CMAKE_SOURCE_DIR}/cmake_config/${PROJECT_NAME}Config.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+  DESTINATION "share/${PROJECT_NAME}/cmake")
+
 
 # make uninstall
 add_custom_target("uninstall" COMMENT "Uninstall installed files")

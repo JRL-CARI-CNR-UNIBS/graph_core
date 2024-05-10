@@ -2,17 +2,14 @@
 #include <cnr_logger/cnr_logger.h>
 #include <random>
 
-//To get the path to logger params file
-#include <filesystem>
 
 int main(int argc, char **argv)
 {
-  // Get the path to the logger params file
-  std::filesystem::path file_path = std::filesystem::read_symlink("/proc/self/exe").parent_path().parent_path().parent_path()
-      / "cari_motion_planning/graph_core/tests/logger_param.yaml";
 
+  std::string file_path = std::string(TEST_DIR) + "/logger_param.yaml";
+  std::cout << "file_path = " << file_path << std::endl;
   // Create the logger
-  cnr_logger::TraceLoggerPtr logger=std::make_shared<cnr_logger::TraceLogger>("kdtree_test", file_path.string());
+  cnr_logger::TraceLoggerPtr logger=std::make_shared<cnr_logger::TraceLogger>("kdtree_test", file_path);
 
   int n_kdnodes = 10;
   int threshold = std::numeric_limits<int>::max();
