@@ -280,3 +280,8 @@ bool RRTStar::solve(PathPtr &solution, const unsigned int& max_iter, const doubl
 
 } //end namespace core
 } // end namespace graph
+
+
+
+#include <cnr_class_loader/register_macro.hpp>
+CLASS_LOADER_REGISTER_CLASS(graph::core::RRTStar, graph::core::TreeSolver)

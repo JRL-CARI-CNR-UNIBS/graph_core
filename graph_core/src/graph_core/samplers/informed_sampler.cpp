@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/samplers/informed_sampler.h>
 
+
 namespace graph
 {
 namespace core
@@ -238,3 +239,11 @@ SamplerPtr InformedSampler::clone()
 
 } //end namespace core
 } // end namespace graph
+
+
+
+/**
+ * @brief Register class to be loader with cnr_class_loader
+ */
+#include <cnr_class_loader/register_macro.hpp>
+CLASS_LOADER_REGISTER_CLASS(graph::core::InformedSampler, graph::core::SamplerBase)

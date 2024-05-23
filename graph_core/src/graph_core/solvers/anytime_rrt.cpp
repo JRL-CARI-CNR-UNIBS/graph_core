@@ -429,3 +429,6 @@ bool AnytimeRRT::update(const NodePtr& n, PathPtr &solution)
 } // end namespace graph
 
 
+
+#include <cnr_class_loader/register_macro.hpp>
+CLASS_LOADER_REGISTER_CLASS(graph::core::AnytimeRRT, graph::core::TreeSolver)

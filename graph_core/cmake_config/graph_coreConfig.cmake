@@ -3,6 +3,7 @@ include(CMakeFindDependencyMacro)
 
 find_dependency(cnr_logger REQUIRED)
 find_dependency(cnr_param REQUIRED)
+find_dependency(cnr_class_loader REQUIRED)
 
 
 find_package(PkgConfig REQUIRED)

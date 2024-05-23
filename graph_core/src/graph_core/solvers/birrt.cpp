@@ -215,3 +215,8 @@ bool BiRRT::update(const NodePtr& n, PathPtr& solution)
 
 } //end namespace core
 } // end namespace graph
+
+
+
+#include <cnr_class_loader/register_macro.hpp>
+CLASS_LOADER_REGISTER_CLASS(graph::core::BiRRT, graph::core::TreeSolver)

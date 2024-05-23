@@ -50,7 +50,6 @@ typedef std::shared_ptr<TreeSolver> TreeSolverPtr;
 class TreeSolver: public std::enable_shared_from_this<TreeSolver>
 {
 protected:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
    * @brief Pointer to the metrics used for evaluating paths.
@@ -196,6 +195,7 @@ protected:
   virtual void printMyself(std::ostream& os) const;
 
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
    * @brief Empty constructor for TreeSolver. The function init() must be called afterwards.
@@ -230,11 +230,7 @@ public:
     goal_cost_fcn_(goal_cost_fcn),
     logger_(logger)
   {
-    path_cost_ = std::numeric_limits<double>::infinity();
-    goal_cost_ = 0.0;
-    cost_ = std::numeric_limits<double>::infinity();
-
-    initialized_ = true;
+    init(metrics,checker,sampler,goal_cost_fcn,logger);
   }
 
   TreeSolver(const MetricsPtr& metrics,
@@ -246,12 +242,7 @@ public:
     sampler_(sampler),
     logger_(logger)
   {
-    path_cost_ = std::numeric_limits<double>::infinity();
-    goal_cost_ = 0.0;
-    cost_ = std::numeric_limits<double>::infinity();
-    goal_cost_fcn_=std::make_shared<GoalCostFunction>();
-
-    initialized_ = true;
+    init(metrics,checker,sampler,logger);
   }
 
   /**
@@ -295,25 +286,8 @@ public:
                     const SamplerPtr& sampler,
                     const cnr_logger::TraceLoggerPtr& logger)
   {
-    if(initialized_)
-    {
-      CNR_WARN(logger_,"Collision checker already initialised!");
-      return false;
-    }
-
-    metrics_ = metrics;
-    checker_ = checker;
-    sampler_ = sampler;
-    logger_ = logger;
-
-    path_cost_ = std::numeric_limits<double>::infinity();
-    goal_cost_ = 0.0;
-    cost_ = std::numeric_limits<double>::infinity();
-    goal_cost_fcn_=std::make_shared<GoalCostFunction>();
-
-    initialized_ = true;
-
-    return true;
+    GoalCostFunctionPtr goal_cost_fcn=std::make_shared<GoalCostFunction>();
+    return init(metrics,checker,sampler,goal_cost_fcn,logger);
   }
 
   /**

@@ -7,6 +7,8 @@ project(graph_core)
 find_package(cnr_logger REQUIRED)
 find_package(cnr_param REQUIRED)
 
+find_package(cnr_class_loader REQUIRED)
+
 add_library(${PROJECT_NAME} SHARED
   src/${PROJECT_NAME}/graph/node.cpp
   src/${PROJECT_NAME}/graph/connection.cpp
@@ -39,6 +41,7 @@ target_compile_options(${PROJECT_NAME} PUBLIC -std=c++17 -funroll-loops -Wall -O
 target_link_libraries(${PROJECT_NAME} PUBLIC
   cnr_param::cnr_param
   cnr_logger::cnr_logger
+  cnr_class_loader::cnr_class_loader
 )
 
 add_library("${PROJECT_NAME}::${PROJECT_NAME}" ALIAS ${PROJECT_NAME})

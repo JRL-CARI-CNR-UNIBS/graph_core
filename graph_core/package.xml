@@ -17,6 +17,7 @@
 
   <depend>cnr_logger</depend>
   <depend>cnr_param</depend>
+  <depend>cnr_class_loader</depend>
   <export>
   </export>
 </package>
