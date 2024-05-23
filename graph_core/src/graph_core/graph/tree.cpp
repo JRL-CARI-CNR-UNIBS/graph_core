@@ -1294,7 +1294,7 @@ TreePtr Tree::fromYAML(const YAML::Node& yaml,
   else
     use_kdtree = yaml["use_kdtree"].as<bool>();
 
-  int max_distance = -1;
+  double max_distance = -1.0;
   bool compute_max_distance = false;
   if (!yaml["max_distance"])
   {
@@ -1302,7 +1302,7 @@ TreePtr Tree::fromYAML(const YAML::Node& yaml,
     compute_max_distance = true;
   }
   else
-    max_distance = yaml["max_distance"].as<int>();
+    max_distance = yaml["max_distance"].as<double>();
 
   YAML::Node nodes = yaml["nodes"];
   YAML::Node connections = yaml["connections"];
