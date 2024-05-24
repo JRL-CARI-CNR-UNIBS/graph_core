@@ -6,7 +6,6 @@ project(graph_core)
 
 find_package(cnr_logger REQUIRED)
 find_package(cnr_param REQUIRED)
-
 find_package(cnr_class_loader REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
@@ -19,6 +18,8 @@ add_library(${PROJECT_NAME} SHARED
 
   src/${PROJECT_NAME}/samplers/informed_sampler.cpp
   src/${PROJECT_NAME}/samplers/tube_informed_sampler.cpp
+
+  src/${PROJECT_NAME}/metrics/euclidean_metrics.cpp
 
   src/${PROJECT_NAME}/datastructure/kdtree.cpp
   src/${PROJECT_NAME}/datastructure/vector.cpp
@@ -55,7 +56,6 @@ target_link_libraries(kdtree_test PUBLIC
   "${PROJECT_NAME}::${PROJECT_NAME}"
 )
 
-
 add_executable(node_connection_test tests/node_connection_test.cpp)
 message(${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/tests)
 target_compile_definitions(node_connection_test
@@ -72,13 +72,12 @@ install(DIRECTORY include/${PROJECT_NAME}
 install(FILES tests/logger_param.yaml
   DESTINATION "share/${PROJECT_NAME}/tests")
 
-
 install(
   TARGETS ${PROJECT_NAME} kdtree_test node_connection_test
   EXPORT ${PROJECT_NAME}Targets
-  ARCHIVE DESTINATION lib/${PROJECT_NAME}
-  LIBRARY DESTINATION lib/${PROJECT_NAME}
-  RUNTIME DESTINATION bin/${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 
 install(EXPORT ${PROJECT_NAME}Targets
@@ -96,7 +95,6 @@ install(FILES
   ${CMAKE_SOURCE_DIR}/cmake_config/${PROJECT_NAME}Config.cmake
   ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
   DESTINATION "share/${PROJECT_NAME}/cmake")
-
 
 # make uninstall
 add_custom_target("uninstall" COMMENT "Uninstall installed files")

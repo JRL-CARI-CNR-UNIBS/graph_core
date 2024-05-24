@@ -65,6 +65,13 @@ public:
   virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution) override;
   virtual bool update(const NodePtr& n, PathPtr& solution) override;
   virtual bool update(PathPtr& solution) override;
+
+  virtual bool pluginInit(const std::string& param_ns,
+                          const graph::core::MetricsPtr& metrics,
+                          const graph::core::CollisionCheckerPtr& checker,
+                          const graph::core::SamplerPtr& sampler,
+                          const graph::core::GoalCostFunctionPtr& goal_cost_fcn,
+                          const cnr_logger::TraceLoggerPtr& logger) override;
 };
 
 } //end namespace core

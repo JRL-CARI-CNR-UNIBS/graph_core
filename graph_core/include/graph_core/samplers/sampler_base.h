@@ -288,6 +288,27 @@ public:
    * @return A shared pointer to the cloned Sampler object.
    */
   virtual SamplerPtr clone() = 0;
+
+  /**
+   * @brief pluginInit  This function should be called just after the plugin is loaded and initialise the graph::core::SamplerBase object, defining its main attributes.
+   * @param param_ns defines the namespace under which parameter are searched for using cnr_param library.
+   * @param focus_1 focus 1 for the ellipse.
+   * @param focus_2 focus 2 for the ellipse.
+   * @param lower_bound Lower bounds for each dimension.
+   * @param upper_bound Upper bounds for each dimension.
+   * @param scale Scaling factors for each dimension.
+   * @param logger TraceLogger for logging.
+   * @param cost Cost of the path (default: infinity).
+   * @return True if correctly initialised, False if already initialised.
+   */
+  virtual bool pluginInit(const std::string& param_ns,
+                    const Eigen::VectorXd& focus_1,
+                    const Eigen::VectorXd& focus_2,
+                    const Eigen::VectorXd& lower_bound,
+                    const Eigen::VectorXd& upper_bound,
+                    const Eigen::VectorXd& scale,
+                    const cnr_logger::TraceLoggerPtr& logger,
+                    const double& cost = std::numeric_limits<double>::infinity()) = 0;
 };
 
 } //end namespace core

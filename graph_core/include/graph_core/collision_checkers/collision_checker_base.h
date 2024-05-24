@@ -309,6 +309,15 @@ public:
    */
   virtual CollisionCheckerPtr clone()=0;
 
+  /**
+   * @brief pluginInit  This function should be called just after the plugin is loaded and initialise the graph::core::CollisionCheckerBase object, defining its main attributes.
+   * @param param_ns defines the namespace under which parameter are searched for using cnr_param library. MoveitCollisionChecker requires group_name and checker_resolution as parameters.
+   * @param min_distance Distance between configurations checked for collisions along a connection.
+   * @param logger Pointer to a TraceLogger for logging.
+   * @return True if correctly initialised, False if already initialised.
+   */
+  virtual bool pluginInit(const std::string& param_ns,const cnr_logger::TraceLoggerPtr& logger, const double& min_distance = 0.01) = 0;
+
 };
 
 } //end namespace core

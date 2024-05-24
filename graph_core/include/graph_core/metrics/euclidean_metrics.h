@@ -105,6 +105,13 @@ public:
     return std::make_shared<EuclideanMetrics>(logger_);
   }
 
+  /**
+   * @brief pluginInit This function should be called just after the plugin is loaded and initialise the graph::core::EuclideanMetrics object, defining its main attributes.
+   * @param param_ns defines the namespace under which parameter are searched for using cnr_param library.
+   * @param logger Pointer to a TraceLogger for logging.
+   * @return True if correctly initialised, False if already initialised.
+   */
+  virtual bool pluginInit(const std::string& param_ns, const cnr_logger::TraceLoggerPtr& logger) override;
 };
 
 } //end namespace core

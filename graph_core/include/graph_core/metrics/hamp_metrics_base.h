@@ -48,7 +48,6 @@ class HampMetricsBase: public MetricsBase
 {
 protected:
 
-
   /**
    * @brief human_positions_ Matrix 3xn with the human positions.
    */
