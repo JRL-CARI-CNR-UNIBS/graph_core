@@ -1,16 +1,5 @@
 #include <graph_core/metrics/euclidean_metrics.h>
 
-namespace graph
-{
-namespace core
-{
-bool EuclideanMetrics::pluginInit(const std::string& param_ns, const cnr_logger::TraceLoggerPtr& logger)
-{
-  return init(logger);
-}
-}
-}
-
 /**
  * @brief Register class to be loaded with cnr_class_loader
  */

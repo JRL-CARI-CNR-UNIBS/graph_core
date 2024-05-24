@@ -193,16 +193,6 @@ bool RRT::update(const NodePtr& n, PathPtr &solution)
   return false;
 }
 
-bool RRT::pluginInit(const std::string& param_ns,
-                     const graph::core::MetricsPtr& metrics,
-                     const graph::core::CollisionCheckerPtr& checker,
-                     const graph::core::SamplerPtr& sampler,
-                     const graph::core::GoalCostFunctionPtr& goal_cost_fcn,
-                     const cnr_logger::TraceLoggerPtr& logger)
-{
-  return init(metrics,checker,sampler,goal_cost_fcn,logger);
-}
-
 } //end namespace core
 } // end namespace graph
 

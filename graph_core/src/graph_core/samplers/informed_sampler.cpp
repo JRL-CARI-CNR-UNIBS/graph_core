@@ -237,13 +237,6 @@ SamplerPtr InformedSampler::clone()
   return std::make_shared<InformedSampler>(focus_1_,focus_2_,lower_bound_,upper_bound_,scale_,logger_,cost_);
 }
 
-bool InformedSampler::pluginInit(const std::string& param_ns,const Eigen::VectorXd& focus_1,const Eigen::VectorXd& focus_2,
-                                 const Eigen::VectorXd& lower_bound,const Eigen::VectorXd& upper_bound,const Eigen::VectorXd& scale,const cnr_logger::TraceLoggerPtr& logger,
-                                 const double& cost)
-{
-  return init(focus_1,focus_2,lower_bound,upper_bound,scale,logger,cost);
-}
-
 } //end namespace core
 } // end namespace graph
 

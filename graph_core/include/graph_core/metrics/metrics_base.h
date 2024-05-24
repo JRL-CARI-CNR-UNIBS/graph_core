@@ -139,15 +139,6 @@ public:
    * @return A shared pointer to the cloned Metrics object.
    */
   virtual MetricsPtr clone() = 0;
-
-  /**
-   * @brief pluginInit  This function should be called just after the plugin is loaded and initialise the graph::core::MetricsBase object, defining its main attributes.
-   * @param param_ns defines the namespace under which parameter are searched for using cnr_param library.
-   * @param logger Pointer to a TraceLogger for logging.
-   * @return True if correctly initialised, False if already initialised.
-   */
-  virtual bool pluginInit(const std::string& param_ns, const cnr_logger::TraceLoggerPtr& logger) = 0;
-
 };
 
 } //end namespace core

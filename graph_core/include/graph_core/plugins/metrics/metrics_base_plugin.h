@@ -26,47 +26,67 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/solvers/tree_solver.h>
+#include <graph_core/metrics/metrics_base.h>
+#include <cnr_class_loader/register_macro.hpp>
 
 namespace graph
 {
 namespace core
 {
 
-class RRT;
-typedef std::shared_ptr<RRT> RRTPtr;
+/**
+ * @class MetricsBasePlugin
+ * @brief This class implements a wrapper to graph::core::MetricsBase to allow its plugin to be defined.
+ * The class can be loaded as a plugin and builds a graph::core::MetricsBase object.
+ */
+class MetricsBasePlugin;
+typedef std::shared_ptr<MetricsBasePlugin> MetricsPluginPtr;
 
-class RRT: public TreeSolver
+class MetricsBasePlugin: public std::enable_shared_from_this<MetricsBasePlugin>
 {
 protected:
+
+  /**
+   * @brief metrics_ is the graph::core::MetricsBase object built and initialized by this plugin class.
+   */
+  graph::core::MetricsPtr metrics_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  RRT():TreeSolver(){} //set initialized_ false
+  /**
+   * @brief Empty constructor for MetricsBasePlugin. The function init() must be called afterwards.
+   */
+  MetricsBasePlugin()
+  {
+    metrics_ = nullptr;
+  }
 
-  RRT(const MetricsPtr& metrics,
-      const CollisionCheckerPtr& checker,
-      const SamplerPtr& sampler,
-      const GoalCostFunctionPtr& goal_cost_fcn,
-      const cnr_logger::TraceLoggerPtr& logger):
-    TreeSolver(metrics, checker, sampler, goal_cost_fcn, logger) {} //set initialized_ true
+  /**
+   * @brief Destructor for MetricsBasePlugin.
+   */
+  virtual ~MetricsBasePlugin()
+  {
+    metrics_ = nullptr;
+  }
 
-  RRT(const MetricsPtr& metrics,
-      const CollisionCheckerPtr& checker,
-      const SamplerPtr& sampler,
-      const cnr_logger::TraceLoggerPtr& logger):
-    TreeSolver(metrics, checker, sampler, logger) {} //set initialized_ true
+  /**
+   * @brief getMetrics return the grraph::core::MetricsPtr object built by the plugin.
+   * @return the graph::core::MetricsPtr object built.
+   */
+  virtual graph::core::MetricsPtr getMetrics()
+  {
+    return metrics_;
+  }
 
-  virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
-  virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity()) override;
-  virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
-  virtual void resetProblem() override;
-  virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution) override;
-  virtual bool update(const NodePtr& n, PathPtr& solution) override;
-  virtual bool update(PathPtr& solution) override;
+  /**
+   * @brief init Initialise the graph::core::MetricsBase object, defining its main attributes.
+   * @param param_ns defines the namespace under which parameter are searched for using cnr_param library.
+   * @param logger Pointer to a TraceLogger for logging.
+   * @return True if correctly initialised, False if already initialised.
+   */
+  virtual bool init(const std::string& param_ns, const cnr_logger::TraceLoggerPtr& logger) = 0;
 };
 
-} //end namespace core
-} // end namespace graph
-
+} //namespace core
+} //namespace graph

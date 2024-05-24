@@ -713,24 +713,6 @@ public:
   double computeRewireRadius(const SamplerPtr &sampler);
 
   friend std::ostream& operator<<(std::ostream& os, const TreeSolver& solver);
-
-  /**
-   * @brief pluginInit  This function should be called just after the plugin is loaded and initialise the graph::core::TreeSolver object, defining its main attributes.
-   * @param param_ns defines the namespace under which parameter are searched for using cnr_param library.
-   * @param metrics The metrics used to evaluate paths.
-   * @param checker The collision checker for checking collisions.
-   * @param sampler The sampler for generating random configurations.
-   * @param goal_cost_fcn The function used to assign the cost of the goal. If it is not defined, the default cost function does not assign any cost to the goal.
-   * @param logger The logger for logging messages.
-   * @return True if correctly initialised, False if already initialised.
-   */
-  virtual bool pluginInit(const std::string& param_ns,
-                          const graph::core::MetricsPtr& metrics,
-                          const graph::core::CollisionCheckerPtr& checker,
-                          const graph::core::SamplerPtr& sampler,
-                          const graph::core::GoalCostFunctionPtr& goal_cost_fcn,
-                          const cnr_logger::TraceLoggerPtr& logger) = 0;
-
 };
 
 /**

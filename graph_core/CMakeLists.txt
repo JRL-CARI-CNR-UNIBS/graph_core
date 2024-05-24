@@ -9,6 +9,7 @@ find_package(cnr_param REQUIRED)
 find_package(cnr_class_loader REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
+  #Graph
   src/${PROJECT_NAME}/graph/node.cpp
   src/${PROJECT_NAME}/graph/connection.cpp
   src/${PROJECT_NAME}/graph/tree.cpp
@@ -16,22 +17,35 @@ add_library(${PROJECT_NAME} SHARED
   src/${PROJECT_NAME}/graph/path.cpp
   src/${PROJECT_NAME}/graph/net.cpp
 
+  #Samplers
   src/${PROJECT_NAME}/samplers/informed_sampler.cpp
   src/${PROJECT_NAME}/samplers/tube_informed_sampler.cpp
 
+  #Metrics
   src/${PROJECT_NAME}/metrics/euclidean_metrics.cpp
 
+  #Datastructure
   src/${PROJECT_NAME}/datastructure/kdtree.cpp
   src/${PROJECT_NAME}/datastructure/vector.cpp
 
+  #Solvers
   src/${PROJECT_NAME}/solvers/tree_solver.cpp
   src/${PROJECT_NAME}/solvers/rrt.cpp
   src/${PROJECT_NAME}/solvers/birrt.cpp
   src/${PROJECT_NAME}/solvers/rrt_star.cpp
   src/${PROJECT_NAME}/solvers/anytime_rrt.cpp
 
+  #Path optimizers
   src/${PROJECT_NAME}/solvers/path_optimizers/path_optimizer_base.cpp
   src/${PROJECT_NAME}/solvers/path_optimizers/path_local_optimizer.cpp
+
+  #Plugins
+  src/${PROJECT_NAME}/plugins/metrics/euclidean_metrics_plugin.cpp
+  src/${PROJECT_NAME}/plugins/samplers/informed_sampler_plugin.cpp
+  src/${PROJECT_NAME}/plugins/solvers/rrt_plugin.cpp
+  src/${PROJECT_NAME}/plugins/solvers/birrt_plugin.cpp
+  src/${PROJECT_NAME}/plugins/solvers/anytime_rrt_plugin.cpp
+  src/${PROJECT_NAME}/plugins/solvers/rrt_star_plugin.cpp
   )
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
