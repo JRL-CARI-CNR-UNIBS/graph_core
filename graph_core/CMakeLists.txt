@@ -1,15 +1,18 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.16)
 project(graph_core)
 
 #set(CMAKE_BUILD_TYPE Release)
 #set(CMAKE_BUILD_TYPE Debug)
+
+#Options
+option(ADD_CUSTOM_UNINSTALL "Add uninstall target" OBJC_STANDARD)
 
 find_package(cnr_logger REQUIRED)
 find_package(cnr_param REQUIRED)
 find_package(cnr_class_loader REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
-  #Graph
+  #Graph components
   src/${PROJECT_NAME}/graph/node.cpp
   src/${PROJECT_NAME}/graph/connection.cpp
   src/${PROJECT_NAME}/graph/tree.cpp
@@ -71,7 +74,6 @@ target_link_libraries(kdtree_test PUBLIC
 )
 
 add_executable(node_connection_test tests/node_connection_test.cpp)
-message(${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/tests)
 target_compile_definitions(node_connection_test
                            PRIVATE
                            TEST_DIR="${CMAKE_CURRENT_LIST_DIR}/tests")
@@ -111,11 +113,15 @@ install(FILES
   DESTINATION "share/${PROJECT_NAME}/cmake")
 
 # make uninstall
-add_custom_target("uninstall" COMMENT "Uninstall installed files")
-add_custom_command(
-    TARGET "uninstall"
-    POST_BUILD
-    COMMENT "Uninstall files with install_manifest.txt"
-    COMMAND xargs rm -vf < install_manifest.txt || echo Nothing in
-            install_manifest.txt to be uninstalled!
-)
+if(ADD_CUSTOM_UNINSTALL)
+  message("Adding custom uninstall")
+  add_custom_target("uninstall" COMMENT "Uninstall installed files")
+  add_custom_command(
+      TARGET "uninstall"
+      POST_BUILD
+      COMMENT "Uninstall files with install_manifest.txt"
+      COMMAND xargs rm -vf < install_manifest.txt || echo Nothing in
+              install_manifest.txt to be uninstalled!
+  )
+endif()
+
