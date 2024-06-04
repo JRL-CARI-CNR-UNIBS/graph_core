@@ -26,12 +26,13 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#include <Eigen/Core>
-#include <memory>
-#include <vector>
 #include <cnr_param/cnr_param.h>
 #include <cnr_logger/cnr_logger.h>
+
+#include <Eigen/Core>
+
+#include <memory>
+#include <vector>
 #include <chrono>
 #include <any>
 #include <type_traits>
@@ -40,7 +41,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MakeString( M, L ) M(L)
 #define $Line MakeString( Stringize, __LINE__ )
 #define Reminder __FILE__ "(" $Line ") : Reminder: "
-
 
 namespace graph
 {
@@ -118,7 +118,7 @@ static inline bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std
 {
   std::string what, full_param_name = param_ns+"/"+param_name;
   if(cnr::param::has(full_param_name, what))
-  {
+  {   
     if(not cnr::param::get(full_param_name, param, what))
     {
       CNR_ERROR(logger, "Cannot load " << full_param_name + " parameter.\n"<<what);

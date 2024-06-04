@@ -2,7 +2,14 @@ cmake_minimum_required(VERSION 3.16)
 project(graph_core)
 
 #set(CMAKE_BUILD_TYPE Release)
-#set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Debug)
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-funroll-loops -Wall -Ofast)
+endif()
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 #Options
 option(ADD_CUSTOM_UNINSTALL "Add uninstall target" OBJC_STANDARD)
@@ -54,7 +61,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
-target_compile_options(${PROJECT_NAME} PUBLIC -std=c++17 -funroll-loops -Wall -Ofast)
+# target_compile_options(${PROJECT_NAME} PUBLIC -std=c++20 -funroll-loops -Wall -Ofast)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
   cnr_param::cnr_param
