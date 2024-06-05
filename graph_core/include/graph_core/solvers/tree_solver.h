@@ -132,7 +132,7 @@ protected:
    * The other constructors automatically initialise the object.
    * As long as the object is not initialised, it cannot perform its main functions.
    */
-  bool initialized_;
+  bool initialized_ = false;
 
   /**
    * @brief Pointer to the goal node of the path planning problem.
@@ -142,7 +142,7 @@ protected:
   /**
    * @brief Cost of the path associated with the current solution.
    */
-  double path_cost_;
+  double path_cost_ = 0;
 
   /**
    * @brief Goal cost associated with the current solution.
@@ -262,7 +262,7 @@ public:
   {
     if(initialized_)
     {
-      CNR_WARN(logger_,"Collision checker already initialised!");
+      CNR_WARN(logger_,"Solver already initialised!");
       return false;
     }
 
