@@ -12,7 +12,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 #Options
-option(ADD_CUSTOM_UNINSTALL "Add uninstall target" OBJC_STANDARD)
+option(ADD_CUSTOM_UNINSTALL "Add uninstall target" ON)
 
 find_package(cnr_logger REQUIRED)
 find_package(cnr_param REQUIRED)
