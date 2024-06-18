@@ -1,0 +1,31 @@
+/snap/clion/277/bin/cmake/linux/x64/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/snap/clion/277/bin/ninja/linux/x64/ninja -G Ninja -S /home/nyquist/projects/planning_ws/src/cari_motion_planning/graph_core -B /home/nyquist/projects/planning_ws/src/cari_motion_planning/graph_core/cmake-build-debug
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+CMake Error at CMakeLists.txt:17 (find_package):
+  By not providing "Findcnr_logger.cmake" in CMAKE_MODULE_PATH this project
+  has asked CMake to find a package configuration file provided by
+  "cnr_logger", but CMake did not find one.
+
+  Could not find a package configuration file provided by "cnr_logger" with
+  any of the following names:
+
+    cnr_loggerConfig.cmake
+    cnr_logger-config.cmake
+
+  Add the installation prefix of "cnr_logger" to CMAKE_PREFIX_PATH or set
+  "cnr_logger_DIR" to a directory containing one of the above files.  If
+  "cnr_logger" provides a separate development package or SDK, be sure it has
+  been installed.
+
+
+-- Configuring incomplete, errors occurred!

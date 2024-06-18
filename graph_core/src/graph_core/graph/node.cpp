@@ -99,6 +99,7 @@ void Node::addParentConnection(const ConnectionPtr &connection)
 
   //Set connection's child as valid
   connection->flags_[Connection::idx_child_valid_] = true;
+  return;
 }
 
 void Node::addChildConnection(const ConnectionPtr &connection)
@@ -113,6 +114,7 @@ void Node::addChildConnection(const ConnectionPtr &connection)
 
   //Set connection's parent as valid
   connection->flags_[Connection::idx_parent_valid_] = true;
+  return;
 }
 
 void Node::addNetParentConnection(const ConnectionPtr &connection)
@@ -127,6 +129,7 @@ void Node::addNetParentConnection(const ConnectionPtr &connection)
 
   //Set connection's child as valid
   connection->flags_[Connection::idx_child_valid_] = true;
+  return;
 }
 
 void Node::addNetChildConnection(const ConnectionPtr &connection)
@@ -141,6 +144,7 @@ void Node::addNetChildConnection(const ConnectionPtr &connection)
 
   //Set connection's parent as valid
   connection->flags_[Connection::idx_parent_valid_] = true;
+  return;
 }
 
 void Node::removeParentConnection(const ConnectionPtr &connection)
@@ -193,6 +197,7 @@ void Node::removeNetParentConnection(const std::vector<ConnectionWeakPtr>::itera
     //Remove connection from this node's net parent connections vector
     net_parent_connections_.erase(it_conn);
   }
+  return;
 }
 
 void Node::removeChildConnection(const ConnectionPtr &connection)
@@ -213,10 +218,12 @@ void Node::removeChildConnection(const std::vector<ConnectionPtr>::iterator &it_
   {
     //Set connection's parent as not valid (before erasing)
     (*it_conn)->flags_[Connection::idx_parent_valid_] = false;
+    assert(not (*it_conn)->flags_[Connection::idx_parent_valid_]);
 
     //Remove connection from this node's child connections vector
     child_connections_.erase(it_conn);
   }
+  return;
 }
 
 void Node::removeNetChildConnection(const ConnectionPtr &connection)
@@ -237,6 +244,7 @@ void Node::removeNetChildConnection(const std::vector<ConnectionPtr>::iterator& 
   {
     //Set connection's parent as not valid (before erasing)
     (*it_conn)->flags_[Connection::idx_parent_valid_] = false;
+    assert(not (*it_conn)->flags_[Connection::idx_parent_valid_]);
 
     //Remove connection from this node's child connections vector
     net_child_connections_.erase(it_conn);

@@ -240,11 +240,6 @@ public:
   }
 
   /**
-   * @brief setTimeCostUpdate sets the time when the connection cost is updated.
-   *  E.g., if you clone a path, you may want to set the same time_cost_update_ of the connections of the original path
-   * @param time
-   */
-  /**
    * @brief Sets the time of the last cost update for the Connection.
    *
    * E.g., if you clone a path, you may want to set the same time_cost_update_ of the connections of the original path

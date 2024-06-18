@@ -130,7 +130,15 @@ void Connection::remove()
     else
       getChild()->removeParentConnection(pointer());     //Set flags_[idx_child_valid_] = false
 
-    assert(not flags_[idx_child_valid_]);
+    assert([&]()->bool{
+      if(flags_.size() == 0)
+        return true;
+
+      if(flags_[idx_child_valid_])
+        return false;
+
+      return true;
+    }());
   }
 
   if(flags_[idx_parent_valid_])
@@ -142,7 +150,15 @@ void Connection::remove()
     else
       getParent()->removeChildConnection(pointer());    //Set flags_[idx_parent_valid_] = false
 
-    assert(not flags_[idx_parent_valid_]);
+    assert([&]()->bool{
+      if(flags_.size() == 0)
+        return true;
+
+      if(this->flags_[idx_parent_valid_])
+        return false;
+
+      return true;
+    }());
   }
 }
 
@@ -211,15 +227,15 @@ void Connection::flip()
 Connection::~Connection()
 {
   assert([&]() ->bool{ // check that the connection has been removed both from parent's connections and child's connections
-           if(flags_[idx_parent_valid_] || flags_[idx_child_valid_])
-           {
-             CNR_FATAL(logger_,"Parent and/or child have not been disconnected from the connection that is being destroyed!\n "<<this<<" ("<<getParent()<<")-->("<<getChild()<<")");
-             CNR_FATAL(logger_,"parent is valid? "<<flags_[idx_parent_valid_]);
-             CNR_FATAL(logger_,"child is valid? "<<flags_[idx_child_valid_]);
-             return false;
-           }
-           return true;
-         }());
+    if(flags_[idx_parent_valid_] || flags_[idx_child_valid_])
+    {
+      CNR_FATAL(logger_,"Parent and/or child have not been disconnected from the connection that is being destroyed!\n "<<this<<" ("<<getParent()<<")-->("<<getChild()<<")");
+      CNR_FATAL(logger_,"parent is valid? "<<flags_[idx_parent_valid_]);
+      CNR_FATAL(logger_,"child is valid? "<<flags_[idx_child_valid_]);
+      return false;
+    }
+    return true;
+  }());
 }
 
 bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)
