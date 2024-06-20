@@ -143,7 +143,7 @@ bool PathLocalOptimizer::warp(const double &min_conn_length, const double min_st
   if(max_time > 0)
   {
     std::vector<ConnectionPtr> connections = path_->getConnections();
-    std::chrono::time_point<std::chrono::system_clock> tic = std::chrono::system_clock::now();
+    auto tic = time_t::now();
     for (unsigned int idx = 1; idx < connections.size(); idx++)
     {
       if(connections.at(idx-1)->norm()>min_conn_length && connections.at(idx)->norm()>min_conn_length)
@@ -164,8 +164,8 @@ bool PathLocalOptimizer::warp(const double &min_conn_length, const double min_st
         }
       }
 
-      std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
-      std::chrono::duration<double> difference = now - tic;
+      auto now = time_t::now();
+      duration_t difference = now - tic;
       if(difference.count() >= 0.98*max_time) break;
     }
   }

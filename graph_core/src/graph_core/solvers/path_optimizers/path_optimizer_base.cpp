@@ -78,7 +78,7 @@ bool PathOptimizerBase::solve(const unsigned int &max_iteration, const double& m
     return false;
   }
 
-  std::chrono::time_point<std::chrono::system_clock> tic = std::chrono::system_clock::now();
+  auto tic = time_t::now();
   if(max_time<=0.0)
     return false;
 
@@ -92,8 +92,8 @@ bool PathOptimizerBase::solve(const unsigned int &max_iteration, const double& m
     }
     step();
 
-    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
-    std::chrono::duration<double> difference = now - tic;
+    auto now = time_t::now();
+    duration_t difference = now - tic;
     if(difference.count() >= 0.98*max_time)
       break;
   }

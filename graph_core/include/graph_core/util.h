@@ -46,6 +46,9 @@ namespace graph
 {
 namespace core
 {
+using time_t = std::chrono::system_clock;
+using duration_t = std::chrono::duration<double>;
+
 class Connection;
 class Node;
 class Path;

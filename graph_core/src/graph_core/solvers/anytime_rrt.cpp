@@ -75,7 +75,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   if(not initialized_)
     return false;
 
-  std::chrono::time_point<std::chrono::system_clock> tic = std::chrono::system_clock::now();
+  auto tic = time_t::now();
   double time;
 
   if(solved_)
@@ -97,7 +97,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   bool success;
   unsigned int n_failed_iter = 0;
 
-  time = (std::chrono::duration<double> (std::chrono::system_clock::now()-tic)).count();
+  time = (duration_t (time_t::now()-tic)).count();
   while(time<0.98*max_time && (not solved_) && n_failed_iter<FAILED_ITER)
   {
     success = RRT::solve(solution,max_iter,(max_time-time));
@@ -107,7 +107,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     if(not success)
       n_failed_iter++;
 
-    time = (std::chrono::duration<double> (std::chrono::system_clock::now()-tic)).count();
+    time = (duration_t (time_t::now()-tic)).count();
     CNR_DEBUG(logger_,"time "<<time);
   }
 
@@ -131,7 +131,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   bool better_solution_found = false;
   n_failed_iter = 0;
 
-  time = (std::chrono::duration<double> (std::chrono::system_clock::now()-tic)).count();
+  time = (duration_t (time_t::now()-tic)).count();
   while(time<0.98*max_time && (not completed_) && n_failed_iter<FAILED_ITER)
   {
     NodePtr tmp_start_node = std::make_shared<Node>(initial_start_node->getConfiguration(),logger_);
@@ -166,7 +166,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
       break;
     }
 
-    time = (std::chrono::duration<double> (std::chrono::system_clock::now()-tic)).count();
+    time = (duration_t (time_t::now()-tic)).count();
     CNR_DEBUG(logger_,"time "<<time);
   }
 
@@ -266,7 +266,7 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
 
 bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solution, const double& cost2beat, const unsigned int& max_iter, const double &max_time)
 {
-  std::chrono::time_point<std::chrono::system_clock> tic = std::chrono::system_clock::now();
+  auto tic = time_t::now();
 
   if(max_time <=0.0)
     return false;
@@ -313,7 +313,7 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
       return true;
     }
 
-    if((std::chrono::duration<double> (std::chrono::system_clock::now()-tic)).count()>=0.98*max_time)
+    if((duration_t (time_t::now()-tic)).count()>=0.98*max_time)
       break;
   }
 

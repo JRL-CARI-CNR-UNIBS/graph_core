@@ -252,7 +252,7 @@ bool RRTStar::solve(PathPtr &solution, const unsigned int& max_iter, const doubl
   if(not initialized_)
     return false;
 
-  std::chrono::time_point<std::chrono::system_clock> tic = std::chrono::system_clock::now();
+  auto tic = time_t::now();
   bool solved = false;
   unsigned int n_iter = 0;
   for (unsigned int iter = 0; iter < max_iter; iter++)
@@ -269,7 +269,7 @@ bool RRTStar::solve(PathPtr &solution, const unsigned int& max_iter, const doubl
       if(completed_)
         break;
     }
-    if(std::chrono::duration<double>(std::chrono::system_clock::now()-tic).count()>=0.98*max_time)
+    if(duration_t(time_t::now()-tic).count()>=0.98*max_time)
       break;
   }
 

@@ -70,7 +70,7 @@ protected:
   /**
    * @brief Time of the last cost update for the connection.
    */
-  std::chrono::time_point<std::chrono::system_clock> time_cost_update_;
+  std::chrono::time_point<time_t> time_cost_update_;
 
   /**
    * @brief Likelihood associated with the connection.

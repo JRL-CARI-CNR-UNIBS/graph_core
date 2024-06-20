@@ -126,7 +126,7 @@ bool BiRRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 
     NodePtr parent=new_goal_node->getParents().at(0);
     double cost_to_parent=new_goal_node->parentConnection(0)->getCost();
-    std::chrono::time_point<std::chrono::system_clock> time_cost = new_goal_node->parentConnection(0)->getTimeCostUpdate();
+    auto time_cost = new_goal_node->parentConnection(0)->getTimeCostUpdate();
     std::vector<ConnectionPtr> connections=goal_tree_->getConnectionToNode(parent);
     for (ConnectionPtr& conn: connections)
       conn->flip();
@@ -186,7 +186,7 @@ bool BiRRT::update(const NodePtr& n, PathPtr& solution)
 
     NodePtr parent=new_goal_node->getParents().at(0);
     double cost_to_parent=new_goal_node->parentConnection(0)->getCost();
-    std::chrono::time_point<std::chrono::system_clock> time_cost = new_goal_node->parentConnection(0)->getTimeCostUpdate();
+    auto time_cost = new_goal_node->parentConnection(0)->getTimeCostUpdate();
     new_goal_node->disconnect();
 
     std::vector<ConnectionPtr> connections=goal_tree_->getConnectionToNode(parent);
