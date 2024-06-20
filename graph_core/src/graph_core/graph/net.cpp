@@ -71,7 +71,7 @@ std::multimap<double,std::vector<ConnectionPtr>>& Net::getConnectionBetweenNodes
   if(max_time_<=0.0)
     return map_;
 
-  tic_search_ = time_t::now();
+  tic_search_ = graph_time::now();
   computeConnectionFromNodeToNode(start_node,goal_node,cost2here,cost2beat);
 
   return map_;
@@ -104,7 +104,7 @@ std::multimap<double,std::vector<ConnectionPtr>>& Net::getConnectionToNode(const
   if(max_time_<=0.0)
     return map_;
 
-  tic_search_ = time_t::now();
+  tic_search_ = graph_time::now();
   computeConnectionFromNodeToNode(linked_tree_->getRoot(),node,cost2here,cost2beat);
 
   return map_;
@@ -125,23 +125,23 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
 
 void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here)
 {
-  std::chrono::time_point<time_t> time_black_list_check, time_visited_list_check;
-  auto now = time_t::now();
+  std::chrono::time_point<graph_time> time_black_list_check, time_visited_list_check;
+  auto now = graph_time::now();
   auto tic_tot = now;
 
   if(verbose_)
-    CNR_INFO(logger_,"time in: "<<(duration_t(now-tic_search_)).count());
+    CNR_INFO(logger_,"time in: "<<(graph_duration(now-tic_search_)).count());
 
   //Depth-first search
   curse_of_dimensionality_++;
 
-  duration_t time_tot;
+  graph_duration time_tot;
 
   NodePtr parent;
 
   if(goal_node == linked_tree_->getRoot() || goal_node == start_node)
   {
-    now = time_t::now();
+    now = graph_time::now();
     time_tot = now-tic_tot;
 
     if(verbose_)
@@ -155,28 +155,28 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
     std::vector<ConnectionPtr> net_parent_connections = goal_node->getNetParentConnections();
     all_parent_connections.insert(all_parent_connections.end(),net_parent_connections.begin(),net_parent_connections.end());
 
-    std::chrono::time_point<time_t> tic_cycle;
+    std::chrono::time_point<graph_time> tic_cycle;
 
-    now = time_t::now();
+    now = graph_time::now();
     time_tot = now-tic_tot;
 
     double time2now;
     double cost2parent;
     for(const ConnectionPtr& conn2parent:all_parent_connections)
     {
-      tic_cycle = time_t::now();
-      time2now =  (duration_t(tic_cycle-tic_search_)).count();
+      tic_cycle = graph_time::now();
+      time2now =  (graph_duration(tic_cycle-tic_search_)).count();
 
       if(verbose_)
-        CNR_INFO(logger_,"Available time: "<<(duration_t(max_time_-time2now)).count());
+        CNR_INFO(logger_,"Available time: "<<(graph_duration(max_time_-time2now)).count());
 
       if(time2now>0.9*max_time_)
       {
         if(verbose_)
         {
-          now = time_t::now();
+          now = graph_time::now();
           CNR_INFO(logger_,"Net max time exceeded! Time: "<<time2now<<" max time: "<<max_time_);
-          CNR_INFO(logger_,"time return: "<<(duration_t(now-tic_cycle)).count());
+          CNR_INFO(logger_,"time return: "<<(graph_duration(now-tic_cycle)).count());
         }
         return;
       }
@@ -196,13 +196,13 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
 
       if(cost2parent == std::numeric_limits<double>::infinity() || cost2parent>=cost_to_beat_ || std::abs(cost2parent-cost_to_beat_)<=NET_ERROR_TOLERANCE) //NET_ERROR_TOLERANCE to cope with machine errors
       {
-        now = time_t::now();
+        now = graph_time::now();
         time_tot = time_tot+(now-tic_cycle);
 
         if(verbose_)
         {
           CNR_INFO(logger_,"cost up to now %lf, cost to beat %f -> don't follow this branch!",cost2parent,cost_to_beat_);
-          CNR_INFO(logger_,"time don't follow branch: "<<(duration_t(now-tic_cycle)).count());
+          CNR_INFO(logger_,"time don't follow branch: "<<(graph_duration(now-tic_cycle)).count());
         }
         continue;
       }
@@ -219,13 +219,13 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
       double cost_heuristics = cost2parent+metrics_->utopia(parent->getConfiguration(),start_node->getConfiguration());
       if(cost_heuristics>=cost_to_beat_ || std::abs(cost_heuristics-cost_to_beat_)<=NET_ERROR_TOLERANCE )
       {
-        now = time_t::now();
+        now = graph_time::now();
         time_tot = time_tot+(now-tic_cycle);
 
         if(verbose_)
         {
           CNR_INFO(logger_,"cost heuristic through this node %lf, cost to beat %f -> don't follow this branch!",cost_heuristics,cost_to_beat_);
-          CNR_INFO(logger_,"time cost heuristics: "<<(duration_t(now-tic_cycle)).count());
+          CNR_INFO(logger_,"time cost heuristics: "<<(graph_duration(now-tic_cycle)).count());
         }
         continue;
       }
@@ -264,39 +264,39 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
 
         map_.insert(pair);
 
-        time_tot = time_tot+(time_t::now()-tic_cycle);
+        time_tot = time_tot+(graph_time::now()-tic_cycle);
       }
       else
       {
-        time_black_list_check = time_t::now();
+        time_black_list_check = graph_time::now();
         if(std::find(black_list_.begin(),black_list_.end(),parent)<black_list_.end())
         {
-          now = time_t::now();
+          now = graph_time::now();
           time_tot = time_tot + (now-tic_cycle);
 
           if(verbose_)
           {
             CNR_INFO(logger_,"parent belongs to black list, skipping..");
-            CNR_INFO(logger_,"time black list: "<<(duration_t(now-tic_cycle)).count()<<" check: "
-                     <<(duration_t(now-time_black_list_check)).count());
+            CNR_INFO(logger_,"time black list: "<<(graph_duration(now-tic_cycle)).count()<<" check: "
+                     <<(graph_duration(now-time_black_list_check)).count());
           }
           continue;
         }
 
-        now = time_t::now();
+        now = graph_time::now();
         if(verbose_)
-          CNR_INFO(logger_,"time black list check: "<<((duration_t(now-time_black_list_check)).count()));
+          CNR_INFO(logger_,"time black list check: "<<((graph_duration(now-time_black_list_check)).count()));
 
-        time_visited_list_check = time_t::now();
+        time_visited_list_check = graph_time::now();
         if(std::find(visited_nodes_.begin(),visited_nodes_.end(),parent)<visited_nodes_.end())
         {
-          now = time_t::now();
+          now = graph_time::now();
           time_tot = time_tot+(now-tic_cycle);
 
           if(verbose_)
           {
             CNR_INFO(logger_,"avoiding cycles...");
-            CNR_INFO(logger_,"time visited nodes: "<<(duration_t(now-tic_cycle)).count()<<" check: "<<(duration_t(now-time_visited_list_check)).count());
+            CNR_INFO(logger_,"time visited nodes: "<<(graph_duration(now-tic_cycle)).count()<<" check: "<<(graph_duration(now-time_visited_list_check)).count());
           }
 
           continue;
@@ -304,28 +304,28 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
         else
           visited_nodes_.push_back(parent);
 
-        now = time_t::now();
+        now = graph_time::now();
         if(verbose_)
-          CNR_INFO(logger_,"time visited list check: "<<(duration_t(now-time_visited_list_check)).count());
+          CNR_INFO(logger_,"time visited list check: "<<(graph_duration(now-time_visited_list_check)).count());
 
         connections2parent_.push_back(conn2parent);
 
-        now = time_t::now();
+        now = graph_time::now();
         time_tot = time_tot+(now-tic_cycle);
 
         if(verbose_)
         {
           CNR_INFO(logger_,"New conn inserted: "<<conn2parent<<" "<<*conn2parent<<" cost up to now: "<<cost2parent<<" cost to beat: "<<cost_to_beat_);
-          CNR_INFO(logger_,"time before: "<<(duration_t(now-tic_search_)).count()<<" time cycle "<<(duration_t(now-tic_cycle)).count());
+          CNR_INFO(logger_,"time before: "<<(graph_duration(now-tic_search_)).count()<<" time cycle "<<(graph_duration(now-tic_cycle)).count());
         }
 
         computeConnectionFromNodeToNode(start_node,parent,cost2parent);
 
-        auto tic_cycle2 = time_t::now();
+        auto tic_cycle2 = graph_time::now();
         visited_nodes_.pop_back();
         connections2parent_.pop_back();
 
-        now = time_t::now();
+        now = graph_time::now();
         time_tot = time_tot+(now-tic_cycle2);
       }
     }

@@ -252,7 +252,7 @@ bool RRTStar::solve(PathPtr &solution, const unsigned int& max_iter, const doubl
   if(not initialized_)
     return false;
 
-  auto tic = time_t::now();
+  auto tic = graph_time::now();
   bool solved = false;
   unsigned int n_iter = 0;
   for (unsigned int iter = 0; iter < max_iter; iter++)
@@ -269,7 +269,7 @@ bool RRTStar::solve(PathPtr &solution, const unsigned int& max_iter, const doubl
       if(completed_)
         break;
     }
-    if(duration_t(time_t::now()-tic).count()>=0.98*max_time)
+    if(graph_duration(graph_time::now()-tic).count()>=0.98*max_time)
       break;
   }
 

@@ -330,7 +330,7 @@ bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node, const double &m
 {
   if(max_time<=0.0)
     return false;
-  auto tic = time_t::now();
+  auto tic = graph_time::now();
 
   bool success = true;
   while (success)
@@ -344,8 +344,8 @@ bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node, const double &m
       if ((new_node->getConfiguration() - node->getConfiguration()).norm() < TOLERANCE)
         return true;
     }
-    auto now = time_t::now();
-    duration_t difference = now - tic;
+    auto now = graph_time::now();
+    graph_duration difference = now - tic;
     if(difference.count() >= 0.98*max_time) break;
   }
   return false;
