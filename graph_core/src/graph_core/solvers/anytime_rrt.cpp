@@ -296,9 +296,9 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
   if(bias_<0.1) bias_ = 0.1;
 
   improve_sampler_ = std::make_shared<InformedSampler>(start_node->getConfiguration(),
-                                                                   goal_node->getConfiguration(),
-                                                                   sampler_->getLB(),sampler_->getUB(),
-                                                                   logger_);
+                                                       goal_node->getConfiguration(),
+                                                       sampler_->getLB(),sampler_->getUB(),
+                                                       logger_);
   improve_sampler_->setCost(path_cost_); //(1-cost_impr_)*path_cost_
 
   for (unsigned int iter = 0; iter < max_iter; iter++)
@@ -427,9 +427,3 @@ bool AnytimeRRT::update(const NodePtr& n, PathPtr &solution)
 
 } //end namespace core
 } // end namespace graph
-
-/**
- * @brief Register class to be loaded with cnr_class_loader
- */
-#include <cnr_class_loader/register_macro.hpp>
-CLASS_LOADER_REGISTER_CLASS(graph::core::AnytimeRRT, graph::core::TreeSolver)
