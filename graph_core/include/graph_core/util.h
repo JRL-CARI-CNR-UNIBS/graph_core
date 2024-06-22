@@ -47,6 +47,7 @@ namespace graph
 namespace core
 {
 using graph_time = std::chrono::system_clock;
+using graph_time_point = graph_time::time_point;
 using graph_duration = std::chrono::duration<double>;
 
 class Connection;
