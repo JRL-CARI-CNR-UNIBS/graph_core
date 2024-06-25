@@ -486,7 +486,12 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const std::vector<NodePtr>
     }
   }
 
-  NodePtr parent = node->getParents()[0];
+  NodePtr parent;
+  if(node == root_)
+    parent = nullptr;
+  else
+   parent = node->getParents()[0];
+
   if(rewire_children)
   {
     for (const std::pair<const double,NodePtr>& p : near_nodes)
@@ -615,6 +620,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
       if(not checkPathToNode(n,checked_connections)) //validate connections to n
         continue;
 
+      assert(node->parentConnection(0)->isValid());
       node->parentConnection(0)->remove();
 
       ConnectionPtr conn = std::make_shared<Connection>(n, node,logger_);
@@ -632,7 +638,11 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
   if(cost_to_node == std::numeric_limits<double>::infinity())
     rewire_children = false;
 
-  NodePtr parent = node->getParents()[0];
+  NodePtr parent;
+  if(node == root_)
+    parent = nullptr;
+  else
+   parent = node->getParents()[0];
 
   if(rewire_children)
   {
