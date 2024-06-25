@@ -204,7 +204,7 @@ void InformedSampler::setCost(const double &cost)
 
   if (cost_ < focii_distance_)
   {
-    CNR_WARN(logger_,"cost is "<<cost_<<" focci distance is "<< focii_distance_);
+    CNR_WARN(logger_,"cost is "<<cost_<<" focii distance is "<< focii_distance_);
     CNR_WARN(logger_,"focus 1: " << focus_1_.transpose());
     CNR_WARN(logger_,"focus 2: " << focus_2_.transpose());
     cost_ = focii_distance_;

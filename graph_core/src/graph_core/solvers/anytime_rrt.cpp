@@ -406,6 +406,8 @@ bool AnytimeRRT::improveUpdate(const Eigen::VectorXd& point, PathPtr &solution)
           path_cost_ = solution_->cost();
           cost_ = path_cost_+goal_cost_;
 
+          CNR_DEBUG(logger_,"Path cost %f, utopia %f",path_cost_,best_utopia_);
+
           improve_sampler_->setCost(path_cost_);
 
           return true;
