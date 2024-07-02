@@ -123,7 +123,7 @@ static inline bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std
   std::string what, full_param_name = param_ns+"/"+param_name;
   if(cnr::param::has(full_param_name, what))
   {   
-    if(not cnr::param::get(full_param_name, param, what))
+    if(not cnr::param::get(full_param_name, param, what, true))
     {
       CNR_ERROR(logger, "Cannot load " << full_param_name + " parameter.\n"<<what);
       throw std::invalid_argument("Cannot load " + full_param_name + " parameter.");
@@ -153,7 +153,7 @@ static inline bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std
   std::string what, full_param_name = param_ns+"/"+param_name;
   if(cnr::param::has(full_param_name, what))
   {
-    if(not cnr::param::get(full_param_name, param, what))
+    if(not cnr::param::get(full_param_name, param, what, true))
     {
       CNR_ERROR(logger, "Cannot load " << full_param_name + " parameter.\n"<<what);
       throw std::invalid_argument("Cannot load " + full_param_name + " parameter.");
