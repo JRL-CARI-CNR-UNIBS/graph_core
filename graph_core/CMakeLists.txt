@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 project(graph_core)
 
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Release")
-  # set(CMAKE_BUILD_TYPE "Debug")
+  # set(CMAKE_BUILD_TYPE "Release")
+  set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -84,7 +84,6 @@ add_executable(kdtree_test tests/kdtree_test.cpp)
 target_compile_definitions(kdtree_test
   PRIVATE
   TEST_DIR="${CMAKE_CURRENT_LIST_DIR}/tests")
-
 target_link_libraries(kdtree_test PUBLIC
   "${PROJECT_NAME}::${PROJECT_NAME}"
 )

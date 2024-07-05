@@ -81,7 +81,7 @@ static const double TOLERANCE = 1e-06;
  *         has been written to it. This allows for chaining of output operations.
  */
 template<typename T>
-std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
+inline std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
 {
   os << "[";
   for (size_t i = 0; i < v.size(); ++i)
@@ -122,8 +122,13 @@ static inline bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std
 {
   std::string what, full_param_name = param_ns+"/"+param_name;
   if(cnr::param::has(full_param_name, what))
-  {   
-    if(not cnr::param::get(full_param_name, param, what, true))
+  {
+    //    bool implicit_cast_if_possible = true;
+    //    std::vector<cnr::param::ModulesID> modules = {cnr::param::ModulesID::MAPPED_FILE,
+    //                                                  cnr::param::ModulesID::ROS1,
+    //                                                  cnr::param::ModulesID::ROS2};
+    if(not cnr::param::get(full_param_name, param, what, true,
+    {cnr::param::ModulesID::MAPPED_FILE,cnr::param::ModulesID::ROS1,cnr::param::ModulesID::ROS2}))
     {
       CNR_ERROR(logger, "Cannot load " << full_param_name + " parameter.\n"<<what);
       throw std::invalid_argument("Cannot load " + full_param_name + " parameter.");
@@ -153,7 +158,12 @@ static inline bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std
   std::string what, full_param_name = param_ns+"/"+param_name;
   if(cnr::param::has(full_param_name, what))
   {
-    if(not cnr::param::get(full_param_name, param, what, true))
+    //    bool implicit_cast_if_possible = true;
+    //    std::vector<cnr::param::ModulesID> modules = {cnr::param::ModulesID::MAPPED_FILE,
+    //                                                  cnr::param::ModulesID::ROS1,
+    //                                                  cnr::param::ModulesID::ROS2};
+    if(not cnr::param::get(full_param_name, param, what, true,
+    {cnr::param::ModulesID::MAPPED_FILE,cnr::param::ModulesID::ROS1,cnr::param::ModulesID::ROS2}))
     {
       CNR_ERROR(logger, "Cannot load " << full_param_name + " parameter.\n"<<what);
       throw std::invalid_argument("Cannot load " + full_param_name + " parameter.");
