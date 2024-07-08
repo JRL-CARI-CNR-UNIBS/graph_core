@@ -15,6 +15,8 @@
 
   <buildtool_depend>cmake</buildtool_depend>
 
+  <depend>eigen3</depend>
+  <depend>yaml-cpp</depend>
   <depend>cnr_logger</depend>
   <depend>cnr_param</depend>
   <depend>cnr_class_loader</depend>

@@ -21,9 +21,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #Options
 option(ADD_CUSTOM_UNINSTALL "Add uninstall target" ON)
 
+find_package(Eigen3 REQUIRED COMPONENTS Core Dense Geometry)
 find_package(cnr_logger REQUIRED)
 find_package(cnr_param REQUIRED)
 find_package(cnr_class_loader REQUIRED)
+find_package(yaml-cpp REQUIRED)
+if(yaml-cpp VERSION_LESS "0.8")
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(YAML_CPP REQUIRED yaml-cpp IMPORTED_TARGET)
+  add_library(yaml-cpp::yaml-cpp ALIAS PkgConfig::YAML_CPP)
+endif()
 
 add_library(${PROJECT_NAME} SHARED
   #Graph components
@@ -73,6 +80,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 # target_compile_options(${PROJECT_NAME} PUBLIC -std=c++20 -funroll-loops -Wall -Ofast)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
+  Eigen3::Eigen
   cnr_param::cnr_param
   cnr_logger::cnr_logger
   cnr_class_loader::cnr_class_loader
@@ -118,12 +126,20 @@ install(EXPORT ${PROJECT_NAME}Targets
 )
 
 include(CMakePackageConfigHelpers)
+include(CMakeDependentOption)
+include(GNUInstallDirs)
+
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
   VERSION 0.0.1
   COMPATIBILITY AnyNewerVersion)
+configure_package_config_file(
+  ${CMAKE_SOURCE_DIR}/cmake_config/${PROJECT_NAME}Config.cmake.in ${PROJECT_NAME}Config.cmake
+  INSTALL_DESTINATION share/${PROJECT_NAME}/cmake
+  PATH_VARS CMAKE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR
+)
 
 install(FILES
-  ${CMAKE_SOURCE_DIR}/cmake_config/${PROJECT_NAME}Config.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
   ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
   DESTINATION "share/${PROJECT_NAME}/cmake")
 
