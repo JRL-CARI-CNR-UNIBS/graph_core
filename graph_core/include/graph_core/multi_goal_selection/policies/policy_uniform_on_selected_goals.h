@@ -27,36 +27,56 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <ros/ros.h>
-#include <random>
-#include <time.h>
+#include <graph_core/multi_goal_selection/policies/policy_mab.h>
 
 namespace multi_goal_selection
 {
 
-class PolicyBase
+class PolicyUniformOnSelectedGoals: public PolicyMAB
 {
+protected:
+  std::vector<int> selected_goals_;
 public:
-  PolicyBase(const std::string& name, const int& n_goals):
-    gen_(time(0))
+  PolicyUniformOnSelectedGoals(const std::string& name, const int& n_goals) : PolicyMAB(name, n_goals)
   {
-    nh_=ros::NodeHandle(name);
-    n_goals_ = n_goals;
-    goals_probabilities_.resize(n_goals_);
-    std::fill(goals_probabilities_.begin(), goals_probabilities_.end(), 0.0);
+    if (!nh_.getParam("selected_goals", selected_goals_))
+    {
+      ROS_DEBUG("%s/selected_goals is not set. Deafult: None",nh_.getNamespace().c_str());
+    }
+    ROS_WARN(toString().c_str());
   }
 
-  virtual std::vector<double> getProbabilities() = 0;
-  virtual void updateState(const int& i_goal, const double& reward) = 0;
-  virtual std::string toString() = 0;
-  virtual std::vector<int> getPullStatistics(){return std::vector<int>();};
+  int selectNextArm()
+  {
+    int rnd = std::uniform_int_distribution<int>(0,n_goals_-1)(gen_);
+    if(std::find(selected_goals_.begin(), selected_goals_.end(), rnd) != selected_goals_.end() || selected_goals_.size()==0) 
+    {
+      return rnd;
+    }
+    else 
+    {
+      return selectNextArm();
+    }
+    
+  };
 
-protected:
-  ros::NodeHandle nh_;
-  int n_goals_ = 0;
-  std::vector<double> goals_probabilities_;
-  std::mt19937 gen_;
+  void updateState(const int& i_goal, const double& reward)
+  {
+    pull_counter_[i_goal]++;
+  };
+
+  std::string toString()
+  {
+    std::string str = "uniform on selected goals ";
+    for (const auto& g: selected_goals_)
+    {
+      str+=std::to_string(g);
+      str+=" ";
+    }
+    return str;
+  };
+
 };
-typedef std::shared_ptr<PolicyBase> PolicyBasePtr;
-
+typedef std::shared_ptr<PolicyUniformOnSelectedGoals> PolicyUniformOnSelectedGoalsPtr;
 
 }

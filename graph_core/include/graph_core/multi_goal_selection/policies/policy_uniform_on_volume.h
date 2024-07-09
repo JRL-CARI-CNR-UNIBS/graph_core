@@ -47,7 +47,7 @@ public:
     if (best_cost_squared_!=std::numeric_limits<double>::infinity())
     {
       double rnd = std::uniform_real_distribution<double>(0.0,volume_factors_sums_.back())(gen_);
-      for (unsigned int idx_goal=0;idx_goal<n_goals_;idx_goal++)
+      for (int idx_goal=0;idx_goal<n_goals_;idx_goal++)
       {
         if (rnd<=volume_factors_sums_.at(idx_goal))
         {
@@ -74,7 +74,7 @@ public:
     {
       best_cost_squared_ = std::pow(reward,2);
 
-      for (unsigned int idx_goal=0;idx_goal<n_goals_;idx_goal++)
+      for (int idx_goal=0;idx_goal<n_goals_;idx_goal++)
       {
         double volume_factor = std::pow(best_cost_squared_-expected_reward_.at(idx_goal),volume_exp_);
         if (volume_factor<=0)

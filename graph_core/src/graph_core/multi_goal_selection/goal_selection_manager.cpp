@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/multi_goal_selection/policies/policy_mab_example.h>
 #include <graph_core/multi_goal_selection/policies/policy_uniform_on_goals.h>
 #include <graph_core/multi_goal_selection/policies/policy_custom_example.h>
+#include <graph_core/multi_goal_selection/policies/policy_uniform_on_selected_goals.h>
 #include <graph_core/multi_goal_selection/policies/policy_uniform_on_volume.h>
 
 #include <graph_core/multi_goal_selection/policies/policy_mab_egreedy.h>
@@ -108,6 +109,11 @@ GoalSelectionManager::GoalSelectionManager(const std::string& name, const unsign
         do_warm_start_ = true;
         ROS_WARN("Warm start automatically set because required by BestSoFar policy.");
       }
+      ROS_INFO_STREAM("Policy name: " << policy_name_);
+    }
+    else if (!policy_name_.compare("PolicyUniformOnSelectedGoals"))
+    {
+      policy_ = std::make_shared<multi_goal_selection::PolicyUniformOnSelectedGoals>(nh_.getNamespace(),goal_number_);
       ROS_INFO_STREAM("Policy name: " << policy_name_);
     }
     else if (!policy_name_.compare("PolicyUniformOnGoals"))
