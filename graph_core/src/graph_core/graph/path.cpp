@@ -130,8 +130,8 @@ PathPtr Path::clone()
     parent = child;                   //NB: parent of connection i+1 must be the child (same object) of connection i
   }
 
-  //  PathPtr new_path = std::make_shared<Path>(new_conn_vector,metrics_,checker_);
-  PathPtr new_path = std::make_shared<Path>(new_conn_vector,metrics_->clone(),checker_->clone(),logger_);
+  PathPtr new_path = std::make_shared<Path>(new_conn_vector,metrics_,checker_,logger_);
+  //  PathPtr new_path = std::make_shared<Path>(new_conn_vector,metrics_->clone(),checker_->clone(),logger_); //set cloned metrics and checker externally if needed
 
   new_path->setTree(nullptr);  //nodes are cloned, so the cloned path does not belong to the original tree
 
@@ -1287,6 +1287,7 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const size_t &conn_idx, 
 bool Path::isValidFromConf(const Eigen::VectorXd &conf, const size_t& conn_idx, int &pos_closest_obs_from_goal, const CollisionCheckerPtr &this_checker)
 {
   assert(conn_idx >= 0);
+  assert(conn_idx < connections_.size());
 
   ConnectionPtr conn = connections_.at(conn_idx);
 
@@ -1303,10 +1304,16 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const size_t& conn_idx, 
 
     if(not validity)
     {
-      for(size_t i = (connections_.size()-1);i>=conn_idx;i--)
+      size_t i = connections_.size() - 1;
+      while(i >= conn_idx)
       {
         if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity())
           pos_closest_obs_from_goal = connections_.size()-1-i;
+
+        if(i == 0)
+          break;
+        else
+          i--;
       }
     }
   }
@@ -1318,10 +1325,16 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const size_t& conn_idx, 
 
       if(not validity)
       {
-        for(size_t i = (connections_.size()-1);i>=conn_idx+1;i--)
+        size_t i = connections_.size() - 1;
+        while(i >= conn_idx)
         {
           if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity())
             pos_closest_obs_from_goal = connections_.size()-1-i;
+
+          if(i == 0)
+            break;
+          else
+            i--;
         }
       }
     }
@@ -1350,10 +1363,17 @@ bool Path::isValidFromConf(const Eigen::VectorXd &conf, const size_t& conn_idx, 
       if(not isValidFromConn(connections_.at(conn_idx+1),checker))
       {
         validity = false;
-        for(size_t i = (connections_.size()-1);i>=conn_idx+1;i--)
+
+        size_t i = connections_.size() - 1;
+        while(i >= conn_idx)
         {
           if(connections_.at(i)->getCost() == std::numeric_limits<double>::infinity())
             pos_closest_obs_from_goal = connections_.size()-1-i;
+
+          if(i == 0)
+            break;
+          else
+            i--;
         }
       }
     }

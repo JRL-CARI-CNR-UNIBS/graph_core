@@ -558,6 +558,8 @@ public:
    * This method creates and returns a new PathPtr that is a copy of the current path.
    * The new path contains cloned nodes and connections, and the original and cloned paths are independent.
    * The cloned path does not belong to the original tree, because and the nodes and connections are cloned.
+   * Note that the cloned path will share the metrics and collision checker with the original path. If indipendent
+   * instances are needed, clone and set them externally.
    *
    * @return A PathPtr representing the copy of the path.
    */
