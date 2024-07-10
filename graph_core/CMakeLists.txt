@@ -22,22 +22,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(ADD_CUSTOM_UNINSTALL "Add uninstall target" ON)
 
 find_package(Eigen3 REQUIRED COMPONENTS Core Dense Geometry)
-# find_package(cnr_yaml REQUIRED)
+find_package(cnr_yaml REQUIRED)
 find_package(cnr_param REQUIRED)
 find_package(cnr_logger REQUIRED)
 find_package(cnr_class_loader REQUIRED)
-find_package(yaml-cpp REQUIRED)
-
-if(NOT TARGET yaml-cpp)
-    add_library(yaml-cpp INTERFACE IMPORTED)
-    target_link_libraries(yaml-cpp INTERFACE yaml-cpp::yaml-cpp)
-endif()
-
-if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.17) 
-    set_target_properties(yaml-cpp PROPERTIES
-        DEPRECATION "The target yaml-cpp is deprecated and will be removed in version 0.10.0. Use the yaml-cpp::yaml-cpp target instead."
-        )
-endif()
 
 add_library(${PROJECT_NAME} SHARED
     #Graph components
@@ -88,7 +76,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
     Eigen3::Eigen
-    # cnr_yaml::cnr_yaml
+    cnr_yaml::cnr_yaml
     cnr_param::cnr_param
     cnr_logger::cnr_logger
     cnr_class_loader::cnr_class_loader
@@ -153,7 +141,7 @@ install(FILES
 
 # make uninstall
 if(ADD_CUSTOM_UNINSTALL)
-    message("Adding custom uninstall")
+    message("-- Adding custom uninstall")
     add_custom_target("uninstall" COMMENT "Uninstall installed files")
     add_custom_command(
         TARGET "uninstall"

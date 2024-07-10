@@ -4,7 +4,6 @@
   <version>0.0.0</version>
   <description>The graph_core package</description>
 
-
   <maintainer email="cesare.tonola@unibs.it">Cesare Tonola</maintainer>
   <maintainer email="manuel.beschi@unibs.it">Manuel Beschi</maintainer>
   <maintainer email="marco.faroni@polimi.it">Marco Faroni</maintainer>
@@ -16,8 +15,7 @@
   <buildtool_depend>cmake</buildtool_depend>
 
   <depend>eigen3</depend>
-  <depend>yaml-cpp</depend>
-  <!-- <depend>cnr_yaml</depend> -->
+  <depend>cnr_yaml</depend>
   <depend>cnr_param</depend>
   <depend>cnr_logger</depend>
   <depend>cnr_class_loader</depend>
