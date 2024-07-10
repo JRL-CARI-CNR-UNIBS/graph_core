@@ -122,7 +122,6 @@ install(EXPORT ${PROJECT_NAME}Targets
     )
 
 include(CMakePackageConfigHelpers)
-include(CMakeDependentOption)
 include(GNUInstallDirs)
 
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
