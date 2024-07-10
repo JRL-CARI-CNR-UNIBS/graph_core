@@ -4,14 +4,18 @@ include(CMakeFindDependencyMacro)
 
 find_dependency(Eigen3 REQUIRED COMPONENTS Core Dense Geometry)
 
-find_dependency(cnr_yaml REQUIRED)
+# find_dependency(cnr_yaml REQUIRED)
 find_dependency(cnr_param REQUIRED)
 find_dependency(cnr_logger REQUIRED)
 find_dependency(cnr_class_loader REQUIRED)
 
 include("${CMAKE_CURRENT_LIST_DIR}/graph_coreTargets.cmake")
 
-set_and_check(@PROJECT_NAME@_INCLUDE_DIRS "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@" ${Eigen3_INCLUDE_DIRS} ${cnr_yaml_INCLUDE_DIRS} ${cnr_param_INCLUDE_DIRS} ${cnr_logger_INCLUDE_DIRS} ${cnr_class_loader_INCLUDE_DIRS})
-set(@PROJECT_NAME@_LIBRARIES @PROJECT_NAME@ ${Eigen3_LIBRARIES} ${cnr_yaml_LIBRARIES} ${cnr_param_LIBRARIES} ${cnr_logger_LIBRARIES} ${cnr_class_loader_LIBRARIES})
+# set_and_check(@PROJECT_NAME@_INCLUDE_DIRS "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@" ${Eigen3_INCLUDE_DIRS} ${cnr_yaml_INCLUDE_DIRS} ${cnr_param_INCLUDE_DIRS} ${cnr_logger_INCLUDE_DIRS} ${cnr_class_loader_INCLUDE_DIRS})
+# set(@PROJECT_NAME@_LIBRARIES @PROJECT_NAME@ ${Eigen3_LIBRARIES} ${cnr_yaml_LIBRARIES} ${cnr_param_LIBRARIES} ${cnr_logger_LIBRARIES} ${cnr_class_loader_LIBRARIES})
+
+set_and_check(@PROJECT_NAME@_INCLUDE_DIRS "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@" ${Eigen3_INCLUDE_DIRS} ${cnr_param_INCLUDE_DIRS} ${cnr_logger_INCLUDE_DIRS} ${cnr_class_loader_INCLUDE_DIRS})
+set(@PROJECT_NAME@_LIBRARIES @PROJECT_NAME@ ${Eigen3_LIBRARIES} ${cnr_param_LIBRARIES} ${cnr_logger_LIBRARIES} ${cnr_class_loader_LIBRARIES})
+
 
 check_required_components(@PROJECT_NAME@)

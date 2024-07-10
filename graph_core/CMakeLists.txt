@@ -22,7 +22,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(ADD_CUSTOM_UNINSTALL "Add uninstall target" ON)
 
 find_package(Eigen3 REQUIRED COMPONENTS Core Dense Geometry)
-find_package(cnr_yaml REQUIRED)
+# find_package(cnr_yaml REQUIRED)
 find_package(cnr_param REQUIRED)
 find_package(cnr_logger REQUIRED)
 find_package(cnr_class_loader REQUIRED)
@@ -76,7 +76,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
     Eigen3::Eigen
-    cnr_yaml::cnr_yaml
+    # cnr_yaml::cnr_yaml
     cnr_param::cnr_param
     cnr_logger::cnr_logger
     cnr_class_loader::cnr_class_loader
@@ -140,7 +140,7 @@ install(FILES
 
 # make uninstall
 if(ADD_CUSTOM_UNINSTALL)
-    message("-- Adding custom uninstall")
+    message(STATUS "Adding custom uninstall")
     add_custom_target("uninstall" COMMENT "Uninstall installed files")
     add_custom_command(
         TARGET "uninstall"
