@@ -1,6 +1,6 @@
 #pragma once
 /*
-Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
+Copyright (c) 2024, Cesare Tonola UNIBS c.tonola001@unibs.it
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,8 +26,11 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/samplers/informed_sampler.h>
-#include <graph_core/plugins/samplers/sampler_base_plugin.h>
+#include <graph_core/samplers/sampler_base.h>
+
+#include <eigen3/Eigen/Core>
+#include <graph_core/util.h>
+#include <random>
 
 namespace graph
 {
@@ -35,48 +38,63 @@ namespace core
 {
 
 /**
- * @class InformedSamplerPlugin
- * @brief This class implements a wrapper to graph::core::InformedSampler to allow its plugin to be defined.
- * The class can be loaded as a plugin and builds a graph::core::InformedSampler object.
+ * @class UniformSampler
+ * @brief Sampling uniformly in the search space.
+ *
+ * The UniformSampler class inherits from SamplerBase and samples uniformly
+ * in the search space considering the lower and upper bounds.
  */
-class InformedSamplerPlugin: public SamplerBasePlugin
-{
-protected:
+class UniformSampler;
+typedef std::shared_ptr<UniformSampler> UniformSamplerPtr;
 
+class UniformSampler: public SamplerBase
+{
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
-   * @brief Empty constructor for InformedSamplerPlugin. The function init() must be called afterwards.
+   * @brief Empty constructor for UniformSampler. The function init() must be called afterwards.
    */
-  InformedSamplerPlugin():SamplerBasePlugin()
+  UniformSampler():SamplerBase() //set initialized_ false
   {}
 
   /**
-   * @brief init Initialise the object graph::core::InformedSampler, defining its main attributes.
-   * @param param_ns defines the namespace under which parameter are searched for using cnr_param library.
-   * @param focus_1 focus 1 for the ellipse.
-   * @param focus_2 focus 2 for the ellipse.
+   * @brief Constructor for UniformSampler.
    * @param lower_bound Lower bounds for each dimension.
    * @param upper_bound Upper bounds for each dimension.
-   * @param scale Scaling factors for each dimension.
    * @param logger TraceLogger for logging.
-   * @param cost Cost of the path (default: infinity).
-   * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const std::string& param_ns,
-                    const Eigen::VectorXd& focus_1,
-                    const Eigen::VectorXd& focus_2,
-                    const Eigen::VectorXd& lower_bound,
-                    const Eigen::VectorXd& upper_bound,
-                    const Eigen::VectorXd& scale,
-                    const cnr_logger::TraceLoggerPtr& logger,
-                    const double& cost = std::numeric_limits<double>::infinity()) override
-  {
-    sampler_ = std::make_shared<InformedSampler>(focus_1,focus_2,lower_bound,upper_bound,scale,logger,cost);
-    return true;
-  }
+  UniformSampler(const Eigen::VectorXd& lower_bound,
+                 const Eigen::VectorXd& upper_bound,
+                 const cnr_logger::TraceLoggerPtr& logger):
+    SamplerBase(lower_bound,upper_bound,logger) //set initialized_ true
+  {}
+
+  /**
+   * @brief Generate a sampled configuration.
+   * @return Sampled configuration.
+   */
+  virtual Eigen::VectorXd sample() override;
+
+  /**
+   * @brief Set the cost associated with the sampler. It has no effect on this sampler.
+   *
+   * @param cost Cost to be set.
+   */
+  virtual void setCost(const double& cost) override {cost_ = cost;}
+
+  /**
+   * @brief Check if the sampler collapse. It has no effect on this sampler.
+   * @return True if bounds collapse, false otherwise.
+   */
+  virtual bool collapse() override {return false;}
+
+  /**
+   * @brief Creates a clone of the UniformSampler object.
+   * @return A shared pointer to the cloned UniformSampler object.
+   */
+  virtual SamplerPtr clone() override;
 };
 
-} //namespace core
-} //namespace graph
+} //end namespace core
+} // end namespace graph

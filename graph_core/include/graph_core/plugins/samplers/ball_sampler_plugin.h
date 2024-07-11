@@ -74,7 +74,7 @@ public:
                     const double& cost = std::numeric_limits<double>::infinity()) override
   {
     (void)param_ns; (void)focus_2; (void)scale;
-    sampler_ = std::make_shared<graph::core::BallSampler>(focus_1,lower_bound,upper_bound,logger,cost);
+    sampler_ = std::make_shared<BallSampler>(focus_1,lower_bound,upper_bound,logger,cost);
     return true;
   }
 };

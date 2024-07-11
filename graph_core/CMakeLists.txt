@@ -36,6 +36,7 @@ add_library(${PROJECT_NAME} SHARED
     src/${PROJECT_NAME}/graph/net.cpp
 
     #Samplers
+    src/${PROJECT_NAME}/samplers/uniform_sampler.cpp
     src/${PROJECT_NAME}/samplers/ball_sampler.cpp
     src/${PROJECT_NAME}/samplers/informed_sampler.cpp
     src/${PROJECT_NAME}/samplers/tube_informed_sampler.cpp
@@ -60,6 +61,7 @@ add_library(${PROJECT_NAME} SHARED
 
     #Plugins
     src/${PROJECT_NAME}/plugins/metrics/euclidean_metrics_plugin.cpp
+    src/${PROJECT_NAME}/plugins/samplers/uniform_sampler_plugin.cpp
     src/${PROJECT_NAME}/plugins/samplers/ball_sampler_plugin.cpp
     src/${PROJECT_NAME}/plugins/samplers/informed_sampler_plugin.cpp
     src/${PROJECT_NAME}/plugins/solvers/rrt_plugin.cpp

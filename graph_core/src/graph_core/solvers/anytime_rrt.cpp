@@ -299,7 +299,7 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
                                                        goal_node->getConfiguration(),
                                                        sampler_->getLB(),sampler_->getUB(),
                                                        logger_);
-  improve_sampler_->setCost(path_cost_); //(1-cost_impr_)*path_cost_
+  improve_sampler_->setCost(cost2beat); //(1-cost_impr_)*path_cost_
 
   for (unsigned int iter = 0; iter < max_iter; iter++)
   {
@@ -408,7 +408,7 @@ bool AnytimeRRT::improveUpdate(const Eigen::VectorXd& point, PathPtr &solution)
 
           CNR_DEBUG(logger_,"Path cost %f, utopia %f",path_cost_,best_utopia_);
 
-          improve_sampler_->setCost(path_cost_);
+          improve_sampler_->setCost(std::min(path_cost_,cost2beat_));
 
           return true;
         }

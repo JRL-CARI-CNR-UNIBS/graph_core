@@ -107,8 +107,6 @@ protected:
    */
   double specific_volume_;
 
-  //add tree, path, metrics?
-
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

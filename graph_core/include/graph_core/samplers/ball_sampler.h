@@ -142,7 +142,6 @@ public:
   /**
    * @brief Set the cost associated with the sampler.
    *
-   * Derived classes should implement this method.
    * @param cost Cost to be set.
    */
   virtual void setCost(const double& cost) override;
