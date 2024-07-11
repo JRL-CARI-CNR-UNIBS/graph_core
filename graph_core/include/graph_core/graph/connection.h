@@ -209,14 +209,13 @@ public:
   }
 
   /**
-   * @brief Sets the cost of the Connection and updates the time of the cost update.
+   * @brief Sets the cost of the Connection.
    *
    * @param cost The cost value to be set for the Connection.
    */
   void setCost(const double& cost)
   {
     cost_ = cost;
-    time_cost_update_ = std::chrono::system_clock::now();
   }
 
   /**
@@ -227,28 +226,6 @@ public:
   const double& getCost() const
   {
     return cost_;
-  }
-
-  /**
-   * @brief Gets the time of the last cost update for the Connection.
-   *
-   * @return Returns a reference to the time of the last cost update for the Connection.
-   */
-  const std::chrono::time_point<std::chrono::system_clock>& getTimeCostUpdate() const
-  {
-    return time_cost_update_;
-  }
-
-  /**
-   * @brief Sets the time of the last cost update for the Connection.
-   *
-   * E.g., if you clone a path, you may want to set the same time_cost_update_ of the connections of the original path
-   *
-   * @param time The time value to be set for the last cost update.
-   */
-  void setTimeCostUpdate(const std::chrono::time_point<std::chrono::system_clock>& time)
-  {
-    time_cost_update_ = time;
   }
 
   /**

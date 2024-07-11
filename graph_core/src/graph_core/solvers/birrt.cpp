@@ -126,7 +126,6 @@ bool BiRRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 
     NodePtr parent=new_goal_node->getParents().at(0);
     double cost_to_parent=new_goal_node->parentConnection(0)->getCost();
-    auto time_cost = new_goal_node->parentConnection(0)->getTimeCostUpdate();
     std::vector<ConnectionPtr> connections=goal_tree_->getConnectionToNode(parent);
     for (ConnectionPtr& conn: connections)
       conn->flip();
@@ -134,7 +133,6 @@ bool BiRRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
     ConnectionPtr conn_to_goal_parent=std::make_shared<Connection>(new_start_node,parent,logger_);
     conn_to_goal_parent->add();
     conn_to_goal_parent->setCost(cost_to_parent);
-    conn_to_goal_parent->setTimeCostUpdate(time_cost);
     start_tree_->addNode(parent,false);
     for (ConnectionPtr& conn: connections)
       start_tree_->addNode(conn->getChild(),false);
@@ -186,7 +184,6 @@ bool BiRRT::update(const NodePtr& n, PathPtr& solution)
 
     NodePtr parent=new_goal_node->getParents().at(0);
     double cost_to_parent=new_goal_node->parentConnection(0)->getCost();
-    auto time_cost = new_goal_node->parentConnection(0)->getTimeCostUpdate();
     new_goal_node->disconnect();
 
     std::vector<ConnectionPtr> connections=goal_tree_->getConnectionToNode(parent);
@@ -196,7 +193,6 @@ bool BiRRT::update(const NodePtr& n, PathPtr& solution)
     ConnectionPtr conn_to_goal_parent=std::make_shared<Connection>(new_start_node,parent,logger_);
     conn_to_goal_parent->add();
     conn_to_goal_parent->setCost(cost_to_parent);
-    conn_to_goal_parent->setTimeCostUpdate(time_cost);
     start_tree_->addNode(parent,false);
     for (ConnectionPtr& conn: connections)
       start_tree_->addNode(conn->getChild(),false);

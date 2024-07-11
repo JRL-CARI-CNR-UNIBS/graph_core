@@ -243,6 +243,9 @@ bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)
   if(euclidean_norm_ == 0.0 || conn->norm() == 0.0)
   {
     CNR_ERROR(logger_,"A connection has norm zero");
+    CNR_ERROR(logger_,"This conn "<<this<<"\n"<<*this);
+    CNR_ERROR(logger_,"Other conn "<<conn<<"\n"<<conn);
+
     throw std::invalid_argument("A connection has norm zero");
     return false;
   }

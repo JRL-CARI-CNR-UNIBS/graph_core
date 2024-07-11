@@ -118,7 +118,6 @@ PathPtr Path::clone()
 
     conn = std::make_shared<Connection>(parent,child,logger_);
     conn->setCost(connections_.at(i-1)->getCost());  //update also the internal time of the cloned connection
-    conn->setTimeCostUpdate(connections_.at(i-1)->getTimeCostUpdate());  //set the internal time to the value of the original connection
     conn->add();
 
     assert(child->getParentConnectionsSize()    == 1);
@@ -413,7 +412,7 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, size_t&
   Eigen::VectorXd parent;
   Eigen::VectorXd child;
 
-  double dist, distP, distC, err;
+  long double dist, distP, distC, err;
 
   for(unsigned int i=0; i<connections_.size(); i++)
   {
@@ -427,12 +426,17 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, size_t&
     err  = std::abs(dist-distP-distC);
 
     if(verbose)
-      CNR_INFO(logger_,"dist %f, distP %f, distC %f, err %f",dist,distP,distC,err);
+      CNR_INFO(logger_,"dist %lf, distP %lf, distC %lf, err %lf",dist,distP,distC,err);
 
-    if(err<1e-10)
+    if(err<1e-06)
     {
       conn = connections_.at(i);
       idx = i;
+
+      if(verbose)
+        CNR_INFO(logger_,"conn " <<conn);
+
+
       return conn;
     }
   }
@@ -606,7 +610,6 @@ bool Path::removeNode(const NodePtr& node, const size_t& idx_conn, const std::ve
     new_conn = std::make_shared<Connection>(conn_parent_node->getParent(),conn_node_child->getChild(),logger_,is_net);
     double cost = conn_parent_node->getCost()+conn_node_child->getCost();
     new_conn->setCost(cost);
-    new_conn->setTimeCostUpdate(std::min(conn_parent_node->getTimeCostUpdate(),conn_node_child->getTimeCostUpdate())); //consider the min between the two internal times
     new_conn->add();
 
     node->disconnect();

@@ -182,7 +182,6 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
 
     ConnectionPtr conn = std::make_shared<Connection>(solution_->getConnections().back()->getParent(), initial_goal_node, logger_);
     conn->setCost(solution_->getConnections().back()->getCost());
-    conn->setTimeCostUpdate(solution_->getConnections().back()->getTimeCostUpdate());
     conn->add();
 
     start_tree_->removeNode(goal_node_); //tpm_goal_node
@@ -220,7 +219,6 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
 
     ConnectionPtr conn2node_on_path = std::make_shared<Connection>(root_child_on_path,initial_start_node,logger_);
     conn2node_on_path->setCost(cost_first_conn_on_path);
-    conn2node_on_path->setTimeCostUpdate(conn_root_child_on_path->getTimeCostUpdate());
     conn2node_on_path->add();
 
     ConnectionPtr parent_conn;
@@ -230,7 +228,6 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
 
       parent_conn = root_children.at(i)->getParentConnections().front();
       conn->setCost(parent_conn->getCost());
-      conn->setTimeCostUpdate(parent_conn->getTimeCostUpdate());
       conn->add();
     }
 
