@@ -1,6 +1,6 @@
 #pragma once
 /*
-Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS, manuel.beschi@unibs.it, c.tonola001@unibs.it
+Copyright (c) 2024, Manuel Beschi and Cesare Tonola, UNIBS and CNR-STIIMA, manuel.beschi@unibs.it, c.tonola001@unibs.it
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,47 +26,32 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/solvers/tree_solver.h>
+#include <graph_core/metrics/hamp_metrics_base.h>
+#include <graph_core/plugins/metrics/metrics_base_plugin.h>
+#include <cnr_class_loader/class_loader.hpp>
 
 namespace graph
 {
 namespace core
 {
 
-class RRT;
-typedef std::shared_ptr<RRT> RRTPtr;
-
-class RRT: public TreeSolver
+/**
+ * @class HampMetricsBasePlugin
+ * @brief This class implements a wrapper to graph::core::HampMetricsBase to allow its plugin to be defined.
+ */
+class HampMetricsBasePlugin: public MetricsBasePlugin
 {
 protected:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  RRT():TreeSolver(){} //set initialized_ false
-
-  RRT(const MetricsPtr& metrics,
-      const CollisionCheckerPtr& checker,
-      const SamplerPtr& sampler,
-      const GoalCostFunctionPtr& goal_cost_fcn,
-      const cnr_logger::TraceLoggerPtr& logger):
-    TreeSolver(metrics, checker, sampler, goal_cost_fcn, logger) {} //set initialized_ true
-
-  RRT(const MetricsPtr& metrics,
-      const CollisionCheckerPtr& checker,
-      const SamplerPtr& sampler,
-      const cnr_logger::TraceLoggerPtr& logger):
-    TreeSolver(metrics, checker, sampler, logger) {} //set initialized_ true
-
-  virtual bool addStart(const NodePtr& start_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
-  virtual bool addStartTree(const TreePtr& start_tree, const double &max_time = std::numeric_limits<double>::infinity()) override;
-  virtual bool addGoal(const NodePtr& goal_node, const double &max_time = std::numeric_limits<double>::infinity()) override;
-  virtual void resetProblem() override;
-  virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution) override;
-  virtual bool update(const NodePtr& n, PathPtr& solution) override;
-  virtual bool update(PathPtr& solution) override;
+  /**
+   * @brief Empty constructor for HampMetricsBasePlugin. The function HampMetricsBasePlugin::init() must be called afterwards.
+   */
+  HampMetricsBasePlugin():MetricsBasePlugin()
+  {}
 };
 
-} //end namespace core
-} // end namespace graph
-
+} //namespace core
+} //namespace graph

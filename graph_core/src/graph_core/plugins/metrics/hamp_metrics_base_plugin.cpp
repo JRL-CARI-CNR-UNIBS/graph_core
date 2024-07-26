@@ -1,6 +1,5 @@
-#pragma once
 /*
-Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS, manuel.beschi@unibs.it, c.tonola001@unibs.it
+Copyright (c) 2024, Manuel Beschi and Cesare Tonola, UNIBS and CNR-STIIMA, manuel.beschi@unibs.it, c.tonola001@unibs.it
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,49 +25,8 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/util.h>
-#include <graph_core/graph/node.h>
-namespace graph
-{
-namespace core
-{
-
+#include <graph_core/plugins/metrics/hamp_metrics_base_plugin.h>
 /**
- * @class GoalCostFunction
- * @brief Base class for defining goal cost functions.
- *
- * The GoalCostFunction class provides an interface for defining cost functions
- * associated with goal configurations in path planning. Users can derive from
- * this class to implement custom cost functions.
+ * @brief Register class to be loaded with cnr_class_loader
  */
-class GoalCostFunction
-{
-public:
-
-  /**
-   * @brief Default constructor for GoalCostFunction.
-   */
-  GoalCostFunction()
-  {
-
-  }
-
-  /**
-   * @brief Calculate the cost for a given goal configuration.
-   * @param q The goal configuration for which the cost is calculated.
-   * @return The cost associated with the goal configuration.
-   */
-  virtual double cost(const Eigen::VectorXd& q)
-  {
-    return 0;
-  }
-  double cost(const NodePtr& node)
-  {
-    return cost(node->getConfiguration());
-  }
-};
-
-typedef std::shared_ptr<GoalCostFunction> GoalCostFunctionPtr;
-
-} //end namespace core
-} // end namespace graph
+CLASS_LOADER_REGISTER_CLASS(graph::core::HampMetricsBasePlugin, graph::core::MetricsBasePlugin)

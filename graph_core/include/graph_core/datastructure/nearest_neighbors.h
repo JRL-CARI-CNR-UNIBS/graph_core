@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2020, JRL-CARI CNR-STIIMA/UNIBS
+Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS, manuel.beschi@unibs.it, c.tonola001@unibs.it
 Manuel Beschi manuel.beschi@unibs.it
 All rights reserved.
 

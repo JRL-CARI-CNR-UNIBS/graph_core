@@ -1,6 +1,6 @@
 ﻿#pragma once
 /*
-Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
+Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS, manuel.beschi@unibs.it, c.tonola001@unibs.it
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -187,6 +187,18 @@ protected:
    * @return true if setting the problem and finding a solution is successful, false otherwise.
    */
   virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity());
+
+  /**
+   * @brief Performs the last operations before solving the planning problem.
+   * It must be called after setProblem() and before solve() (see computePath() as an example).
+   * By default it does nothing, but in general it can be used to read additional parameters specified by param_ns.
+   * Parameters are read under the namespace param_ns_ set with the function config().
+   * @return true if successfull.
+   */
+  virtual bool finalizeProblem()
+  {
+    return true;
+  }
 
   /**
    * @brief printMyself

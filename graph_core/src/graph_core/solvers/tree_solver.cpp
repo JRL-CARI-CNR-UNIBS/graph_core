@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019, Manuel Beschi CNR-STIIMA manuel.beschi@stiima.cnr.it
+Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS, manuel.beschi@unibs.it, c.tonola001@unibs.it
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -142,6 +142,8 @@ bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node
     return false;
   if(not addGoal(goal_node))
     return false;
+
+  finalizeProblem();
 
   auto tic = graph_time::now();
   if(!solve(solution, max_iter, max_time))
