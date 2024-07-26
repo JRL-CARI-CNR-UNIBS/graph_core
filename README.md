@@ -21,7 +21,7 @@ For detailed instructions on downloading and installing these dependencies, refe
 ## Installation 
 Follow these steps to compile and install `graph_core`using CMake: 
 
-1. Set the installation directory:
+1. Set the workspace directory path:
     ```bash
     export PATH_TO_WS=path_to_your_ws
     ```
