@@ -72,4 +72,18 @@ This is the folder used by `cnr_param` to save parameters. See the dedicated [Gi
     make -C build/graph_core install
     ```
 
-`graph_core` can also be compiled in both ROS1 and ROS2 workspaces. For a ROS1 workspace, ensure you have set `catkin config --install`.
+Add these lines to your ``.bashrc` file:
+```bash
+if [[ ":$PATH:" != *":path_to_your_ws/install/bin:"* ]]; then
+    export PATH="path_to_your_ws/install/bin:$PATH"
+fi
+if [[ ":$LD_LIBRARY_PATH:" != *":path_to_your_ws/install/lib:"* ]]; then
+    export LD_LIBRARY_PATH="path_to_your_ws/install/lib:$LD_LIBRARY_PATH"
+fi
+if [[ ":$CMAKE_PREFIX_PATH:" != *":path_to_your_ws/install:"* ]]; then
+    export CMAKE_PREFIX_PATH="path_to_your_ws/install:$CMAKE_PREFIX_PATH"
+fi
+``` 
+where `path_to_your_ws/install` is the path to the install folder. These are necessary to make the installed libraries visible.
+
+`graph_core` can also be compiled in both ROS1 and ROS2 workspaces. For a ROS1 workspace, ensure you have set `catkin config --install`. In this case, you do not need to export the paths as shown above.
