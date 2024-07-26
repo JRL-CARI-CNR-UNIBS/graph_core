@@ -23,13 +23,14 @@ Follow these steps to compile and install `graph_core`using CMake:
 
 1. Set the installation directory:
     ```bash
-    export PATH_TO_INSTALL_FOLDER=path_to_your_ws/install
+    export PATH_TO_WS=path_to_your_ws
     ```
 
 2. Compile and install `graph_core`:
     ```bash
+    cd $PATH_TO_WS
     mkdir -p build/graph_core
-    cmake -S cari_motion_planning/graph_core -B build/graph_core -DCMAKE_INSTALL_PREFIX=$PATH_TO_INSTALL_FOLDER
+    cmake -S cari_motion_planning/graph_core -B build/graph_core -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install
     make -C build/graph_core install
     ```
 
