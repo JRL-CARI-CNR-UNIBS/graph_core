@@ -44,6 +44,7 @@ add_library(${PROJECT_NAME} SHARED
     #Metrics
     src/${PROJECT_NAME}/metrics/euclidean_metrics.cpp
 
+
     #Datastructure
     src/${PROJECT_NAME}/datastructure/kdtree.cpp
     src/${PROJECT_NAME}/datastructure/vector.cpp

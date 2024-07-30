@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/graph/tree.h>
 #include <graph_core/graph/path.h>
 #include <graph_core/samplers/sampler_base.h>
-#include <graph_core/metrics/goal_cost_function.h>
+#include <graph_core/metrics/goal_cost_function_base.h>
 
 namespace graph
 {
@@ -188,17 +188,7 @@ protected:
    */
   virtual bool setProblem(const double &max_time = std::numeric_limits<double>::infinity());
 
-  /**
-   * @brief Performs the last operations before solving the planning problem.
-   * It must be called after setProblem() and before solve() (see computePath() as an example).
-   * By default it does nothing, but in general it can be used to read additional parameters specified by param_ns.
-   * Parameters are read under the namespace param_ns_ set with the function config().
-   * @return true if successfull.
-   */
-  virtual bool finalizeProblem()
-  {
-    return true;
-  }
+
 
   /**
    * @brief printMyself
@@ -217,7 +207,7 @@ public:
     path_cost_ = std::numeric_limits<double>::infinity();
     goal_cost_ = 0.0;
     cost_ = std::numeric_limits<double>::infinity();
-    goal_cost_fcn_=std::make_shared<GoalCostFunction>();
+    goal_cost_fcn_=std::make_shared<GoalCostFunctionBase>();
 
     initialized_ = false;
   }
@@ -298,7 +288,7 @@ public:
                     const SamplerPtr& sampler,
                     const cnr_logger::TraceLoggerPtr& logger)
   {
-    GoalCostFunctionPtr goal_cost_fcn=std::make_shared<GoalCostFunction>();
+    GoalCostFunctionPtr goal_cost_fcn=std::make_shared<GoalCostFunctionBase>();
     return init(metrics,checker,sampler,goal_cost_fcn,logger);
   }
 
@@ -723,6 +713,18 @@ public:
    */
   double computeRewireRadius();
   double computeRewireRadius(const SamplerPtr &sampler);
+
+  /**
+   * @brief Performs the last operations before solving the planning problem.
+   * It must be called after setProblem() and before solve() (see computePath() as an example).
+   * By default it does nothing, but in general it can be used to read additional parameters specified by param_ns.
+   * Parameters are read under the namespace param_ns_ set with the function config().
+   * @return true if successfull.
+   */
+  virtual bool finalizeProblem()
+  {
+    return true;
+  }
 
   friend std::ostream& operator<<(std::ostream& os, const TreeSolver& solver);
 };

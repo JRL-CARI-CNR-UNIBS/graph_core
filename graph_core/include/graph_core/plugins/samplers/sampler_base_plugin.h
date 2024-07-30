@@ -71,7 +71,7 @@ public:
   }
 
   /**
-   * @brief getSampler return the grraph::core::SamplerPtr object built by the plugin.
+   * @brief getSampler return the graph::core::SamplerPtr object built by the plugin.
    * @return the graph::core::SamplerPtr object built.
    */
   virtual graph::core::SamplerPtr getSampler()
