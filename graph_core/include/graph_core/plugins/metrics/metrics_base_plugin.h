@@ -71,7 +71,7 @@ public:
   }
 
   /**
-   * @brief getMetrics return the grraph::core::MetricsPtr object built by the plugin.
+   * @brief getMetrics return the graph::core::MetricsPtr object built by the plugin.
    * @return the graph::core::MetricsPtr object built.
    */
   virtual graph::core::MetricsPtr getMetrics()

@@ -34,21 +34,21 @@ namespace core
 {
 
 /**
- * @class GoalCostFunction
+ * @class GoalCostFunctionBase
  * @brief Base class for defining goal cost functions.
  *
- * The GoalCostFunction class provides an interface for defining cost functions
+ * The GoalCostFunctionBase class provides an interface for defining cost functions
  * associated with goal configurations in path planning. Users can derive from
  * this class to implement custom cost functions.
  */
-class GoalCostFunction
+class GoalCostFunctionBase
 {
 public:
 
   /**
-   * @brief Default constructor for GoalCostFunction.
+   * @brief Default constructor for GoalCostFunctionBase.
    */
-  GoalCostFunction()
+  GoalCostFunctionBase()
   {
 
   }
@@ -68,7 +68,7 @@ public:
   }
 };
 
-typedef std::shared_ptr<GoalCostFunction> GoalCostFunctionPtr;
+typedef std::shared_ptr<GoalCostFunctionBase> GoalCostFunctionPtr;
 
 } //end namespace core
 } // end namespace graph

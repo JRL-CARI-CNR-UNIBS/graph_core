@@ -26,7 +26,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/collision_checkers/collision_checker_base.h>
+#include <graph_core/metrics/goal_cost_function_base.h>
 #include <cnr_class_loader/register_macro.hpp>
 
 namespace graph
@@ -35,60 +35,57 @@ namespace core
 {
 
 /**
- * @class CollisionCheckerBasePlugin
- * @brief This class implements a wrapper to graph::core::CollisionCheckerBase to allow its plugin to be defined.
- * The class can be loaded as a plugin and builds a graph::core::CollisionCheckerBase object.
+ * @class GoalCostFunctionBasePlugin
+ * @brief This class implements a wrapper to graph::core::GoalCostFunctionBase to allow its plugin to be defined.
+ * The class can be loaded as a plugin and builds a graph::core::GoalCostFunctionBase object.
  */
-class CollisionCheckerBasePlugin;
-typedef std::shared_ptr<CollisionCheckerBasePlugin> CollisionCheckerPluginPtr;
+class GoalCostFunctionBasePlugin;
+typedef std::shared_ptr<GoalCostFunctionBasePlugin> GoalCostFunctionPluginPtr;
 
-class CollisionCheckerBasePlugin: std::enable_shared_from_this<CollisionCheckerBasePlugin>
+class GoalCostFunctionBasePlugin: public std::enable_shared_from_this<GoalCostFunctionBasePlugin>
 {
 protected:
 
   /**
-   * @brief collision_checker_ is the graph::core::CollisionCheckerBase object built and initialized by this plugin class.
+   * @brief metrics_ is the graph::core::GoalCostFunctionBase object built and initialized by this plugin class.
    */
-  graph::core::CollisionCheckerPtr collision_checker_;
+  graph::core::GoalCostFunctionPtr goal_cost_fcn_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
-   * @brief Empty constructor for CollisionCheckerBase. The function init() must be called afterwards.
+   * @brief Empty constructor for GoalCostFunctionBasePlugin. The function init() must be called afterwards.
    */
-  CollisionCheckerBasePlugin()
+  GoalCostFunctionBasePlugin()
   {
-    collision_checker_ = nullptr;
+    goal_cost_fcn_ = nullptr;
   }
 
   /**
-   * @brief Destructor for CollisionCheckerBasePlugin.
+   * @brief Destructor for GoalCostFunctionBasePlugin.
    */
-  virtual ~CollisionCheckerBasePlugin()
+  virtual ~GoalCostFunctionBasePlugin()
   {
-    collision_checker_ = nullptr;
+    goal_cost_fcn_ = nullptr;
   }
 
   /**
-   * @brief getCollisionChecker return the graph::core::CollisionCheckerPtr object built by the plugin.
-   * @return the graph::core::CollisionCheckerPtr object built.
+   * @brief getCostFunction return the graph::core::GoalCostFunctionPtr object built by the plugin.
+   * @return the graph::core::GoalCostFunctionPtr object built.
    */
-  graph::core::CollisionCheckerPtr getCollisionChecker()
+  virtual graph::core::GoalCostFunctionPtr getCostFunction()
   {
-    return collision_checker_;
+    return goal_cost_fcn_;
   }
 
   /**
-   * @brief init Initialise the graph::core::CollisionCheckerBase object, defining its main attributes.
-   * @param param_ns defines the namespace under which parameter are searched for using cnr_param library. MoveitCollisionChecker requires group_name and checker_resolution as parameters.
-   * @param planning_scene Pointer to the MoveIt! PlanningScene.
+   * @brief init Initialise the graph::core::GoalCostFunctionBase object, defining its main attributes.
+   * @param param_ns defines the namespace under which parameter are searched for using cnr_param library.
    * @param logger Pointer to a TraceLogger for logging.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const std::string& param_ns,
-                    const cnr_logger::TraceLoggerPtr& logger,
-                    const double& min_distance = 0.01) = 0;
+  virtual bool init(const std::string& param_ns, const cnr_logger::TraceLoggerPtr& logger) = 0;
 };
 
 } //namespace core

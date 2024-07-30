@@ -39,7 +39,7 @@ namespace core
  * @brief This class implements a wrapper to graph::core::HampMetricsBase to allow its plugin to be defined.
  * The class can be loaded as a plugin and builds a graph::core::HampMetricsBase object.
  */
-class HampMetricsBasePlugin: public std::enable_shared_from_this<HampMetricsBase>
+class HampMetricsBasePlugin: public std::enable_shared_from_this<HampMetricsBasePlugin>
 {
 protected:
   /**
@@ -66,7 +66,7 @@ public:
   }
 
   /**
-   * @brief getMetrics return the grraph::core::HampMetricsPtr object built by the plugin.
+   * @brief getMetrics return the graph::core::HampMetricsPtr object built by the plugin.
    * @return the graph::core::HampMetricsPtr object built.
    */
   virtual graph::core::HampMetricsPtr getMetrics()
