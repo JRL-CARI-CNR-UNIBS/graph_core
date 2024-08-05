@@ -49,7 +49,7 @@ bool TreeSolver::config(const std::string &param_ns)
 
   dof_ = sampler_->getDimension();
   configured_ = true;
-  can_improve_=false;
+  can_improve_=true;
   return true;
 }
 
