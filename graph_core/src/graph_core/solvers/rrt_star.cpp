@@ -99,13 +99,13 @@ bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 
   if (!problem_set_)
   {
-    CNR_DEBUG(logger_,"RRT* -> not init");
+    CNR_TRACE(logger_,"RRT* -> not init");
 
     return false;
   }
   if (cost_ <= utopia_tolerance_ * best_utopia_)
   {
-    CNR_DEBUG(logger_,"RRT*:: Solution already optimal");
+    CNR_TRACE(logger_,"RRT*:: Solution already optimal");
 
     solution=solution_;
    can_improve_=false;
@@ -172,17 +172,17 @@ bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 
 bool RRTStar::update(const NodePtr& n, PathPtr& solution)
 {
-  CNR_DEBUG(logger_,"RRT*::update");
+  CNR_TRACE(logger_,"RRT*::update");
 
   if (!problem_set_)
   {
-    CNR_DEBUG(logger_,"RRT* -> not init");
+    CNR_TRACE(logger_,"RRT* -> not init");
 
     return false;
   }
   if (cost_ <= utopia_tolerance_ * best_utopia_)
   {
-    CNR_DEBUG(logger_,"RRT*:: Solution already optimal");
+    CNR_TRACE(logger_,"RRT*:: Solution already optimal");
 
     solution=solution_;
     can_improve_=false;
@@ -193,7 +193,7 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
 
   if(not solved_)
   {
-    CNR_DEBUG(logger_,"RRT* -> solving");
+    CNR_TRACE(logger_,"RRT* -> solving");
     NodePtr new_node;
     if(start_tree_->rewireToNode(n,r_rewire_,new_node))
     {
@@ -225,7 +225,7 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
   }
   else
   {
-    CNR_DEBUG(logger_,"RRT* -> improving");
+    CNR_TRACE(logger_,"RRT* -> improving");
 
     //double r_rewire = std::min(start_tree_->getMaximumDistance(), r_rewire_factor_ * sampler_->getSpecificVolume() * std::pow(std::log(start_tree_->getNumberOfNodes())/start_tree_->getNumberOfNodes(),1./dof_));
     bool improved = start_tree_->rewireToNode(n, r_rewire_);

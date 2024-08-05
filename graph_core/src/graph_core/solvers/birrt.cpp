@@ -73,17 +73,17 @@ bool BiRRT::addGoal(const NodePtr &goal_node, const double &max_time)
 
 bool BiRRT::update(PathPtr &solution)
 {
-  CNR_DEBUG(logger_,"RRTConnect::update");
+  CNR_TRACE(logger_,"RRTConnect::update");
   if (solved_)
   {
-    CNR_DEBUG(logger_,"alreay found a solution");
+    CNR_TRACE(logger_,"alreay found a solution");
     solution = solution_;
     return true;
   }
 
   if (sampler_->collapse())
   {
-    CNR_DEBUG(logger_,"collapsed");
+    CNR_TRACE(logger_,"collapsed");
     return false;
   }
 
@@ -94,10 +94,10 @@ bool BiRRT::update(PathPtr &solution)
 
 bool BiRRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 {
-  CNR_DEBUG(logger_,"RRTConnect::update");
+  CNR_TRACE(logger_,"RRTConnect::update");
   if (solved_)
   {
-    CNR_DEBUG(logger_,"already found a solution");
+    CNR_TRACE(logger_,"already found a solution");
     solution = solution_;
     return true;
   }
@@ -117,12 +117,12 @@ bool BiRRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
   {
     distance = (new_start_node->getConfiguration()-new_goal_node->getConfiguration()).norm();
     tree_connected = (distance<TOLERANCE);
-    CNR_DEBUG(logger_,"Distance between node added to start tree and node added to goal tree: %f (tolerance %f)",distance,TOLERANCE);
+    CNR_TRACE(logger_,"Distance between node added to start tree and node added to goal tree: %f (tolerance %f)",distance,TOLERANCE);
   }
 
   if (tree_connected) // a solution is found
   {
-    CNR_DEBUG(logger_,"Trees connected");
+    CNR_TRACE(logger_,"Trees connected");
 
     NodePtr parent=new_goal_node->getParents().at(0);
     double cost_to_parent=new_goal_node->parentConnection(0)->getCost();
@@ -153,10 +153,10 @@ bool BiRRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 
 bool BiRRT::update(const NodePtr& n, PathPtr& solution)
 {
-  CNR_DEBUG(logger_,"RRTConnect::update");
+  CNR_TRACE(logger_,"RRTConnect::update");
   if (solved_)
   {
-    CNR_DEBUG(logger_,"alreay find a solution");
+    CNR_TRACE(logger_,"alreay find a solution");
     solution = solution_;
     return true;
   }
@@ -176,12 +176,12 @@ bool BiRRT::update(const NodePtr& n, PathPtr& solution)
   {
     distance = (new_start_node->getConfiguration()-new_goal_node->getConfiguration()).norm();
     tree_connected = (distance<TOLERANCE);
-    CNR_DEBUG(logger_,"Distance between node added to start tree and node added to goal tree: %f (tolerance %f)",distance,TOLERANCE);
+    CNR_TRACE(logger_,"Distance between node added to start tree and node added to goal tree: %f (tolerance %f)",distance,TOLERANCE);
   }
 
   if (tree_connected) // a solution is found
   {
-    CNR_DEBUG(logger_,"Trees connected");
+    CNR_TRACE(logger_,"Trees connected");
 
     NodePtr parent=new_goal_node->getParents().at(0);
     double cost_to_parent=new_goal_node->parentConnection(0)->getCost();

@@ -84,7 +84,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
 
     if (cost_ <= utopia_tolerance_ * best_utopia_)
     {
-      CNR_DEBUG(logger_,"Utopia reached!");
+      CNR_TRACE(logger_,"Utopia reached!");
       can_improve_=false;
       return true;
     }
@@ -102,23 +102,23 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   {
     success = RRT::solve(solution,max_iter,(max_time-time));
 
-    CNR_DEBUG(logger_,"Tree has "<<start_tree_->getNumberOfNodes()<<" nodes");
+    CNR_TRACE(logger_,"Tree has "<<start_tree_->getNumberOfNodes()<<" nodes");
 
     if(not success)
       n_failed_iter++;
 
     time = (graph_duration (graph_time::now()-tic)).count();
-    CNR_DEBUG(logger_,"time "<<time);
+    CNR_TRACE(logger_,"time "<<time);
   }
 
   if(not solved_)
     return false;
 
-  CNR_DEBUG(logger_,"Path cost: "<<path_cost_);
+  CNR_TRACE(logger_,"Path cost: "<<path_cost_);
 
   if (cost_ <= utopia_tolerance_ * best_utopia_)
   {
-    CNR_DEBUG(logger_,"Utopia reached!");
+    CNR_TRACE(logger_,"Utopia reached!");
     can_improve_=false;
     return true;
   }
@@ -138,7 +138,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     NodePtr tmp_goal_node  = std::make_shared<Node>(initial_goal_node->getConfiguration(),logger_);
     improved = AnytimeRRT::improve(tmp_start_node,tmp_goal_node,solution,max_iter,(max_time-time));
 
-    CNR_DEBUG(logger_,"New tree has "<<new_tree_->getNumberOfNodes()<<" nodes");
+    CNR_TRACE(logger_,"New tree has "<<new_tree_->getNumberOfNodes()<<" nodes");
 
     improved? (n_failed_iter = 0):
               (n_failed_iter++);
@@ -146,13 +146,13 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     if(improved)
     {
       better_solution_found = true;
-      CNR_DEBUG(logger_,"tmp_start "<<*tmp_start_node);
-      CNR_DEBUG(logger_,"tmp_goal  "<<*tmp_goal_node);
+      CNR_TRACE(logger_,"tmp_start "<<*tmp_start_node);
+      CNR_TRACE(logger_,"tmp_goal  "<<*tmp_goal_node);
 
       assert([&]() ->bool{
                if(start_tree_ != new_tree_)
                {
-                 CNR_DEBUG(logger_,"start tree "<<start_tree_<<" new tree "<<new_tree_);
+                 CNR_TRACE(logger_,"start tree "<<start_tree_<<" new tree "<<new_tree_);
                  return false;
                }
                return true;
@@ -161,16 +161,16 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
 
     if(cost_ <= utopia_tolerance_ * best_utopia_)
     {
-      CNR_DEBUG(logger_,"Utopia reached!");
+      CNR_TRACE(logger_,"Utopia reached!");
       can_improve_=false;
       break;
     }
 
     time = (graph_duration (graph_time::now()-tic)).count();
-    CNR_DEBUG(logger_,"time "<<time);
+    CNR_TRACE(logger_,"time "<<time);
   }
 
-  CNR_DEBUG(logger_,"Better solution found? "<<better_solution_found);
+  CNR_TRACE(logger_,"Better solution found? "<<better_solution_found);
 
   // Start and goal ptr in start tree may be different from the ones given as input to the solver.
   // Replace the actual start and goal ptr with the desired ones.
@@ -257,7 +257,7 @@ bool AnytimeRRT::improve(NodePtr& start_node, PathPtr& solution, const double& c
 bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solution, const unsigned int& max_iter, const double &max_time)
 {
   double cost2beat = (1.0-cost_impr_)*path_cost_;
-  CNR_DEBUG(logger_,"cost2beat: "<<cost2beat);
+  CNR_TRACE(logger_,"cost2beat: "<<cost2beat);
   return improve(start_node, goal_node, solution, cost2beat, max_iter, max_time);
 }
 
@@ -273,14 +273,14 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
 
   if(cost_ <= utopia_tolerance_ * utopia) //also if start and/or goal are changed, the old path is better to follow
   {
-    CNR_DEBUG(logger_,"Utopia reached! Utopia: "<<utopia_tolerance_*utopia<<" path cost: "<<path_cost_);
+    CNR_TRACE(logger_,"Utopia reached! Utopia: "<<utopia_tolerance_*utopia<<" path cost: "<<path_cost_);
     can_improve_=false;
     return false;
   }
 
   if(cost2beat <= utopia)
   {
-    CNR_DEBUG(logger_,"The cost to beat is less than utopia, impossible to reach! Utopia: "<<utopia<<" cost to beat: "<<cost2beat);
+    CNR_TRACE(logger_,"The cost to beat is less than utopia, impossible to reach! Utopia: "<<utopia<<" cost to beat: "<<cost2beat);
     return false;
   }
 
@@ -302,7 +302,7 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
   {
     if(AnytimeRRT::improveUpdate(solution))
     {
-      CNR_DEBUG(logger_,"Improved path cost: "<<path_cost_);
+      CNR_TRACE(logger_,"Improved path cost: "<<path_cost_);
 
       assert(solution->getTree() == solution_->getTree());
       assert(start_tree_ == new_tree_);
@@ -331,11 +331,11 @@ void AnytimeRRT::resetProblem()
 
 bool AnytimeRRT::improveUpdate(PathPtr &solution)
 {
-  CNR_DEBUG(logger_,"AnytimeRRT::improveUpdate");
+  CNR_TRACE(logger_,"AnytimeRRT::improveUpdate");
 
   if(not can_improve_)
   {
-    CNR_DEBUG(logger_,"already found the best solution");
+    CNR_TRACE(logger_,"already found the best solution");
     solution = solution_;
     return true;
   }
@@ -348,11 +348,11 @@ bool AnytimeRRT::improveUpdate(PathPtr &solution)
 
 bool AnytimeRRT::improveUpdate(const Eigen::VectorXd& point, PathPtr &solution)
 {
-  CNR_DEBUG(logger_,"AnytimeRRT::improveUpdate");
+  CNR_TRACE(logger_,"AnytimeRRT::improveUpdate");
 
   if (not can_improve_)
   {
-    CNR_DEBUG(logger_,"already found the best solution");
+    CNR_TRACE(logger_,"already found the best solution");
     solution = solution_;
     return true;
   }
@@ -369,15 +369,15 @@ bool AnytimeRRT::improveUpdate(const Eigen::VectorXd& point, PathPtr &solution)
       for(const ConnectionPtr& conn: conn2node)
         new_solution_cost += conn->getCost();
 
-      CNR_DEBUG(logger_,"A new solution with cost "<<new_solution_cost<<" was found");
+      CNR_TRACE(logger_,"A new solution with cost "<<new_solution_cost<<" was found");
 
       if(new_solution_cost<solution_->cost())
       {
-        CNR_DEBUG(logger_,"Its cost is less than that of current solution ");
+        CNR_TRACE(logger_,"Its cost is less than that of current solution ");
 
         if(checker_->checkConnection(new_node->getConfiguration(), tmp_goal_node_->getConfiguration()))
         {
-          CNR_DEBUG(logger_,"Connection to goal collision free");
+          CNR_TRACE(logger_,"Connection to goal collision free");
 
           assert(tmp_goal_node_->getParentConnectionsSize() == 0);
 
@@ -401,14 +401,14 @@ bool AnytimeRRT::improveUpdate(const Eigen::VectorXd& point, PathPtr &solution)
           path_cost_ = solution_->cost();
           cost_ = path_cost_+goal_cost_;
 
-          CNR_DEBUG(logger_,"Path cost %f, utopia %f",path_cost_,best_utopia_);
+          CNR_TRACE(logger_,"Path cost %f, utopia %f",path_cost_,best_utopia_);
 
           improve_sampler_->setCost(std::min(path_cost_,cost2beat_));
 
           return true;
         }
         else
-          CNR_DEBUG(logger_,"Connection to goal not collision free, discarding the solution");
+          CNR_TRACE(logger_,"Connection to goal not collision free, discarding the solution");
 
       }
     }

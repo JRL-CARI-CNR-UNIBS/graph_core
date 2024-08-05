@@ -93,7 +93,7 @@ bool TreeSolver::setProblem(const double &max_time)
     start_tree_->addNode(goal_node_);
 
     solved_ = true;
-    CNR_DEBUG(logger_,"A direct solution is found\n" << *solution_);
+    CNR_TRACE(logger_,"A direct solution is found\n" << *solution_);
   }
   else
   {
