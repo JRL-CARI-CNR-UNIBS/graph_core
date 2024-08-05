@@ -85,7 +85,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     if (cost_ <= utopia_tolerance_ * best_utopia_)
     {
       CNR_DEBUG(logger_,"Utopia reached!");
-      completed_=true;
+      can_improve_=false;
       return true;
     }
   }
@@ -119,7 +119,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   if (cost_ <= utopia_tolerance_ * best_utopia_)
   {
     CNR_DEBUG(logger_,"Utopia reached!");
-    completed_=true;
+    can_improve_=false;
     return true;
   }
 
@@ -132,7 +132,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   n_failed_iter = 0;
 
   time = (graph_duration (graph_time::now()-tic)).count();
-  while(time<0.98*max_time && (not completed_) && n_failed_iter<FAILED_ITER)
+  while(time<0.98*max_time && (can_improve_) && n_failed_iter<FAILED_ITER)
   {
     NodePtr tmp_start_node = std::make_shared<Node>(initial_start_node->getConfiguration(),logger_);
     NodePtr tmp_goal_node  = std::make_shared<Node>(initial_goal_node->getConfiguration(),logger_);
@@ -162,7 +162,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     if(cost_ <= utopia_tolerance_ * best_utopia_)
     {
       CNR_DEBUG(logger_,"Utopia reached!");
-      completed_=true;
+      can_improve_=false;
       break;
     }
 
@@ -269,12 +269,12 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
     return false;
 
   double utopia = metrics_->utopia(start_node->getConfiguration(),goal_node->getConfiguration()); //start and goal may be different from the previous ones
-  completed_ = false;
+  can_improve_=true;
 
   if(cost_ <= utopia_tolerance_ * utopia) //also if start and/or goal are changed, the old path is better to follow
   {
     CNR_DEBUG(logger_,"Utopia reached! Utopia: "<<utopia_tolerance_*utopia<<" path cost: "<<path_cost_);
-    completed_=true;
+    can_improve_=false;
     return false;
   }
 
@@ -326,7 +326,7 @@ bool AnytimeRRT::config(const std::string& param_ns)
 void AnytimeRRT::resetProblem()
 {
   new_tree_.reset();
-  completed_ = false;
+  can_improve_=true;
 
   RRT::resetProblem();
 }
@@ -335,7 +335,7 @@ bool AnytimeRRT::improveUpdate(PathPtr &solution)
 {
   CNR_DEBUG(logger_,"AnytimeRRT::improveUpdate");
 
-  if(completed_)
+  if(not can_improve_)
   {
     CNR_DEBUG(logger_,"already found the best solution");
     solution = solution_;
@@ -352,7 +352,7 @@ bool AnytimeRRT::improveUpdate(const Eigen::VectorXd& point, PathPtr &solution)
 {
   CNR_DEBUG(logger_,"AnytimeRRT::improveUpdate");
 
-  if (completed_)
+  if (not can_improve_)
   {
     CNR_DEBUG(logger_,"already found the best solution");
     solution = solution_;

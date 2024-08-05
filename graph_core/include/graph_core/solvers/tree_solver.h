@@ -77,9 +77,9 @@ protected:
   bool solved_ = false;
 
   /**
-   * @brief Flag indicating whether the path planning task is completed, i.e., the optimal solution has been found.
+   * @brief Flag indicating whether the path planning task can improve the solution, i.e., the optimal solution has been found.
    */
-  bool completed_=false;
+  bool can_improve_=true;
 
   /**
    * @brief Flag indicating whether the problem has been defined, i.e., start and goal node defined.
@@ -448,19 +448,19 @@ public:
   }
 
   /**
-   * @brief Check if the path planning task is completed.
+   * @brief Check if the path planning task can improve the solution.
    *
-   * This function returns a constant reference indicating whether the path planning task is completed.
+   * This function returns a constant reference indicating whether the path planning task can be improved.
    * A path planning problem is:
    *  - solved: A solution has been found;
-   *  - completed: The optimal solution has been found.
+   *  - (If optimal path planner is used) not improvable: The optimal solution has been found.
    * Some algorithms stop as soon as a solution is found (e.g., RRT), others continue to improve the solution to find the optimal one (e.g., RRT*).
    *
-   * @return A constant reference to the completion status.
+   * @return A constant reference to the ability of the planner to improve the solution.
    */
-  const bool& completed()const
+  const bool& canImprove()const
   {
-    return completed_;
+    return can_improve_;
   }
 
   /**

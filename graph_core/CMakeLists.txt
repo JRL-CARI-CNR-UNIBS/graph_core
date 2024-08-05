@@ -62,6 +62,7 @@ add_library(${PROJECT_NAME} SHARED
 
     #Plugins
     src/${PROJECT_NAME}/plugins/metrics/euclidean_metrics_plugin.cpp
+    src/${PROJECT_NAME}/plugins/metrics/null_goal_cost_function_plugin.cpp
     src/${PROJECT_NAME}/plugins/samplers/uniform_sampler_plugin.cpp
     src/${PROJECT_NAME}/plugins/samplers/ball_sampler_plugin.cpp
     src/${PROJECT_NAME}/plugins/samplers/informed_sampler_plugin.cpp

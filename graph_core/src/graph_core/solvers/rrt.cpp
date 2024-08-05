@@ -103,6 +103,7 @@ bool RRT::update(PathPtr &solution)
   {
     CNR_DEBUG(logger_,"already found a solution");
     solution = solution_;
+    can_improve_=false;
     return true;
   }
 
@@ -120,6 +121,7 @@ bool RRT::update(const Eigen::VectorXd& configuration, PathPtr &solution)
   {
     CNR_DEBUG(logger_,"already found a solution");
     solution = solution_;
+    can_improve_ = false;
     return true;
   }
 
@@ -145,6 +147,7 @@ bool RRT::update(const Eigen::VectorXd& configuration, PathPtr &solution)
         sampler_->setCost(path_cost_);
         solution = solution_;
         solved_ = true;
+        can_improve_ = false;
         return true;
       }
     }
@@ -185,6 +188,7 @@ bool RRT::update(const NodePtr& n, PathPtr &solution)
         sampler_->setCost(path_cost_);
         solution = solution_;
         solved_ = true;
+        can_improve_ = false;
         return true;
       }
     }

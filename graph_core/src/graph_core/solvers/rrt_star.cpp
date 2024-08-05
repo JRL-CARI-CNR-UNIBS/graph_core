@@ -108,7 +108,7 @@ bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
     CNR_DEBUG(logger_,"RRT*:: Solution already optimal");
 
     solution=solution_;
-    completed_=true;
+   can_improve_=false;
     return true;
   }
 
@@ -185,7 +185,7 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
     CNR_DEBUG(logger_,"RRT*:: Solution already optimal");
 
     solution=solution_;
-    completed_=true;
+    can_improve_=false;
     return true;
   }
 
@@ -266,14 +266,14 @@ bool RRTStar::solve(PathPtr &solution, const unsigned int& max_iter, const doubl
 
       n_iter = 0;
 
-      if(completed_)
+      if(not can_improve_)
         break;
     }
     if(graph_duration(graph_time::now()-tic).count()>=0.98*max_time)
       break;
   }
 
-  CNR_DEBUG(logger_,"Solved: %d. Completed: %d. Cost: %f. Utopia: %f", solved_,completed_,cost_,best_utopia_*utopia_tolerance_);
+  CNR_DEBUG(logger_,"Solved: %d. can improve? %d. Cost: %f. Utopia: %f", solved_,can_improve_,cost_,best_utopia_*utopia_tolerance_);
 
   return solved;
 }
