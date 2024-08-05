@@ -93,11 +93,12 @@ void RRT::resetProblem()
   start_tree_.reset();
   problem_set_ = false;
   solved_=false;
+  can_improve_ = true;
 }
 
 bool RRT::update(PathPtr &solution)
 {
-  CNR_DEBUG(logger_,"RRT::update");
+  CNR_TRACE(logger_,"RRT::update");
 
   if (solved_)
   {
@@ -115,7 +116,7 @@ bool RRT::update(PathPtr &solution)
 
 bool RRT::update(const Eigen::VectorXd& configuration, PathPtr &solution)
 {
-  CNR_DEBUG(logger_,"RRT::update");
+  CNR_TRACE(logger_,"RRT::update");
 
   if (solved_)
   {

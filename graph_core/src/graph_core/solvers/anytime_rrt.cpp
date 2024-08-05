@@ -325,10 +325,8 @@ bool AnytimeRRT::config(const std::string& param_ns)
 
 void AnytimeRRT::resetProblem()
 {
-  new_tree_.reset();
-  can_improve_=true;
-
   RRT::resetProblem();
+  new_tree_.reset();
 }
 
 bool AnytimeRRT::improveUpdate(PathPtr &solution)

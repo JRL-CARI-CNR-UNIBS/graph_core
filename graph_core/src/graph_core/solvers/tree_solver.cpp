@@ -60,6 +60,8 @@ bool TreeSolver::setProblem(const double &max_time)
     return false;
   if (!goal_node_)
     return false;
+
+  can_improve_ = true;
   goal_cost_ = goal_cost_fcn_->cost(goal_node_);
 
   best_utopia_ = goal_cost_+metrics_->utopia(start_tree_->getRoot()->getConfiguration(),goal_node_->getConfiguration());

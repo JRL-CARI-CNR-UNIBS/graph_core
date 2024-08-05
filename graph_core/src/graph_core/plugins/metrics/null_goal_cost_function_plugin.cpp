@@ -39,9 +39,9 @@ namespace core
 
 bool NullGoalCostFunctionPlugin::init(const std::string &param_ns, const cnr_logger::TraceLoggerPtr &logger)
 {
-  CNR_DEBUG(logger,"creating NullGoalCostFunction using namespace << " << param_ns);
+  CNR_TRACE(logger,"creating NullGoalCostFunction using namespace << " << param_ns);
   goal_cost_fcn_=std::make_shared<NullGoalCostFunction>(logger);
-  CNR_DEBUG(logger,"created NullGoalCostFunction");
+  CNR_TRACE(logger,"created NullGoalCostFunction");
   return true;
 }
 
