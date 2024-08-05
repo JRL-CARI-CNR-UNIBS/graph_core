@@ -77,7 +77,7 @@ protected:
   bool solved_ = false;
 
   /**
-   * @brief Flag indicating whether the path planning task can improve the solution, i.e., the optimal solution has been found.
+   * @brief  Flag indicating whether the path found can still be improved, i.e. whether the optimal solution has not been found for an optimal path planner.
    */
   bool can_improve_=true;
 
@@ -448,15 +448,13 @@ public:
   }
 
   /**
-   * @brief Check if the path planning task can improve the solution.
+   * @brief Check if the path found can still be improved.
    *
-   * This function returns a constant reference indicating whether the path planning task can be improved.
-   * A path planning problem is:
-   *  - solved: A solution has been found;
-   *  - (If optimal path planner is used) not improvable: The optimal solution has been found.
-   * Some algorithms stop as soon as a solution is found (e.g., RRT), others continue to improve the solution to find the optimal one (e.g., RRT*).
+   * This function tells whether the path found can be improved.
+   * When a path planner finds a solution the flag 'solved_' is enabled. If the path planner is still able to improve the solution found, 'can_improve_' is set to true.
+   * Some algorithms stop as soon as a solution is found (e.g., RRT), others continue to improve the solution untile the optimal one is found (e.g., RRT*).
    *
-   * @return A constant reference to the ability of the planner to improve the solution.
+   * @return A constant reference to 'can_improve_', which tells if the planner could be able to improve the solution.
    */
   const bool& canImprove()const
   {
