@@ -49,6 +49,7 @@ bool TreeSolver::config(const std::string &param_ns)
 
   dof_ = sampler_->getDimension();
   configured_ = true;
+  can_improve_=true;
   return true;
 }
 
@@ -59,6 +60,8 @@ bool TreeSolver::setProblem(const double &max_time)
     return false;
   if (!goal_node_)
     return false;
+
+  can_improve_ = true;
   goal_cost_ = goal_cost_fcn_->cost(goal_node_);
 
   best_utopia_ = goal_cost_+metrics_->utopia(start_tree_->getRoot()->getConfiguration(),goal_node_->getConfiguration());
@@ -191,13 +194,13 @@ bool TreeSolver::setSolution(const PathPtr &solution)
     best_utopia_ = goal_cost_+metrics_->utopia(start_tree_->getRoot()->getConfiguration(),goal_node_->getConfiguration());
 
     solved_ = true;
-    completed_ = (cost_ <= (utopia_tolerance_ * best_utopia_));
+    can_improve_ = not (cost_ <= (utopia_tolerance_ * best_utopia_));
 
     sampler_->setCost(path_cost_);
 
     problem_set_ = true;
 
-    CNR_DEBUG(logger_,"Solution set. Solved %d, completed %d, cost %f, utopia %f",solved_,completed_,cost_,best_utopia_*utopia_tolerance_);
+    CNR_DEBUG(logger_,"Solution set. Solved %d, can improve? %d, cost %f, utopia %f",solved_,can_improve_,cost_,best_utopia_*utopia_tolerance_);
     return true;
   }
   else
@@ -236,7 +239,7 @@ bool TreeSolver::importFromSolver(const TreeSolverPtr& solver)
 
   goal_cost_fcn_ = solver->goal_cost_fcn_;
   solved_ = solver->solved_;
-  completed_ = solver->completed_;
+  can_improve_ = solver->can_improve_;
   initialized_ = solver->initialized_;
   problem_set_ = solver->problem_set_;
   configured_ = solver->configured_;
@@ -269,7 +272,7 @@ void TreeSolver::printMyself(std::ostream &os) const
   }
 
   os << ".\nSolved: " << solved();
-  os << ". Completed: " << completed();
+  os << ". Can improve? " << canImprove();
 
   if(solved())
   {

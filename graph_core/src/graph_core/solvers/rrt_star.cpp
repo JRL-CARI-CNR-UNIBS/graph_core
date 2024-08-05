@@ -88,14 +88,14 @@ void RRTStar::updateRewireRadius()
 
 bool RRTStar::update(PathPtr& solution)
 {
-  CNR_DEBUG(logger_,"RRT*::update");
+  CNR_TRACE(logger_,"RRT*::update");
 
   return update(sampler_->sample(), solution);
 }
 
 bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 {
-  CNR_DEBUG(logger_,"RRT*::update");
+  CNR_TRACE(logger_,"RRT*::update");
 
   if (!problem_set_)
   {
@@ -108,7 +108,7 @@ bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
     CNR_DEBUG(logger_,"RRT*:: Solution already optimal");
 
     solution=solution_;
-    completed_=true;
+   can_improve_=false;
     return true;
   }
 
@@ -116,7 +116,7 @@ bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 
   if(not solved_)
   {
-    CNR_DEBUG(logger_,"RRT* -> solving");
+    CNR_TRACE(logger_,"RRT* -> solving");
 
     NodePtr new_node;
     if(start_tree_->rewire(configuration,r_rewire_,new_node))
@@ -149,7 +149,7 @@ bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
   }
   else
   {
-    CNR_DEBUG(logger_,"RRT* -> improving");
+    CNR_TRACE(logger_,"RRT* -> improving");
 
     bool improved = start_tree_->rewire(configuration, r_rewire_);
     if(improved)
@@ -185,7 +185,7 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
     CNR_DEBUG(logger_,"RRT*:: Solution already optimal");
 
     solution=solution_;
-    completed_=true;
+    can_improve_=false;
     return true;
   }
 
@@ -260,20 +260,20 @@ bool RRTStar::solve(PathPtr &solution, const unsigned int& max_iter, const doubl
     n_iter++;
     if(update(solution))
     {
-      CNR_DEBUG(logger_,"Improved or solved in %u iterations", n_iter);
+      CNR_TRACE(logger_,"Improved or solved in %u iterations", n_iter);
       solved_ = true;
       solved = true;
 
       n_iter = 0;
 
-      if(completed_)
+      if(not can_improve_)
         break;
     }
     if(graph_duration(graph_time::now()-tic).count()>=0.98*max_time)
       break;
   }
 
-  CNR_DEBUG(logger_,"Solved: %d. Completed: %d. Cost: %f. Utopia: %f", solved_,completed_,cost_,best_utopia_*utopia_tolerance_);
+  CNR_DEBUG(logger_,"Solved: %d. can improve? %d. Cost: %f. Utopia: %f", solved_,can_improve_,cost_,best_utopia_*utopia_tolerance_);
 
   return solved;
 }
