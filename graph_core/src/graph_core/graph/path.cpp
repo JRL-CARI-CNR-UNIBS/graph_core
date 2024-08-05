@@ -426,7 +426,7 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, size_t&
     err  = std::abs(dist-distP-distC);
 
     if(verbose)
-      CNR_INFO(logger_,"dist %lf, distP %lf, distC %lf, err %lf",dist,distP,distC,err);
+      CNR_INFO(logger_,"dist %Lf, distP %Lf, distC %Lf, err %Lf",dist,distP,distC,err);
 
     if(err<1e-06)
     {
@@ -436,7 +436,6 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, size_t&
       if(verbose)
         CNR_INFO(logger_,"conn " <<conn);
 
-
       return conn;
     }
   }
@@ -445,8 +444,7 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, size_t&
   {
     CNR_INFO(logger_, "Connection not found");
     CNR_INFO (logger_, "conf: "<<configuration.transpose());
-    CNR_INFO (logger_, "parent0: "<<connections_.at(0)->getParent()->getConfiguration().transpose());
-    CNR_INFO (logger_, "child0: "<<connections_.at(0)->getChild()->getConfiguration().transpose());
+    CNR_INFO (logger_, "path:\n"<<*this);
   }
 
   return nullptr;

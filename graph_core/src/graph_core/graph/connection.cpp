@@ -131,14 +131,14 @@ void Connection::remove()
       getChild()->removeParentConnection(pointer());     //Set flags_[idx_child_valid_] = false
 
     assert([&]()->bool{
-      if(flags_.size() == 0)
-        return true;
+             if(flags_.size() == 0)
+             return true;
 
-      if(flags_[idx_child_valid_])
-        return false;
+             if(flags_[idx_child_valid_])
+             return false;
 
-      return true;
-    }());
+             return true;
+           }());
   }
 
   if(flags_[idx_parent_valid_])
@@ -151,14 +151,14 @@ void Connection::remove()
       getParent()->removeChildConnection(pointer());    //Set flags_[idx_parent_valid_] = false
 
     assert([&]()->bool{
-      if(flags_.size() == 0)
-        return true;
+             if(flags_.size() == 0)
+             return true;
 
-      if(this->flags_[idx_parent_valid_])
-        return false;
+             if(this->flags_[idx_parent_valid_])
+             return false;
 
-      return true;
-    }());
+             return true;
+           }());
   }
 }
 
@@ -227,15 +227,15 @@ void Connection::flip()
 Connection::~Connection()
 {
   assert([&]() ->bool{ // check that the connection has been removed both from parent's connections and child's connections
-    if(flags_[idx_parent_valid_] || flags_[idx_child_valid_])
-    {
-      CNR_FATAL(logger_,"Parent and/or child have not been disconnected from the connection that is being destroyed!\n "<<this<<" ("<<getParent()<<")-->("<<getChild()<<")");
-      CNR_FATAL(logger_,"parent is valid? "<<flags_[idx_parent_valid_]);
-      CNR_FATAL(logger_,"child is valid? "<<flags_[idx_child_valid_]);
-      return false;
-    }
-    return true;
-  }());
+                       if(flags_[idx_parent_valid_] || flags_[idx_child_valid_])
+                       {
+                         CNR_FATAL(logger_,"Parent and/or child have not been disconnected from the connection that is being destroyed!\n "<<this<<" ("<<getParent()<<")-->("<<getChild()<<")");
+                         CNR_FATAL(logger_,"parent is valid? "<<flags_[idx_parent_valid_]);
+                         CNR_FATAL(logger_,"child is valid? "<<flags_[idx_child_valid_]);
+                         return false;
+                       }
+                       return true;
+         }());
 }
 
 bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)
@@ -244,7 +244,7 @@ bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)
   {
     CNR_ERROR(logger_,"A connection has norm zero");
     CNR_ERROR(logger_,"This conn "<<this<<"\n"<<*this);
-    CNR_ERROR(logger_,"Other conn "<<conn<<"\n"<<conn);
+    CNR_ERROR(logger_,"Other conn "<<conn<<"\n"<<*conn);
 
     throw std::invalid_argument("A connection has norm zero");
     return false;

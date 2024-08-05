@@ -63,16 +63,12 @@ typedef std::weak_ptr<Node> NodeWeakPtr;
 static const double TOLERANCE = 1e-06;
 
 /**
- * @brief Overload of the insertion operator for std::vector.
+ * @brief Overload fucntion to print out a vector.
  *
- * This template function overloads the insertion (<<) operator to handle
- * std::vector of any type T. It outputs the elements of the vector in a
+ * It outputs the elements of the vector in a
  * formatted string enclosed in square brackets and separated by commas.
  * For example, a vector with elements 1, 2, 3 would be output as "[1, 2, 3]".
- *
- * @tparam T The data type of the elements stored in the vector. This type must
- *           support insertion into a std::ostream itself, as the function relies
- *           on the insertion operator for individual element output.
+
  * @param os The output stream to which the content is to be written. This is typically
  *           std::cout, but can be any stream derived from std::ostream.
  * @param v The vector whose contents are to be output to the stream. The elements of the
