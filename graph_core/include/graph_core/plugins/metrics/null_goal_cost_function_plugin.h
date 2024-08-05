@@ -37,9 +37,9 @@ namespace core
 {
 
 /**
- * @class GoalCostFunctionBasePlugin
- * @brief This class implements a wrapper to graph::core::GoalCostFunctionBase to allow its plugin to be defined.
- * The class can be loaded as a plugin and builds a graph::core::GoalCostFunctionBase object.
+ * @class NullGoalCostFunctionPlugin
+ * @brief This class implements a wrapper to graph::core::NullGoalCostFunction to allow its plugin to be defined.
+ * The class can be loaded as a plugin and builds a graph::core::NullGoalCostFunction object.
  */
 class NullGoalCostFunctionPlugin: public GoalCostFunctionBasePlugin
 {
@@ -47,7 +47,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
-   * @brief Empty constructor for GoalCostFunctionBasePlugin. The function init() must be called afterwards.
+   * @brief Empty constructor for NullGoalCostFunctionPlugin. The function init() must be called afterwards.
    */
   NullGoalCostFunctionPlugin()
   {
@@ -55,7 +55,7 @@ public:
   }
 
   /**
-   * @brief Destructor for GoalCostFunctionBasePlugin.
+   * @brief Destructor for NullGoalCostFunctionPlugin.
    */
   virtual ~NullGoalCostFunctionPlugin()
   {
@@ -63,7 +63,7 @@ public:
   }
 
   /**
-   * @brief init Initialise the graph::core::GoalCostFunctionBase object, defining its main attributes.
+   * @brief init Initialise the graph::core::NullGoalCostFunction object, defining its main attributes.
    * @param param_ns defines the namespace under which parameter are searched for using cnr_param library.
    * @param logger Pointer to a TraceLogger for logging.
    * @return True if correctly initialised, False if already initialised.
