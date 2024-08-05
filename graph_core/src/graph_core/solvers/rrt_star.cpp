@@ -88,14 +88,14 @@ void RRTStar::updateRewireRadius()
 
 bool RRTStar::update(PathPtr& solution)
 {
-  CNR_DEBUG(logger_,"RRT*::update");
+  CNR_TRACE(logger_,"RRT*::update");
 
   return update(sampler_->sample(), solution);
 }
 
 bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 {
-  CNR_DEBUG(logger_,"RRT*::update");
+  CNR_TRACE(logger_,"RRT*::update");
 
   if (!problem_set_)
   {
@@ -116,7 +116,7 @@ bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 
   if(not solved_)
   {
-    CNR_DEBUG(logger_,"RRT* -> solving");
+    CNR_TRACE(logger_,"RRT* -> solving");
 
     NodePtr new_node;
     if(start_tree_->rewire(configuration,r_rewire_,new_node))
@@ -149,7 +149,7 @@ bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
   }
   else
   {
-    CNR_DEBUG(logger_,"RRT* -> improving");
+    CNR_TRACE(logger_,"RRT* -> improving");
 
     bool improved = start_tree_->rewire(configuration, r_rewire_);
     if(improved)
@@ -260,7 +260,7 @@ bool RRTStar::solve(PathPtr &solution, const unsigned int& max_iter, const doubl
     n_iter++;
     if(update(solution))
     {
-      CNR_DEBUG(logger_,"Improved or solved in %u iterations", n_iter);
+      CNR_TRACE(logger_,"Improved or solved in %u iterations", n_iter);
       solved_ = true;
       solved = true;
 
