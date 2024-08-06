@@ -74,7 +74,7 @@ public:
    * @brief getCostFunction return the graph::core::GoalCostFunctionPtr object built by the plugin.
    * @return the graph::core::GoalCostFunctionPtr object built.
    */
-  virtual graph::core::GoalCostFunctionPtr getCostFunction()
+  virtual graph::core::HampGoalCostFunctionPtr getCostFunction()
   {
     return goal_cost_fcn_;
   }
