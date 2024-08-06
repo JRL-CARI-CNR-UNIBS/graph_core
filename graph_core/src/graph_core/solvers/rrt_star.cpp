@@ -269,7 +269,7 @@ bool RRTStar::solve(PathPtr &solution, const unsigned int& max_iter, const doubl
       if(not can_improve_)
         break;
     }
-    if(graph_duration(graph_time::now()-tic).count()>=0.98*max_time)
+    if(toSeconds(graph_time::now(),tic)>=0.98*max_time)
       break;
   }
 

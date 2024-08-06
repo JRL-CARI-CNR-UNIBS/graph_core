@@ -33,8 +33,8 @@ namespace core
 {
 
 PathOptimizerBase::PathOptimizerBase(const CollisionCheckerPtr &checker,
-                                       const MetricsPtr &metrics,
-                                       const cnr_logger::TraceLoggerPtr &logger):
+                                     const MetricsPtr &metrics,
+                                     const cnr_logger::TraceLoggerPtr &logger):
   checker_(checker),
   metrics_(metrics),
   logger_(logger)
@@ -92,9 +92,7 @@ bool PathOptimizerBase::solve(const unsigned int &max_iteration, const double& m
     }
     step();
 
-    auto now = graph_time::now();
-    graph_duration difference = now - tic;
-    if(difference.count() >= 0.98*max_time)
+    if(toSeconds(graph_time::now(),tic) >= 0.98*max_time)
       break;
   }
   return solved_;

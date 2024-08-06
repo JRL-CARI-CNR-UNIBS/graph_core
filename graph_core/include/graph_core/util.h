@@ -36,7 +36,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <chrono>
 #include <any>
 #include <type_traits>
-using namespace std::literals::chrono_literals;
 
 #define Stringize( L )     #L
 #define MakeString( M, L ) M(L)
@@ -47,6 +46,9 @@ namespace graph
 {
 namespace core
 {
+
+using namespace std::literals::chrono_literals;
+
 using graph_time = std::chrono::system_clock;
 using graph_time_point = graph_time::time_point;
 using graph_duration = std::chrono::duration<double>;

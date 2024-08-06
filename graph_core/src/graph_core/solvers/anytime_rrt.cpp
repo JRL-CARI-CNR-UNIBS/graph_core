@@ -97,7 +97,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   bool success;
   unsigned int n_failed_iter = 0;
 
-  time = (graph_duration (graph_time::now()-tic)).count();
+  time = toSeconds(graph_time::now(),tic);
   while(time<0.98*max_time && (not solved_) && n_failed_iter<FAILED_ITER)
   {
     success = RRT::solve(solution,max_iter,(max_time-time));
@@ -107,7 +107,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
     if(not success)
       n_failed_iter++;
 
-    time = (graph_duration (graph_time::now()-tic)).count();
+    time = toSeconds(graph_time::now(),tic);
     CNR_TRACE(logger_,"time "<<time);
   }
 
@@ -131,7 +131,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
   bool better_solution_found = false;
   n_failed_iter = 0;
 
-  time = (graph_duration (graph_time::now()-tic)).count();
+  time = toSeconds(graph_time::now(),tic);
   while(time<0.98*max_time && (can_improve_) && n_failed_iter<FAILED_ITER)
   {
     NodePtr tmp_start_node = std::make_shared<Node>(initial_start_node->getConfiguration(),logger_);
@@ -166,7 +166,7 @@ bool AnytimeRRT::solve(PathPtr &solution, const unsigned int& max_iter, const do
       break;
     }
 
-    time = (graph_duration (graph_time::now()-tic)).count();
+    time = toSeconds(graph_time::now(),tic);
     CNR_TRACE(logger_,"time "<<time);
   }
 
@@ -310,7 +310,7 @@ bool AnytimeRRT::improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solut
       return true;
     }
 
-    if((graph_duration (graph_time::now()-tic)).count()>=0.98*max_time)
+    if(toSeconds(graph_time::now(),tic)>=0.98*max_time)
       break;
   }
 

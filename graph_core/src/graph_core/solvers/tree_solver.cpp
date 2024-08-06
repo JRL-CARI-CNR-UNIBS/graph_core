@@ -121,9 +121,7 @@ bool TreeSolver::solve(PathPtr &solution, const unsigned int& max_iter, const do
       return true;
     }
 
-    auto now = graph_time::now();
-    graph_duration difference = now - tic;
-    if(difference.count() >= 0.98*max_time) break;
+    if(toSeconds(graph_time::now(),tic) >= 0.98*max_time) break;
   }
 
   return false;
@@ -151,7 +149,7 @@ bool TreeSolver::computePath(const NodePtr &start_node, const NodePtr &goal_node
   auto tic = graph_time::now();
   if(!solve(solution, max_iter, max_time))
   {
-    CNR_WARN(logger_,"No solutions found. Time: "<<graph_duration(graph_time::now()-tic).count()<<", max time: "<<max_time);
+    CNR_WARN(logger_,"No solutions found. Time: "<<toSeconds(graph_time::now(),tic)<<", max time: "<<max_time);
     return false;
   }
   return true;

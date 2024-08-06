@@ -38,7 +38,6 @@ namespace core
 //class PathOptimizerBase; //Defined in util.h
 typedef std::shared_ptr<PathOptimizerBase> PathOptimizerPtr;
 
-
 /**
  * @brief Base class for path optimization algorithms, such as local optimizers.
  *

@@ -164,9 +164,7 @@ bool PathLocalOptimizer::warp(const double &min_conn_length, const double min_st
         }
       }
 
-      auto now = graph_time::now();
-      graph_duration difference = now - tic;
-      if(difference.count() >= 0.98*max_time) break;
+      if(toSeconds(graph_time::now(),tic) >= 0.98*max_time) break;
     }
   }
 

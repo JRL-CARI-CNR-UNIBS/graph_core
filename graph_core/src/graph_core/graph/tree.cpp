@@ -344,9 +344,8 @@ bool Tree::connectToNode(const NodePtr &node, NodePtr &new_node, const double &m
       if ((new_node->getConfiguration() - node->getConfiguration()).norm() < TOLERANCE)
         return true;
     }
-    auto now = graph_time::now();
-    graph_duration difference = now - tic;
-    if(difference.count() >= 0.98*max_time) break;
+
+    if(toSeconds(graph_time::now(),tic) >= 0.98*max_time) break;
   }
   return false;
 }
