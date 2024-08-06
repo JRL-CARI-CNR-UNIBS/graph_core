@@ -428,7 +428,7 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, size_t&
     if(verbose)
       CNR_INFO(logger_,"dist %Lf, distP %Lf, distC %Lf, err %Lf",dist,distP,distC,err);
 
-    if(err<1e-06)
+    if(err<1e-12)
     {
       conn = connections_.at(i);
       idx = i;
