@@ -50,6 +50,23 @@ using graph_time = std::chrono::system_clock;
 using graph_time_point = graph_time::time_point;
 using graph_duration = std::chrono::duration<double>;
 
+/**
+ * @brief Converts the duration between two time points to seconds.
+ *
+ * This function calculates the duration between the provided end and start time points,
+ * and returns the duration in seconds.
+ *
+ * @param end The end time point.
+ * @param start The start time point.
+ * @return The duration in seconds as a double.
+ */
+inline double toSeconds(const graph_time_point& end,
+                        const graph_time_point& start)
+{
+  return graph_duration(end - start).count();
+}
+
+
 class Connection;
 class Node;
 class Path;
