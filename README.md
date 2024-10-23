@@ -30,7 +30,7 @@ Follow these steps to compile and install `graph_core`using CMake:
     ```bash
     cd $PATH_TO_WS
     mkdir -p build/graph_core
-    cmake -S cari_motion_planning/graph_core -B build/graph_core -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install
+    cmake -S src/graph_core/graph_core -B build/graph_core -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install
     make -C build/graph_core install
     ```
 
