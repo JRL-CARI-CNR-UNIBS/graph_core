@@ -19,10 +19,16 @@ jobs:
       - name: Install Ubuntu
         run: |
           sudo apt-get update
-          sudo apt install libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev
+          sudo apt install libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
 
-      - name: Run Script
+      - name: Build & Install cnr_common
         run: |
-          chmod +x ./path/to/your/github_workflow_graph_core_install.sh 
-          ./path/to/your/github_workflow_graph_core_install.sh
+          chmod +x .github/workflows/github_workflow_cnr_common_install.sh 
+          .github/workflows/github_workflow_cnr_common_install.sh
+
+      - name: Build & Install graph_core
+        run: |
+          chmod +x .github/workflows/github_workflow_graph_core_install.sh 
+          .github/workflows/github_workflow_graph_core_install.sh
+      
 
