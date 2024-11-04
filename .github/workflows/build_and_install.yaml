@@ -1,0 +1,28 @@
+name: Build and Install graph_core
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  install-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install Ubuntu
+        run: |
+          sudo apt-get update
+          sudo apt install libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev
+
+      - name: Run Script
+        run: |
+          chmod +x ./path/to/your/github_workflow_graph_core_install.sh 
+          ./path/to/your/github_workflow_graph_core_install.sh
+
