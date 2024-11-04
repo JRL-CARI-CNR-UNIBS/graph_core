@@ -2,15 +2,6 @@
 echo "Workspace Path: $PATH_TO_WS"
 cd $PATH_TO_WS
 
-echo "Install Folder: $PATH_TO_WS/install"
-cd $PATH_TO_WS/install
-echo "PATH: $PATH"
-echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
-echo "CMAKE_PREFIX_PATH: $CMAKE_PREFIX_PATH"
-
-echo "Files in $PATH_TO_WS/install:"
-ls -R $PATH_TO_WS/install
-
 # Install graph_core
 cd $PATH_TO_WS/src
 git clone https://github.com/JRL-CARI-CNR-UNIBS/graph_core.git
