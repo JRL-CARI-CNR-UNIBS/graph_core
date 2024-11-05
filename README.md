@@ -39,7 +39,6 @@ We're currently working on documentation. Expect new changes in the next weeks. 
 
 ```bash
 sudo apt update
-
 sudo apt -y install libeigen3-dev
 ```
 
