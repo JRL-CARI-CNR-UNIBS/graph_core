@@ -4,16 +4,33 @@
 </p>
 
 
+## Introduction
+`graph_core` is an open-source C++ library for sampling-based robot path planning. It provides essential tools for solving path planning problems, includes state-of-the-art algorithms, and streamlines the development of new algorithms.
+
+## Status
+
+### Code
 [![GitHub Action
 Status](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/workflows/master/badge.svg)](https://github.com/JRL-CARI-CNR-UNIBS/graph_core)
 
-<h1 align="center">🚧 Update in Progress! 🚧</h1>
+
+### Documentation
+![Status](https://img.shields.io/badge/Status-Updating-blue?style=flat-square&logo=github)
+
+🚧 Update in Progress! 🚧  
+We're currently working on documentation. Expect new changes in the next weeks. Stay tuned!
+
+<!-- <h3 align="center">🚧 Update in Progress! 🚧</h3>
 <p align="center">
-  <img src="https://img.shields.io/badge/Status-Updating-blue?style=for-the-badge&logo=github">
+  <img src="https://img.shields.io/badge/Status-Updating-blue?style=flat-square&logo=github">
 </p>
-<p align="center">
+<p align="center" style="font-size: 14px; color: gray;">
   We're currently working on documentation. Expect new changes in the next weeks. Stay tuned!
-</p>
+</p> -->
+
+### License
+<!-- [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fros-planning%2Fmoveit.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fros-planning%2Fmoveit?ref=badge_shield) -->
+
 
 ## Dependencies
 
