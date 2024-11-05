@@ -1,7 +1,7 @@
-<div style="text-align: center;">
-  <img src="docs/graph_core_logo.png?raw=true" alt="Graph Core Logo" width="40%">
-</div>
 
+<p align="center">
+  <img src="docs/graph_core_logo.png?raw=true" alt="Graph Core Logo" width="40%" style="display: block; margin: auto;">
+</p>
 
 
 [![GitHub Action
