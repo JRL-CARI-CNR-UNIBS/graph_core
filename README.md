@@ -1,4 +1,3 @@
-
 <p align="center">
   <img src="docs/graph_core_logo.png?raw=true" alt="Graph Core Logo" width="40%" style="display: block; margin: auto;">
 </p>
@@ -6,6 +5,7 @@
 
 [![GitHub Action
 Status](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/workflows/master/badge.svg)](https://github.com/JRL-CARI-CNR-UNIBS/graph_core)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FJRL-CARI-CNR-UNIBS%2Fgraph_core.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FJRL-CARI-CNR-UNIBS%2Fgraph_core?ref=badge_shield)
 
 <h1 align="center">🚧 Update in Progress! 🚧</h1>
 <p align="center">
@@ -57,3 +57,7 @@ if [[ ":$CMAKE_PREFIX_PATH:" != *":path_to_your_ws/install:"* ]]; then
 fi
 ``` 
 Replace `path_to_your_ws/install` with the actual path to your install folder. These settings are necessary to make the installed libraries visible. However, `graph_core` can also be compiled in both ROS1 and ROS2 workspaces. For a ROS1 workspace, ensure you have set `catkin config --install`. In this case, you do not need to export the paths as shown above.
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FJRL-CARI-CNR-UNIBS%2Fgraph_core.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FJRL-CARI-CNR-UNIBS%2Fgraph_core?ref=badge_large)
