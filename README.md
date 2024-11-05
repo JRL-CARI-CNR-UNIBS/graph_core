@@ -1,4 +1,9 @@
-# graph_core
+<div style="text-align: center;">
+  <img src="docs/graph_core_logo.png?raw=true" alt="Graph Core Logo" width="40%">
+</div>
+
+
+
 [![GitHub Action
 Status](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/workflows/master/badge.svg)](https://github.com/JRL-CARI-CNR-UNIBS/graph_core)
 
