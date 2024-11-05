@@ -8,7 +8,7 @@
 </p>
 
 [![GitHub Action
-Status](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/.github/workflows/build_and_install.yaml/badge.svg)](https://github.com/JRL-CARI-CNR-UNIBS/graph_core)
+Status](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/workflows/master/badge.svg)](https://github.com/JRL-CARI-CNR-UNIBS/graph_core)
 
 ## Dependencies
 
