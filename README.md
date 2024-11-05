@@ -1,4 +1,7 @@
 # graph_core
+[![GitHub Action
+Status](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/workflows/master/badge.svg)](https://github.com/JRL-CARI-CNR-UNIBS/graph_core)
+
 <h1 align="center">🚧 Update in Progress! 🚧</h1>
 <p align="center">
   <img src="https://img.shields.io/badge/Status-Updating-blue?style=for-the-badge&logo=github">
@@ -6,9 +9,6 @@
 <p align="center">
   We're currently working on documentation. Expect new changes in the next weeks. Stay tuned!
 </p>
-
-[![GitHub Action
-Status](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/workflows/master/badge.svg)](https://github.com/JRL-CARI-CNR-UNIBS/graph_core)
 
 ## Dependencies
 
