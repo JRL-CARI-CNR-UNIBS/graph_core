@@ -134,7 +134,7 @@ inline std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
  * and retrieve the parameter, respectively. Error messages include the full parameter name for clarity.
  */
 template<typename T>
-static inline bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string param_ns, const std::string param_name, T& param)
+static inline bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string& param_ns, const std::string& param_name, T& param)
 {
   std::string what, full_param_name = param_ns+"/"+param_name;
   if(cnr::param::has(full_param_name, what))
