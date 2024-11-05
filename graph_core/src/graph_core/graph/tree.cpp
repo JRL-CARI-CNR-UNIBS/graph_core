@@ -1437,7 +1437,7 @@ bool Tree::recheckCollisionFromNode(NodePtr& n)
   return true;
 }
 
-bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string param_ns, const std::string param_name, TreePtr& param,
+bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string& param_ns, const std::string &param_name, TreePtr& param,
                const MetricsPtr& metrics, const CollisionCheckerPtr& checker)
 {
 
