@@ -36,8 +36,10 @@ We're currently working on documentation. Expect new changes in the next weeks. 
 ## Dependencies
 
 `graph_core` depends on [Eigen3](https://eigen.tuxfamily.org/index.php?title=Main_Page), which can be installed with
+
 ``
 sudo apt update
+
 sudo apt -y install libeigen3-dev
 ``
 
