@@ -7,6 +7,8 @@
   We're currently working on documentation. Expect new changes in the next weeks. Stay tuned!
 </p>
 
+[![GitHub Action
+Status](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/workflows/badge.svg)](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/workflows)
 
 ## Dependencies
 
