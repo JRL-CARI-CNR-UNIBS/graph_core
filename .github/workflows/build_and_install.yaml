@@ -1,4 +1,4 @@
-name: Build and Install graph_core
+name: main
 
 on:
   push:
