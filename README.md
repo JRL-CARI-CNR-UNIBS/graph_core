@@ -29,6 +29,7 @@ We're currently working on documentation. Expect new changes in the next weeks. 
 </p> -->
 
 ### License
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1185ff74c03146c8bb639c5d0e372541)](https://app.codacy.com/gh/JRL-CARI-CNR-UNIBS/graph_core?utm_source=github.com&utm_medium=referral&utm_content=JRL-CARI-CNR-UNIBS/graph_core&utm_campaign=Badge_Grade)
 <!-- [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fros-planning%2Fmoveit.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fros-planning%2Fmoveit?ref=badge_shield) -->
 
 
