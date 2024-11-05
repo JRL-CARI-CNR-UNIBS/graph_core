@@ -35,7 +35,14 @@ We're currently working on documentation. Expect new changes in the next weeks. 
 
 ## Dependencies
 
-`graph_core` relies on the following packages:
+`graph_core` depends on [Eigen3](https://eigen.tuxfamily.org/index.php?title=Main_Page), which can be installed with
+
+```bash
+sudo apt update
+sudo apt -y install libeigen3-dev
+```
+
+Furthermore, it relies on the following packages:
 
 - [cnr_logger](https://github.com/CNR-STIIMA-IRAS/cnr_logger): Logging package.
 - [cnr_param](https://github.com/CNR-STIIMA-IRAS/cnr_param): Package to read and set parameters. It depends on [cnr_yaml](https://github.com/CNR-STIIMA-IRAS/cnr_yaml).
