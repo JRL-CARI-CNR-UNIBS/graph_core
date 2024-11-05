@@ -247,7 +247,6 @@ bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)
     CNR_ERROR(logger_,"Other conn "<<conn<<"\n"<<*conn);
 
     throw std::invalid_argument("A connection has norm zero");
-    return false;
   }
   // v1 dot v2 = norm(v1)*norm(v2)*cos(angle) if v1 not // v2
   // v1 dot v2 = norm(v1)*norm(v2) if v1 // v2

@@ -1492,7 +1492,7 @@ std::ostream& operator<<(std::ostream& os, const Path& path)
   return os;
 }
 
-bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string param_ns, const std::string param_name, PathPtr& param,
+bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string& param_ns, const std::string& param_name, PathPtr& param,
                const MetricsPtr& metrics, const CollisionCheckerPtr& checker)
 {
 

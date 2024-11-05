@@ -516,7 +516,7 @@ std::ostream& operator<<(std::ostream& os, const KdTree& kdtree)
   fcn = [&](const KdNodePtr& root) ->void{
     if(root)
     {
-      if((kdtree.print_deleted_nodes_) || (not kdtree.print_deleted_nodes_ && not root->deleted_))
+      if((kdtree.print_deleted_nodes_) || (not root->deleted_))
       {
         os << "   --- kdnode "<<root<<" ---"<<std::endl;
         os<<*root<<std::endl;

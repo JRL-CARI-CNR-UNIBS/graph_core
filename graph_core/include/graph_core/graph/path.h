@@ -768,7 +768,7 @@ std::ostream& operator<<(std::ostream& os, const Path& path);
  * @return True if the parameter is successfully retrieved and assigned, false otherwise.
  * @throws std::invalid_argument if an error occurs while retrieving the parameter.
  */
-bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string param_ns, const std::string param_name, PathPtr& param,
+bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string& param_ns, const std::string& param_name, PathPtr& param,
                              const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
 
 } //end namespace core

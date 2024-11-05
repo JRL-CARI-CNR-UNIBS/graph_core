@@ -594,7 +594,7 @@ std::ostream& operator<<(std::ostream& os, const Node& node);
  * @throws std::invalid_argument if an error occurs while retrieving the parameter.
  */
 template<>
-inline bool get_param<NodePtr>(const cnr_logger::TraceLoggerPtr& logger, const std::string param_ns, const std::string param_name, NodePtr& param);
+inline bool get_param<NodePtr>(const cnr_logger::TraceLoggerPtr& logger, const std::string& param_ns, const std::string& param_name, NodePtr& param);
 
 } //end namespace core
 } // end namespace graph

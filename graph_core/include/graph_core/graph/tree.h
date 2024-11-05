@@ -1033,7 +1033,7 @@ public:
  * @return True if the parameter is successfully retrieved and assigned, false otherwise.
  * @throws std::invalid_argument if an error occurs while retrieving the parameter.
  */
-bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string param_ns, const std::string param_name, TreePtr& param,
+bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string &param_ns, const std::string& param_name, TreePtr& param,
                              const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
 } //end namespace core
 } // end namespace graph

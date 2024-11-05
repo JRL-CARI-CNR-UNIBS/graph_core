@@ -588,7 +588,7 @@ std::ostream& operator<<(std::ostream& os, const Node& node)
 }
 
 template<>
-bool get_param<NodePtr>(const cnr_logger::TraceLoggerPtr& logger, const std::string param_ns, const std::string param_name, NodePtr& param)
+bool get_param<NodePtr>(const cnr_logger::TraceLoggerPtr& logger, const std::string& param_ns, const std::string& param_name, NodePtr& param)
 {
   std::string what, full_param_name = param_ns+"/"+param_name;
   if(cnr::param::has(full_param_name, what))
