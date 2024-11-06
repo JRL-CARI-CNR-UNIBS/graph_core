@@ -13,7 +13,6 @@ All types of contributions are encouraged and valued. See the [Table of Contents
 
 <!-- omit in toc -->
 ## Table of Contents
-
 - [I Have a Question](#i-have-a-question)
 - [I Want To Contribute](#i-want-to-contribute)
   - [Reporting Bugs](#reporting-bugs)
@@ -21,7 +20,6 @@ All types of contributions are encouraged and valued. See the [Table of Contents
   - [Improving The Documentation](#improving-the-documentation)
 
 ## I Have a Question
-
 > If you want to ask a question, we assume that you have read the available [Documentation](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/README.md).
 
 Before you ask a question, it is best to search for existing [Issues](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/issues) that might help you. In case you have found a suitable issue and still need clarification, you can write your question in this issue. It is also advisable to search the internet for answers first.
@@ -50,7 +48,6 @@ Depending on how large the project is, you may want to outsource the questioning
 -->
 
 ## I Want To Contribute
-
 > ### Legal Notice <!-- omit in toc -->
 > When contributing to this project, you must agree that you have authored 100% of the content, that you have the necessary rights to the content and that the content you contribute may be provided under the project license.
 
@@ -58,7 +55,6 @@ Depending on how large the project is, you may want to outsource the questioning
 
 <!-- omit in toc -->
 #### Before Submitting a Bug Report
-
 A good bug report shouldn't leave others needing to chase you up for more information. Therefore, we ask you to investigate carefully, collect information and describe the issue in detail in your report. Please complete the following steps in advance to help us fix any potential bug as fast as possible.
 
 - Make sure that you are using the latest version.
@@ -74,7 +70,6 @@ A good bug report shouldn't leave others needing to chase you up for more inform
 
 <!-- omit in toc -->
 #### How Do I Submit a Good Bug Report?
-
 > You must never report security related issues, vulnerabilities or bugs including sensitive information to the issue tracker, or elsewhere in public. Instead sensitive bugs must be sent by email to <c.tonola001@unibs.it>.
 <!-- You may add a PGP key to allow the messages to be sent encrypted as well. -->
 
@@ -95,12 +90,10 @@ Once it's filed:
 
 
 ### Suggesting Enhancements
-
 This section guides you through submitting an enhancement suggestion for graph_core, **including completely new features and minor improvements to existing functionality**. Following these guidelines will help maintainers and the community to understand your suggestion and find related suggestions.
 
 <!-- omit in toc -->
 #### Before Submitting an Enhancement
-
 - Make sure that you are using the latest version.
 - Read the [documentation](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/README.md) carefully and find out if the functionality is already covered, maybe by an individual configuration.
 - Perform a [search](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/issues) to see if the enhancement has already been suggested. If it has, add a comment to the existing issue instead of opening a new one.
@@ -108,7 +101,6 @@ This section guides you through submitting an enhancement suggestion for graph_c
 
 <!-- omit in toc -->
 #### How Do I Submit a Good Enhancement Suggestion?
-
 Enhancement suggestions are tracked as [GitHub issues](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/issues).
 
 - Use a **clear and descriptive title** for the issue to identify the suggestion.
