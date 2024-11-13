@@ -26,7 +26,7 @@ We're currently working on documentation. Expect new changes in the next weeks. 
 </p> -->
 
 ### Tutorials
-See [this page](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/tree/master/docs) for tutorials.
+See [this page](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/docs/tutorial/tutorial_intro.md) for tutorials.
 
 ## Dependencies
 `graph_core` depends on [Eigen3](https://eigen.tuxfamily.org/index.php?title=Main_Page), which can be installed with
