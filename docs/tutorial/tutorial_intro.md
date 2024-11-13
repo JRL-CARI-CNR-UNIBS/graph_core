@@ -20,7 +20,7 @@ This tutorial provides a concise guide on computing paths using `graph_core`. Wh
 
 ```cpp
 // Load the logger's cofiguration
-std::string path_to_logger_folder = "path/to/logger/folder"
+std::string path_to_logger_folder = "path/to/logger/folder";
 std::string logger_file = path_to_logger_folder+"/logger_param.yaml";
 cnr_logger::TraceLoggerPtr logger = std::make_shared<cnr_logger::TraceLogger>("graph_core_tutorial_loggers",logger_file);
 ```
@@ -30,11 +30,11 @@ cnr_logger::TraceLoggerPtr logger = std::make_shared<cnr_logger::TraceLogger>("g
 
 ```cpp
 // Define namespace for parameters retrieving
-std::string param_ns = "/graph_core_tutorial"  // must begin with "/"
+std::string param_ns = "/graph_core_tutorial";  // must begin with "/"
 
 // Define the collision checker (foo collision checker)
 double min_cc_distance;
-double default_min_cc_distance = 0.01,
+double default_min_cc_distance = 0.01;
 graph::core::get_param(logger,param_ns,"min_cc_distance",min_cc_distance,min_cc_distance); //wrapper to cnr_param functions
   
 if(min_cc_distance<=0)
@@ -159,7 +159,7 @@ graph::core::PathPtr cloned_path = path->clone();
 E.g., flip the path:
 
 ```cpp
-cloned_path->flip()
+cloned_path->flip();
 ```
 
 4. [This class](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/graph_core/include/graph_core/solvers/path_optimizers/path_optimizer_base.h) is designed for local optimizations.
