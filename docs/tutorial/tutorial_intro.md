@@ -3,7 +3,7 @@
 This tutorial provides a concise guide on computing paths using `graph_core`. While `graph_core` alone does not handle scene management, it is often combined with ROS and MoveIt to enable collision checking and planning scene management. For practical examples of integrating `graph_core` with MoveIt for these purposes, you can refer to [these test examples](https://github.com/JRL-CARI-CNR-UNIBS/graph_ros_tests). Additionally, [this package](https://github.com/JRL-CARI-CNR-UNIBS/graph_display) offers tools to visualize paths, nodes, and trees within Rviz, enhancing your ability to work with and debug complex algorithms.
 
 ### Compute a path
-[This tutorial](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/tree/master/docs/tutorial1.cpp) provides a quick overview of how to use `graph_core` to compute a path. As mentioned earlier, `graph_core` does not handle collision checking, so this example uses foo collision checker. Below are explanations of the main steps involved.
+[This tutorial](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/docs/tutorial/tutorial1.cpp) provides a quick overview of how to use `graph_core` to compute a path. As mentioned earlier, `graph_core` does not handle collision checking, so this example uses foo collision checker. Below are explanations of the main steps involved.
 
 1. Include the headers. The [structure](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/tree/master/graph_core/include/graph_core) of `graph_core` is quite simple and intuitive. Here we need to include a path planning algoritm (e.g., RRT) and all the other things it needs: a sampler, a cost function and the foo collision checker.
 
@@ -125,7 +125,7 @@ else
 ```
 
 ### Path post processing
-[This tutorial](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/tree/master/docs/tutorial2.cpp) builds on the results of the previous tutorial and demonstrates how to apply post-processing to the computed path. Post-processing can refine the path, optimize it, or prepare it for further use.
+[This tutorial](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/docs/tutorial/tutorial2.cpp) builds on the results of the previous tutorial and demonstrates how to apply post-processing to the computed path. Post-processing can refine the path, optimize it, or prepare it for further use.
 
 1. Let's include a new header for path post processing.
 
