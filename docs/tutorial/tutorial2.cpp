@@ -8,16 +8,16 @@
 int main(int argc, char **argv)
 {
   // Load the logger's configuration
-  std::string path_to_config_folder = "path/to/config/folder"
+  std::string path_to_config_folder = "path/to/config/folder";
   std::string logger_file = path_to_config_folder+"/logger_param.yaml";
   cnr_logger::TraceLoggerPtr logger = std::make_shared<cnr_logger::TraceLogger>("graph_core_tutorial_loggers",logger_file);
 
   // Define namespace for parameters retrieving
-  std::string param_ns = "/graph_core_tutorial"  // must begin with "/"
+  std::string param_ns = "/graph_core_tutorial";  // must begin with "/"
 
   // Define the collision checker (foo collision checker)
   double min_cc_distance;
-  double default_min_cc_distance = 0.01,
+  double default_min_cc_distance = 0.01;
   graph::core::get_param(logger,param_ns,"min_cc_distance",min_cc_distance,min_cc_distance); //wrapper to cnr_param functions
   
   if(min_cc_distance<=0)
