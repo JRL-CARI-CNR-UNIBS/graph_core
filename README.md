@@ -7,13 +7,13 @@
 `graph_core` is an open-source C++ library for sampling-based robot path planning. It provides essential tools for solving path planning problems, includes state-of-the-art algorithms, and streamlines the development of new algorithms.
 
 ## Status
-### Code
+
 [![GitHub Action
 Status](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/workflows/master/badge.svg)](https://github.com/JRL-CARI-CNR-UNIBS/graph_core)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/1755d91be93e4c86912929a5e9ad04e8)](https://app.codacy.com/gh/JRL-CARI-CNR-UNIBS/graph_core/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
-### Documentation
-![Status](https://img.shields.io/badge/Status-Updating-blue?style=flat-square&logo=github)
+![Status](https://img.shields.io/badge/License-BSD3-green)
+![Status](https://img.shields.io/badge/Documentation-Updating-blue?&logo=github)
 
 🚧 Update in Progress! 🚧  
 We're currently working on documentation. Expect new changes in the next weeks. Stay tuned!
@@ -25,9 +25,8 @@ We're currently working on documentation. Expect new changes in the next weeks. 
   We're currently working on documentation. Expect new changes in the next weeks. Stay tuned!
 </p> -->
 
-### License
-<!-- [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fros-planning%2Fmoveit.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fros-planning%2Fmoveit?ref=badge_shield) -->
-TODO
+### Tutorials
+See [this page](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/tree/master/docs) for tutorials.
 
 ## Dependencies
 `graph_core` depends on [Eigen3](https://eigen.tuxfamily.org/index.php?title=Main_Page), which can be installed with

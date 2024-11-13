@@ -1,11 +1,11 @@
 
 ## Tutorials
-This tutorial quickly explains how to compute a path using `graph_core`. However, since `graph_core` does not handle scene management, you are likely interested to use it in combination with ROS and Moveit for collision checking. [Here](https://github.com/JRL-CARI-CNR-UNIBS/graph_ros_tests) there are some test exaples on using `graph_core` relying on MoveIt for collision checking and planning scene management. Furthermore, [this package](https://github.com/JRL-CARI-CNR-UNIBS/graph_display) provide tools to display paths, nodes and trees on Rviz.
+This tutorial provides a concise guide on computing paths using `graph_core`. While `graph_core` alone does not handle scene management, it is often combined with ROS and MoveIt to enable collision checking and planning scene management. For practical examples of integrating `graph_core` with MoveIt for these purposes, you can refer to [these test examples](https://github.com/JRL-CARI-CNR-UNIBS/graph_ros_tests). Additionally, [this package](https://github.com/JRL-CARI-CNR-UNIBS/graph_display) offers tools to visualize paths, nodes, and trees within Rviz, enhancing your ability to work with and debug complex algorithms.
 
 ### Compute a path
-[This tutorial](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/tree/master/docs/tutorial1.cpp) quickly explains how to use `graph_core` to compute a path. As previously said, `graph_core` itself does not handle collision checking, so we will use a foo collision checker in the example. Below the explainations of the main steps.
+[This tutorial](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/tree/master/docs/tutorial1.cpp) provides a quick overview of how to use `graph_core` to compute a path. As mentioned earlier, `graph_core` does not handle collision checking, so this example uses foo collision checker. Below are explanations of the main steps involved.
 
-1. Include the headers. The [structure](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/tree/master/graph_core/include/graph_core) of `graph_core` is quite simple and intuitive. Here we need to include a path planning algoritm (e.g., rrt) and all the other things it need, e.g. a sampler, a cost function and the foo collision checker.
+1. Include the headers. The [structure](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/tree/master/graph_core/include/graph_core) of `graph_core` is quite simple and intuitive. Here we need to include a path planning algoritm (e.g., RRT) and all the other things it needs: a sampler, a cost function and the foo collision checker.
 
 ```cpp
 // Graph core required headers
@@ -15,7 +15,8 @@ This tutorial quickly explains how to compute a path using `graph_core`. However
 #include <graph_core/collision_checkers/cube_3d_collision_checker.h>
 ```
 
-2. Create a logger object for logging purposes. The logger is defined by the [cnr_logger](https://github.com/CNR-STIIMA-IRAS/cnr_logger) library and requires a configuration file to define where to print the logging information and other stuff. See the related repository for more information.
+2. Create a logger object for logging purposes. 
+   For logging purposes, create a logger object using the [cnr_logger](https://github.com/CNR-STIIMA-IRAS/cnr_logger) library. This logger requires a configuration file that specifies where to print the logging information, along with other settings. For further details, refer to the [cnr_logger repository](https://github.com/CNR-STIIMA-IRAS/cnr_logger).
 
 ```cpp
 // Load the logger's cofiguration
@@ -24,8 +25,8 @@ std::string logger_file = path_to_logger_folder+"/logger_param.yaml";
 cnr_logger::TraceLoggerPtr logger = std::make_shared<cnr_logger::TraceLogger>("graph_core_tutorial_loggers",logger_file);
 ```
 
-3. Define the foo collision checker, a cost function, a sampler, and finally the solver. Note that you can rely on [cnr_param](https://github.com/CNR-STIIMA-IRAS/cnr_param) for reading and writing parameters. It uses [yaml-cpp](https://github.com/jbeder/yaml-cpp) to read yaml file containing your parameters and it can also interact with the ROS and ROS2 parameter systems. See the related repository for more information.
-However, `graph_core` defines a wrapper function to facilitate parameters retrieving. [Here](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/graph_core/include/graph_core/util.h) you can find the main utilities function defined by `graph_core`.
+3. Define the foo collision checker, a cost function, a sampler, and finally the solver.
+   To handle parameters, you can utilize [cnr_param](https://github.com/CNR-STIIMA-IRAS/cnr_param), which leverages [yaml-cpp](https://github.com/jbeder/yaml-cpp) to read parameter values from YAML files. `cnr_param` also integrates with the ROS and ROS2 parameter ecosystems, making it versatile for different applications. See the `cnr_param` repository for further details. Additionally, `graph_core` provides a wrapper function to simplify parameter retrieval, helping to streamline the setup process. You can find the main utility functions offered by `graph_core` [here](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/graph_core/include/graph_core/util.h).
 
 ```cpp
 // Define namespace for parameters retrieving
@@ -53,7 +54,7 @@ graph::core::TreeSolverPtr solver =
 std::make_shared<graph::core::RRT>(metrics,collision_checker,sampler,logger);
 ```
 
-4. Define the start and goal nodes. Note that you can also use ```graph::core::get_param(..)``` function to read the start and goal configurations from param 
+4. Define the start and goal nodes for the path planning process. You can specify these configurations directly, or use the `graph::core::get_param(..)` function to read the start and goal configurations from parameter files. This approach allows you to manage configurations more flexibly, especially when working with complex or varying setups.
 
 ```cpp
 // Define start and goal nodes
@@ -71,7 +72,7 @@ graph::core::NodePtr start_node = std::make_shared<graph::core::Node>(start_conf
 graph::core::NodePtr goal_node  = std::make_shared<graph::core::Node>(goal_configuration, logger);
 ```
 
-5. Finally compute a path using the solver and print out the results.
+5. With the solver set up, compute the path from the start to the goal node.
 
 ```cpp
 // Compute a path
@@ -84,7 +85,7 @@ bool found = solver->computePath(start_node,goal_node,param_ns,solution,max_time
 graph::core::graph_time_point toc = graph::core::graph_time::now(); 
 ```
 
-6. Optionally, you can print out the solution and save it to a file.
+6. After computing the path, you can optionally print out the solution details and save them to a file for further analysis or record-keeping.
 
 ```cpp
 // Print out the solution and save it to a file
@@ -124,9 +125,9 @@ else
 ```
 
 ### Path post processing
-[This tutorial](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/tree/master/docs/tutorial2.cpp) starts from the results of the previous one and shows how to apply some post processing to the computed path.
+[This tutorial](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/tree/master/docs/tutorial2.cpp) builds on the results of the previous tutorial and demonstrates how to apply post-processing to the computed path. Post-processing can refine the path, optimize it, or prepare it for further use.
 
-1. Let's include a new header for path post processing the headers.
+1. Let's include a new header for path post processing.
 
 ```cpp
 #include <graph_core/solvers/path_optimizers/path_local_optimizer.h>
@@ -184,5 +185,4 @@ graph::core::get_param(logger,param_ns,"simplify_max_conn_length",simplify_max_c
 
 path_opt->simplify(simplify_max_conn_length);
 CNR_INFO(logger,"Path after simplify \n "<<*cloned_path);
-
 ```
