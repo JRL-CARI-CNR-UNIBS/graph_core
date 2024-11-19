@@ -12,14 +12,17 @@
 
   <author email="cesare.tonola@unibs.it">Cesare Tonola</author>
 
-  <buildtool_depend>cmake</buildtool_depend>
+  <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
+  <buildtool_depend condition="$ROS_VERSION != 1">cmake</buildtool_depend>
 
   <depend>eigen3</depend>
   <depend>cnr_param</depend>
   <depend>cnr_logger</depend>
   <depend>cnr_class_loader</depend>
-  
+
   <export>
-    <build_type>cmake</build_type>
+    <build_type condition="$ROS_VERSION == 1">catkin</build_type>
+    <build_type condition="$ROS_VERSION != 1">cmake</build_type>
   </export>
+
 </package>
