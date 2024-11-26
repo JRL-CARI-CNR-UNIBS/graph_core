@@ -25,12 +25,28 @@ class Cube3dCollisionChecker: public CollisionCheckerBase
 public:
 
   /**
+   * @brief If each joint has absolute value grater than 'abs_joint_threshold_', the configuration will be considered collision-free.
+   */
+  double abs_joint_threshold_;
+
+  /**
+   * @brief Constructor for Cube3dCollisionChecker.
+   * @param logger Pointer to a TraceLogger for logging.
+   * @param abs_joint_threshold is the value each joint must exceed in absolute value for the configuration to be collision-free.
+   * @param min_distance Distance between configurations checked for collisions along a connection.
+   */
+  Cube3dCollisionChecker(const cnr_logger::TraceLoggerPtr& logger,const double& abs_joint_threshold, const double& min_distance = 0.01):
+    CollisionCheckerBase(logger,min_distance), abs_joint_threshold_(abs_joint_threshold)
+  {
+  }
+
+  /**
    * @brief Constructor for Cube3dCollisionChecker.
    * @param logger Pointer to a TraceLogger for logging.
    * @param min_distance Distance between configurations checked for collisions along a connection.
    */
   Cube3dCollisionChecker(const cnr_logger::TraceLoggerPtr& logger, const double& min_distance = 0.01):
-    CollisionCheckerBase(logger,min_distance)
+    CollisionCheckerBase(logger,min_distance), abs_joint_threshold_(1.0)
   {
   }
 

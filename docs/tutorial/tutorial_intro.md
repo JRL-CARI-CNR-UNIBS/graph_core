@@ -46,6 +46,11 @@ if(min_cc_distance<=0)
 // Define a cost function (Euclidean metrics)
 graph::core::MetricsPtr metrics = std::make_shared<graph::core::EuclideanMetrics>(logger);
 
+// Define lower/upper bounds
+size_t dof = 3; 
+Eigen::VectorXd lb(dof); lb.setConstant(-2.5);
+Eigen::VectorXd ub(dof); ub.setConstant( 2.5);
+
 // Define a sampler (uniform sampler)
 graph::core::SamplerPtr sampler = std::make_shared<graph::core::UniformSampler>(lb,ub,logger);
 
