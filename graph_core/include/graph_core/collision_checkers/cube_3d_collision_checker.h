@@ -57,7 +57,7 @@ public:
    */
   virtual bool check(const Eigen::VectorXd& configuration)
   {
-    return configuration.cwiseAbs().maxCoeff() > 1;
+    return configuration.cwiseAbs().maxCoeff() > abs_joint_threshold_;
   }
 
   /**
