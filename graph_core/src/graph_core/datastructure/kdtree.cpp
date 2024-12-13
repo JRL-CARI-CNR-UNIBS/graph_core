@@ -49,7 +49,7 @@ KdNode::KdNode(const NodePtr& node,
 
 KdNode::~KdNode()
 {
-//  CNR_DEBUG(logger_,"destroying kdnode "<<this);
+  //  CNR_DEBUG(logger_,"destroying kdnode "<<this);
   left_  = nullptr;
   right_ = nullptr;
   node_  = nullptr;
@@ -165,9 +165,9 @@ void KdNode::nearestNeighbor(const Eigen::VectorXd& configuration,
     best=node_;
   }
 
-  SearchDirection dir=SearchDirection::Left;
-  if (configuration(dimension_)>node_->getConfiguration()(dimension_))
-    dir=SearchDirection::Right;
+  SearchDirection dir = (configuration(dimension_) > node_->getConfiguration()(dimension_))
+      ? SearchDirection::Right
+      : SearchDirection::Left;
 
   if (dir==SearchDirection::Left)
   {
@@ -243,9 +243,9 @@ void KdNode::kNearestNeighbors(const Eigen::VectorXd& configuration,
     last_distance=std::prev(nodes.end())->first;
   }
 
-  SearchDirection dir=SearchDirection::Left;
-  if (configuration(dimension_)>node_->getConfiguration()(dimension_))
-    dir=SearchDirection::Right;
+  SearchDirection dir = (configuration(dimension_) > node_->getConfiguration()(dimension_))
+                        ? SearchDirection::Right
+                        : SearchDirection::Left;
 
   if (dir==SearchDirection::Left)
   {
@@ -397,7 +397,7 @@ void KdTree::nearestNeighbor(const Eigen::VectorXd& configuration,
 
 
 std::multimap<double, NodePtr> KdTree::near(const Eigen::VectorXd& configuration,
-                                                        const double& radius)
+                                            const double& radius)
 {
   std::multimap<double, NodePtr> nodes;
   if (not root_)
