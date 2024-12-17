@@ -1,9 +1,5 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/graph_core_logo.png">
-    <source media="(prefers-color-scheme: light)" srcset="docs/graph_core_logo_background.png">
-    <img alt="Graph Core Logo." src="docs/graph_core_logo_background.png" width="40%" style="display: block; margin: auto;">
-  </picture>
+  <img src="docs/graph_core_logo_background.png?raw=true" alt="Graph Core Logo" width="40%" style="display: block; margin: auto;">
 </p>
 
 
