@@ -1,7 +1,6 @@
 <p align="center">
-  <img src="docs/graph_core_logo_background.png?raw=true" alt="Graph Core Logo" width="40%" style="display: block; margin: auto;">
+  <img src="docs/graph_core_logo_blue.png?raw=true" alt="Graph Core Logo" width="40%" style="display: block; margin: auto;">
 </p>
-
 
 ## Introduction
 `graph_core` is an open-source C++ library for sampling-based robot path planning. It provides essential tools for solving path planning problems, includes state-of-the-art algorithms, and streamlines the development of new algorithms.
