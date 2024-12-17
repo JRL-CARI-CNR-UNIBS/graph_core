@@ -1,5 +1,5 @@
 
-<p align="center">
+<p align="center" style="background-color: white; padding: 10px;">
   <img src="docs/graph_core_logo.png?raw=true" alt="Graph Core Logo" width="40%" style="display: block; margin: auto;">
 </p>
 
