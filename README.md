@@ -7,8 +7,7 @@
 
 ## Status
 
-[![GitHub Action
-Status](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/workflows/master/badge.svg)](https://github.com/JRL-CARI-CNR-UNIBS/graph_core)
+[![build check](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/actions/workflows/build_and_install.yaml/badge.svg)](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/actions/workflows/build_and_install.yaml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/1755d91be93e4c86912929a5e9ad04e8)](https://app.codacy.com/gh/JRL-CARI-CNR-UNIBS/graph_core/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
 ![Status](https://img.shields.io/badge/License-BSD3-green)
