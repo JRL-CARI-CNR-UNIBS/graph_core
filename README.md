@@ -7,21 +7,11 @@
 
 ## Status
 
+
 [![build check](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/actions/workflows/build_and_install.yaml/badge.svg)](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/actions/workflows/build_and_install.yaml)
+[![clang-format check](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/actions/workflows/clang-format.yaml/badge.svg)](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/actions/workflows/clang-format.yaml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/1755d91be93e4c86912929a5e9ad04e8)](https://app.codacy.com/gh/JRL-CARI-CNR-UNIBS/graph_core/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-
 ![Status](https://img.shields.io/badge/License-BSD3-green)
-![Status](https://img.shields.io/badge/Documentation-Updating-blue?&logo=github)
-
-🚧 Update in Progress! 🚧  
-We're currently working on documentation. Expect new changes in the next weeks. Stay tuned!
-<!-- <h3 align="center">🚧 Update in Progress! 🚧</h3>
-<p align="center">
-  <img src="https://img.shields.io/badge/Status-Updating-blue?style=flat-square&logo=github">
-</p>
-<p align="center" style="font-size: 14px; color: gray;">
-  We're currently working on documentation. Expect new changes in the next weeks. Stay tuned!
-</p> -->
 
 ### Tutorials
 See [this page](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/docs/tutorial/tutorial_intro.md) for tutorials.
