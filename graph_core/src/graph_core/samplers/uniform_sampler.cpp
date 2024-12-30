@@ -25,24 +25,20 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #include <graph_core/samplers/uniform_sampler.h>
 
-namespace graph
-{
-namespace core
-{
-Eigen::VectorXd UniformSampler::sample()
-{
+namespace graph {
+namespace core {
+Eigen::VectorXd UniformSampler::sample() {
   // Sample everywhere
   return 0.5 * (lower_bound_ + upper_bound_) +
-      Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(0.5 * (lower_bound_ - upper_bound_));
+         Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(
+             0.5 * (lower_bound_ - upper_bound_));
 }
 
-SamplerPtr UniformSampler::clone()
-{
-  return std::make_shared<UniformSampler>(lower_bound_,upper_bound_,logger_);
+SamplerPtr UniformSampler::clone() {
+  return std::make_shared<UniformSampler>(lower_bound_, upper_bound_, logger_);
 }
 
-} //end namespace core
+} // end namespace core
 } // end namespace graph

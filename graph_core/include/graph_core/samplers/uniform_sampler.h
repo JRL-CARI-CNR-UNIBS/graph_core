@@ -1,7 +1,7 @@
 #pragma once
 /*
-Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS, manuel.beschi@unibs.it, c.tonola001@unibs.it
-All rights reserved.
+Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS,
+manuel.beschi@unibs.it, c.tonola001@unibs.it All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -32,10 +32,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/util.h>
 #include <random>
 
-namespace graph
-{
-namespace core
-{
+namespace graph {
+namespace core {
 
 /**
  * @class UniformSampler
@@ -47,15 +45,16 @@ namespace core
 class UniformSampler;
 typedef std::shared_ptr<UniformSampler> UniformSamplerPtr;
 
-class UniformSampler: public SamplerBase
-{
+class UniformSampler : public SamplerBase {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
-   * @brief Empty constructor for UniformSampler. The function init() must be called afterwards.
+   * @brief Empty constructor for UniformSampler. The function init() must be
+   * called afterwards.
    */
-  UniformSampler():SamplerBase() //set initialized_ false
+  UniformSampler()
+      : SamplerBase() // set initialized_ false
   {}
 
   /**
@@ -64,10 +63,10 @@ public:
    * @param upper_bound Upper bounds for each dimension.
    * @param logger TraceLogger for logging.
    */
-  UniformSampler(const Eigen::VectorXd& lower_bound,
-                 const Eigen::VectorXd& upper_bound,
-                 const cnr_logger::TraceLoggerPtr& logger):
-    SamplerBase(lower_bound,upper_bound,logger) //set initialized_ true
+  UniformSampler(const Eigen::VectorXd &lower_bound,
+                 const Eigen::VectorXd &upper_bound,
+                 const cnr_logger::TraceLoggerPtr &logger)
+      : SamplerBase(lower_bound, upper_bound, logger) // set initialized_ true
   {}
 
   /**
@@ -77,17 +76,18 @@ public:
   virtual Eigen::VectorXd sample() override;
 
   /**
-   * @brief Set the cost associated with the sampler. It has no effect on this sampler.
+   * @brief Set the cost associated with the sampler. It has no effect on this
+   * sampler.
    *
    * @param cost Cost to be set.
    */
-  virtual void setCost(const double& cost) override {cost_ = cost;}
+  virtual void setCost(const double &cost) override { cost_ = cost; }
 
   /**
    * @brief Check if the sampler collapse. It has no effect on this sampler.
    * @return True if bounds collapse, false otherwise.
    */
-  virtual bool collapse() override {return false;}
+  virtual bool collapse() override { return false; }
 
   /**
    * @brief Creates a clone of the UniformSampler object.
@@ -96,5 +96,5 @@ public:
   virtual SamplerPtr clone() override;
 };
 
-} //end namespace core
+} // end namespace core
 } // end namespace graph

@@ -1,7 +1,7 @@
 #pragma once
 /*
-Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS, manuel.beschi@unibs.it, c.tonola001@unibs.it
-All rights reserved.
+Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS,
+manuel.beschi@unibs.it, c.tonola001@unibs.it All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -26,28 +26,27 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/metrics/goal_cost_function_base.h>
 #include <cnr_class_loader/register_macro.hpp>
+#include <graph_core/metrics/goal_cost_function_base.h>
 
-namespace graph
-{
-namespace core
-{
+namespace graph {
+namespace core {
 
 /**
  * @class GoalCostFunctionBasePlugin
- * @brief This class implements a wrapper to graph::core::GoalCostFunctionBase to allow its plugin to be defined.
- * The class can be loaded as a plugin and builds a graph::core::GoalCostFunctionBase object.
+ * @brief This class implements a wrapper to graph::core::GoalCostFunctionBase
+ * to allow its plugin to be defined. The class can be loaded as a plugin and
+ * builds a graph::core::GoalCostFunctionBase object.
  */
 class GoalCostFunctionBasePlugin;
 typedef std::shared_ptr<GoalCostFunctionBasePlugin> GoalCostFunctionPluginPtr;
 
-class GoalCostFunctionBasePlugin: public std::enable_shared_from_this<GoalCostFunctionBasePlugin>
-{
+class GoalCostFunctionBasePlugin
+    : public std::enable_shared_from_this<GoalCostFunctionBasePlugin> {
 protected:
-
   /**
-   * @brief metrics_ is the graph::core::GoalCostFunctionBase object built and initialized by this plugin class.
+   * @brief metrics_ is the graph::core::GoalCostFunctionBase object built and
+   * initialized by this plugin class.
    */
   graph::core::GoalCostFunctionPtr goal_cost_fcn_;
 
@@ -55,38 +54,36 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
-   * @brief Empty constructor for GoalCostFunctionBasePlugin. The function init() must be called afterwards.
+   * @brief Empty constructor for GoalCostFunctionBasePlugin. The function
+   * init() must be called afterwards.
    */
-  GoalCostFunctionBasePlugin()
-  {
-    goal_cost_fcn_ = nullptr;
-  }
+  GoalCostFunctionBasePlugin() { goal_cost_fcn_ = nullptr; }
 
   /**
    * @brief Destructor for GoalCostFunctionBasePlugin.
    */
-  virtual ~GoalCostFunctionBasePlugin()
-  {
-    goal_cost_fcn_ = nullptr;
-  }
+  virtual ~GoalCostFunctionBasePlugin() { goal_cost_fcn_ = nullptr; }
 
   /**
-   * @brief getCostFunction return the graph::core::GoalCostFunctionPtr object built by the plugin.
+   * @brief getCostFunction return the graph::core::GoalCostFunctionPtr object
+   * built by the plugin.
    * @return the graph::core::GoalCostFunctionPtr object built.
    */
-  virtual graph::core::GoalCostFunctionPtr getCostFunction()
-  {
+  virtual graph::core::GoalCostFunctionPtr getCostFunction() {
     return goal_cost_fcn_;
   }
 
   /**
-   * @brief init Initialise the graph::core::GoalCostFunctionBase object, defining its main attributes.
-   * @param param_ns defines the namespace under which parameter are searched for using cnr_param library.
+   * @brief init Initialise the graph::core::GoalCostFunctionBase object,
+   * defining its main attributes.
+   * @param param_ns defines the namespace under which parameter are searched
+   * for using cnr_param library.
    * @param logger Pointer to a TraceLogger for logging.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const std::string& param_ns, const cnr_logger::TraceLoggerPtr& logger) = 0;
+  virtual bool init(const std::string &param_ns,
+                    const cnr_logger::TraceLoggerPtr &logger) = 0;
 };
 
-} //namespace core
-} //namespace graph
+} // namespace core
+} // namespace graph

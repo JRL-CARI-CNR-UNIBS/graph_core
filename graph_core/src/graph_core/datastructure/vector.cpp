@@ -1,7 +1,6 @@
 /*
-Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS, manuel.beschi@unibs.it, c.tonola001@unibs.it
-Manuel Beschi manuel.beschi@unibs.it
-All rights reserved.
+Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS,
+manuel.beschi@unibs.it, c.tonola001@unibs.it All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -26,95 +25,75 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #include <graph_core/datastructure/vector.h>
 
-namespace graph
-{
-namespace core
-{
-Vector::Vector(const cnr_logger::TraceLoggerPtr &logger):
-  NearestNeighbors(logger)
-{
-}
+namespace graph {
+namespace core {
+Vector::Vector(const cnr_logger::TraceLoggerPtr &logger)
+    : NearestNeighbors(logger) {}
 
-void Vector::insert(const NodePtr& node)
-{
+void Vector::insert(const NodePtr &node) {
   nodes_.push_back(node);
   size_++;
   return;
 }
 
-bool Vector::clear()
-{
-  size_=0;
-  deleted_nodes_=0;
+bool Vector::clear() {
+  size_ = 0;
+  deleted_nodes_ = 0;
 
   nodes_.clear();
 
   return true;
 }
 
-void Vector::nearestNeighbor(const Eigen::VectorXd& configuration,
-                             NodePtr &best,
-                             double &best_distance)
-{
-  best_distance=std::numeric_limits<double>::infinity();
-  for (const NodePtr& n: nodes_)
-  {
-    double dist=(n->getConfiguration()-configuration).norm();
-    if (dist<best_distance)
-    {
-      best=n;
-      best_distance=dist;
+void Vector::nearestNeighbor(const Eigen::VectorXd &configuration,
+                             NodePtr &best, double &best_distance) {
+  best_distance = std::numeric_limits<double>::infinity();
+  for (const NodePtr &n : nodes_) {
+    double dist = (n->getConfiguration() - configuration).norm();
+    if (dist < best_distance) {
+      best = n;
+      best_distance = dist;
     }
   }
 }
 
-std::multimap<double, NodePtr> Vector::near(const Eigen::VectorXd& configuration,
-                                  const double& radius)
-{
+std::multimap<double, NodePtr>
+Vector::near(const Eigen::VectorXd &configuration, const double &radius) {
   std::multimap<double, NodePtr> nodes;
-  for (const NodePtr& n: nodes_)
-  {
-    double dist=(n->getConfiguration()-configuration).norm();
-    if (dist<radius)
-    {
-      nodes.insert(std::pair<double, NodePtr>(dist,n));
+  for (const NodePtr &n : nodes_) {
+    double dist = (n->getConfiguration() - configuration).norm();
+    if (dist < radius) {
+      nodes.insert(std::pair<double, NodePtr>(dist, n));
     }
   }
   return nodes;
 }
 
-std::multimap<double, NodePtr> Vector::kNearestNeighbors(const Eigen::VectorXd& configuration,
-                                        const size_t& k)
-{
+std::multimap<double, NodePtr>
+Vector::kNearestNeighbors(const Eigen::VectorXd &configuration,
+                          const size_t &k) {
   std::multimap<double, NodePtr> nodes;
-  for (const NodePtr& n: nodes_)
-  {
-    double dist=(n->getConfiguration()-configuration).norm();
-    nodes.insert(std::pair<double, NodePtr>(dist,n));
+  for (const NodePtr &n : nodes_) {
+    double dist = (n->getConfiguration() - configuration).norm();
+    nodes.insert(std::pair<double, NodePtr>(dist, n));
   }
-  if (nodes.size()<k)
+  if (nodes.size() < k)
     return nodes;
 
   std::multimap<double, NodePtr> m2(nodes.begin(), std::next(nodes.begin(), k));
   return m2;
 }
 
-
-bool Vector::findNode(const NodePtr& node)
-{
-  return  (std::find(nodes_.begin(),nodes_.end(),node)!=nodes_.end());
+bool Vector::findNode(const NodePtr &node) {
+  return (std::find(nodes_.begin(), nodes_.end(), node) != nodes_.end());
 }
 
-
-bool Vector::deleteNode(const NodePtr& node,
-                        const bool& disconnect_node)
-{
+bool Vector::deleteNode(const NodePtr &node, const bool &disconnect_node) {
   std::vector<NodePtr>::iterator it;
-  it=std::find(nodes_.begin(),nodes_.end(),node);
-  if (it==nodes_.end())
+  it = std::find(nodes_.begin(), nodes_.end(), node);
+  if (it == nodes_.end())
     return false;
 
   size_--;
@@ -122,30 +101,22 @@ bool Vector::deleteNode(const NodePtr& node,
 
   nodes_.erase(it);
 
-  if(disconnect_node)
+  if (disconnect_node)
     node->disconnect();
 
   return true;
 }
 
-bool Vector::restoreNode(const NodePtr& node)
-{
-  return false;
-}
+bool Vector::restoreNode(const NodePtr &node) { return false; }
 
-std::vector<NodePtr> Vector::getNodes()
-{
-  return nodes_;
-}
+std::vector<NodePtr> Vector::getNodes() { return nodes_; }
 
-void Vector::disconnectNodes(const std::vector<NodePtr>& white_list)
-{
-  for (NodePtr& n: nodes_)
-  {
-    if (std::find(white_list.begin(),white_list.end(),n)==white_list.end())
+void Vector::disconnectNodes(const std::vector<NodePtr> &white_list) {
+  for (NodePtr &n : nodes_) {
+    if (std::find(white_list.begin(), white_list.end(), n) == white_list.end())
       n->disconnect();
   }
 }
 
-} //end namespace core
+} // end namespace core
 } // end namespace graph

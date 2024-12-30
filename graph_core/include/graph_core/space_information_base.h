@@ -31,17 +31,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <xmlrpcpp/XmlRpcValue.h>
 //#include <random>
 
-namespace graph
-{
-namespace core
-{
+namespace graph {
+namespace core {
 
-//class StateInformationBase;
-//typedef std::shared_ptr<StateInformationBase> StateInformationPtr;
+// class StateInformationBase;
+// typedef std::shared_ptr<StateInformationBase> StateInformationPtr;
 
-//class StateInformationBase: public std::enable_shared_from_this<StateInformationBase>
+// class StateInformationBase: public
+// std::enable_shared_from_this<StateInformationBase>
 //{
-//protected:
+// protected:
 //  Eigen::VectorXd lower_bound_;
 //  Eigen::VectorXd upper_bound_;
 //  Eigen::VectorXd scales_;
@@ -50,20 +49,20 @@ namespace core
 //  std::map<std::string,StateSpacePtr> state_spaces_map;
 //  unsigned int ndof_;
 
-//public:
+// public:
 //  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 //  StateInformationBase();
 //  virtual bool config(const XmlRpc::XmlRpcValue& config)=0;
-//  virtual bool setLB(const Eigen::VectorXd& lower_bound){lower_bound_=lower_bound;}
-//  virtual bool setUB(const Eigen::VectorXd& upper_bound){upper_bound_=upper_bound;}
-//  const std::vector<std::string>& getNames(){return names_};
-//  const std::vector<StateSpacePtr>& getStateSpace(){return state_spaces_;}
-//  const std::map<std::string,StateSpacePtr>& getStateSpaceMap(){return state_spaces_map;}
-//  const Eigen::VectorXd& getLB(){return lower_bound_;}
+//  virtual bool setLB(const Eigen::VectorXd&
+//  lower_bound){lower_bound_=lower_bound;} virtual bool setUB(const
+//  Eigen::VectorXd& upper_bound){upper_bound_=upper_bound;} const
+//  std::vector<std::string>& getNames(){return names_}; const
+//  std::vector<StateSpacePtr>& getStateSpace(){return state_spaces_;} const
+//  std::map<std::string,StateSpacePtr>& getStateSpaceMap(){return
+//  state_spaces_map;} const Eigen::VectorXd& getLB(){return lower_bound_;}
 //  const Eigen::VectorXd& getUB(){return upper_bound_;}
 //  const unsigned int& getDimension()const {return ndof_;}
 //};
 
-
-} //end namespace core
+} // end namespace core
 } // end namespace graph

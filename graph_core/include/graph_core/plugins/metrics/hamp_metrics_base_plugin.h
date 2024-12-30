@@ -1,7 +1,7 @@
 #pragma once
 /*
-Copyright (c) 2024, Manuel Beschi and Cesare Tonola, UNIBS and CNR-STIIMA, manuel.beschi@unibs.it, c.tonola001@unibs.it
-All rights reserved.
+Copyright (c) 2024, Manuel Beschi and Cesare Tonola, UNIBS and CNR-STIIMA,
+manuel.beschi@unibs.it, c.tonola001@unibs.it All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -26,62 +26,59 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/metrics/hamp_metrics_base.h>
 #include <cnr_class_loader/class_loader.hpp>
+#include <graph_core/metrics/hamp_metrics_base.h>
 
-namespace graph
-{
-namespace core
-{
+namespace graph {
+namespace core {
 
 /**
  * @class HampMetricsBase
- * @brief This class implements a wrapper to graph::core::HampMetricsBase to allow its plugin to be defined.
- * The class can be loaded as a plugin and builds a graph::core::HampMetricsBase object.
+ * @brief This class implements a wrapper to graph::core::HampMetricsBase to
+ * allow its plugin to be defined. The class can be loaded as a plugin and
+ * builds a graph::core::HampMetricsBase object.
  */
-class HampMetricsBasePlugin: public std::enable_shared_from_this<HampMetricsBasePlugin>
-{
+class HampMetricsBasePlugin
+    : public std::enable_shared_from_this<HampMetricsBasePlugin> {
 protected:
   /**
-   * @brief metrics_ is the graph::core::HampMetricsBase object built and initialized by this plugin class.
+   * @brief metrics_ is the graph::core::HampMetricsBase object built and
+   * initialized by this plugin class.
    */
   graph::core::HampMetricsPtr metrics_;
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
-   * @brief Empty constructor for HampMetricsBasePlugin. The function init() must be called afterwards.
+   * @brief Empty constructor for HampMetricsBasePlugin. The function init()
+   * must be called afterwards.
    */
-  HampMetricsBasePlugin()
-  {
-    metrics_ = nullptr;
-  }
+  HampMetricsBasePlugin() { metrics_ = nullptr; }
 
   /**
    * @brief Destructor for HampMetricsBasePlugin.
    */
-  virtual ~HampMetricsBasePlugin()
-  {
-    metrics_ = nullptr;
-  }
+  virtual ~HampMetricsBasePlugin() { metrics_ = nullptr; }
 
   /**
-   * @brief getMetrics return the graph::core::HampMetricsPtr object built by the plugin.
+   * @brief getMetrics return the graph::core::HampMetricsPtr object built by
+   * the plugin.
    * @return the graph::core::HampMetricsPtr object built.
    */
-  virtual graph::core::HampMetricsPtr getMetrics()
-  {
-    return metrics_;
-  }
+  virtual graph::core::HampMetricsPtr getMetrics() { return metrics_; }
 
   /**
-   * @brief init Initialise the graph::core::HampMetricsBase object, defining its main attributes.
-   * @param param_ns defines the namespace under which parameter are searched for using cnr_param library.
+   * @brief init Initialise the graph::core::HampMetricsBase object, defining
+   * its main attributes.
+   * @param param_ns defines the namespace under which parameter are searched
+   * for using cnr_param library.
    * @param logger Pointer to a TraceLogger for logging.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const std::string& param_ns, const cnr_logger::TraceLoggerPtr& logger) = 0;
+  virtual bool init(const std::string &param_ns,
+                    const cnr_logger::TraceLoggerPtr &logger) = 0;
 };
 
-} //namespace core
-} //namespace graph
+} // namespace core
+} // namespace graph

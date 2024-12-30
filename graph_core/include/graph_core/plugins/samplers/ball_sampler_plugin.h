@@ -1,7 +1,7 @@
 #pragma once
 /*
-Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS, manuel.beschi@unibs.it, c.tonola001@unibs.it
-All rights reserved.
+Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS,
+manuel.beschi@unibs.it, c.tonola001@unibs.it All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -26,35 +26,34 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/samplers/ball_sampler.h>
 #include <graph_core/plugins/samplers/sampler_base_plugin.h>
+#include <graph_core/samplers/ball_sampler.h>
 
-namespace graph
-{
-namespace core
-{
+namespace graph {
+namespace core {
 
 /**
  * @class BallSamplerPlugin
- * @brief This class implements a wrapper to graph::core::BallSampler to allow its plugin to be defined.
- * The class can be loaded as a plugin and builds a graph::core::BallSampler object.
+ * @brief This class implements a wrapper to graph::core::BallSampler to allow
+ * its plugin to be defined. The class can be loaded as a plugin and builds a
+ * graph::core::BallSampler object.
  */
-class BallSamplerPlugin: public SamplerBasePlugin
-{
+class BallSamplerPlugin : public SamplerBasePlugin {
 protected:
-
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
-   * @brief Empty constructor for BallSamplerPlugin. The function init() must be called afterwards.
+   * @brief Empty constructor for BallSamplerPlugin. The function init() must be
+   * called afterwards.
    */
-  BallSamplerPlugin():SamplerBasePlugin()
-  {}
+  BallSamplerPlugin() : SamplerBasePlugin() {}
 
   /**
-   * @brief init Initialise the object graph::core::BallSampler, defining its main attributes.
-   * @param param_ns defines the namespace under which parameter are searched for using cnr_param library.
+   * @brief init Initialise the object graph::core::BallSampler, defining its
+   * main attributes.
+   * @param param_ns defines the namespace under which parameter are searched
+   * for using cnr_param library.
    * @param focus_1 is considered as the center of the ball.
    * @param focus_2 discarded, it just has no effects.
    * @param lower_bound Lower bounds for each dimension.
@@ -64,20 +63,20 @@ public:
    * @param cost Radius of the ball (default: infinity).
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const std::string& param_ns,
-                    const Eigen::VectorXd& focus_1,
-                    const Eigen::VectorXd& focus_2,
-                    const Eigen::VectorXd& lower_bound,
-                    const Eigen::VectorXd& upper_bound,
-                    const Eigen::VectorXd& scale,
-                    const cnr_logger::TraceLoggerPtr& logger,
-                    const double& cost = std::numeric_limits<double>::infinity()) override
-  {
-    (void)param_ns; (void)focus_2; (void)scale;
-    sampler_ = std::make_shared<BallSampler>(focus_1,lower_bound,upper_bound,logger,cost);
+  virtual bool
+  init(const std::string &param_ns, const Eigen::VectorXd &focus_1,
+       const Eigen::VectorXd &focus_2, const Eigen::VectorXd &lower_bound,
+       const Eigen::VectorXd &upper_bound, const Eigen::VectorXd &scale,
+       const cnr_logger::TraceLoggerPtr &logger,
+       const double &cost = std::numeric_limits<double>::infinity()) override {
+    (void)param_ns;
+    (void)focus_2;
+    (void)scale;
+    sampler_ = std::make_shared<BallSampler>(focus_1, lower_bound, upper_bound,
+                                             logger, cost);
     return true;
   }
 };
 
-} //namespace core
-} //namespace graph
+} // namespace core
+} // namespace graph

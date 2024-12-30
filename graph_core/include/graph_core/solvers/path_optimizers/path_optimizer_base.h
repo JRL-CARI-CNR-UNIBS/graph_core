@@ -1,7 +1,7 @@
 #pragma once
 /*
-Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS, manuel.beschi@unibs.it, c.tonola001@unibs.it
-All rights reserved.
+Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS,
+manuel.beschi@unibs.it, c.tonola001@unibs.it All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -26,32 +26,30 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <graph_core/collision_checkers/collision_checker_base.h>
 #include <graph_core/graph/path.h>
 #include <graph_core/metrics/metrics_base.h>
-#include <graph_core/collision_checkers/collision_checker_base.h>
 
-namespace graph
-{
-namespace core
-{
+namespace graph {
+namespace core {
 
-//class PathOptimizerBase; //Defined in util.h
+// class PathOptimizerBase; //Defined in util.h
 typedef std::shared_ptr<PathOptimizerBase> PathOptimizerPtr;
 
 /**
  * @brief Base class for path optimization algorithms, such as local optimizers.
  *
  * This class serves as the base class for various path optimization algorithms.
- * It provides a common interface and structure for different optimization approaches.
+ * It provides a common interface and structure for different optimization
+ * approaches.
  */
 
-class PathOptimizerBase: public std::enable_shared_from_this<PathOptimizerBase>
-{
- friend class Path;
+class PathOptimizerBase
+    : public std::enable_shared_from_this<PathOptimizerBase> {
+  friend class Path;
 
 protected:
-
- /**
+  /**
    * @brief path_ The input path to be optimized.
    */
   PathPtr path_;
@@ -67,7 +65,8 @@ protected:
   MetricsPtr metrics_;
 
   /**
-   * @brief configured_ Flag indicating whether the optimizer is configured ('config' method executed).
+   * @brief configured_ Flag indicating whether the optimizer is configured
+   * ('config' method executed).
    */
   bool configured_;
 
@@ -82,7 +81,8 @@ protected:
   unsigned int max_stall_gen_;
 
   /**
-   * @brief solved_ Flag indicating whether the optimization process has found a solution.
+   * @brief solved_ Flag indicating whether the optimization process has found a
+   * solution.
    */
   bool solved_;
 
@@ -94,15 +94,16 @@ protected:
   /**
    * @brief Pointer to a TraceLogger instance for logging.
    *
-   * This member variable represents a pointer to a TraceLogger instance, allowing
-   * to perform logging operations. TraceLogger is a part of the cnr_logger library.
-   * Ensure that the logger is properly configured and available for use.
+   * This member variable represents a pointer to a TraceLogger instance,
+   * allowing to perform logging operations. TraceLogger is a part of the
+   * cnr_logger library. Ensure that the logger is properly configured and
+   * available for use.
    */
   cnr_logger::TraceLoggerPtr logger_;
 
-
   /**
-   * @brief Perform one optimization step. Derived classes must implement this function.
+   * @brief Perform one optimization step. Derived classes must implement this
+   * function.
    * @return True if the optimization step was successful, false otherwise.
    */
   virtual bool step() = 0;
@@ -116,15 +117,16 @@ public:
    * @param metrics Metrics used to evaluate the quality of the path.
    * @param logger Logger for debugging and logging.
    */
-  PathOptimizerBase(const CollisionCheckerPtr& checker,
-                     const MetricsPtr& metrics,
-                     const cnr_logger::TraceLoggerPtr& logger);
+  PathOptimizerBase(const CollisionCheckerPtr &checker,
+                    const MetricsPtr &metrics,
+                    const cnr_logger::TraceLoggerPtr &logger);
 
   /**
-   * @brief Set the input path for optimization and reset the flags 'solved_' and 'stall_gen_'.
+   * @brief Set the input path for optimization and reset the flags 'solved_'
+   * and 'stall_gen_'.
    * @param path The input path to be optimized.
    */
-  virtual void setPath(const PathPtr& path);
+  virtual void setPath(const PathPtr &path);
 
   /**
    * @brief Get the optimized path.
@@ -135,16 +137,21 @@ public:
   /**
    * @brief Configure the optimizer reading parameters with cnr_param library.
    */
-  virtual void config(const std::string& param_ns);
+  virtual void config(const std::string &param_ns);
 
   /**
-   * @brief Solve the optimization problem. Use 'getPath' to get the processed path.
-   * @param max_iteration Maximum number of iterations for the optimization process.
-   * @param max_time Maximum time (in seconds) allowed for the optimization process.
+   * @brief Solve the optimization problem. Use 'getPath' to get the processed
+   * path.
+   * @param max_iteration Maximum number of iterations for the optimization
+   * process.
+   * @param max_time Maximum time (in seconds) allowed for the optimization
+   * process.
    * @return True if a solution was found, false otherwise.
    */
-  virtual bool solve(const unsigned int& max_iteration = 100, const double &max_time = std::numeric_limits<double>::infinity());
+  virtual bool
+  solve(const unsigned int &max_iteration = 100,
+        const double &max_time = std::numeric_limits<double>::infinity());
 };
 
-} //end namespace core
+} // end namespace core
 } // end namespace graph

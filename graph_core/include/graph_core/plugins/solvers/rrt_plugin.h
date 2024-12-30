@@ -1,7 +1,7 @@
 #pragma once
 /*
-Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS, manuel.beschi@unibs.it, c.tonola001@unibs.it
-All rights reserved.
+Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS,
+manuel.beschi@unibs.it, c.tonola001@unibs.it All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -26,54 +26,54 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <graph_core/solvers/rrt.h>
 #include <graph_core/plugins/solvers/tree_solver_plugin.h>
+#include <graph_core/solvers/rrt.h>
 
-namespace graph
-{
-namespace core
-{
+namespace graph {
+namespace core {
 
 /**
  * @class RRTPlugin
- * @brief This class implements a wrapper to graph::core::RRT to allow its plugin to be defined.
- * The class can be loaded as a plugin and builds a graph::core::RRT object.
+ * @brief This class implements a wrapper to graph::core::RRT to allow its
+ * plugin to be defined. The class can be loaded as a plugin and builds a
+ * graph::core::RRT object.
  */
 
-class RRTPlugin: public TreeSolverPlugin
-{
+class RRTPlugin : public TreeSolverPlugin {
 protected:
-
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
-   * @brief Empty constructor for RRTPlugin. The function RRTPlugin::init() must be called afterwards.
+   * @brief Empty constructor for RRTPlugin. The function RRTPlugin::init() must
+   * be called afterwards.
    */
-  RRTPlugin():TreeSolverPlugin()
-  {}
+  RRTPlugin() : TreeSolverPlugin() {}
 
   /**
    * @brief init Initialise the object, defining its main attributes.
-   * @param param_ns defines the namespace under which parameter are searched for using cnr_param library.
+   * @param param_ns defines the namespace under which parameter are searched
+   * for using cnr_param library.
    * @param metrics The metrics used to evaluate paths.
    * @param checker The collision checker for checking collisions.
    * @param sampler The sampler for generating random configurations.
-   * @param goal_cost_fcn The function used to assign the cost of the goal. If it is not defined, the default cost function does not assign any cost to the goal.
+   * @param goal_cost_fcn The function used to assign the cost of the goal. If
+   * it is not defined, the default cost function does not assign any cost to
+   * the goal.
    * @param logger The logger for logging messages.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const std::string& param_ns,
-                    const graph::core::MetricsPtr& metrics,
-                    const graph::core::CollisionCheckerPtr& checker,
-                    const graph::core::SamplerPtr& sampler,
-                    const graph::core::GoalCostFunctionPtr& goal_cost_fcn,
-                    const cnr_logger::TraceLoggerPtr& logger)
-  {
-    solver_ = std::make_shared<graph::core::RRT>(metrics,checker,sampler,goal_cost_fcn,logger);
+  virtual bool init(const std::string &param_ns,
+                    const graph::core::MetricsPtr &metrics,
+                    const graph::core::CollisionCheckerPtr &checker,
+                    const graph::core::SamplerPtr &sampler,
+                    const graph::core::GoalCostFunctionPtr &goal_cost_fcn,
+                    const cnr_logger::TraceLoggerPtr &logger) {
+    solver_ = std::make_shared<graph::core::RRT>(metrics, checker, sampler,
+                                                 goal_cost_fcn, logger);
     return true;
   }
 };
 
-} //namespace core
-} //namespace graph
+} // namespace core
+} // namespace graph

@@ -31,22 +31,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <xmlrpcpp/XmlRpcValue.h>
 //#include <random>
 
-namespace graph
-{
-namespace core
-{
+namespace graph {
+namespace core {
 
-//class StateSpaceBase;
-//typedef std::shared_ptr<StateSpaceBase> StateSpacePtr;
+// class StateSpaceBase;
+// typedef std::shared_ptr<StateSpaceBase> StateSpacePtr;
 
-//class StateSpaceBase: public std::enable_shared_from_this<StateSpaceBase>
+// class StateSpaceBase: public std::enable_shared_from_this<StateSpaceBase>
 //{
-//protected:
+// protected:
 //  std::vector<std::string> names_;
 //  std::string type_;
 //  StateSpaceProjectorPtr projector_;
 
-//public:
+// public:
 //  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 //  StateSpaceBase();
 //  const std::vector<std::string>& getNames(){return names_};
@@ -54,5 +52,5 @@ namespace core
 //  const StateSpaceProjectorPtr& getProjector(){return projector_;}
 //};
 
-} //end namespace core
+} // end namespace core
 } // end namespace graph

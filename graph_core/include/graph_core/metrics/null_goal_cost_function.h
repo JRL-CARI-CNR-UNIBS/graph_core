@@ -1,7 +1,7 @@
 #pragma once
 /*
-Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS, manuel.beschi@unibs.it, c.tonola001@unibs.it
-All rights reserved.
+Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS,
+manuel.beschi@unibs.it, c.tonola001@unibs.it All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,49 +28,42 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/metrics/goal_cost_function_base.h>
 
-namespace graph
-{
-namespace core
-{
+namespace graph {
+namespace core {
 
 /**
  * @class NullGoalCostFunction
  * @brief class for setting goal cost to zero.
  *
- * The NullGoalCostFunction class is a placeholder to avoid the use of a cost function
+ * The NullGoalCostFunction class is a placeholder to avoid the use of a cost
+ * function
  */
-class NullGoalCostFunction: public GoalCostFunctionBase
-{
+class NullGoalCostFunction : public GoalCostFunctionBase {
 public:
-
   /**
    * @brief Default constructor for NullGoalCostFunction.
    */
-  NullGoalCostFunction(const cnr_logger::TraceLoggerPtr& logger):logger_(logger)
-  {
-
-  }
+  NullGoalCostFunction(const cnr_logger::TraceLoggerPtr &logger)
+      : logger_(logger) {}
 
   /**
    * @brief Calculate the cost for a given goal configuration.
    * @param q The goal configuration for which the cost is calculated.
    * @return The cost associated with the goal configuration.
    */
-  virtual double cost(const Eigen::VectorXd& q)
-  {
-    return 0.0;
-  }
+  virtual double cost(const Eigen::VectorXd &q) { return 0.0; }
+
 protected:
   /**
    * @brief Pointer to a TraceLogger instance for logging.
    *
-   * This member variable represents a pointer to a TraceLogger instance, allowing
-   * to perform logging operations. TraceLogger is a part of the cnr_logger library.
-   * Ensure that the logger is properly configured and available for use.
+   * This member variable represents a pointer to a TraceLogger instance,
+   * allowing to perform logging operations. TraceLogger is a part of the
+   * cnr_logger library. Ensure that the logger is properly configured and
+   * available for use.
    */
   cnr_logger::TraceLoggerPtr logger_;
 };
 
-
-} //end namespace core
+} // end namespace core
 } // end namespace graph
