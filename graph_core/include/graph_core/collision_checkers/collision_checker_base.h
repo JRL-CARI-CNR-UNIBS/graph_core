@@ -1,7 +1,7 @@
 #pragma once
 /*
-Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS, manuel.beschi@unibs.it, c.tonola001@unibs.it
-All rights reserved.
+Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS,
+manuel.beschi@unibs.it, c.tonola001@unibs.it All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,15 +29,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Core>
 #include <graph_core/graph/connection.h>
 
-namespace graph
-{
-namespace core
-{
+namespace graph {
+namespace core {
 
 /**
  * @class CollisionCheckerBase
- * @brief Base class for collision checkers in path planning. The current implementation of collision checking assumes that
- * path's connections are straight lines between configurations.
+ * @brief Base class for collision checkers in path planning. The current
+ * implementation of collision checking assumes that path's connections are
+ * straight lines between configurations.
  *
  * The CollisionCheckerBase class provides an interface for collision checking
  * in path planning. Users can derive from this class to implement custom
@@ -46,11 +45,12 @@ namespace core
 class CollisionCheckerBase;
 typedef std::shared_ptr<CollisionCheckerBase> CollisionCheckerPtr;
 
-class CollisionCheckerBase:  public std::enable_shared_from_this<CollisionCheckerBase>
-{
+class CollisionCheckerBase
+    : public std::enable_shared_from_this<CollisionCheckerBase> {
 protected:
   /**
-   * @brief min_distance_ Defines the distance between configurations checked for collisions along a connection.
+   * @brief min_distance_ Defines the distance between configurations checked
+   * for collisions along a connection.
    */
   double min_distance_;
 
@@ -60,19 +60,22 @@ protected:
   bool verbose_ = false;
 
   /**
-   * @brief initialized_ Flag to indicate whether the object is initialised, i.e. whether its members have been defined correctly.
-   * It is false when the object is created with an empty constructor. In this case, call the 'init' function to initialise it.
-   * The other constructors automatically initialise the object.
-   * As long as the object is not initialised, it cannot perform its main functions.
+   * @brief initialized_ Flag to indicate whether the object is initialised,
+   * i.e. whether its members have been defined correctly. It is false when the
+   * object is created with an empty constructor. In this case, call the 'init'
+   * function to initialise it. The other constructors automatically initialise
+   * the object. As long as the object is not initialised, it cannot perform its
+   * main functions.
    */
   bool initialized_;
 
   /**
    * @brief Pointer to a TraceLogger instance for logging.
    *
-   * This member variable represents a pointer to a TraceLogger instance, allowing
-   * to perform logging operations. TraceLogger is a part of the cnr_logger library.
-   * Ensure that the logger is properly configured and available for use.
+   * This member variable represents a pointer to a TraceLogger instance,
+   * allowing to perform logging operations. TraceLogger is a part of the
+   * cnr_logger library. Ensure that the logger is properly configured and
+   * available for use.
    */
   cnr_logger::TraceLoggerPtr logger_;
 
@@ -80,10 +83,10 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
-   * @brief Empty constructor for CollisionCheckerBase. The function init() must be called afterwards.
+   * @brief Empty constructor for CollisionCheckerBase. The function init() must
+   * be called afterwards.
    */
-  CollisionCheckerBase()
-  {
+  CollisionCheckerBase() {
     initialized_ = false;
     verbose_ = false;
   }
@@ -91,27 +94,29 @@ public:
   /**
    * @brief Constructor for CollisionCheckerBase.
    * @param logger Pointer to a TraceLogger for logging.
-   * @param min_distance Distance between configurations checked for collisions along a connection.
+   * @param min_distance Distance between configurations checked for collisions
+   * along a connection.
    */
-  CollisionCheckerBase(const cnr_logger::TraceLoggerPtr& logger, const double& min_distance = 0.01):
-    min_distance_(min_distance),
-    logger_(logger)
-  {
+  CollisionCheckerBase(const cnr_logger::TraceLoggerPtr &logger,
+                       const double &min_distance = 0.01)
+      : min_distance_(min_distance), logger_(logger) {
     initialized_ = true;
     verbose_ = false;
   }
 
   /**
-   * @brief init Initialise the object, defining its main attributes. At the end of the function, the flag 'initialized_' is set to true and the object can execute its main functions.
+   * @brief init Initialise the object, defining its main attributes. At the end
+   * of the function, the flag 'initialized_' is set to true and the object can
+   * execute its main functions.
    * @param logger Pointer to a TraceLogger for logging.
-   * @param min_distance Distance between configurations checked for collisions along a connection.
+   * @param min_distance Distance between configurations checked for collisions
+   * along a connection.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const cnr_logger::TraceLoggerPtr& logger, const double& min_distance = 0.01)
-  {
-    if(initialized_)
-    {
-      CNR_WARN(logger_,"Collision checker already initialised!");
+  virtual bool init(const cnr_logger::TraceLoggerPtr &logger,
+                    const double &min_distance = 0.01) {
+    if (initialized_) {
+      CNR_WARN(logger_, "Collision checker already initialised!");
       return false;
     }
 
@@ -126,61 +131,51 @@ public:
    * @brief Set the verbose flag for additional output.
    * @param verbose True to enable verbose output, false otherwise.
    */
-  void setVerbose(const bool& verbose)
-  {
-    verbose_ = verbose;
-  }
+  void setVerbose(const bool &verbose) { verbose_ = verbose; }
 
   /**
-   * @brief Get the name of the robotic group for which collision checking is performed.
+   * @brief Get the name of the robotic group for which collision checking is
+   * performed.
    * @return The group name.
    */
-  virtual std::string getGroupName()
-  {
-    return "";
-  }
+  virtual std::string getGroupName() { return ""; }
 
   /**
    * @brief getInitialized tells if the object has been initialised.
    * @return the 'initialized_' flag.
    */
-  bool getInitialized()
-  {
-    return initialized_;
-  }
+  bool getInitialized() { return initialized_; }
 
   /**
    * @brief Perform collision check for a given configuration.
    * @param configuration The robot configuration to check for collision.
    * @return True if the configuration is collision-free, false otherwise.
    */
-  virtual bool check(const Eigen::VectorXd& configuration)=0;
+  virtual bool check(const Eigen::VectorXd &configuration) = 0;
 
   /**
-   * @brief Perform collision check along a connection between two configurations.
-   *  It assumes the connection is as a straight line between configuration1 and configuration2.
+   * @brief Perform collision check along a connection between two
+   * configurations. It assumes the connection is as a straight line between
+   * configuration1 and configuration2.
    * @param configuration1 Start configuration of the connection.
    * @param configuration2 End configuration of the connection.
-   * @param conf If collision is detected, this is the last feasible configuration on the connection.
+   * @param conf If collision is detected, this is the last feasible
+   * configuration on the connection.
    * @return True if the connection is collision-free, false otherwise.
    */
-  virtual bool checkConnection(const Eigen::VectorXd& configuration1,
-                               const Eigen::VectorXd& configuration2,
-                               Eigen::VectorXd& conf)
-  {
+  virtual bool checkConnection(const Eigen::VectorXd &configuration1,
+                               const Eigen::VectorXd &configuration2,
+                               Eigen::VectorXd &conf) {
     if (!check(configuration1))
       return false;
 
     double dist = (configuration2 - configuration1).norm();
     unsigned int npnt = std::ceil(dist / min_distance_);
-    if (npnt > 1)
-    {
+    if (npnt > 1) {
       Eigen::VectorXd step = (configuration2 - configuration1) / npnt;
-      for (unsigned int ipnt = 1; ipnt < npnt; ipnt++)
-      {
+      for (unsigned int ipnt = 1; ipnt < npnt; ipnt++) {
         conf = configuration1 + step * ipnt;
-        if (!check(conf))
-        {
+        if (!check(conf)) {
           // return last feasible configuration
           conf = configuration1 + step * (ipnt - 1);
           return false;
@@ -194,15 +189,12 @@ public:
     return true;
   }
 
-  virtual bool checkConnection(const Eigen::VectorXd& configuration1,
-                               const Eigen::VectorXd& configuration2)
-  {
-    if (!check(configuration1))
-    {
+  virtual bool checkConnection(const Eigen::VectorXd &configuration1,
+                               const Eigen::VectorXd &configuration2) {
+    if (!check(configuration1)) {
       return false;
     }
-    if (!check(configuration2))
-    {
+    if (!check(configuration2)) {
       return false;
     }
     double distance = (configuration2 - configuration1).norm();
@@ -211,13 +203,10 @@ public:
 
     Eigen::VectorXd conf;
     double n = 2;
-    while (distance > n * min_distance_)
-    {
-      for (double idx = 1; idx < n; idx += 2)
-      {
+    while (distance > n * min_distance_) {
+      for (double idx = 1; idx < n; idx += 2) {
         conf = configuration1 + (configuration2 - configuration1) * idx / n;
-        if (!check(conf))
-        {
+        if (!check(conf)) {
           return false;
         }
       }
@@ -227,10 +216,9 @@ public:
     return true;
   }
 
-
-  virtual bool checkConnection(const ConnectionPtr& conn)
-  {
-    return checkConnection(conn->getParent()->getConfiguration(),conn->getChild()->getConfiguration());
+  virtual bool checkConnection(const ConnectionPtr &conn) {
+    return checkConnection(conn->getParent()->getConfiguration(),
+                           conn->getChild()->getConfiguration());
   }
 
   /**
@@ -238,62 +226,58 @@ public:
    * @param connections The vector of connections to check for collision.
    * @return True if all connections are collision-free, false otherwise.
    */
-  virtual bool checkConnections(const std::vector<ConnectionPtr>& connections)
-  {
-    for (const ConnectionPtr& c: connections)
+  virtual bool checkConnections(const std::vector<ConnectionPtr> &connections) {
+    for (const ConnectionPtr &c : connections)
       if (!checkConnection(c))
         return false;
     return true;
   }
 
   /**
-   * @brief Perform collision check along a connection, starting from a given configuration.
+   * @brief Perform collision check along a connection, starting from a given
+   * configuration.
    * @param conn The connection to check for collision.
    * @param this_conf The configuration to start the collision check from.
    * @return True if the connection is collision-free, false otherwise.
    */
   virtual bool checkConnFromConf(const ConnectionPtr &conn,
-                                 const Eigen::VectorXd& this_conf)
-  {
+                                 const Eigen::VectorXd &this_conf) {
     Eigen::VectorXd parent = conn->getParent()->getConfiguration();
     Eigen::VectorXd child = conn->getChild()->getConfiguration();
 
-    double dist_child = (this_conf-child).norm();
-    double dist_parent = (parent-this_conf).norm();
-    double dist = (parent-child).norm();
+    double dist_child = (this_conf - child).norm();
+    double dist_parent = (parent - this_conf).norm();
+    double dist = (parent - child).norm();
 
-    if((dist-dist_child-dist_parent)>1e-04)
-    {
-      CNR_ERROR(logger_,"The conf is not on the connection between parent and child");
-      throw std::invalid_argument("The conf is not on the connection between parent and child");
+    if ((dist - dist_child - dist_parent) > 1e-04) {
+      CNR_ERROR(logger_,
+                "The conf is not on the connection between parent and child");
+      throw std::invalid_argument(
+          "The conf is not on the connection between parent and child");
     }
 
-    if (!check(this_conf))
-    {
+    if (!check(this_conf)) {
       return false;
     }
-    if (!check(child))
-    {
+    if (!check(child)) {
       return false;
     }
 
     double distance = (this_conf - child).norm();
-    if(distance < min_distance_) return true;
+    if (distance < min_distance_)
+      return true;
 
-    double this_abscissa = (parent-this_conf).norm()/(parent-child).norm();
+    double this_abscissa =
+        (parent - this_conf).norm() / (parent - child).norm();
     double abscissa;
     double n = 2;
     Eigen::VectorXd conf;
-    while (distance > n * min_distance_)
-    {
-      for (double idx = 1; idx < n; idx += 2)
-      {
-        abscissa = idx/n;
-        if(abscissa>=this_abscissa)
-        {
+    while (distance > n * min_distance_) {
+      for (double idx = 1; idx < n; idx += 2) {
+        abscissa = idx / n;
+        if (abscissa >= this_abscissa) {
           conf = parent + (child - parent) * abscissa;
-          if (!check(conf))
-          {
+          if (!check(conf)) {
             return false;
           }
         }
@@ -307,8 +291,8 @@ public:
    * @brief Clone the collision checker.
    * @return A shared pointer to the cloned collision checker.
    */
-  virtual CollisionCheckerPtr clone()=0;
+  virtual CollisionCheckerPtr clone() = 0;
 };
 
-} //end namespace core
+} // end namespace core
 } // end namespace graph

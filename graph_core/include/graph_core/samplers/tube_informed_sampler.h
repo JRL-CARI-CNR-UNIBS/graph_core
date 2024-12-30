@@ -1,7 +1,7 @@
 #pragma once
 /*
-Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS, manuel.beschi@unibs.it, c.tonola001@unibs.it
-All rights reserved.
+Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS,
+manuel.beschi@unibs.it, c.tonola001@unibs.it All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -26,26 +26,22 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-
-#include <graph_core/samplers/sampler_base.h>
 #include <graph_core/graph/path.h>
+#include <graph_core/samplers/sampler_base.h>
 
-namespace graph
-{
-namespace core
-{
+namespace graph {
+namespace core {
 
 /**
  * @class TubeInformedSampler
- * @brief A sampler class for generating configurations in a path-informed manner.
+ * @brief A sampler class for generating configurations in a path-informed
+ * manner.
  *
- * This class inherits from SamplerBase and implements a sampling strategy that biases
- * towards a given path. It considers a tubular region around the path and samples
- * configurations within this tube.
+ * This class inherits from SamplerBase and implements a sampling strategy that
+ * biases towards a given path. It considers a tubular region around the path
+ * and samples configurations within this tube.
  */
-class TubeInformedSampler: public SamplerBase
-{
+class TubeInformedSampler : public SamplerBase {
 protected:
   /**
    * @brief path_ Waypoints defining the path.
@@ -75,7 +71,7 @@ protected:
   /**
    * @brief local_bias_ Local bias factor for sampling.
    */
-  double local_bias_=0.8;
+  double local_bias_ = 0.8;
 
   /**
    * @brief sampler_ Pointer to the underlying sampler.
@@ -88,7 +84,8 @@ protected:
   MetricsPtr metrics_;
 
   /**
-   * @brief Check if a given configuration could improve the cost along the path.
+   * @brief Check if a given configuration could improve the cost along the
+   * path.
    * @param q The configuration to be checked.
    * @return True if the configuration could improve the cost, false otherwise.
    */
@@ -98,12 +95,14 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
-   * @brief Empty constructor for TubeInformedSampler. The function init() must be called afterwards.
+   * @brief Empty constructor for TubeInformedSampler. The function init() must
+   * be called afterwards.
    */
-  TubeInformedSampler():SamplerBase() //set initialized_ false
+  TubeInformedSampler()
+      : SamplerBase() // set initialized_ false
   {
     length_ = 0;
-    radius_=0;
+    radius_ = 0;
   }
 
   /**
@@ -111,61 +110,60 @@ public:
    * @param sampler Pointer to the underlying sampler.
    * @param metrics Pointer to the metrics for evaluating costs.
    */
-  TubeInformedSampler(const SamplerPtr& sampler,
-                      const MetricsPtr& metrics):
-    SamplerBase(sampler->getLB(),
-                sampler->getUB(),
-                sampler->getLogger(),
-                sampler->getCost()) //set initialized_ true
+  TubeInformedSampler(const SamplerPtr &sampler, const MetricsPtr &metrics)
+      : SamplerBase(sampler->getLB(), sampler->getUB(), sampler->getLogger(),
+                    sampler->getCost()) // set initialized_ true
   {
     length_ = 0;
-    radius_=0;
-    sampler_=sampler;
-    metrics_=metrics;
+    radius_ = 0;
+    sampler_ = sampler;
+    metrics_ = metrics;
   }
 
   /**
-   * @brief init Initialise the object, defining its main attributes. At the end of the function, the flag 'initialized_' is set to true and the object can execute its main functions.
+   * @brief init Initialise the object, defining its main attributes. At the end
+   * of the function, the flag 'initialized_' is set to true and the object can
+   * execute its main functions.
    * @param sampler Pointer to the underlying sampler.
    * @param metrics Pointer to the metrics for evaluating costs.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const SamplerPtr& sampler, const MetricsPtr& metrics);
+  virtual bool init(const SamplerPtr &sampler, const MetricsPtr &metrics);
 
   /**
    * @brief Set the path for path-informed sampling.
    * @param path The path.
    * @return True if the path is successfully set, false otherwise.
    */
-  bool setPath(const PathPtr& path);
-  bool setPath(const std::vector<Eigen::VectorXd>& path);
-  bool setPath(const std::vector<std::vector<double>>& path);
+  bool setPath(const PathPtr &path);
+  bool setPath(const std::vector<Eigen::VectorXd> &path);
+  bool setPath(const std::vector<std::vector<double>> &path);
 
   /**
    * @brief Set the radius of the tubular region around the path.
    * @param radius The radius of the tubular region.
    * @return True if the radius is valid, false otherwise.
    */
-  bool setRadius(const double& radius);
+  bool setRadius(const double &radius);
 
   /**
    * @brief Set the local bias factor for sampling.
    * @param local_bias The local bias factor (between 0 and 1).
    * @return True if the local bias is valid, false otherwise.
    */
-  bool setLocalBias(const double& local_bias);
+  bool setLocalBias(const double &local_bias);
 
   /**
-    * @brief Compute a point on the path at a specified curvilinear abscissa.
-    *
-    * This function calculates a point on the path corresponding to a given
-    * curvilinear abscissa. If the provided abscissa is outside the path range,
-    * the function returns the closest endpoint of the path.
-    *
-    * @param abscissa The curvilinear abscissa along the path.
-    * @return A point on the path at the specified abscissa.
-    */
-  Eigen::VectorXd pointOnCurvilinearAbscissa(const double& abscissa);
+   * @brief Compute a point on the path at a specified curvilinear abscissa.
+   *
+   * This function calculates a point on the path corresponding to a given
+   * curvilinear abscissa. If the provided abscissa is outside the path range,
+   * the function returns the closest endpoint of the path.
+   *
+   * @param abscissa The curvilinear abscissa along the path.
+   * @return A point on the path at the specified abscissa.
+   */
+  Eigen::VectorXd pointOnCurvilinearAbscissa(const double &abscissa);
 
   /**
    * @brief Generate a path-informed sample configuration.
@@ -178,7 +176,7 @@ public:
    *
    * @param cost Cost to be set.
    */
-  virtual void setCost(const double& cost) override;
+  virtual void setCost(const double &cost) override;
 
   /**
    * @brief Check if the sampler should collapse.
@@ -197,5 +195,5 @@ public:
 
 typedef std::shared_ptr<TubeInformedSampler> TubeInformedSamplerPtr;
 
-} //end namespace core
+} // end namespace core
 } // end namespace graph

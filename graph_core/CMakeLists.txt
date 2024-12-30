@@ -153,3 +153,13 @@ if(ADD_CUSTOM_UNINSTALL)
         )
 endif()
 
+# clang-format
+
+file(GLOB_RECURSE ALL_SOURCE_FILES *.cpp *.h)
+
+add_custom_target(
+    format
+    COMMAND clang-format -i ${ALL_SOURCE_FILES}
+    COMMENT "Auto clang-format for all *.cpp and *.h files"
+)
+

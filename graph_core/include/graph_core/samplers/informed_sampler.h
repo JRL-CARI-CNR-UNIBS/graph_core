@@ -1,7 +1,7 @@
 #pragma once
 /*
-Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS, manuel.beschi@unibs.it, c.tonola001@unibs.it
-All rights reserved.
+Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS,
+manuel.beschi@unibs.it, c.tonola001@unibs.it All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -32,26 +32,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/util.h>
 #include <random>
 
-namespace graph
-{
-namespace core
-{
+namespace graph {
+namespace core {
 
 /**
  * @class InformedSampler
  * @brief Sampler with informed sampling strategy for path planning.
  *
- * The InformedSampler class inherits from SamplerBase and implements an informed
- * sampling strategy for path planning. It samples configurations in a ellipse-shaped
- * to guide the search towards the goal configuration efficiently.
+ * The InformedSampler class inherits from SamplerBase and implements an
+ * informed sampling strategy for path planning. It samples configurations in a
+ * ellipse-shaped to guide the search towards the goal configuration
+ * efficiently.
  */
 class InformedSampler;
 typedef std::shared_ptr<InformedSampler> InformedSamplerPtr;
 
-class InformedSampler: public SamplerBase
-{
+class InformedSampler : public SamplerBase {
 protected:
-
   /**
    * @brief focus_1_ Focus 1 of the ellipse.
    */
@@ -73,19 +70,21 @@ protected:
   Eigen::VectorXd focus_2_not_scaled_;
 
   /**
-   * @brief lower_bound_not_scaled_ Lower bounds not scaled for configuration sampling.
+   * @brief lower_bound_not_scaled_ Lower bounds not scaled for configuration
+   * sampling.
    */
   Eigen::VectorXd lower_bound_not_scaled_;
 
   /**
-   * @brief upper_bound_not_scaled_ Upper bounds not scaled for configuration sampling.
+   * @brief upper_bound_not_scaled_ Upper bounds not scaled for configuration
+   * sampling.
    */
   Eigen::VectorXd upper_bound_not_scaled_;
 
   /**
-   * @brief scale_ A vector containing a scaling for each element of a configuration.
-   * Each configuration in the scaled space is computed as the component-wise product between the configuration
-   * and scale_.
+   * @brief scale_ A vector containing a scaling for each element of a
+   * configuration. Each configuration in the scaled space is computed as the
+   * component-wise product between the configuration and scale_.
    */
   Eigen::VectorXd scale_;
 
@@ -145,7 +144,8 @@ protected:
    * @param x2 Configuration 2.
    * @return Rotation matrix.
    */
-  Eigen::MatrixXd computeRotationMatrix(const Eigen::VectorXd& x1, const Eigen::VectorXd&  x2);
+  Eigen::MatrixXd computeRotationMatrix(const Eigen::VectorXd &x1,
+                                        const Eigen::VectorXd &x2);
 
   /**
    * @brief Configure the informed sampler parameters.
@@ -156,9 +156,11 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
-   * @brief Empty constructor for InformedSampler. The function init() must be called afterwards.
+   * @brief Empty constructor for InformedSampler. The function init() must be
+   * called afterwards.
    */
-  InformedSampler():SamplerBase() //set initialized_ false
+  InformedSampler()
+      : SamplerBase() // set initialized_ false
   {}
 
   /**
@@ -171,46 +173,44 @@ public:
    * @param logger TraceLogger for logging.
    * @param cost Cost of the path (default: infinity).
    */
-  InformedSampler(const Eigen::VectorXd& focus_1,
-                  const Eigen::VectorXd& focus_2,
-                  const Eigen::VectorXd& lower_bound,
-                  const Eigen::VectorXd& upper_bound,
-                  const Eigen::VectorXd& scale,
-                  const cnr_logger::TraceLoggerPtr& logger,
-                  const double& cost):
-    SamplerBase(lower_bound,
-                upper_bound,
-                logger,
-                cost), //set initialized_ true
-    //at this point lower_bound, upper_bound, focus_1, focus_2 are not scaled yet, they will be scaled and
-    //assigned to lower_bound_, upper_bound_, focus_1_, focus_2_ in config()
-    focus_1_not_scaled_(focus_1),focus_2_not_scaled_(focus_2),
-    lower_bound_not_scaled_(lower_bound),upper_bound_not_scaled_(upper_bound),
-    scale_(scale)
-  {
+  InformedSampler(const Eigen::VectorXd &focus_1,
+                  const Eigen::VectorXd &focus_2,
+                  const Eigen::VectorXd &lower_bound,
+                  const Eigen::VectorXd &upper_bound,
+                  const Eigen::VectorXd &scale,
+                  const cnr_logger::TraceLoggerPtr &logger, const double &cost)
+      : SamplerBase(lower_bound, upper_bound, logger,
+                    cost), // set initialized_ true
+        // at this point lower_bound, upper_bound, focus_1, focus_2 are not
+        // scaled yet, they will be scaled and assigned to lower_bound_,
+        // upper_bound_, focus_1_, focus_2_ in config()
+        focus_1_not_scaled_(focus_1), focus_2_not_scaled_(focus_2),
+        lower_bound_not_scaled_(lower_bound),
+        upper_bound_not_scaled_(upper_bound), scale_(scale) {
     config();
   }
-  InformedSampler(const Eigen::VectorXd& focus_1,
-                  const Eigen::VectorXd& focus_2,
-                  const Eigen::VectorXd& lower_bound,
-                  const Eigen::VectorXd& upper_bound,
-                  const cnr_logger::TraceLoggerPtr& logger,
-                  const double& cost = std::numeric_limits<double>::infinity()):
-    SamplerBase(lower_bound,
-                upper_bound,
-                logger,
-                cost), //set initialized_ true
-    //at this point lower_bound, upper_bound, focus_1, focus_2 are not scaled yet, they will be scaled and
-    //assigned to lower_bound_, upper_bound_, focus_1_, focus_2_ in config()
-    focus_1_not_scaled_(focus_1),focus_2_not_scaled_(focus_2),
-    lower_bound_not_scaled_(lower_bound),upper_bound_not_scaled_(upper_bound)
-  {
-    scale_.setOnes(lower_bound_.rows(),1);
+  InformedSampler(const Eigen::VectorXd &focus_1,
+                  const Eigen::VectorXd &focus_2,
+                  const Eigen::VectorXd &lower_bound,
+                  const Eigen::VectorXd &upper_bound,
+                  const cnr_logger::TraceLoggerPtr &logger,
+                  const double &cost = std::numeric_limits<double>::infinity())
+      : SamplerBase(lower_bound, upper_bound, logger,
+                    cost), // set initialized_ true
+        // at this point lower_bound, upper_bound, focus_1, focus_2 are not
+        // scaled yet, they will be scaled and assigned to lower_bound_,
+        // upper_bound_, focus_1_, focus_2_ in config()
+        focus_1_not_scaled_(focus_1), focus_2_not_scaled_(focus_2),
+        lower_bound_not_scaled_(lower_bound),
+        upper_bound_not_scaled_(upper_bound) {
+    scale_.setOnes(lower_bound_.rows(), 1);
     config();
   }
 
   /**
-   * @brief pluginInit  This function should be called just after the plugin is loaded and initialise the graph::core::InformedSampler object, defining its main attributes.
+   * @brief pluginInit  This function should be called just after the plugin is
+   * loaded and initialise the graph::core::InformedSampler object, defining its
+   * main attributes.
    * @param focus_1 focus 1 for the ellipse.
    * @param focus_2 focus 2 for the ellipse.
    * @param lower_bound Lower bounds for each dimension.
@@ -220,15 +220,12 @@ public:
    * @param cost Cost of the path (default: infinity).
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const Eigen::VectorXd& focus_1,
-                    const Eigen::VectorXd& focus_2,
-                    const Eigen::VectorXd& lower_bound,
-                    const Eigen::VectorXd& upper_bound,
-                    const Eigen::VectorXd& scale,
-                    const cnr_logger::TraceLoggerPtr& logger,
-                    const double& cost = std::numeric_limits<double>::infinity())
-  {
-    if(not SamplerBase::init(lower_bound,upper_bound,logger,cost))
+  virtual bool
+  init(const Eigen::VectorXd &focus_1, const Eigen::VectorXd &focus_2,
+       const Eigen::VectorXd &lower_bound, const Eigen::VectorXd &upper_bound,
+       const Eigen::VectorXd &scale, const cnr_logger::TraceLoggerPtr &logger,
+       const double &cost = std::numeric_limits<double>::infinity()) {
+    if (not SamplerBase::init(lower_bound, upper_bound, logger, cost))
       return false;
 
     focus_1_ = focus_1;
@@ -240,19 +237,17 @@ public:
     return true;
   }
 
-  virtual bool init(const Eigen::VectorXd& focus_1,
-                    const Eigen::VectorXd& focus_2,
-                    const Eigen::VectorXd& lower_bound,
-                    const Eigen::VectorXd& upper_bound,
-                    const cnr_logger::TraceLoggerPtr& logger,
-                    const double& cost = std::numeric_limits<double>::infinity())
-  {
-    if(not SamplerBase::init(lower_bound,upper_bound,logger,cost))
+  virtual bool
+  init(const Eigen::VectorXd &focus_1, const Eigen::VectorXd &focus_2,
+       const Eigen::VectorXd &lower_bound, const Eigen::VectorXd &upper_bound,
+       const cnr_logger::TraceLoggerPtr &logger,
+       const double &cost = std::numeric_limits<double>::infinity()) {
+    if (not SamplerBase::init(lower_bound, upper_bound, logger, cost))
       return false;
 
     focus_1_ = focus_1;
     focus_2_ = focus_2;
-    scale_.setOnes(lower_bound_.rows(),1);
+    scale_.setOnes(lower_bound_.rows(), 1);
 
     config();
 
@@ -269,14 +264,13 @@ public:
    * @brief Set the cost for the informed sampler.
    * @param cost Cost of the path.
    */
-  void setCost(const double& cost) override;
+  void setCost(const double &cost) override;
 
   /**
    * @brief Set the scaling factors for the bounds.
    * @param scale Scaling factors for each dimension.
    */
-  void setScale(const Eigen::VectorXd& scale)
-  {
+  void setScale(const Eigen::VectorXd &scale) {
     scale_ = scale;
     config();
   }
@@ -286,46 +280,43 @@ public:
    * @param q Configuration to check.
    * @return True if in bounds, false otherwise.
    */
-  virtual bool inBounds(const Eigen::VectorXd& q) override;
+  virtual bool inBounds(const Eigen::VectorXd &q) override;
 
   /**
    * @brief Check if the informed bounds collapse (focii distance exceeds cost).
    * @return True if bounds collapse, false otherwise.
    */
-  virtual bool collapse() override
-  {
-    return focii_distance_ >= cost_;
-  }
+  virtual bool collapse() override { return focii_distance_ >= cost_; }
 
   /**
    * @brief Get the distance between ellipse focii.
    * @return Focii distance.
    */
-  const double& getFociiDistance(){return focii_distance_;}
+  const double &getFociiDistance() { return focii_distance_; }
 
   /**
    * @brief Get the lower bounds of the informed sampler in the unscaled space.
    * @return Lower bounds of the informed sampler in the unscaled space.
    */
-  const Eigen::VectorXd& getLB() override {return lower_bound_not_scaled_;}
+  const Eigen::VectorXd &getLB() override { return lower_bound_not_scaled_; }
 
   /**
    * @brief Get the upper bounds of the informed sampler in the unscaled space.
    * @return Upper bounds of the informed sampler in the unscaled space.
    */
-  const Eigen::VectorXd& getUB() override {return upper_bound_not_scaled_;}
+  const Eigen::VectorXd &getUB() override { return upper_bound_not_scaled_; }
 
   /**
    * @brief Get the focus 1 of the informed sampler in the unscaled space.
    * @return Focus 1 of the informed sampler in the unscaled space.
    */
-  const Eigen::VectorXd& getFocus1(){return focus_1_not_scaled_;}
+  const Eigen::VectorXd &getFocus1() { return focus_1_not_scaled_; }
 
   /**
    * @brief Get the focus 2 of the informed sampler in the unscaled space.
    * @return Focus 2 of the informed sampler in the unscaled space.
    */
-  const Eigen::VectorXd& getFocus2(){return focus_2_not_scaled_;}
+  const Eigen::VectorXd &getFocus2() { return focus_2_not_scaled_; }
 
   /**
    * @brief Creates a clone of the InformedSampler object.
@@ -334,5 +325,5 @@ public:
   virtual SamplerPtr clone() override;
 };
 
-} //end namespace core
+} // end namespace core
 } // end namespace graph

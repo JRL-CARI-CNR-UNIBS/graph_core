@@ -1,6 +1,6 @@
 /*
-Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS, manuel.beschi@unibs.it, c.tonola001@unibs.it
-All rights reserved.
+Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS,
+manuel.beschi@unibs.it, c.tonola001@unibs.it All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,4 +29,5 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /**
  * @brief Register class to be loaded with cnr_class_loader
  */
-CLASS_LOADER_REGISTER_CLASS(graph::core::BallSamplerPlugin, graph::core::SamplerBasePlugin)
+CLASS_LOADER_REGISTER_CLASS(graph::core::BallSamplerPlugin,
+                            graph::core::SamplerBasePlugin)
