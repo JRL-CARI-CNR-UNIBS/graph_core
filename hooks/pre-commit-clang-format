@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# clang-formatting
+echo "Executing clang-formatting pre-commit hook..."
+
+FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E "\\.(cpp|h)$")
+
+if [ -n "$FILES" ]; then
+  echo "Formatting files:"
+  echo "$FILES"
+  echo
+
+  CLANG_FORMAT_FILE="graph_core/graph_core/.clang-format"
+
+  echo "Using clang-format configuration from: $(realpath "$CLANG_FORMAT_FILE")"
+
+  for FILE in $FILES; do
+    clang-format -i --style=file --assume-filename="$CLANG_FORMAT_FILE" "$FILE"
+    git add "$FILE"
+  done
+fi
