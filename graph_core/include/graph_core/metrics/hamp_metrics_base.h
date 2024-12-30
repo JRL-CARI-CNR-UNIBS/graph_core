@@ -28,9 +28,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/metrics/metrics_base.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 /**
  * @class HampMetricsBase
  * @brief Base class for defining metrics to measure costs between
@@ -43,7 +44,8 @@ namespace core {
 class HampMetricsBase;
 typedef std::shared_ptr<HampMetricsBase> HampMetricsPtr;
 
-class HampMetricsBase : public MetricsBase {
+class HampMetricsBase : public MetricsBase
+{
 protected:
   /**
    * @brief human_positions_ Matrix 3xn with the human positions.
@@ -62,14 +64,17 @@ public:
    * @brief Empty constructor for MetricsBase. The function init() must be
    * called afterwards.
    */
-  HampMetricsBase() : MetricsBase() {}
+  HampMetricsBase() : MetricsBase()
+  {
+  }
 
   /**
    * @brief init Initialise the object, defining its main attributes.
    * @param logger Pointer to a TraceLogger for logging.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const cnr_logger::TraceLoggerPtr &logger) {
+  virtual bool init(const cnr_logger::TraceLoggerPtr& logger)
+  {
     return MetricsBase::init(logger);
   }
 
@@ -78,8 +83,8 @@ public:
    *
    * @param human_positions Matrix 3xn with the human positions
    */
-  virtual void
-  setHumanPositions(const Eigen::Matrix<double, 3, -1> &human_positions) {
+  virtual void setHumanPositions(const Eigen::Matrix<double, 3, -1>& human_positions)
+  {
     human_positions_ = human_positions;
   }
 
@@ -88,11 +93,11 @@ public:
    *
    * @param human_velocities Matrix 3xn with the human velocities
    */
-  virtual void
-  setHumanVelocities(const Eigen::Matrix<double, 3, -1> &human_velocities) {
+  virtual void setHumanVelocities(const Eigen::Matrix<double, 3, -1>& human_velocities)
+  {
     human_velocities_ = human_velocities;
   }
 };
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

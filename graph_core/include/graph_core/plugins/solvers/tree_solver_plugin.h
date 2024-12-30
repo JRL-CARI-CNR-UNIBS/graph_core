@@ -29,9 +29,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cnr_class_loader/register_macro.hpp>
 #include <graph_core/solvers/tree_solver.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 /**
  * @class TreeSolverPlugin
  * @brief This class implements a wrapper to graph::core::TreeSolver to allow
@@ -41,7 +42,8 @@ namespace core {
 class TreeSolverPlugin;
 typedef std::shared_ptr<TreeSolverPlugin> TreeSolverPluginPtr;
 
-class TreeSolverPlugin : public std::enable_shared_from_this<TreeSolverPlugin> {
+class TreeSolverPlugin : public std::enable_shared_from_this<TreeSolverPlugin>
+{
 protected:
   /**
    * @brief solver_ is the graph::core::TreeSolver object built and initialized
@@ -56,19 +58,28 @@ public:
    * @brief Empty constructor for TreeSolverPlugin. The function init() must be
    * called afterwards.
    */
-  TreeSolverPlugin() { solver_ = nullptr; }
+  TreeSolverPlugin()
+  {
+    solver_ = nullptr;
+  }
 
   /**
    * @brief Destructor of TreeSolverPlugin.
    */
-  virtual ~TreeSolverPlugin() { solver_ = nullptr; }
+  virtual ~TreeSolverPlugin()
+  {
+    solver_ = nullptr;
+  }
 
   /**
    * @brief getSolver return the graph::core::TreeSolverPtr object built by the
    * plugin.
    * @return the graph::core::TreeSolverPtr object built.
    */
-  virtual graph::core::TreeSolverPtr getSolver() { return solver_; }
+  virtual graph::core::TreeSolverPtr getSolver()
+  {
+    return solver_;
+  }
 
   /**
    * @brief init Initialise the object, defining its main attributes.
@@ -83,13 +94,11 @@ public:
    * @param logger The logger for logging messages.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const std::string &param_ns,
-                    const graph::core::MetricsPtr &metrics,
-                    const graph::core::CollisionCheckerPtr &checker,
-                    const graph::core::SamplerPtr &sampler,
-                    const graph::core::GoalCostFunctionPtr &goal_cost_fcn,
-                    const cnr_logger::TraceLoggerPtr &logger) = 0;
+  virtual bool init(const std::string& param_ns, const graph::core::MetricsPtr& metrics,
+                    const graph::core::CollisionCheckerPtr& checker, const graph::core::SamplerPtr& sampler,
+                    const graph::core::GoalCostFunctionPtr& goal_cost_fcn,
+                    const cnr_logger::TraceLoggerPtr& logger) = 0;
 };
 
-} // namespace core
-} // namespace graph
+}  // namespace core
+}  // namespace graph

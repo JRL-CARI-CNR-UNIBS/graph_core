@@ -28,9 +28,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/metrics/metrics_base.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 /**
  * @class EuclideanMetrics
  * @brief This class defines a metrics which computes the cost between
@@ -40,7 +41,8 @@ class EuclideanMetrics;
 typedef std::shared_ptr<EuclideanMetrics> EuclideanMetricsPtr;
 
 // Euclidean metrics
-class EuclideanMetrics : public MetricsBase {
+class EuclideanMetrics : public MetricsBase
+{
 protected:
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -49,17 +51,17 @@ public:
    * @brief Empty constructor for EuclideanMetrics. The function
    * MetricsBase::init() must be called afterwards.
    */
-  EuclideanMetrics()
-      : MetricsBase() // set initialized_ false
-  {}
+  EuclideanMetrics() : MetricsBase()  // set initialized_ false
+  {
+  }
 
   /**
    * @brief Constructs a EuclideanMetrics object.
    * @param logger A shared pointer to a TraceLogger for logging.
    */
-  EuclideanMetrics(const cnr_logger::TraceLoggerPtr &logger)
-      : MetricsBase(logger) // set initialized_ true
-  {}
+  EuclideanMetrics(const cnr_logger::TraceLoggerPtr& logger) : MetricsBase(logger)  // set initialized_ true
+  {
+  }
 
   /**
    * @brief Calculates the cost between two configurations.
@@ -67,11 +69,12 @@ public:
    * @param configuration2 The second node.
    * @return The cost between the two configurations.
    */
-  virtual double cost(const Eigen::VectorXd &configuration1,
-                      const Eigen::VectorXd &configuration2) override {
+  virtual double cost(const Eigen::VectorXd& configuration1, const Eigen::VectorXd& configuration2) override
+  {
     return (configuration1 - configuration2).norm();
   }
-  virtual double cost(const NodePtr &node1, const NodePtr &node2) override {
+  virtual double cost(const NodePtr& node1, const NodePtr& node2) override
+  {
     return cost(node1->getConfiguration(), node2->getConfiguration());
   }
 
@@ -82,11 +85,12 @@ public:
    * @param configuration2 The second configuration.
    * @return The utopia distance between the two configurations.
    */
-  virtual double utopia(const Eigen::VectorXd &configuration1,
-                        const Eigen::VectorXd &configuration2) override {
+  virtual double utopia(const Eigen::VectorXd& configuration1, const Eigen::VectorXd& configuration2) override
+  {
     return (configuration1 - configuration2).norm();
   }
-  virtual double utopia(const NodePtr &node1, const NodePtr &node2) override {
+  virtual double utopia(const NodePtr& node1, const NodePtr& node2) override
+  {
     return utopia(node1->getConfiguration(), node2->getConfiguration());
   }
 
@@ -94,10 +98,11 @@ public:
    * @brief Creates a clone of the EuclideanMetrics object.
    * @return A shared pointer to the cloned EuclideanMetrics object.
    */
-  virtual MetricsPtr clone() override {
+  virtual MetricsPtr clone() override
+  {
     return std::make_shared<EuclideanMetrics>(logger_);
   }
 };
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

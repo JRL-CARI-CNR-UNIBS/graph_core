@@ -28,9 +28,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/node.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 /**
  * @class MetricsBase
  * @brief Base class for defining metrics to measure costs between
@@ -43,7 +44,8 @@ namespace core {
 class MetricsBase;
 typedef std::shared_ptr<MetricsBase> MetricsPtr;
 
-class MetricsBase : public std::enable_shared_from_this<MetricsBase> {
+class MetricsBase : public std::enable_shared_from_this<MetricsBase>
+{
 protected:
   /**
    * @brief initialized_ Flag to indicate whether the object is initialised,
@@ -72,13 +74,17 @@ public:
    * @brief Empty constructor for MetricsBase. The function init() must be
    * called afterwards.
    */
-  MetricsBase() { initialized_ = false; }
+  MetricsBase()
+  {
+    initialized_ = false;
+  }
 
   /**
    * @brief Constructs a MetricsBase object.
    * @param logger A shared pointer to a TraceLogger for logging.
    */
-  MetricsBase(const cnr_logger::TraceLoggerPtr &logger) : logger_(logger) {
+  MetricsBase(const cnr_logger::TraceLoggerPtr& logger) : logger_(logger)
+  {
     initialized_ = true;
   }
 
@@ -89,8 +95,10 @@ public:
    * @param logger Pointer to a TraceLogger for logging.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const cnr_logger::TraceLoggerPtr &logger) {
-    if (initialized_) {
+  virtual bool init(const cnr_logger::TraceLoggerPtr& logger)
+  {
+    if (initialized_)
+    {
       CNR_WARN(logger_, "Metrics already initialised!");
       return false;
     }
@@ -105,7 +113,10 @@ public:
    * @brief getInitialized tells if the object has been initialised.
    * @return the 'initialized_' flag.
    */
-  bool getInitialized() { return initialized_; }
+  bool getInitialized()
+  {
+    return initialized_;
+  }
 
   /**
    * @brief Calculates the cost between two configurations.
@@ -113,9 +124,8 @@ public:
    * @param configuration2 The second node.
    * @return The cost between the two configurations.
    */
-  virtual double cost(const Eigen::VectorXd &configuration1,
-                      const Eigen::VectorXd &configuration2) = 0;
-  virtual double cost(const NodePtr &node1, const NodePtr &node2) = 0;
+  virtual double cost(const Eigen::VectorXd& configuration1, const Eigen::VectorXd& configuration2) = 0;
+  virtual double cost(const NodePtr& node1, const NodePtr& node2) = 0;
 
   /**
    * @brief Calculates the utopia (ideal minimum cost) between two
@@ -124,9 +134,8 @@ public:
    * @param configuration2 The second configuration.
    * @return The utopia distance between the two configurations.
    */
-  virtual double utopia(const Eigen::VectorXd &configuration1,
-                        const Eigen::VectorXd &configuration2) = 0;
-  virtual double utopia(const NodePtr &node1, const NodePtr &node2) = 0;
+  virtual double utopia(const Eigen::VectorXd& configuration1, const Eigen::VectorXd& configuration2) = 0;
+  virtual double utopia(const NodePtr& node1, const NodePtr& node2) = 0;
   /**
    * @brief Creates a clone of the MetricsBase object.
    * @return A shared pointer to the cloned Metrics object.
@@ -134,5 +143,5 @@ public:
   virtual MetricsPtr clone() = 0;
 };
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

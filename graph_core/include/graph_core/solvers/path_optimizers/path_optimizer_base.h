@@ -30,9 +30,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/graph/path.h>
 #include <graph_core/metrics/metrics_base.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 // class PathOptimizerBase; //Defined in util.h
 typedef std::shared_ptr<PathOptimizerBase> PathOptimizerPtr;
 
@@ -44,8 +45,8 @@ typedef std::shared_ptr<PathOptimizerBase> PathOptimizerPtr;
  * approaches.
  */
 
-class PathOptimizerBase
-    : public std::enable_shared_from_this<PathOptimizerBase> {
+class PathOptimizerBase : public std::enable_shared_from_this<PathOptimizerBase>
+{
   friend class Path;
 
 protected:
@@ -117,16 +118,15 @@ public:
    * @param metrics Metrics used to evaluate the quality of the path.
    * @param logger Logger for debugging and logging.
    */
-  PathOptimizerBase(const CollisionCheckerPtr &checker,
-                    const MetricsPtr &metrics,
-                    const cnr_logger::TraceLoggerPtr &logger);
+  PathOptimizerBase(const CollisionCheckerPtr& checker, const MetricsPtr& metrics,
+                    const cnr_logger::TraceLoggerPtr& logger);
 
   /**
    * @brief Set the input path for optimization and reset the flags 'solved_'
    * and 'stall_gen_'.
    * @param path The input path to be optimized.
    */
-  virtual void setPath(const PathPtr &path);
+  virtual void setPath(const PathPtr& path);
 
   /**
    * @brief Get the optimized path.
@@ -137,7 +137,7 @@ public:
   /**
    * @brief Configure the optimizer reading parameters with cnr_param library.
    */
-  virtual void config(const std::string &param_ns);
+  virtual void config(const std::string& param_ns);
 
   /**
    * @brief Solve the optimization problem. Use 'getPath' to get the processed
@@ -148,10 +148,9 @@ public:
    * process.
    * @return True if a solution was found, false otherwise.
    */
-  virtual bool
-  solve(const unsigned int &max_iteration = 100,
-        const double &max_time = std::numeric_limits<double>::infinity());
+  virtual bool solve(const unsigned int& max_iteration = 100,
+                     const double& max_time = std::numeric_limits<double>::infinity());
 };
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

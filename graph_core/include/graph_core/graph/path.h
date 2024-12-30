@@ -29,9 +29,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/graph/tree.h>
 #include <math.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 // class Path; //Defined in util.h
 typedef std::shared_ptr<Path> PathPtr;
 
@@ -39,7 +40,8 @@ typedef std::shared_ptr<Path> PathPtr;
  * @class Path
  * @brief Class for defining a path as a vector of connections.
  */
-class Path : public std::enable_shared_from_this<Path> {
+class Path : public std::enable_shared_from_this<Path>
+{
   friend class PathOptimizerBase;
 
 protected:
@@ -112,9 +114,8 @@ public:
    * the path.
    * @param logger The cnr_logger::TraceLoggerPtr logger for logging operations.
    */
-  Path(std::vector<ConnectionPtr> connections, const MetricsPtr &metrics,
-       const CollisionCheckerPtr &checker,
-       const cnr_logger::TraceLoggerPtr &logger);
+  Path(std::vector<ConnectionPtr> connections, const MetricsPtr& metrics, const CollisionCheckerPtr& checker,
+       const cnr_logger::TraceLoggerPtr& logger);
 
   /**
    * @brief Constructor for the Path class from a vector of nodes.
@@ -129,9 +130,8 @@ public:
    * the path.
    * @param logger The cnr_logger::TraceLoggerPtr logger for logging operations.
    */
-  Path(std::vector<NodePtr> nodes, const MetricsPtr &metrics,
-       const CollisionCheckerPtr &checker,
-       const cnr_logger::TraceLoggerPtr &logger);
+  Path(std::vector<NodePtr> nodes, const MetricsPtr& metrics, const CollisionCheckerPtr& checker,
+       const cnr_logger::TraceLoggerPtr& logger);
 
   /**
    * @brief Get the cost of the path.
@@ -141,7 +141,8 @@ public:
    *
    * @return A reference to the computed cost of the path.
    */
-  const double &cost() {
+  const double& cost()
+  {
     computeCost();
     return cost_;
   }
@@ -154,7 +155,10 @@ public:
    *
    * @return A shared pointer to the current Path instance.
    */
-  PathPtr pointer() { return shared_from_this(); }
+  PathPtr pointer()
+  {
+    return shared_from_this();
+  }
 
   /**
    * @brief Add a node at the current configuration to the path.
@@ -174,13 +178,10 @@ public:
    * created.
    * @return A pointer to the path node corresponding to the configuration.
    */
-  NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd &configuration,
-                                 ConnectionPtr &conn, const bool &rewire,
-                                 bool &is_a_new_node);
-  NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd &configuration,
-                                 ConnectionPtr &conn, const bool &rewire);
-  NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd &configuration,
-                                 const bool &rewire);
+  NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr& conn, const bool& rewire,
+                                 bool& is_a_new_node);
+  NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, ConnectionPtr& conn, const bool& rewire);
+  NodePtr addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, const bool& rewire);
 
   /**
    * @brief Resample the path to reduce the distance between nodes.
@@ -194,7 +195,7 @@ public:
    * path.
    * @return The number of nodes added to the path.
    */
-  int resample(const double &max_distance);
+  int resample(const double& max_distance);
 
   /**
    * @brief Remove a node from the path and update connections accordingly.
@@ -217,14 +218,11 @@ public:
    * @param toll The tolerance for considering two connections as parallel.
    * @return True if the node removal is successful, false otherwise.
    */
-  bool removeNode(const NodePtr &node, const size_t &idx_conn,
-                  const std::vector<NodePtr> &white_list,
-                  ConnectionPtr &new_conn, const double &toll = 1e-06);
-  bool removeNode(const NodePtr &node, const size_t &idx_conn,
-                  const std::vector<NodePtr> &white_list);
-  bool removeNode(const NodePtr &node, const std::vector<NodePtr> &white_list,
-                  ConnectionPtr &new_conn);
-  bool removeNode(const NodePtr &node, const std::vector<NodePtr> &white_list);
+  bool removeNode(const NodePtr& node, const size_t& idx_conn, const std::vector<NodePtr>& white_list,
+                  ConnectionPtr& new_conn, const double& toll = 1e-06);
+  bool removeNode(const NodePtr& node, const size_t& idx_conn, const std::vector<NodePtr>& white_list);
+  bool removeNode(const NodePtr& node, const std::vector<NodePtr>& white_list, ConnectionPtr& new_conn);
+  bool removeNode(const NodePtr& node, const std::vector<NodePtr>& white_list);
 
   /**
    * @brief Remove nodes from the path and update connections accordingly.
@@ -240,12 +238,10 @@ public:
    * @param toll A tolerance value to check for parallelism between connections.
    * @return True if at least one node is removed, false otherwise.
    */
-  bool removeNodes(const std::vector<NodePtr> &white_list,
-                   std::vector<NodePtr> &deleted_nodes,
-                   const double &toll = 1e-06);
-  bool removeNodes(const std::vector<NodePtr> &white_list,
-                   const double &toll = 1e-06);
-  bool removeNodes(const double &toll = 1e-06);
+  bool removeNodes(const std::vector<NodePtr>& white_list, std::vector<NodePtr>& deleted_nodes,
+                   const double& toll = 1e-06);
+  bool removeNodes(const std::vector<NodePtr>& white_list, const double& toll = 1e-06);
+  bool removeNodes(const double& toll = 1e-06);
 
   /**
    * @brief Find a connection in the path based on the given configuration.
@@ -259,9 +255,8 @@ public:
    * @param verbose If true, print additional information for debugging.
    * @return The found connection or nullptr if not found.
    */
-  ConnectionPtr findConnection(const Eigen::VectorXd &configuration,
-                               size_t &idx, bool verbose = false);
-  ConnectionPtr findConnection(const Eigen::VectorXd &configuration);
+  ConnectionPtr findConnection(const Eigen::VectorXd& configuration, size_t& idx, bool verbose = false);
+  ConnectionPtr findConnection(const Eigen::VectorXd& configuration);
 
   /**
    * @brief Find the closest node in the path to the given configuration.
@@ -275,10 +270,10 @@ public:
    * the closest node.
    * @return The closest node in the path to the given configuration.
    */
-  NodePtr findCloserNode(const Eigen::VectorXd &configuration, double &dist);
-  NodePtr findCloserNode(const Eigen::VectorXd &configuration);
-  NodePtr findCloserNode(const NodePtr &node);
-  NodePtr findCloserNode(const NodePtr &node, double &dist);
+  NodePtr findCloserNode(const Eigen::VectorXd& configuration, double& dist);
+  NodePtr findCloserNode(const Eigen::VectorXd& configuration);
+  NodePtr findCloserNode(const NodePtr& node);
+  NodePtr findCloserNode(const NodePtr& node, double& dist);
 
   /**
    * @brief Get a subpath from the current path starting from a specified
@@ -296,7 +291,7 @@ public:
    * return the actual subpath.
    * @return The subpath starting from the specified configuration.
    */
-  PathPtr getSubpathFromConf(const Eigen::VectorXd &conf, const bool clone);
+  PathPtr getSubpathFromConf(const Eigen::VectorXd& conf, const bool clone);
 
   /**
    * @brief Get a subpath from the current path ending at a specified
@@ -314,7 +309,7 @@ public:
    * return the actual subpath.
    * @return The subpath ending at the specified configuration.
    */
-  PathPtr getSubpathToConf(const Eigen::VectorXd &conf, const bool clone);
+  PathPtr getSubpathToConf(const Eigen::VectorXd& conf, const bool clone);
 
   /**
    * @brief Get a subpath from the current path starting at the specified
@@ -330,8 +325,8 @@ public:
    * @param conf The configuration at which to start the subpath.
    * @return The subpath starting at the specified configuration.
    */
-  PathPtr getSubpathFromNode(const Eigen::VectorXd &conf);
-  PathPtr getSubpathFromNode(const NodePtr &node);
+  PathPtr getSubpathFromNode(const Eigen::VectorXd& conf);
+  PathPtr getSubpathFromNode(const NodePtr& node);
 
   /**
    * @brief Get a subpath from the current path ending at the specified
@@ -347,8 +342,8 @@ public:
    * @param conf The configuration at which to end the subpath.
    * @return The subpath ending at the specified configuration.
    */
-  PathPtr getSubpathToNode(const Eigen::VectorXd &conf);
-  PathPtr getSubpathToNode(const NodePtr &node);
+  PathPtr getSubpathToNode(const Eigen::VectorXd& conf);
+  PathPtr getSubpathToNode(const NodePtr& node);
 
   /**
    * @brief Compute the sum of Euclidean norms of all connections in the path.
@@ -364,9 +359,8 @@ public:
    * @param connection Outputs the connection on which the point lies.
    * @return The configuration of the point on the path.
    */
-  Eigen::VectorXd pointOnCurvilinearAbscissa(const double &abscissa,
-                                             ConnectionPtr &connection);
-  Eigen::VectorXd pointOnCurvilinearAbscissa(const double &abscissa);
+  Eigen::VectorXd pointOnCurvilinearAbscissa(const double& abscissa, ConnectionPtr& connection);
+  Eigen::VectorXd pointOnCurvilinearAbscissa(const double& abscissa);
 
   /**
    * @brief Compute the curvilinear abscissa of a point on the path.
@@ -375,8 +369,8 @@ public:
    * @param idx Outputs the index of the connection on which the point lies.
    * @return The curvilinear abscissa of the point.
    */
-  double curvilinearAbscissaOfPoint(const Eigen::VectorXd &conf, size_t &idx);
-  double curvilinearAbscissaOfPoint(const Eigen::VectorXd &conf);
+  double curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf, size_t& idx);
+  double curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf);
 
   /**
    * @brief Compute the curvilinear abscissa of a point on a specific connection
@@ -386,8 +380,7 @@ public:
    * @param conn_idx The index of the connection on which the point lies.
    * @return The curvilinear abscissa of the point on the specified connection.
    */
-  double curvilinearAbscissaOfPointGivenConnection(const Eigen::VectorXd &conf,
-                                                   const size_t &conn_idx);
+  double curvilinearAbscissaOfPointGivenConnection(const Eigen::VectorXd& conf, const size_t& conn_idx);
 
   /**
    * @brief Get the cost of the path from a specific configuration.
@@ -395,7 +388,7 @@ public:
    * @param conf The configuration of interest.
    * @return The cost from of the path the specified configuration.
    */
-  double getCostFromConf(const Eigen::VectorXd &conf);
+  double getCostFromConf(const Eigen::VectorXd& conf);
 
   /**
    * @brief Get the curvilinear norm from the specified configuration to the end
@@ -405,7 +398,7 @@ public:
    * @return The curvilinear norm from the specified configuration to the end of
    * the path.
    */
-  double getNormFromConf(const Eigen::VectorXd &conf);
+  double getNormFromConf(const Eigen::VectorXd& conf);
 
   /**
    * @brief Get the nodes associated with the path.
@@ -434,7 +427,10 @@ public:
    *
    * @return A shared pointer to the start node of the path.
    */
-  NodePtr getStartNode() const { return start_node_; }
+  NodePtr getStartNode() const
+  {
+    return start_node_;
+  }
 
   /**
    * @brief Get the goal node of the path.
@@ -443,7 +439,10 @@ public:
    *
    * @return A shared pointer to the goal node of the path.
    */
-  NodePtr getGoalNode() const { return goal_node_; }
+  NodePtr getGoalNode() const
+  {
+    return goal_node_;
+  }
 
   /**
    * @brief Get the associated tree.
@@ -452,7 +451,10 @@ public:
    *
    * @return A shared pointer to the associated tree.
    */
-  TreePtr getTree() { return tree_; }
+  TreePtr getTree()
+  {
+    return tree_;
+  }
 
   /**
    * @brief Get the collision checker.
@@ -461,7 +463,10 @@ public:
    *
    * @return A shared pointer to the associated tree.
    */
-  CollisionCheckerPtr getChecker() { return checker_; }
+  CollisionCheckerPtr getChecker()
+  {
+    return checker_;
+  }
 
   /**
    * @brief Get the metrics used for evaluating the cost of the path.
@@ -470,7 +475,10 @@ public:
    *
    * @return A shared pointer to the metrics of the path.
    */
-  MetricsPtr getMetrics() { return metrics_; }
+  MetricsPtr getMetrics()
+  {
+    return metrics_;
+  }
 
   /**
    * @brief Set the metrics used for evaluating the cost of the path.
@@ -481,7 +489,10 @@ public:
    * @param metrics A shared pointer to the metrics used for evaluating path
    * cost.
    */
-  void setMetrics(const MetricsPtr &metrics) { metrics_ = metrics; }
+  void setMetrics(const MetricsPtr& metrics)
+  {
+    metrics_ = metrics;
+  }
 
   /**
    * @brief Get the number of connections in the path.
@@ -490,7 +501,10 @@ public:
    *
    * @return The number of connections in the path.
    */
-  unsigned int getConnectionsSize() { return connections_.size(); }
+  unsigned int getConnectionsSize()
+  {
+    return connections_.size();
+  }
 
   /**
    * @brief Retrieves a pointer to the TraceLogger associated with the path.
@@ -501,12 +515,18 @@ public:
    *
    * @return A constant reference to the TraceLogger pointer.
    */
-  const cnr_logger::TraceLoggerPtr &getLogger() const { return logger_; }
+  const cnr_logger::TraceLoggerPtr& getLogger() const
+  {
+    return logger_;
+  }
 
   /**
    * @brief Sets the TraceLogger associated with the path.
    */
-  void setLogger(const cnr_logger::TraceLoggerPtr &logger) { logger_ = logger; }
+  void setLogger(const cnr_logger::TraceLoggerPtr& logger)
+  {
+    logger_ = logger;
+  }
 
   /**
    * @brief Set the collision checker for the path and its associated tree.
@@ -517,7 +537,8 @@ public:
    *
    * @param checker The collision checker to be set.
    */
-  void setChecker(const CollisionCheckerPtr &checker) {
+  void setChecker(const CollisionCheckerPtr& checker)
+  {
     checker_ = checker;
     if (tree_)
       tree_->setChecker(checker);
@@ -530,7 +551,10 @@ public:
    *
    * @param tree A shared pointer to the Tree object.
    */
-  void setTree(const TreePtr &tree) { tree_ = tree; }
+  void setTree(const TreePtr& tree)
+  {
+    tree_ = tree;
+  }
 
   /**
    * @brief Get the connections that compose the path.
@@ -540,7 +564,10 @@ public:
    *
    * @return A vector of shared pointers to Connection objects.
    */
-  std::vector<ConnectionPtr> getConnections() const { return connections_; }
+  std::vector<ConnectionPtr> getConnections() const
+  {
+    return connections_;
+  }
 
   /**
    * @brief Get the i-th connection that composes the path.
@@ -550,7 +577,7 @@ public:
    * @return The shared pointers to i-th Connection object, nullptr if 'i'
    * exceeds the vector bounds.
    */
-  ConnectionPtr getConnection(const size_t &i) const;
+  ConnectionPtr getConnection(const size_t& i) const;
 
   /**
    * @brief Get a constant reference to the connections that compose the path.
@@ -561,7 +588,8 @@ public:
    * @return A constant reference to a vector of shared pointers to Connection
    * objects.
    */
-  const std::vector<ConnectionPtr> &getConnectionsConst() const {
+  const std::vector<ConnectionPtr>& getConnectionsConst() const
+  {
     return connections_;
   }
 
@@ -601,7 +629,7 @@ public:
    * @param conn A vector of ConnectionPtr representing the connections to set
    * for the path.
    */
-  void setConnections(const std::vector<ConnectionPtr> &conn);
+  void setConnections(const std::vector<ConnectionPtr>& conn);
 
   /**
    * @brief Split a connection and update the path.
@@ -620,10 +648,9 @@ public:
    * @param it An iterator pointing to the connection to split.
    * @return True if the split is successful, false otherwise.
    */
-  bool splitConnection(const ConnectionPtr &conn1, const ConnectionPtr &conn2,
-                       const std::vector<ConnectionPtr>::iterator &it);
-  bool splitConnection(const ConnectionPtr &conn1, const ConnectionPtr &conn2,
-                       const ConnectionPtr &conn);
+  bool splitConnection(const ConnectionPtr& conn1, const ConnectionPtr& conn2,
+                       const std::vector<ConnectionPtr>::iterator& it);
+  bool splitConnection(const ConnectionPtr& conn1, const ConnectionPtr& conn2, const ConnectionPtr& conn);
 
   /**
    * @brief Restore a connection in the path and cuts off a node with the
@@ -637,7 +664,7 @@ public:
    * @param node2remove The node to be removed and replaced by the connection.
    * @return True if the restoration is successful, false otherwise.
    */
-  bool restoreConnection(const ConnectionPtr &conn, const NodePtr &node2remove);
+  bool restoreConnection(const ConnectionPtr& conn, const NodePtr& node2remove);
 
   /**
    * @brief Checks if the path is valid, taking into account collision checking.
@@ -650,7 +677,7 @@ public:
    * @param this_checker Optional custom collision checker.
    * @return True if the path is collision-free, false otherwise.
    */
-  bool isValid(const CollisionCheckerPtr &this_checker = nullptr);
+  bool isValid(const CollisionCheckerPtr& this_checker = nullptr);
 
   /**
    * @brief Checks the validity of the path from a specific configuration.
@@ -670,16 +697,13 @@ public:
    * @return True if the path is collision-free from the given configuration,
    * false otherwise.
    */
-  bool isValidFromConf(const Eigen::VectorXd &conf, const size_t &conn_idx,
-                       int &pos_closest_obs_from_goal,
-                       const CollisionCheckerPtr &this_checker = nullptr);
-  bool isValidFromConf(const Eigen::VectorXd &conf,
-                       int &pos_closest_obs_from_goal,
-                       const CollisionCheckerPtr &this_checker = nullptr);
-  bool isValidFromConf(const Eigen::VectorXd &conf, const size_t &conn_idx,
-                       const CollisionCheckerPtr &this_checker = nullptr);
-  bool isValidFromConf(const Eigen::VectorXd &conf,
-                       const CollisionCheckerPtr &this_checker = nullptr);
+  bool isValidFromConf(const Eigen::VectorXd& conf, const size_t& conn_idx, int& pos_closest_obs_from_goal,
+                       const CollisionCheckerPtr& this_checker = nullptr);
+  bool isValidFromConf(const Eigen::VectorXd& conf, int& pos_closest_obs_from_goal,
+                       const CollisionCheckerPtr& this_checker = nullptr);
+  bool isValidFromConf(const Eigen::VectorXd& conf, const size_t& conn_idx,
+                       const CollisionCheckerPtr& this_checker = nullptr);
+  bool isValidFromConf(const Eigen::VectorXd& conf, const CollisionCheckerPtr& this_checker = nullptr);
 
   /**
    * @brief Checks the validity of the path from a specific connection.
@@ -695,8 +719,7 @@ public:
    * @return True if the path is collision-free from the given connection, false
    * otherwise.
    */
-  bool isValidFromConn(const ConnectionPtr &this_conn,
-                       const CollisionCheckerPtr &this_checker = nullptr);
+  bool isValidFromConn(const ConnectionPtr& this_conn, const CollisionCheckerPtr& this_checker = nullptr);
 
   /**
    * @brief Projects a point onto the closest connection of the path.
@@ -712,8 +735,7 @@ public:
    * projection process.
    * @return The projected point on the closest connection of the path.
    */
-  Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd &point,
-                                             const bool verbose = false);
+  Eigen::VectorXd projectOnClosestConnection(const Eigen::VectorXd& point, const bool verbose = false);
 
   /**
    * @brief Projects a point onto the path and returns the connection and
@@ -733,15 +755,11 @@ public:
    * @param verbose Whether to print verbose information for debugging.
    * @return The precise projection on the path.
    */
-  Eigen::VectorXd projectOnPath(const Eigen::VectorXd &point,
-                                const Eigen::VectorXd &past_projection,
-                                ConnectionPtr &conn,
-                                const bool &verbose = false);
-  Eigen::VectorXd projectOnPath(const Eigen::VectorXd &point,
-                                const Eigen::VectorXd &past_projection,
-                                const bool &verbose = false);
-  Eigen::VectorXd projectOnPath(const Eigen::VectorXd &point,
-                                const bool &verbose = false);
+  Eigen::VectorXd projectOnPath(const Eigen::VectorXd& point, const Eigen::VectorXd& past_projection,
+                                ConnectionPtr& conn, const bool& verbose = false);
+  Eigen::VectorXd projectOnPath(const Eigen::VectorXd& point, const Eigen::VectorXd& past_projection,
+                                const bool& verbose = false);
+  Eigen::VectorXd projectOnPath(const Eigen::VectorXd& point, const bool& verbose = false);
 
   /**
    * @brief Flips the path by reversing the order of connections.
@@ -775,7 +793,7 @@ public:
    * @param reverse If true, the path connections will be listed in reverse
    * order.
    */
-  void toYAML(const std::string &file_name, const bool reverse = false) const;
+  void toYAML(const std::string& file_name, const bool reverse = false) const;
 
   /**
    * @brief Create a Path from a YAML::Node.
@@ -789,11 +807,10 @@ public:
    * @return A Path constructed from the YAML::Node. If an error occurs during
    * construction, returns an empty Path.
    */
-  static PathPtr fromYAML(const YAML::Node &yaml, const MetricsPtr &metrics,
-                          const CollisionCheckerPtr &checker,
-                          const cnr_logger::TraceLoggerPtr &logger);
+  static PathPtr fromYAML(const YAML::Node& yaml, const MetricsPtr& metrics, const CollisionCheckerPtr& checker,
+                          const cnr_logger::TraceLoggerPtr& logger);
 
-  friend std::ostream &operator<<(std::ostream &os, const Path &path);
+  friend std::ostream& operator<<(std::ostream& os, const Path& path);
 };
 
 /**
@@ -806,7 +823,7 @@ public:
  * @param path Path object to be printed.
  * @return Reference to the output stream.
  */
-std::ostream &operator<<(std::ostream &os, const Path &path);
+std::ostream& operator<<(std::ostream& os, const Path& path);
 
 /**
  * @brief Static inline function to get a parameter from the parameter server
@@ -834,10 +851,8 @@ std::ostream &operator<<(std::ostream &os, const Path &path);
  * @throws std::invalid_argument if an error occurs while retrieving the
  * parameter.
  */
-bool get_param(const cnr_logger::TraceLoggerPtr &logger,
-               const std::string &param_ns, const std::string &param_name,
-               PathPtr &param, const MetricsPtr &metrics,
-               const CollisionCheckerPtr &checker);
+bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string& param_ns, const std::string& param_name,
+               PathPtr& param, const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

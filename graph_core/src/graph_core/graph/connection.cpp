@@ -27,106 +27,110 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/connection.h>
 
-namespace graph {
-namespace core {
-Connection::Connection(const NodePtr &parent, const NodePtr &child,
-                       const cnr_logger::TraceLoggerPtr &logger,
+namespace graph
+{
+namespace core
+{
+Connection::Connection(const NodePtr& parent, const NodePtr& child, const cnr_logger::TraceLoggerPtr& logger,
                        const bool is_net)
-    : parent_(parent), child_(child), logger_(logger) {
+  : parent_(parent), child_(child), logger_(logger)
+{
   assert(getParent());
   assert(getChild());
 
-  euclidean_norm_ =
-      (child->getConfiguration() - parent->getConfiguration()).norm();
+  euclidean_norm_ = (child->getConfiguration() - parent->getConfiguration()).norm();
   likelihood_ = 1.0;
 
-  flags_ = {false, false, is_net, false}; // valid, is_net, recently_checked
+  flags_ = { false, false, is_net, false };  // valid, is_net, recently_checked
   assert(number_reserved_flags_ == flags_.size());
 }
 
-unsigned int Connection::setFlag(const bool flag) {
+unsigned int Connection::setFlag(const bool flag)
+{
   unsigned int idx = flags_.size();
   setFlag(flag, idx);
 
   return idx;
 }
 
-bool Connection::setFlag(const size_t &idx, const bool flag) {
-  if (idx == flags_.size()) // new flag to add
+bool Connection::setFlag(const size_t& idx, const bool flag)
+{
+  if (idx == flags_.size())  // new flag to add
     flags_.push_back(flag);
 
-  else if (idx < flags_.size()) // overwrite an already existing flag
+  else if (idx < flags_.size())  // overwrite an already existing flag
   {
-    if (idx < number_reserved_flags_) {
+    if (idx < number_reserved_flags_)
+    {
       CNR_ERROR(logger_, "can't overwrite a default flag");
       return false;
-    } else
+    }
+    else
       flags_[idx] = flag;
-  } else // the flag should already exist or you should ask to create a flag at
-         // idx = flags_.size()
+  }
+  else  // the flag should already exist or you should ask to create a flag at
+        // idx = flags_.size()
   {
-    CNR_ERROR(logger_, "flags size "
-                           << flags_.size()
-                           << " and you want to set a flag in position "
-                           << idx);
+    CNR_ERROR(logger_, "flags size " << flags_.size() << " and you want to set a flag in position " << idx);
     return false;
   }
 
   return true;
 }
 
-bool Connection::getFlag(const size_t &idx, const bool default_value) {
+bool Connection::getFlag(const size_t& idx, const bool default_value)
+{
   if (idx < flags_.size())
     return flags_[idx];
   else
-    return default_value; // if the value has not been set, return the default
-                          // value
+    return default_value;  // if the value has not been set, return the default
+                           // value
 }
 
-void Connection::add(const bool is_net) {
+void Connection::add(const bool is_net)
+{
   flags_[idx_net_] = is_net;
   add();
 }
 
-void Connection::add() {
+void Connection::add()
+{
   assert(getChild());
   assert(getParent());
 
-  if (not flags_[idx_child_valid_]) {
+  if (not flags_[idx_child_valid_])
+  {
     if (flags_[idx_net_])
-      getChild()->addNetParentConnection(
-          pointer()); // Set flags_[idx_child_valid_] = true
+      getChild()->addNetParentConnection(pointer());  // Set flags_[idx_child_valid_] = true
     else
-      getChild()->addParentConnection(
-          pointer()); // Set flags_[idx_child_valid_] = true
+      getChild()->addParentConnection(pointer());  // Set flags_[idx_child_valid_] = true
 
     assert(flags_[idx_child_valid_]);
   }
 
-  if (not flags_[idx_parent_valid_]) {
+  if (not flags_[idx_parent_valid_])
+  {
     if (flags_[idx_net_])
-      getParent()->addNetChildConnection(
-          pointer()); // Set flags_[idx_parent_valid_] = true
+      getParent()->addNetChildConnection(pointer());  // Set flags_[idx_parent_valid_] = true
     else
-      getParent()->addChildConnection(
-          pointer()); // Set flags_[idx_parent_valid_] = true
+      getParent()->addChildConnection(pointer());  // Set flags_[idx_parent_valid_] = true
 
     assert(flags_[idx_parent_valid_]);
   }
 }
 
-void Connection::remove() {
+void Connection::remove()
+{
   // Detach the child before the parent to keep the connection alive during the
   // process
-  if (flags_[idx_child_valid_]) {
+  if (flags_[idx_child_valid_])
+  {
     assert(getChild());
 
     if (flags_[idx_net_])
-      getChild()->removeNetParentConnection(
-          pointer()); // Set flags_[idx_child_valid_] = false
+      getChild()->removeNetParentConnection(pointer());  // Set flags_[idx_child_valid_] = false
     else
-      getChild()->removeParentConnection(
-          pointer()); // Set flags_[idx_child_valid_] = false
+      getChild()->removeParentConnection(pointer());  // Set flags_[idx_child_valid_] = false
 
     assert([&]() -> bool {
       if (flags_.size() == 0)
@@ -139,15 +143,14 @@ void Connection::remove() {
     }());
   }
 
-  if (flags_[idx_parent_valid_]) {
+  if (flags_[idx_parent_valid_])
+  {
     assert(getParent());
 
     if (flags_[idx_net_])
-      getParent()->removeNetChildConnection(
-          pointer()); // Set flags_[idx_parent_valid_] = false
+      getParent()->removeNetChildConnection(pointer());  // Set flags_[idx_parent_valid_] = false
     else
-      getParent()->removeChildConnection(
-          pointer()); // Set flags_[idx_parent_valid_] = false
+      getParent()->removeChildConnection(pointer());  // Set flags_[idx_parent_valid_] = false
 
     assert([&]() -> bool {
       if (flags_.size() == 0)
@@ -161,27 +164,32 @@ void Connection::remove() {
   }
 }
 
-Eigen::VectorXd Connection::projectOnConnection(const Eigen::VectorXd &point,
-                                                double &distance, bool &in_conn,
-                                                const bool &verbose) {
+Eigen::VectorXd Connection::projectOnConnection(const Eigen::VectorXd& point, double& distance, bool& in_conn,
+                                                const bool& verbose)
+{
   Eigen::VectorXd parent = getParent()->getConfiguration();
   Eigen::VectorXd child = getChild()->getConfiguration();
 
-  if (point == parent) {
+  if (point == parent)
+  {
     if (verbose)
       CNR_INFO(logger_, "point is parent");
 
     in_conn = true;
     distance = 0.0;
     return parent;
-  } else if (point == child) {
+  }
+  else if (point == child)
+  {
     if (verbose)
       CNR_INFO(logger_, "point is child");
 
     in_conn = true;
     distance = 0.0;
     return child;
-  } else {
+  }
+  else
+  {
     Eigen::VectorXd conn_vector = child - parent;
     Eigen::VectorXd point_vector = point - parent;
 
@@ -203,34 +211,34 @@ Eigen::VectorXd Connection::projectOnConnection(const Eigen::VectorXd &point,
     ((s >= 0.0) && (s <= conn_length)) ? (in_conn = true) : (in_conn = false);
 
     if (verbose)
-      CNR_INFO(logger_, "in_conn: " << in_conn << " dist: " << distance
-                                    << " s: " << s
-                                    << " point_length: " << point_length
-                                    << " conn_length: " << euclidean_norm_
-                                    << " projection: " << projection.transpose()
-                                    << " parent: " << parent.transpose()
+      CNR_INFO(logger_, "in_conn: " << in_conn << " dist: " << distance << " s: " << s
+                                    << " point_length: " << point_length << " conn_length: " << euclidean_norm_
+                                    << " projection: " << projection.transpose() << " parent: " << parent.transpose()
                                     << " child: " << child.transpose());
 
     return projection;
   }
 }
 
-void Connection::flip() {
-  remove(); // remove connection from parent and child
+void Connection::flip()
+{
+  remove();  // remove connection from parent and child
   NodePtr tmp = child_;
   child_ = parent_.lock();
   parent_ = tmp;
-  add(); // add new connection from new parent and child
+  add();  // add new connection from new parent and child
 }
 
-Connection::~Connection() {
-  assert([&]() -> bool { // check that the connection has been removed both from
-                         // parent's connections and child's connections
-    if (flags_[idx_parent_valid_] || flags_[idx_child_valid_]) {
-      CNR_FATAL(logger_, "Parent and/or child have not been disconnected from "
-                         "the connection that is being destroyed!\n "
-                             << this << " (" << getParent() << ")-->("
-                             << getChild() << ")");
+Connection::~Connection()
+{
+  assert([&]() -> bool {  // check that the connection has been removed both from
+                          // parent's connections and child's connections
+    if (flags_[idx_parent_valid_] || flags_[idx_child_valid_])
+    {
+      CNR_FATAL(logger_,
+                "Parent and/or child have not been disconnected from "
+                "the connection that is being destroyed!\n "
+                    << this << " (" << getParent() << ")-->(" << getChild() << ")");
       CNR_FATAL(logger_, "parent is valid? " << flags_[idx_parent_valid_]);
       CNR_FATAL(logger_, "child is valid? " << flags_[idx_child_valid_]);
       return false;
@@ -239,8 +247,10 @@ Connection::~Connection() {
   }());
 }
 
-bool Connection::isParallel(const ConnectionPtr &conn, const double &toll) {
-  if (euclidean_norm_ == 0.0 || conn->norm() == 0.0) {
+bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)
+{
+  if (euclidean_norm_ == 0.0 || conn->norm() == 0.0)
+  {
     CNR_ERROR(logger_, "A connection has norm zero");
     CNR_ERROR(logger_, "This conn " << this << "\n" << *this);
     CNR_ERROR(logger_, "Other conn " << conn << "\n" << *conn);
@@ -250,20 +260,19 @@ bool Connection::isParallel(const ConnectionPtr &conn, const double &toll) {
   // v1 dot v2 = norm(v1)*norm(v2)*cos(angle) if v1 not // v2
   // v1 dot v2 = norm(v1)*norm(v2) if v1 // v2
 
-  double scalar = std::abs(
-      (getChild()->getConfiguration() - getParent()->getConfiguration())
-          .dot(conn->getChild()->getConfiguration() -
-               conn->getParent()->getConfiguration()));
+  double scalar = std::abs((getChild()->getConfiguration() - getParent()->getConfiguration())
+                               .dot(conn->getChild()->getConfiguration() - conn->getParent()->getConfiguration()));
 
-  assert(std::abs(euclidean_norm_ - (getChild()->getConfiguration() -
-                                     getParent()->getConfiguration())
-                                        .norm()) < TOLERANCE);
+  assert(std::abs(euclidean_norm_ - (getChild()->getConfiguration() - getParent()->getConfiguration()).norm()) <
+         TOLERANCE);
 
   return (std::abs(scalar - (euclidean_norm_ * conn->norm())) < toll);
 }
 
-bool Connection::convertToConnection() {
-  if (flags_[idx_net_]) {
+bool Connection::convertToConnection()
+{
+  if (flags_[idx_net_])
+  {
     remove();
     flags_[idx_net_] = false;
     add();
@@ -272,8 +281,10 @@ bool Connection::convertToConnection() {
   return false;
 }
 
-bool Connection::convertToNetConnection() {
-  if (not flags_[idx_net_]) {
+bool Connection::convertToNetConnection()
+{
+  if (not flags_[idx_net_])
+  {
     remove();
     flags_[idx_net_] = true;
     add();
@@ -282,34 +293,32 @@ bool Connection::convertToNetConnection() {
   return false;
 }
 
-void Connection::changeConnectionType() {
+void Connection::changeConnectionType()
+{
   if (not convertToConnection())
     convertToNetConnection();
 }
 
-std::ostream &operator<<(std::ostream &os, const Connection &connection) {
+std::ostream& operator<<(std::ostream& os, const Connection& connection)
+{
   assert(connection.getParent() != nullptr);
   assert(connection.getChild() != nullptr);
 
-  os << connection.getParent()->getConfiguration().transpose() << " ("
-     << connection.getParent() << ") --> "
-     << connection.getChild()->getConfiguration().transpose() << " ("
-     << connection.getChild() << ")"
-     << "\ncost: " << connection.cost_
-     << " | length: " << connection.euclidean_norm_
+  os << connection.getParent()->getConfiguration().transpose() << " (" << connection.getParent() << ") --> "
+     << connection.getChild()->getConfiguration().transpose() << " (" << connection.getChild() << ")"
+     << "\ncost: " << connection.cost_ << " | length: " << connection.euclidean_norm_
      << "\nvalid: " << connection.isValid() << " | net: " << connection.isNet()
      << " | r.c.: " << connection.isRecentlyChecked();
 
-  if (connection.flags_.size() > Connection::getReservedFlagsNumber()) {
+  if (connection.flags_.size() > Connection::getReservedFlagsNumber())
+  {
     os << "\n";
-    for (unsigned int i = Connection::getReservedFlagsNumber();
-         i < connection.flags_.size(); i++)
-      os << " | flag" << (i - Connection::getReservedFlagsNumber()) << ": "
-         << connection.flags_[i];
+    for (unsigned int i = Connection::getReservedFlagsNumber(); i < connection.flags_.size(); i++)
+      os << " | flag" << (i - Connection::getReservedFlagsNumber()) << ": " << connection.flags_[i];
   }
 
   return os;
 }
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

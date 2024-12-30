@@ -154,12 +154,24 @@ if(ADD_CUSTOM_UNINSTALL)
 endif()
 
 # clang-format
-
 file(GLOB_RECURSE ALL_SOURCE_FILES *.cpp *.h)
 
 add_custom_target(
     format
-    COMMAND clang-format -i ${ALL_SOURCE_FILES}
+    COMMAND echo "Searching for .clang-format file..."
+    COMMAND find ${CMAKE_SOURCE_DIR} -name ".clang-format" -print
+    COMMAND echo "Running clang-format on the following files:"
+    COMMAND echo ${ALL_SOURCE_FILES}
+    COMMAND clang-format -i --style=file --assume-filename=${CMAKE_SOURCE_DIR}/.clang-format ${ALL_SOURCE_FILES}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Auto clang-format for all *.cpp and *.h files"
 )
+
+
+
+
+
+
+
+
 

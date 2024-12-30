@@ -28,13 +28,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/rrt.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 class RRTStar;
 typedef std::shared_ptr<RRTStar> RRTStarPtr;
 
-class RRTStar : public RRT {
+class RRTStar : public RRT
+{
 protected:
   double r_rewire_;
 
@@ -43,36 +45,39 @@ protected:
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  RRTStar() : RRT() {} // set initialized_ false
+  RRTStar() : RRT()
+  {
+  }  // set initialized_ false
 
-  RRTStar(const MetricsPtr &metrics, const CollisionCheckerPtr &checker,
-          const SamplerPtr &sampler, const GoalCostFunctionPtr &goal_cost_fcn,
-          const cnr_logger::TraceLoggerPtr &logger)
-      : RRT(metrics, checker, sampler, goal_cost_fcn, logger) {
-  } // set initialized_ true
+  RRTStar(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
+          const GoalCostFunctionPtr& goal_cost_fcn, const cnr_logger::TraceLoggerPtr& logger)
+    : RRT(metrics, checker, sampler, goal_cost_fcn, logger)
+  {
+  }  // set initialized_ true
 
-  RRTStar(const MetricsPtr &metrics, const CollisionCheckerPtr &checker,
-          const SamplerPtr &sampler, const cnr_logger::TraceLoggerPtr &logger)
-      : RRT(metrics, checker, sampler, logger) {} // set initialized_ true
+  RRTStar(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
+          const cnr_logger::TraceLoggerPtr& logger)
+    : RRT(metrics, checker, sampler, logger)
+  {
+  }  // set initialized_ true
 
-  virtual bool config(const std::string &param_ns) override;
-  virtual bool
-  addStartTree(const TreePtr &start_tree,
-               const double &max_time =
-                   std::numeric_limits<double>::infinity()) override;
-  virtual bool update(PathPtr &solution) override;
-  virtual bool solve(PathPtr &solution, const unsigned int &max_iter = 100,
-                     const double &max_time =
-                         std::numeric_limits<double>::infinity()) override;
-  virtual bool update(const Eigen::VectorXd &configuration,
-                      PathPtr &solution) override;
-  virtual bool update(const NodePtr &n, PathPtr &solution) override;
+  virtual bool config(const std::string& param_ns) override;
+  virtual bool addStartTree(const TreePtr& start_tree,
+                            const double& max_time = std::numeric_limits<double>::infinity()) override;
+  virtual bool update(PathPtr& solution) override;
+  virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100,
+                     const double& max_time = std::numeric_limits<double>::infinity()) override;
+  virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution) override;
+  virtual bool update(const NodePtr& n, PathPtr& solution) override;
 
-  double getRewireRadius() { return r_rewire_; }
+  double getRewireRadius()
+  {
+    return r_rewire_;
+  }
 
-  bool importFromSolver(const RRTStarPtr &solver);
-  bool importFromSolver(const TreeSolverPtr &solver) override;
+  bool importFromSolver(const RRTStarPtr& solver);
+  bool importFromSolver(const TreeSolverPtr& solver) override;
 };
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

@@ -29,16 +29,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/plugins/samplers/sampler_base_plugin.h>
 #include <graph_core/samplers/informed_sampler.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 /**
  * @class InformedSamplerPlugin
  * @brief This class implements a wrapper to graph::core::InformedSampler to
  * allow its plugin to be defined. The class can be loaded as a plugin and
  * builds a graph::core::InformedSampler object.
  */
-class InformedSamplerPlugin : public SamplerBasePlugin {
+class InformedSamplerPlugin : public SamplerBasePlugin
+{
 protected:
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -47,7 +49,9 @@ public:
    * @brief Empty constructor for InformedSamplerPlugin. The function init()
    * must be called afterwards.
    */
-  InformedSamplerPlugin() : SamplerBasePlugin() {}
+  InformedSamplerPlugin() : SamplerBasePlugin()
+  {
+  }
 
   /**
    * @brief init Initialise the object graph::core::InformedSampler, defining
@@ -63,17 +67,15 @@ public:
    * @param cost Cost of the path (default: infinity).
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool
-  init(const std::string &param_ns, const Eigen::VectorXd &focus_1,
-       const Eigen::VectorXd &focus_2, const Eigen::VectorXd &lower_bound,
-       const Eigen::VectorXd &upper_bound, const Eigen::VectorXd &scale,
-       const cnr_logger::TraceLoggerPtr &logger,
-       const double &cost = std::numeric_limits<double>::infinity()) override {
-    sampler_ = std::make_shared<InformedSampler>(
-        focus_1, focus_2, lower_bound, upper_bound, scale, logger, cost);
+  virtual bool init(const std::string& param_ns, const Eigen::VectorXd& focus_1, const Eigen::VectorXd& focus_2,
+                    const Eigen::VectorXd& lower_bound, const Eigen::VectorXd& upper_bound,
+                    const Eigen::VectorXd& scale, const cnr_logger::TraceLoggerPtr& logger,
+                    const double& cost = std::numeric_limits<double>::infinity()) override
+  {
+    sampler_ = std::make_shared<InformedSampler>(focus_1, focus_2, lower_bound, upper_bound, scale, logger, cost);
     return true;
   }
 };
 
-} // namespace core
-} // namespace graph
+}  // namespace core
+}  // namespace graph

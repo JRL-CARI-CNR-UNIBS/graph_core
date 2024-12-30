@@ -29,9 +29,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cnr_class_loader/register_macro.hpp>
 #include <graph_core/metrics/metrics_base.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 /**
  * @class MetricsBasePlugin
  * @brief This class implements a wrapper to graph::core::MetricsBase to allow
@@ -41,8 +42,8 @@ namespace core {
 class MetricsBasePlugin;
 typedef std::shared_ptr<MetricsBasePlugin> MetricsPluginPtr;
 
-class MetricsBasePlugin
-    : public std::enable_shared_from_this<MetricsBasePlugin> {
+class MetricsBasePlugin : public std::enable_shared_from_this<MetricsBasePlugin>
+{
 protected:
   /**
    * @brief metrics_ is the graph::core::MetricsBase object built and
@@ -57,19 +58,28 @@ public:
    * @brief Empty constructor for MetricsBasePlugin. The function init() must be
    * called afterwards.
    */
-  MetricsBasePlugin() { metrics_ = nullptr; }
+  MetricsBasePlugin()
+  {
+    metrics_ = nullptr;
+  }
 
   /**
    * @brief Destructor for MetricsBasePlugin.
    */
-  virtual ~MetricsBasePlugin() { metrics_ = nullptr; }
+  virtual ~MetricsBasePlugin()
+  {
+    metrics_ = nullptr;
+  }
 
   /**
    * @brief getMetrics return the graph::core::MetricsPtr object built by the
    * plugin.
    * @return the graph::core::MetricsPtr object built.
    */
-  virtual graph::core::MetricsPtr getMetrics() { return metrics_; }
+  virtual graph::core::MetricsPtr getMetrics()
+  {
+    return metrics_;
+  }
 
   /**
    * @brief init Initialise the graph::core::MetricsBase object, defining its
@@ -79,9 +89,8 @@ public:
    * @param logger Pointer to a TraceLogger for logging.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const std::string &param_ns,
-                    const cnr_logger::TraceLoggerPtr &logger) = 0;
+  virtual bool init(const std::string& param_ns, const cnr_logger::TraceLoggerPtr& logger) = 0;
 };
 
-} // namespace core
-} // namespace graph
+}  // namespace core
+}  // namespace graph

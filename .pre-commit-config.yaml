@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: clang-formatting-hook
+        name: clang-formatting hook
+        entry: ./hooks/pre-commit-clang-format
+        language: script
+        types: [file]
+        files: \.(cpp|h)$

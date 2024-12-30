@@ -29,9 +29,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cnr_class_loader/register_macro.hpp>
 #include <graph_core/samplers/sampler_base.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 /**
  * @class SamplerBasePlugin
  * @brief This class implements a wrapper to graph::core::SamplerBase to allow
@@ -41,8 +42,8 @@ namespace core {
 class SamplerBasePlugin;
 typedef std::shared_ptr<SamplerBasePlugin> SamplerPluginPtr;
 
-class SamplerBasePlugin
-    : public std::enable_shared_from_this<SamplerBasePlugin> {
+class SamplerBasePlugin : public std::enable_shared_from_this<SamplerBasePlugin>
+{
 protected:
   /**
    * @brief sampler_ is the graph::core::SamplerBase object built and
@@ -57,19 +58,28 @@ public:
    * @brief Empty constructor for SamplerBasePlugin. The function init() must be
    * called afterwards.
    */
-  SamplerBasePlugin() { sampler_ = nullptr; }
+  SamplerBasePlugin()
+  {
+    sampler_ = nullptr;
+  }
 
   /**
    * @brief Destructor for SamplerBasePlugin.
    */
-  virtual ~SamplerBasePlugin() { sampler_ = nullptr; }
+  virtual ~SamplerBasePlugin()
+  {
+    sampler_ = nullptr;
+  }
 
   /**
    * @brief getSampler return the graph::core::SamplerPtr object built by the
    * plugin.
    * @return the graph::core::SamplerPtr object built.
    */
-  virtual graph::core::SamplerPtr getSampler() { return sampler_; }
+  virtual graph::core::SamplerPtr getSampler()
+  {
+    return sampler_;
+  }
 
   /**
    * @brief init Initialise the object graph::core::SamplerBase, defining its
@@ -85,13 +95,11 @@ public:
    * @param cost Cost of the path (default: infinity).
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool
-  init(const std::string &param_ns, const Eigen::VectorXd &focus_1,
-       const Eigen::VectorXd &focus_2, const Eigen::VectorXd &lower_bound,
-       const Eigen::VectorXd &upper_bound, const Eigen::VectorXd &scale,
-       const cnr_logger::TraceLoggerPtr &logger,
-       const double &cost = std::numeric_limits<double>::infinity()) = 0;
+  virtual bool init(const std::string& param_ns, const Eigen::VectorXd& focus_1, const Eigen::VectorXd& focus_2,
+                    const Eigen::VectorXd& lower_bound, const Eigen::VectorXd& upper_bound,
+                    const Eigen::VectorXd& scale, const cnr_logger::TraceLoggerPtr& logger,
+                    const double& cost = std::numeric_limits<double>::infinity()) = 0;
 };
 
-} // namespace core
-} // namespace graph
+}  // namespace core
+}  // namespace graph

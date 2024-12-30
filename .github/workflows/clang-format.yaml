@@ -24,7 +24,15 @@ jobs:
         run: |
           FILES=$(find . -type f \( -name "*.cpp" -o -name "*.h" \))
 
+          CLANG_FORMAT_FILE=".clang-format"
+          if [ ! -f "$CLANG_FORMAT_FILE" ]; then
+            echo "Error: .clang-format file not found in the repository root."
+            exit 1
+          fi
+
+          echo "Using .clang-format from: $(realpath "$CLANG_FORMAT_FILE")"
+
           for FILE in $FILES; do
-            clang-format -n $FILE
+            clang-format --style=file --assume-filename="$CLANG_FORMAT_FILE" -n $FILE
           done
         shell: bash

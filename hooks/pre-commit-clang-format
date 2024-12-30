@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# clang-formatting
+echo "Executing clang-formatting pre-commit hook..."
+
+CLANG_FORMAT_FILE="graph_core/graph_core/.clang-format"
+
+if ! command -v clang-format &> /dev/null; then
+  echo "Error: clang-format is not installed. Please install it and try again."
+  exit 1
+fi
+
+if [ ! -f "$CLANG_FORMAT_FILE" ]; then
+  echo "Error: .clang-format file not found at $CLANG_FORMAT_FILE"
+  exit 1
+fi
+
+echo "Using clang-format configuration from: $(realpath "$CLANG_FORMAT_FILE")"
+
+for FILE in "$@"; do
+  echo "Formatting $FILE"
+  clang-format -i --style=file --assume-filename="$CLANG_FORMAT_FILE" "$FILE"
+  git add "$FILE"
+done
+

@@ -30,18 +30,22 @@ PSEUDO CODE :
 */
 #pragma once
 #include <graph_core/graph/node.h>
-namespace graph {
-namespace core {
+namespace graph
+{
+namespace core
+{
 /**
  * @class NearestNeighbors
  * @brief Abstract base class for handling nearest neighbor search in a graph.
  */
-class NearestNeighbors : public std::enable_shared_from_this<NearestNeighbors> {
+class NearestNeighbors : public std::enable_shared_from_this<NearestNeighbors>
+{
 public:
   /**
    * @brief Constructor for the NearestNeighbors class.
    */
-  NearestNeighbors(const cnr_logger::TraceLoggerPtr &logger) : logger_(logger) {
+  NearestNeighbors(const cnr_logger::TraceLoggerPtr& logger) : logger_(logger)
+  {
     deleted_nodes_ = 0;
     size_ = 0;
   }
@@ -52,7 +56,7 @@ public:
    *
    * @param node The node to be inserted.
    */
-  virtual void insert(const NodePtr &node) = 0;
+  virtual void insert(const NodePtr& node) = 0;
 
   /**
    * @brief  Pure virtual function to clear the nearest neighbors data
@@ -70,8 +74,7 @@ public:
    * @param best Reference to the pointer to the best-matching node.
    * @param best_distance Reference to the distance to the best-matching node.
    */
-  virtual void nearestNeighbor(const Eigen::VectorXd &configuration,
-                               NodePtr &best, double &best_distance) = 0;
+  virtual void nearestNeighbor(const Eigen::VectorXd& configuration, NodePtr& best, double& best_distance) = 0;
 
   /**
    * @brief Function to find the nearest neighbor to a given configuration.
@@ -80,7 +83,8 @@ public:
    * to be found.
    * @return The nearest neighbor node.
    */
-  virtual NodePtr nearestNeighbor(const Eigen::VectorXd &configuration) {
+  virtual NodePtr nearestNeighbor(const Eigen::VectorXd& configuration)
+  {
     {
       double best_distance = std::numeric_limits<double>::infinity();
       NodePtr best;
@@ -98,8 +102,7 @@ public:
    * @return A multimap containing nodes and their distances within the
    * specified radius.
    */
-  virtual std::multimap<double, NodePtr>
-  near(const Eigen::VectorXd &configuration, const double &radius) = 0;
+  virtual std::multimap<double, NodePtr> near(const Eigen::VectorXd& configuration, const double& radius) = 0;
 
   /**
    * @brief Pure virtual function to find k nearest neighbors to a given
@@ -109,8 +112,7 @@ public:
    * @param k The number of nearest neighbors to find.
    * @return A multimap containing k nodes and their distances.
    */
-  virtual std::multimap<double, NodePtr>
-  kNearestNeighbors(const Eigen::VectorXd &configuration, const size_t &k) = 0;
+  virtual std::multimap<double, NodePtr> kNearestNeighbors(const Eigen::VectorXd& configuration, const size_t& k) = 0;
 
   /**
    * @brief Pure virtual function to check if a node exists in the nearest
@@ -119,7 +121,7 @@ public:
    * @param node The node to check.
    * @return True if the node exists, false otherwise.
    */
-  virtual bool findNode(const NodePtr &node) = 0;
+  virtual bool findNode(const NodePtr& node) = 0;
 
   /**
    * @brief Pure virtual function to delete a node from the nearest neighbors
@@ -130,8 +132,7 @@ public:
    * graph/tree.
    * @return True if the deletion is successful, false otherwise.
    */
-  virtual bool deleteNode(const NodePtr &node,
-                          const bool &disconnect_node = false) = 0;
+  virtual bool deleteNode(const NodePtr& node, const bool& disconnect_node = false) = 0;
 
   /**
    * @brief Pure virtual function to restore a previously deleted node from the
@@ -140,7 +141,7 @@ public:
    * @param node The node to restore.
    * @return True if the restoration is successful, false otherwise.
    */
-  virtual bool restoreNode(const NodePtr &node) = 0;
+  virtual bool restoreNode(const NodePtr& node) = 0;
 
   /**
    * @brief Function to get the size (number of nodes) in the nearest neighbors
@@ -148,7 +149,10 @@ public:
    *
    * @return The size of the nearest neighbors data structure.
    */
-  virtual unsigned int size() { return size_; }
+  virtual unsigned int size()
+  {
+    return size_;
+  }
 
   /**
    * @brief Pure virtual function to get a vector of all nodes in the nearest
@@ -166,7 +170,7 @@ public:
    * @param white_list A vector of nodes to be excluded from the disconnection
    * process.
    */
-  virtual void disconnectNodes(const std::vector<NodePtr> &white_list) = 0;
+  virtual void disconnectNodes(const std::vector<NodePtr>& white_list) = 0;
 
 protected:
   /**
@@ -192,5 +196,5 @@ protected:
 
 typedef std::shared_ptr<NearestNeighbors> NearestNeighborsPtr;
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

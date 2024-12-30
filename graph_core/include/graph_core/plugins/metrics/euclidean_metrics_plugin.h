@@ -30,15 +30,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/metrics/euclidean_metrics.h>
 #include <graph_core/plugins/metrics/metrics_base_plugin.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 /**
  * @class EuclideanMetricsPlugin
  * @brief This class implements a wrapper to graph::core::EuclideanMetrics to
  * allow its plugin to be defined.
  */
-class EuclideanMetricsPlugin : public MetricsBasePlugin {
+class EuclideanMetricsPlugin : public MetricsBasePlugin
+{
 protected:
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -47,7 +49,9 @@ public:
    * @brief Empty constructor for EuclideanMetricsPlugin. The function
    * EuclideanMetricsPlugin::init() must be called afterwards.
    */
-  EuclideanMetricsPlugin() : MetricsBasePlugin() {}
+  EuclideanMetricsPlugin() : MetricsBasePlugin()
+  {
+  }
 
   /**
    * @brief init Initialise the object, defining its main attributes. At the end
@@ -58,12 +62,12 @@ public:
    * @param logger Pointer to a TraceLogger for logging.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const std::string &param_ns,
-                    const cnr_logger::TraceLoggerPtr &logger) override {
+  virtual bool init(const std::string& param_ns, const cnr_logger::TraceLoggerPtr& logger) override
+  {
     metrics_ = std::make_shared<graph::core::EuclideanMetrics>(logger);
     return true;
   }
 };
 
-} // namespace core
-} // namespace graph
+}  // namespace core
+}  // namespace graph

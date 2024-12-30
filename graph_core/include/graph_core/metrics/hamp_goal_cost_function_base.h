@@ -29,9 +29,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 #include <graph_core/metrics/goal_cost_function_base.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 /**
  * @class HampGoalCostFunctionBase
  * @brief Base class for defining goal cost functions.
@@ -40,8 +41,8 @@ namespace core {
  * functions associated with goal configurations in HAMP path planning. Users
  * can derive from this class to implement custom cost functions.
  */
-class HampGoalCostFunctionBase : public GoalCostFunctionBase {
-
+class HampGoalCostFunctionBase : public GoalCostFunctionBase
+{
   /**
    * @brief human_positions_ Matrix 3xn with the human positions.
    */
@@ -56,15 +57,17 @@ public:
   /**
    * @brief Default constructor for GoalCostFunctionBase.
    */
-  HampGoalCostFunctionBase() {}
+  HampGoalCostFunctionBase()
+  {
+  }
 
   /**
    * @brief Set human position.
    *
    * @param human_positions Matrix 3xn with the human positions
    */
-  virtual void
-  setHumanPositions(const Eigen::Matrix<double, 3, -1> &human_positions) {
+  virtual void setHumanPositions(const Eigen::Matrix<double, 3, -1>& human_positions)
+  {
     human_positions_ = human_positions;
   }
 
@@ -73,13 +76,13 @@ public:
    *
    * @param human_velocities Matrix 3xn with the human velocities
    */
-  virtual void
-  setHumanVelocities(const Eigen::Matrix<double, 3, -1> &human_velocities) {
+  virtual void setHumanVelocities(const Eigen::Matrix<double, 3, -1>& human_velocities)
+  {
     human_velocities_ = human_velocities;
   }
 };
 
 typedef std::shared_ptr<HampGoalCostFunctionBase> HampGoalCostFunctionPtr;
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

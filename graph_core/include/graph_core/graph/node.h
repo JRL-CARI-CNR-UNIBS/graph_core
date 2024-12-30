@@ -27,16 +27,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <Eigen/Core>
-#include <graph_core/graph/connection.h>
 #include <graph_core/util.h>
+#include <graph_core/graph/connection.h>
 
-namespace graph {
-namespace core {
+namespace graph
+{
+namespace core
+{
 /**
  * @class Node
  * @brief Class for defining node of a graph.
  */
-class Node : public std::enable_shared_from_this<Node> {
+class Node : public std::enable_shared_from_this<Node>
+{
   friend class Connection;
 
 protected:
@@ -62,8 +65,7 @@ protected:
    * This member variable represents a vector of weak pointers to parent
    * connections of the node.
    */
-  std::vector<ConnectionWeakPtr>
-      parent_connections_; // Weak ptr to avoid pointers cycles
+  std::vector<ConnectionWeakPtr> parent_connections_;  // Weak ptr to avoid pointers cycles
 
   /**
    * @brief Vector of weak pointers to net parent connections.
@@ -71,8 +73,7 @@ protected:
    * This member variable represents a vector of weak pointers to net parent
    * connections of the node.
    */
-  std::vector<ConnectionWeakPtr>
-      net_parent_connections_; // Weak ptr to avoid pointers cycles
+  std::vector<ConnectionWeakPtr> net_parent_connections_;  // Weak ptr to avoid pointers cycles
 
   /**
    * @brief Vector of pointers to child connections.
@@ -122,7 +123,7 @@ protected:
    * @param connection The ConnectionPtr representing the parent connection to
    * be added.
    */
-  void addParentConnection(const ConnectionPtr &connection);
+  void addParentConnection(const ConnectionPtr& connection);
 
   /**
    * @brief Adds a child connection to the node.
@@ -134,7 +135,7 @@ protected:
    * @param connection The ConnectionPtr representing the child connection to be
    * added.
    */
-  void addChildConnection(const ConnectionPtr &connection);
+  void addChildConnection(const ConnectionPtr& connection);
 
   /**
    * @brief Adds a net parent connection to the node.
@@ -146,7 +147,7 @@ protected:
    * @param connection The ConnectionPtr representing the net parent connection
    * to be added.
    */
-  void addNetParentConnection(const ConnectionPtr &connection);
+  void addNetParentConnection(const ConnectionPtr& connection);
 
   /**
    * @brief Adds a net child connection to the node.
@@ -158,7 +159,7 @@ protected:
    * @param connection The ConnectionPtr representing the net child connection
    * to be added.
    */
-  void addNetChildConnection(const ConnectionPtr &connection);
+  void addNetChildConnection(const ConnectionPtr& connection);
 
   /**
    * @brief Removes the specified parent connection from the node.
@@ -170,9 +171,8 @@ protected:
    * @param connection The ConnectionPtr representing the parent connection to
    * be removed.
    */
-  void removeParentConnection(const ConnectionPtr &connection);
-  void removeParentConnection(
-      const std::vector<ConnectionWeakPtr>::iterator &it_conn);
+  void removeParentConnection(const ConnectionPtr& connection);
+  void removeParentConnection(const std::vector<ConnectionWeakPtr>::iterator& it_conn);
   /**
    * @brief Removes the specified child connection from the node.
    *
@@ -183,9 +183,8 @@ protected:
    * @param connection The ConnectionPtr representing the child connection to be
    * removed.
    */
-  void removeChildConnection(const ConnectionPtr &connection);
-  void
-  removeChildConnection(const std::vector<ConnectionPtr>::iterator &it_conn);
+  void removeChildConnection(const ConnectionPtr& connection);
+  void removeChildConnection(const std::vector<ConnectionPtr>::iterator& it_conn);
 
   /**
    * @brief Removes the specified net parent connection from the node.
@@ -198,9 +197,8 @@ protected:
    * @param connection The ConnectionPtr representing the net parent connection
    * to be removed.
    */
-  void removeNetParentConnection(const ConnectionPtr &connection);
-  void removeNetParentConnection(
-      const std::vector<ConnectionWeakPtr>::iterator &it_conn);
+  void removeNetParentConnection(const ConnectionPtr& connection);
+  void removeNetParentConnection(const std::vector<ConnectionWeakPtr>::iterator& it_conn);
 
   /**
    * @brief Removes the specified net child connection from the node.
@@ -212,9 +210,8 @@ protected:
    * @param connection The ConnectionPtr representing the net child connection
    * to be removed.
    */
-  void removeNetChildConnection(const ConnectionPtr &connection);
-  void
-  removeNetChildConnection(const std::vector<ConnectionPtr>::iterator &it_conn);
+  void removeNetChildConnection(const ConnectionPtr& connection);
+  void removeNetChildConnection(const std::vector<ConnectionPtr>::iterator& it_conn);
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -241,9 +238,8 @@ public:
    * the node.
    */
 
-  Node(const Eigen::VectorXd &configuration);
-  Node(const Eigen::VectorXd &configuration,
-       const cnr_logger::TraceLoggerPtr &logger);
+  Node(const Eigen::VectorXd& configuration);
+  Node(const Eigen::VectorXd& configuration, const cnr_logger::TraceLoggerPtr& logger);
 
   /**
    * @brief Retrieves a shared pointer to the Node.
@@ -253,7 +249,10 @@ public:
    *
    * @return Returns a shared pointer to the current Node.
    */
-  NodePtr pointer() { return shared_from_this(); }
+  NodePtr pointer()
+  {
+    return shared_from_this();
+  }
 
   /**
    * Add here your reserved flags.
@@ -291,7 +290,7 @@ public:
    * @param flag The value to set for the flag.
    * @return Returns true if the flag is successfully set, and false otherwise.
    */
-  bool setFlag(const size_t &idx, const bool flag);
+  bool setFlag(const size_t& idx, const bool flag);
 
   /**
    * @brief Sets a new flag with the provided value and returns its index.
@@ -319,7 +318,7 @@ public:
    * @return Returns the value of the flag at the specified index or the default
    * value if the index is out of range.
    */
-  bool getFlag(const size_t &idx, const bool default_value);
+  bool getFlag(const size_t& idx, const bool default_value);
 
   /**
    * @brief Retrieves a pointer to the TraceLogger associated with the node.
@@ -330,12 +329,18 @@ public:
    *
    * @return A constant reference to the TraceLogger pointer.
    */
-  const cnr_logger::TraceLoggerPtr &getLogger() const { return logger_; }
+  const cnr_logger::TraceLoggerPtr& getLogger() const
+  {
+    return logger_;
+  }
 
   /**
    * @brief Sets the TraceLogger associated with the node.
    */
-  void setLogger(const cnr_logger::TraceLoggerPtr &logger) { logger_ = logger; }
+  void setLogger(const cnr_logger::TraceLoggerPtr& logger)
+  {
+    logger_ = logger;
+  }
 
   /**
    * @brief Retrieves the number of parent connections for the node.
@@ -376,7 +381,7 @@ public:
    * @param i The index of the parent connection to retrieve.
    * @return Returns a shared pointer to the i-th parent connection.
    */
-  ConnectionPtr parentConnection(const int &i) const;
+  ConnectionPtr parentConnection(const int& i) const;
 
   /**
    * @brief Retrieves the i-th net parent connection associated with the node.
@@ -387,7 +392,7 @@ public:
    * @param i The index of the net parent connection to retrieve.
    * @return Returns a shared pointer to the i-th net parent connection.
    */
-  ConnectionPtr netParentConnection(const int &i) const;
+  ConnectionPtr netParentConnection(const int& i) const;
 
   /**
    * @brief Retrieves the i-th child connection associated with the node.
@@ -397,7 +402,7 @@ public:
    * @param i The index of the child connection to retrieve.
    * @return Returns a shared pointer to the i-th child connection.
    */
-  ConnectionPtr childConnection(const int &i) const;
+  ConnectionPtr childConnection(const int& i) const;
 
   /**
    * @brief Retrieves the i-th net child connection associated with the node.
@@ -408,7 +413,7 @@ public:
    * @param i The index of the net child connection to retrieve.
    * @return Returns a shared pointer to the i-th net child connection.
    */
-  ConnectionPtr netChildConnection(const int &i) const;
+  ConnectionPtr netChildConnection(const int& i) const;
 
   /**
    * @brief Retrieves the child nodes associated with the node.
@@ -569,7 +574,7 @@ public:
    * connection to be switched.
    * @return Returns true if the switch is successful, false otherwise.
    */
-  bool switchParentConnection(const ConnectionPtr &net_connection);
+  bool switchParentConnection(const ConnectionPtr& net_connection);
 
   /**
    * @brief Retrieves the configuration vector of the node.
@@ -580,7 +585,10 @@ public:
    * @return Returns a constant reference to the Eigen::VectorXd representing
    * the configuration of the node.
    */
-  const Eigen::VectorXd &getConfiguration() { return configuration_; }
+  const Eigen::VectorXd& getConfiguration()
+  {
+    return configuration_;
+  }
 
   /**
    * @brief Retrieves the number of reserved flags for the node.
@@ -627,11 +635,10 @@ public:
    *  If the YAML::Node is not a sequence or if an error occurs during
    * construction, returns nullptr.
    */
-  static NodePtr fromYAML(const YAML::Node &yaml,
-                          const cnr_logger::TraceLoggerPtr &logger);
-  static NodePtr fromYAML(const YAML::Node &yaml, std::string &what);
+  static NodePtr fromYAML(const YAML::Node& yaml, const cnr_logger::TraceLoggerPtr& logger);
+  static NodePtr fromYAML(const YAML::Node& yaml, std::string& what);
 
-  friend std::ostream &operator<<(std::ostream &os, const Node &node);
+  friend std::ostream& operator<<(std::ostream& os, const Node& node);
 };
 
 /**
@@ -644,7 +651,7 @@ public:
  * @param node The Node object to be output.
  * @return Returns the modified output stream.
  */
-std::ostream &operator<<(std::ostream &os, const Node &node);
+std::ostream& operator<<(std::ostream& os, const Node& node);
 
 /**
  * @brief Template function to get a graph::core::Node from the parameter
@@ -670,9 +677,8 @@ std::ostream &operator<<(std::ostream &os, const Node &node);
  * parameter.
  */
 template <>
-inline bool get_param<NodePtr>(const cnr_logger::TraceLoggerPtr &logger,
-                               const std::string &param_ns,
-                               const std::string &param_name, NodePtr &param);
+inline bool get_param<NodePtr>(const cnr_logger::TraceLoggerPtr& logger, const std::string& param_ns,
+                               const std::string& param_name, NodePtr& param);
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

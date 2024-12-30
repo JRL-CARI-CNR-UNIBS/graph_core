@@ -29,20 +29,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /**
  * @brief Register class to be loaded with cnr_class_loader
  */
-CLASS_LOADER_REGISTER_CLASS(graph::core::NullGoalCostFunctionPlugin,
-                            graph::core::GoalCostFunctionBasePlugin)
+CLASS_LOADER_REGISTER_CLASS(graph::core::NullGoalCostFunctionPlugin, graph::core::GoalCostFunctionBasePlugin)
 
-namespace graph {
-namespace core {
-
-bool NullGoalCostFunctionPlugin::init(
-    const std::string &param_ns, const cnr_logger::TraceLoggerPtr &logger) {
-  CNR_TRACE(logger,
-            "creating NullGoalCostFunction using namespace << " << param_ns);
+namespace graph
+{
+namespace core
+{
+bool NullGoalCostFunctionPlugin::init(const std::string& param_ns, const cnr_logger::TraceLoggerPtr& logger)
+{
+  CNR_TRACE(logger, "creating NullGoalCostFunction using namespace << " << param_ns);
   goal_cost_fcn_ = std::make_shared<NullGoalCostFunction>(logger);
   CNR_TRACE(logger, "created NullGoalCostFunction");
   return true;
 }
 
-} // namespace core
-} // namespace graph
+}  // namespace core
+}  // namespace graph

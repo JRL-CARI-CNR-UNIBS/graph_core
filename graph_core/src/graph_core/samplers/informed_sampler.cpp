@@ -27,41 +27,48 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/samplers/informed_sampler.h>
 
-namespace graph {
-namespace core {
-
-void InformedSampler::config() {
-  if (not initialized_) {
+namespace graph
+{
+namespace core
+{
+void InformedSampler::config()
+{
+  if (not initialized_)
+  {
     CNR_ERROR(logger_, "Informed sampler not initialised, cannot configure");
     return;
   }
 
-  if (cost_ < 0.0) {
+  if (cost_ < 0.0)
+  {
     CNR_FATAL(logger_, "cost should be >= 0");
     throw std::invalid_argument("cost should be >= 0");
   }
 
   ndof_ = lower_bound_.rows();
 
-  if (focus_1_not_scaled_.rows() != ndof_) {
+  if (focus_1_not_scaled_.rows() != ndof_)
+  {
     CNR_FATAL(logger_, "focus 1 should have the same size of ndof");
     throw std::invalid_argument("focus 1 should have the same size of ndof");
   }
-  if (focus_2_not_scaled_.rows() != ndof_) {
+  if (focus_2_not_scaled_.rows() != ndof_)
+  {
     CNR_FATAL(logger_, "focus 2 should have the same size of ndof");
     throw std::invalid_argument("focus 2 should have the same size of ndof");
   }
-  if (upper_bound_not_scaled_.rows() != ndof_) {
+  if (upper_bound_not_scaled_.rows() != ndof_)
+  {
     CNR_FATAL(logger_, "upper bound should have the same size of ndof");
-    throw std::invalid_argument(
-        "upper bound should have the same size of ndof");
+    throw std::invalid_argument("upper bound should have the same size of ndof");
   }
-  if (lower_bound_not_scaled_.rows() != ndof_) {
+  if (lower_bound_not_scaled_.rows() != ndof_)
+  {
     CNR_FATAL(logger_, "lower bound should have the same size of ndof");
-    throw std::invalid_argument(
-        "lower bound should have the same size of ndof");
+    throw std::invalid_argument("lower bound should have the same size of ndof");
   }
-  if (scale_.rows() != ndof_) {
+  if (scale_.rows() != ndof_)
+  {
     CNR_FATAL(logger_, "scale should have the same size of ndof");
     throw std::invalid_argument("scale should have the same size of ndof");
   }
@@ -97,9 +104,8 @@ void InformedSampler::config() {
     inf_cost_ = true;
 }
 
-Eigen::MatrixXd
-InformedSampler::computeRotationMatrix(const Eigen::VectorXd &x1,
-                                       const Eigen::VectorXd &x2) {
+Eigen::MatrixXd InformedSampler::computeRotationMatrix(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2)
+{
   assert(x1.size() == x2.size());
   unsigned int dof = x1.size();
   Eigen::MatrixXd rot_matrix(dof, dof);
@@ -107,8 +113,10 @@ InformedSampler::computeRotationMatrix(const Eigen::VectorXd &x1,
   Eigen::VectorXd main_versor = (x1 - x2) / (x1 - x2).norm();
 
   bool is_standard_base = false;
-  for (unsigned int ic = 0; ic < rot_matrix.cols(); ic++) {
-    if (std::abs(main_versor.dot(rot_matrix.col(ic))) > 0.999) {
+  for (unsigned int ic = 0; ic < rot_matrix.cols(); ic++)
+  {
+    if (std::abs(main_versor.dot(rot_matrix.col(ic))) > 0.999)
+    {
       is_standard_base = true;
       // rot_matrix is already orthonormal, put this direction as first
       Eigen::VectorXd tmp = rot_matrix.col(ic);
@@ -118,13 +126,15 @@ InformedSampler::computeRotationMatrix(const Eigen::VectorXd &x1,
     }
   }
 
-  if (!is_standard_base) {
+  if (!is_standard_base)
+  {
     rot_matrix.col(0) = main_versor;
     // orthonormalization
-    for (unsigned int ic = 1; ic < rot_matrix.cols(); ic++) {
-      for (unsigned int il = 0; il < ic; il++) {
-        rot_matrix.col(ic) -=
-            (rot_matrix.col(ic).dot(rot_matrix.col(il))) * rot_matrix.col(il);
+    for (unsigned int ic = 1; ic < rot_matrix.cols(); ic++)
+    {
+      for (unsigned int il = 0; il < ic; il++)
+      {
+        rot_matrix.col(ic) -= (rot_matrix.col(ic).dot(rot_matrix.col(il))) * rot_matrix.col(il);
       }
       rot_matrix.col(ic) /= rot_matrix.col(ic).norm();
     }
@@ -132,80 +142,89 @@ InformedSampler::computeRotationMatrix(const Eigen::VectorXd &x1,
   return rot_matrix;
 }
 
-Eigen::VectorXd InformedSampler::sample() {
-  if (inf_cost_) {
-    return center_bound_ +
-           Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(bound_width_);
-  } else {
+Eigen::VectorXd InformedSampler::sample()
+{
+  if (inf_cost_)
+  {
+    return center_bound_ + Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(bound_width_);
+  }
+  else
+  {
     Eigen::VectorXd ball(ndof_);
-    for (int iter = 0; iter < 100; iter++) {
+    for (int iter = 0; iter < 100; iter++)
+    {
       ball.setRandom();
       ball *= std::pow(ud_(gen_), 1.0 / (double)ndof_) / ball.norm();
 
-      Eigen::VectorXd q = (rot_matrix_ * ellipse_axis_.asDiagonal() * ball) +
-                          ellipse_center_; // q_scaled
+      Eigen::VectorXd q = (rot_matrix_ * ellipse_axis_.asDiagonal() * ball) + ellipse_center_;  // q_scaled
 
       bool in_of_bounds = true;
-      for (unsigned int iax = 0; iax < ndof_; iax++) {
-        if (q(iax) > upper_bound_(iax) || q(iax) < lower_bound_(iax)) {
+      for (unsigned int iax = 0; iax < ndof_; iax++)
+      {
+        if (q(iax) > upper_bound_(iax) || q(iax) < lower_bound_(iax))
+        {
           in_of_bounds = false;
           break;
         }
       }
 
       if (in_of_bounds)
-        return q.cwiseProduct(inv_scale_); // q = q_scaled/scale
+        return q.cwiseProduct(inv_scale_);  // q = q_scaled/scale
     }
 
-    CNR_WARN(logger_, "InformedSampler has not found a sample in the informed "
-                      "set that respects the bounds");
-    return center_bound_ +
-           Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(bound_width_);
+    CNR_WARN(logger_,
+             "InformedSampler has not found a sample in the informed "
+             "set that respects the bounds");
+    return center_bound_ + Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(bound_width_);
   }
 }
 
-bool InformedSampler::inBounds(const Eigen::VectorXd &q) {
+bool InformedSampler::inBounds(const Eigen::VectorXd& q)
+{
   Eigen::VectorXd q_scaled = q.cwiseProduct(scale_);
-  for (unsigned int iax = 0; iax < ndof_; iax++) {
-    if (q_scaled(iax) > upper_bound_(iax) ||
-        q_scaled(iax) < lower_bound_(iax)) {
+  for (unsigned int iax = 0; iax < ndof_; iax++)
+  {
+    if (q_scaled(iax) > upper_bound_(iax) || q_scaled(iax) < lower_bound_(iax))
+    {
       return false;
     }
   }
   if (inf_cost_)
     return true;
   else
-    return ((q_scaled - focus_1_).norm() + (q_scaled - focus_2_).norm()) <
-           cost_;
+    return ((q_scaled - focus_1_).norm() + (q_scaled - focus_2_).norm()) < cost_;
 }
 
-void InformedSampler::setCost(const double &cost) {
+void InformedSampler::setCost(const double& cost)
+{
   cost_ = cost;
   inf_cost_ = cost_ >= std::numeric_limits<double>::infinity();
 
-  if (cost_ < focii_distance_) {
-    CNR_WARN(logger_,
-             "cost is " << cost_ << " focii distance is " << focii_distance_);
+  if (cost_ < focii_distance_)
+  {
+    CNR_WARN(logger_, "cost is " << cost_ << " focii distance is " << focii_distance_);
     CNR_WARN(logger_, "focus 1: " << focus_1_.transpose());
     CNR_WARN(logger_, "focus 2: " << focus_2_.transpose());
     cost_ = focii_distance_;
     min_radius_ = 0.0;
-  } else {
-    min_radius_ =
-        0.5 * std::sqrt(std::pow(cost_, 2) - std::pow(focii_distance_, 2));
+  }
+  else
+  {
+    min_radius_ = 0.5 * std::sqrt(std::pow(cost_, 2) - std::pow(focii_distance_, 2));
   }
   max_radius_ = 0.5 * cost_;
   ellipse_axis_.setConstant(min_radius_);
   ellipse_axis_(0) = max_radius_;
 
-  if (inf_cost_) {
+  if (inf_cost_)
+  {
     specific_volume_ =
-        std::tgamma(((double)ndof_) * 0.5 + 1.0) /
-        std::pow(M_PI,
-                 (double)ndof_ * 0.5); // inverse of the volume of unit ball
+        std::tgamma(((double)ndof_) * 0.5 + 1.0) / std::pow(M_PI,
+                                                            (double)ndof_ * 0.5);  // inverse of the volume of unit ball
     for (unsigned int idx = 0; idx < ndof_; idx++)
       specific_volume_ *= (upper_bound_(idx) - lower_bound_(idx));
-  } else
+  }
+  else
     specific_volume_ = max_radius_ * std::pow(min_radius_, ndof_ - 1);
 
   // probably not necessary
@@ -213,10 +232,10 @@ void InformedSampler::setCost(const double &cost) {
   //  specific_volume_=std::pow(specific_volume_,1.0/(double) ndof_);
 }
 
-SamplerPtr InformedSampler::clone() {
-  return std::make_shared<InformedSampler>(
-      focus_1_, focus_2_, lower_bound_, upper_bound_, scale_, logger_, cost_);
+SamplerPtr InformedSampler::clone()
+{
+  return std::make_shared<InformedSampler>(focus_1_, focus_2_, lower_bound_, upper_bound_, scale_, logger_, cost_);
 }
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

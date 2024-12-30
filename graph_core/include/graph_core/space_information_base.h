@@ -31,9 +31,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <xmlrpcpp/XmlRpcValue.h>
 //#include <random>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 // class StateInformationBase;
 // typedef std::shared_ptr<StateInformationBase> StateInformationPtr;
 
@@ -64,5 +65,5 @@ namespace core {
 //  const unsigned int& getDimension()const {return ndof_;}
 //};
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

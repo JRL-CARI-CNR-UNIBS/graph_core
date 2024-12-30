@@ -28,9 +28,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/metrics/goal_cost_function_base.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 /**
  * @class NullGoalCostFunction
  * @brief class for setting goal cost to zero.
@@ -38,20 +39,25 @@ namespace core {
  * The NullGoalCostFunction class is a placeholder to avoid the use of a cost
  * function
  */
-class NullGoalCostFunction : public GoalCostFunctionBase {
+class NullGoalCostFunction : public GoalCostFunctionBase
+{
 public:
   /**
    * @brief Default constructor for NullGoalCostFunction.
    */
-  NullGoalCostFunction(const cnr_logger::TraceLoggerPtr &logger)
-      : logger_(logger) {}
+  NullGoalCostFunction(const cnr_logger::TraceLoggerPtr& logger) : logger_(logger)
+  {
+  }
 
   /**
    * @brief Calculate the cost for a given goal configuration.
    * @param q The goal configuration for which the cost is calculated.
    * @return The cost associated with the goal configuration.
    */
-  virtual double cost(const Eigen::VectorXd &q) { return 0.0; }
+  virtual double cost(const Eigen::VectorXd& q)
+  {
+    return 0.0;
+  }
 
 protected:
   /**
@@ -65,5 +71,5 @@ protected:
   cnr_logger::TraceLoggerPtr logger_;
 };
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

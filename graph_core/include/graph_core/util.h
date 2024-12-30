@@ -42,9 +42,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define $Line MakeString(Stringize, __LINE__)
 #define Reminder __FILE__ "(" $Line ") : Reminder: "
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 using namespace std::literals::chrono_literals;
 
 using graph_time = std::chrono::system_clock;
@@ -61,8 +62,8 @@ using graph_duration = std::chrono::duration<double>;
  * @param start The start time point.
  * @return The duration in seconds as a double.
  */
-inline double toSeconds(const graph_time_point &end,
-                        const graph_time_point &start) {
+inline double toSeconds(const graph_time_point& end, const graph_time_point& start)
+{
   return graph_duration(end - start).count();
 }
 
@@ -97,9 +98,11 @@ static const double TOLERANCE = 1e-06;
  operations.
  */
 template <typename T>
-inline std::ostream &operator<<(std::ostream &os, const std::vector<T> &v) {
+inline std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
+{
   os << "[";
-  for (size_t i = 0; i < v.size(); ++i) {
+  for (size_t i = 0; i < v.size(); ++i)
+  {
     if (i != 0)
       os << " ";
     os << v[i];
@@ -138,21 +141,22 @@ inline std::ostream &operator<<(std::ostream &os, const std::vector<T> &v) {
  * messages include the full parameter name for clarity.
  */
 template <typename T>
-static inline bool get_param(const cnr_logger::TraceLoggerPtr &logger,
-                             const std::string &param_ns,
-                             const std::string &param_name, T &param) {
+static inline bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string& param_ns,
+                             const std::string& param_name, T& param)
+{
   std::string what, full_param_name = param_ns + "/" + param_name;
-  if (cnr::param::has(full_param_name, what)) {
-    if (not cnr::param::get(full_param_name, param, what, true,
-                            {cnr::param::ModulesID::MAPPED_FILE,
-                             cnr::param::ModulesID::ROS1,
-                             cnr::param::ModulesID::ROS2})) {
-      CNR_ERROR(logger, "Cannot load " << full_param_name + " parameter.\n"
-                                       << what);
-      throw std::invalid_argument("Cannot load " + full_param_name +
-                                  " parameter.");
+  if (cnr::param::has(full_param_name, what))
+  {
+    if (not cnr::param::get(
+            full_param_name, param, what, true,
+            { cnr::param::ModulesID::MAPPED_FILE, cnr::param::ModulesID::ROS1, cnr::param::ModulesID::ROS2 }))
+    {
+      CNR_ERROR(logger, "Cannot load " << full_param_name + " parameter.\n" << what);
+      throw std::invalid_argument("Cannot load " + full_param_name + " parameter.");
     }
-  } else {
+  }
+  else
+  {
     CNR_WARN(logger, full_param_name + " parameter not available.\n" << what);
     return false;
   }
@@ -162,40 +166,45 @@ static inline bool get_param(const cnr_logger::TraceLoggerPtr &logger,
 // Specialize for Eigen::Vector
 // Trait to check if a type is an Eigen vector
 template <typename T, typename = void>
-struct is_eigen_vector : std::false_type {};
+struct is_eigen_vector : std::false_type
+{
+};
 
 // Specialize for types that are Eigen matrices but with one column
 // (Eigen::Vector)
 template <typename T>
-struct is_eigen_vector<T, std::enable_if_t<T::ColsAtCompileTime == 1>>
-    : std::true_type {};
+struct is_eigen_vector<T, std::enable_if_t<T::ColsAtCompileTime == 1>> : std::true_type
+{
+};
 //
 
 template <typename T>
-static inline bool
-get_param(const cnr_logger::TraceLoggerPtr &logger, const std::string param_ns,
-          const std::string param_name, T &param, const T &default_value) {
+static inline bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string param_ns,
+                             const std::string param_name, T& param, const T& default_value)
+{
   std::string what, full_param_name = param_ns + "/" + param_name;
-  if (cnr::param::has(full_param_name, what)) {
-    if (not cnr::param::get(full_param_name, param, what, true,
-                            {cnr::param::ModulesID::MAPPED_FILE,
-                             cnr::param::ModulesID::ROS1,
-                             cnr::param::ModulesID::ROS2})) {
-      CNR_ERROR(logger, "Cannot load " << full_param_name + " parameter.\n"
-                                       << what);
-      throw std::invalid_argument("Cannot load " + full_param_name +
-                                  " parameter.");
+  if (cnr::param::has(full_param_name, what))
+  {
+    if (not cnr::param::get(
+            full_param_name, param, what, true,
+            { cnr::param::ModulesID::MAPPED_FILE, cnr::param::ModulesID::ROS1, cnr::param::ModulesID::ROS2 }))
+    {
+      CNR_ERROR(logger, "Cannot load " << full_param_name + " parameter.\n" << what);
+      throw std::invalid_argument("Cannot load " + full_param_name + " parameter.");
     }
-  } else {
+  }
+  else
+  {
     param = default_value;
-    if constexpr (is_eigen_vector<T>::value) {
+    if constexpr (is_eigen_vector<T>::value)
+    {
       CNR_WARN(logger, full_param_name << " parameter not available.\n"
-                                       << what << "\nUsing " << param_name
-                                       << ": = " << default_value.transpose());
-    } else {
+                                       << what << "\nUsing " << param_name << ": = " << default_value.transpose());
+    }
+    else
+    {
       CNR_WARN(logger, full_param_name << " parameter not available.\n"
-                                       << what << "\nUsing " << param_name
-                                       << ": = " << default_value);
+                                       << what << "\nUsing " << param_name << ": = " << default_value);
     }
 
     return false;
@@ -203,5 +212,5 @@ get_param(const cnr_logger::TraceLoggerPtr &logger, const std::string param_ns,
   return true;
 }
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

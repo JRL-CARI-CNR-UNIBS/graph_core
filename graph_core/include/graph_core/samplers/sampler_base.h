@@ -29,9 +29,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/util.h>
 #include <random>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 /**
  * @brief Base class for sampling configurations in a planning problem.
  *
@@ -42,7 +43,8 @@ namespace core {
 class SamplerBase;
 typedef std::shared_ptr<SamplerBase> SamplerPtr;
 
-class SamplerBase : public std::enable_shared_from_this<SamplerBase> {
+class SamplerBase : public std::enable_shared_from_this<SamplerBase>
+{
 protected:
   /**
    * @brief lower_bound_ Lower bounds for configuration sampling.
@@ -114,8 +116,9 @@ public:
    * @brief Empty constructor for SamplerBase. The function init() must be
    * called afterwards.
    */
-  SamplerBase() : gen_{rd_()} {
-    srand((unsigned int)time(NULL)); // randomize seed
+  SamplerBase() : gen_{ rd_() }
+  {
+    srand((unsigned int)time(NULL));  // randomize seed
     ud_ = std::uniform_real_distribution<double>(0, 1);
 
     initialized_ = false;
@@ -129,21 +132,18 @@ public:
    * @param logger Pointer to a TraceLogger instance for logging.
    * @param cost Cost associated with the sampler (default: infinity).
    */
-  SamplerBase(const Eigen::VectorXd &lower_bound,
-              const Eigen::VectorXd &upper_bound,
-              const cnr_logger::TraceLoggerPtr &logger,
-              const double &cost = std::numeric_limits<double>::infinity())
-      : lower_bound_(lower_bound), upper_bound_(upper_bound), logger_(logger),
-        cost_(cost), gen_{rd_()} {
-    srand((unsigned int)time(NULL)); // randomize seed
+  SamplerBase(const Eigen::VectorXd& lower_bound, const Eigen::VectorXd& upper_bound,
+              const cnr_logger::TraceLoggerPtr& logger, const double& cost = std::numeric_limits<double>::infinity())
+    : lower_bound_(lower_bound), upper_bound_(upper_bound), logger_(logger), cost_(cost), gen_{ rd_() }
+  {
+    srand((unsigned int)time(NULL));  // randomize seed
     ud_ = std::uniform_real_distribution<double>(0, 1);
 
     ndof_ = lower_bound_.rows();
 
     specific_volume_ =
-        std::tgamma(((double)ndof_) * 0.5 + 1.0) /
-        std::pow(M_PI,
-                 (double)ndof_ * 0.5); // inverse of the volume of unit ball
+        std::tgamma(((double)ndof_) * 0.5 + 1.0) / std::pow(M_PI,
+                                                            (double)ndof_ * 0.5);  // inverse of the volume of unit ball
 
     for (unsigned int idx = 0; idx < ndof_; idx++)
       specific_volume_ *= (upper_bound_(idx) - lower_bound_(idx));
@@ -161,11 +161,12 @@ public:
    * @param cost Cost associated with the sampler (default: infinity).
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool
-  init(const Eigen::VectorXd &lower_bound, const Eigen::VectorXd &upper_bound,
-       const cnr_logger::TraceLoggerPtr &logger,
-       const double &cost = std::numeric_limits<double>::infinity()) {
-    if (initialized_) {
+  virtual bool init(const Eigen::VectorXd& lower_bound, const Eigen::VectorXd& upper_bound,
+                    const cnr_logger::TraceLoggerPtr& logger,
+                    const double& cost = std::numeric_limits<double>::infinity())
+  {
+    if (initialized_)
+    {
       CNR_WARN(logger_, "Sampler already initialised!");
       return false;
     }
@@ -178,9 +179,8 @@ public:
     ndof_ = lower_bound_.rows();
 
     specific_volume_ =
-        std::tgamma(((double)ndof_) * 0.5 + 1.0) /
-        std::pow(M_PI,
-                 (double)ndof_ * 0.5); // inverse of the volume of unit ball
+        std::tgamma(((double)ndof_) * 0.5 + 1.0) / std::pow(M_PI,
+                                                            (double)ndof_ * 0.5);  // inverse of the volume of unit ball
     for (unsigned int idx = 0; idx < ndof_; idx++)
       specific_volume_ *= (upper_bound_(idx) - lower_bound_(idx));
 
@@ -193,19 +193,28 @@ public:
    * @brief getInitialized tells if the object has been initialised.
    * @return the 'initialized_' flag.
    */
-  bool getInitialized() { return initialized_; }
+  bool getInitialized()
+  {
+    return initialized_;
+  }
 
   /**
    * @brief Get the cost associated with the sampler.
    * @return Cost associated with the sampler.
    */
-  const double &getCost() { return cost_; }
+  const double& getCost()
+  {
+    return cost_;
+  }
 
   /**
    * @brief Get the specific volume of the sampling space.
    * @return Specific volume.
    */
-  double getSpecificVolume() { return specific_volume_; }
+  double getSpecificVolume()
+  {
+    return specific_volume_;
+  }
 
   /**
    * @brief Set the cost associated with the sampler.
@@ -213,7 +222,7 @@ public:
    * Derived classes should implement this method.
    * @param cost Cost to be set.
    */
-  virtual void setCost(const double &cost) = 0;
+  virtual void setCost(const double& cost) = 0;
 
   /**
    * @brief Sample a configuration using the sampling strategy.
@@ -228,9 +237,12 @@ public:
    * @param q Configuration to check.
    * @return True if the configuration is within bounds, false otherwise.
    */
-  virtual bool inBounds(const Eigen::VectorXd &q) {
-    for (unsigned int iax = 0; iax < ndof_; iax++) {
-      if (q(iax) > upper_bound_(iax) || q(iax) < lower_bound_(iax)) {
+  virtual bool inBounds(const Eigen::VectorXd& q)
+  {
+    for (unsigned int iax = 0; iax < ndof_; iax++)
+    {
+      if (q(iax) > upper_bound_(iax) || q(iax) < lower_bound_(iax))
+      {
         return false;
       }
     }
@@ -255,25 +267,37 @@ public:
    * @brief Get the lower bounds of the sampler.
    * @return Lower bounds of the sampler.
    */
-  virtual const Eigen::VectorXd &getLB() { return lower_bound_; }
+  virtual const Eigen::VectorXd& getLB()
+  {
+    return lower_bound_;
+  }
 
   /**
    * @brief Get the upper bounds of the sampler.
    * @return Upper bounds of the sampler.
    */
-  virtual const Eigen::VectorXd &getUB() { return upper_bound_; }
+  virtual const Eigen::VectorXd& getUB()
+  {
+    return upper_bound_;
+  }
 
   /**
    * @brief Get the dimension of the sampler.
    * @return Dimension of the sampler.
    */
-  const unsigned int &getDimension() const { return ndof_; }
+  const unsigned int& getDimension() const
+  {
+    return ndof_;
+  }
 
   /**
    * @brief Get the logger associated with the sampler.
    * @return Pointer to the TraceLogger instance.
    */
-  const cnr_logger::TraceLoggerPtr &getLogger() { return logger_; }
+  const cnr_logger::TraceLoggerPtr& getLogger()
+  {
+    return logger_;
+  }
 
   /**
    * @brief Creates a clone of the Sampler object.
@@ -284,5 +308,5 @@ public:
   virtual SamplerPtr clone() = 0;
 };
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph
