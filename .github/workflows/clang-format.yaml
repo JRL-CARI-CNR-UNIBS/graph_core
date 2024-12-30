@@ -15,14 +15,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Navigate to graph_core directory
-        working-directory: graph_core
-
+        
       - name: Install Clang Format
         run: sudo apt-get update && sudo apt-get install -y clang-format
 
       - name: Check formatting
+        working-directory: graph_core
         run: |
           # Trova tutti i file .cpp e .h
           FILES=$(find . -type f \( -name "*.cpp" -o -name "*.h" \))
