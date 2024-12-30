@@ -28,19 +28,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/rrt.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 #define FAILED_ITER 3
 class AnytimeRRT;
 typedef std::shared_ptr<AnytimeRRT> AnytimeRRTPtr;
 
-class AnytimeRRT : public RRT {
+class AnytimeRRT : public RRT
+{
 protected:
   double bias_;
-  double delta_;     // dist_bias and cost_bias update factor
-  double cost_impr_; // cost improvement factor (new cost <
-                     // (1-cost_impr_)*path_cost_)
+  double delta_;      // dist_bias and cost_bias update factor
+  double cost_impr_;  // cost improvement factor (new cost <
+                      // (1-cost_impr_)*path_cost_)
   double cost2beat_;
   SamplerPtr improve_sampler_;
   TreePtr new_tree_;
@@ -49,22 +51,21 @@ protected:
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  AnytimeRRT() : RRT() {} // set initialized_ false
+  AnytimeRRT() : RRT()
+  {
+  }  // set initialized_ false
 
-  AnytimeRRT(const MetricsPtr &metrics, const CollisionCheckerPtr &checker,
-             const SamplerPtr &sampler,
-             const GoalCostFunctionPtr &goal_cost_fcn,
-             const cnr_logger::TraceLoggerPtr &logger)
-      : RRT(metrics, checker, sampler, goal_cost_fcn,
-            logger) // set initialized_ true
+  AnytimeRRT(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
+             const GoalCostFunctionPtr& goal_cost_fcn, const cnr_logger::TraceLoggerPtr& logger)
+    : RRT(metrics, checker, sampler, goal_cost_fcn,
+          logger)  // set initialized_ true
   {
     setParameters();
   }
 
-  AnytimeRRT(const MetricsPtr &metrics, const CollisionCheckerPtr &checker,
-             const SamplerPtr &sampler,
-             const cnr_logger::TraceLoggerPtr &logger)
-      : RRT(metrics, checker, sampler, logger) // set initialized_ true
+  AnytimeRRT(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
+             const cnr_logger::TraceLoggerPtr& logger)
+    : RRT(metrics, checker, sampler, logger)  // set initialized_ true
   {
     setParameters();
   }
@@ -82,13 +83,11 @@ public:
    * @param logger The logger for logging messages.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const MetricsPtr &metrics,
-                    const CollisionCheckerPtr &checker,
-                    const SamplerPtr &sampler,
-                    const GoalCostFunctionPtr &goal_cost_fcn,
-                    const cnr_logger::TraceLoggerPtr &logger) override {
+  virtual bool init(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
+                    const GoalCostFunctionPtr& goal_cost_fcn, const cnr_logger::TraceLoggerPtr& logger) override
+  {
     if (not RRT::init(metrics, checker, sampler, goal_cost_fcn,
-                      logger)) // set initialized_ true
+                      logger))  // set initialized_ true
       return false;
 
     setParameters();
@@ -96,12 +95,11 @@ public:
     return true;
   }
 
-  virtual bool init(const MetricsPtr &metrics,
-                    const CollisionCheckerPtr &checker,
-                    const SamplerPtr &sampler,
-                    const cnr_logger::TraceLoggerPtr &logger) override {
+  virtual bool init(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
+                    const cnr_logger::TraceLoggerPtr& logger) override
+  {
     if (not RRT::init(metrics, checker, sampler,
-                      logger)) // set initialized_ true
+                      logger))  // set initialized_ true
       return false;
 
     setParameters();
@@ -109,58 +107,71 @@ public:
     return true;
   }
 
-  double getBias() { return bias_; }
+  double getBias()
+  {
+    return bias_;
+  }
 
-  double getCost2Beat() { return cost2beat_; }
+  double getCost2Beat()
+  {
+    return cost2beat_;
+  }
 
-  double getDelta() { return delta_; }
+  double getDelta()
+  {
+    return delta_;
+  }
 
-  double getCostImpr() { return cost_impr_; }
+  double getCostImpr()
+  {
+    return cost_impr_;
+  }
 
-  TreePtr getNewTree() { return new_tree_; }
+  TreePtr getNewTree()
+  {
+    return new_tree_;
+  }
 
-  void setDelta(const double &delta = 0.1) { delta_ = delta; }
+  void setDelta(const double& delta = 0.1)
+  {
+    delta_ = delta;
+  }
 
-  void setCostImprovementFactor(const double &impr = 0.1) { cost_impr_ = impr; }
+  void setCostImprovementFactor(const double& impr = 0.1)
+  {
+    cost_impr_ = impr;
+  }
 
-  void setParameters(const double &delta = 0.1, const double &impr = 0.1) {
+  void setParameters(const double& delta = 0.1, const double& impr = 0.1)
+  {
     bias_ = 0.9;
     setDelta(delta);
     setCostImprovementFactor(impr);
   }
 
-  bool
-  improve(NodePtr &start_node, PathPtr &solution, const double &cost2beat,
-          const unsigned int &max_iter = 100,
-          const double &max_time = std::numeric_limits<double>::infinity());
+  bool improve(NodePtr& start_node, PathPtr& solution, const double& cost2beat, const unsigned int& max_iter = 100,
+               const double& max_time = std::numeric_limits<double>::infinity());
 
-  bool
-  improve(NodePtr &start_node, PathPtr &solution,
-          const unsigned int &max_iter = 100,
-          const double &max_time = std::numeric_limits<double>::infinity());
+  bool improve(NodePtr& start_node, PathPtr& solution, const unsigned int& max_iter = 100,
+               const double& max_time = std::numeric_limits<double>::infinity());
 
-  bool
-  improve(NodePtr &start_node, NodePtr &goal_node, PathPtr &solution,
-          const double &cost2beat, const unsigned int &max_iter = 100,
-          const double &max_time = std::numeric_limits<double>::infinity());
+  bool improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solution, const double& cost2beat,
+               const unsigned int& max_iter = 100, const double& max_time = std::numeric_limits<double>::infinity());
 
-  bool
-  improve(NodePtr &start_node, NodePtr &goal_node, PathPtr &solution,
-          const unsigned int &max_iter = 100,
-          const double &max_time = std::numeric_limits<double>::infinity());
+  bool improve(NodePtr& start_node, NodePtr& goal_node, PathPtr& solution, const unsigned int& max_iter = 100,
+               const double& max_time = std::numeric_limits<double>::infinity());
 
-  bool importFromSolver(const AnytimeRRTPtr &solver);
-  bool importFromSolver(const TreeSolverPtr &solver) override;
+  bool importFromSolver(const AnytimeRRTPtr& solver);
+  bool importFromSolver(const TreeSolverPtr& solver) override;
 
-  virtual bool solve(PathPtr &solution, const unsigned int &max_iter = 100,
-                     const double &max_time =
-                         std::numeric_limits<double>::infinity()) override;
-  virtual bool config(const std::string &param_ns) override;
+  virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100,
+                     const double& max_time = std::numeric_limits<double>::infinity()) override;
+  virtual bool config(const std::string& param_ns) override;
   virtual void resetProblem() override;
-  virtual bool improveUpdate(const Eigen::VectorXd &point, PathPtr &solution);
-  virtual bool improveUpdate(PathPtr &solution);
-  virtual bool update(const NodePtr &n, PathPtr &solution) override;
+  virtual bool improveUpdate(const Eigen::VectorXd& point, PathPtr& solution);
+  virtual bool improveUpdate(PathPtr& solution);
+  virtual bool update(const NodePtr& n, PathPtr& solution) override;
 };
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

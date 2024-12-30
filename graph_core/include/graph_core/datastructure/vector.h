@@ -30,19 +30,22 @@ PSEUDO CODE :
 */
 
 #include <graph_core/datastructure/nearest_neighbors.h>
-namespace graph {
-namespace core {
+namespace graph
+{
+namespace core
+{
 /**
  * @class Vector
  * @brief NearestNeighbors implementation using a vector data structure for
  * storing nodes.
  */
-class Vector : public NearestNeighbors {
+class Vector : public NearestNeighbors
+{
 public:
   /**
    * @brief Constructor for the Vector class.
    */
-  Vector(const cnr_logger::TraceLoggerPtr &logger);
+  Vector(const cnr_logger::TraceLoggerPtr& logger);
 
   /**
    * @brief Implementation of the insert function for adding a node to the
@@ -50,7 +53,7 @@ public:
    *
    * @param node The node to be inserted.
    */
-  virtual void insert(const NodePtr &node) override;
+  virtual void insert(const NodePtr& node) override;
 
   /**
    * @brief Implementation of the clear function to clear the nearest neighbors
@@ -68,8 +71,7 @@ public:
    * @param best Reference to the pointer to the best-matching node.
    * @param best_distance Reference to the distance to the best-matching node.
    */
-  virtual void nearestNeighbor(const Eigen::VectorXd &configuration,
-                               NodePtr &best, double &best_distance) override;
+  virtual void nearestNeighbor(const Eigen::VectorXd& configuration, NodePtr& best, double& best_distance) override;
 
   /**
    * @brief Implementation of the near function for finding nodes within a
@@ -80,8 +82,7 @@ public:
    * @return A multimap containing nodes and their distances within the
    * specified radius.
    */
-  virtual std::multimap<double, NodePtr>
-  near(const Eigen::VectorXd &configuration, const double &radius) override;
+  virtual std::multimap<double, NodePtr> near(const Eigen::VectorXd& configuration, const double& radius) override;
 
   /**
    * @brief Implementation of the kNearestNeighbors function for finding k
@@ -91,9 +92,8 @@ public:
    * @param k The number of nearest neighbors to find.
    * @return A multimap containing k nodes and their distances.
    */
-  virtual std::multimap<double, NodePtr>
-  kNearestNeighbors(const Eigen::VectorXd &configuration,
-                    const size_t &k) override;
+  virtual std::multimap<double, NodePtr> kNearestNeighbors(const Eigen::VectorXd& configuration,
+                                                           const size_t& k) override;
 
   /**
    * @brief Implementation of the findNode function for checking if a node
@@ -102,7 +102,7 @@ public:
    * @param node The node to check.
    * @return True if the node exists, false otherwise.
    */
-  virtual bool findNode(const NodePtr &node) override;
+  virtual bool findNode(const NodePtr& node) override;
 
   /**
    * @brief Implementation of the deleteNode function for deleting a node from
@@ -112,8 +112,7 @@ public:
    * @param disconnect_node If true, disconnect the node from the graph.
    * @return True if the deletion is successful, false otherwise.
    */
-  virtual bool deleteNode(const NodePtr &node,
-                          const bool &disconnect_node = false) override;
+  virtual bool deleteNode(const NodePtr& node, const bool& disconnect_node = false) override;
 
   /**
    * @brief Implementation of the restoreNode function for restoring a
@@ -122,7 +121,7 @@ public:
    * @param node The node to restore.
    * @return Always returns false as restoration is not implemented.
    */
-  virtual bool restoreNode(const NodePtr &node) override;
+  virtual bool restoreNode(const NodePtr& node) override;
 
   /**
    * @brief Implementation of the getNodes function for getting all nodes in the
@@ -139,11 +138,11 @@ public:
    * @param white_list A vector of nodes to be excluded from the disconnection
    * process.
    */
-  virtual void disconnectNodes(const std::vector<NodePtr> &white_list) override;
+  virtual void disconnectNodes(const std::vector<NodePtr>& white_list) override;
 
 protected:
   std::vector<NodePtr> nodes_;
 };
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

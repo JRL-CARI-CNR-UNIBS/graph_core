@@ -31,9 +31,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <xmlrpcpp/XmlRpcValue.h>
 //#include <random>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 // class StateSpaceBase;
 // typedef std::shared_ptr<StateSpaceBase> StateSpacePtr;
 
@@ -52,5 +53,5 @@ namespace core {
 //  const StateSpaceProjectorPtr& getProjector(){return projector_;}
 //};
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

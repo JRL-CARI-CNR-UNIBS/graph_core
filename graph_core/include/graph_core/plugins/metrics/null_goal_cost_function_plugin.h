@@ -30,16 +30,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/metrics/null_goal_cost_function.h>
 #include <graph_core/plugins/metrics/goal_cost_function_base_plugin.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 /**
  * @class NullGoalCostFunctionPlugin
  * @brief This class implements a wrapper to graph::core::NullGoalCostFunction
  * to allow its plugin to be defined. The class can be loaded as a plugin and
  * builds a graph::core::NullGoalCostFunction object.
  */
-class NullGoalCostFunctionPlugin : public GoalCostFunctionBasePlugin {
+class NullGoalCostFunctionPlugin : public GoalCostFunctionBasePlugin
+{
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -47,12 +49,18 @@ public:
    * @brief Empty constructor for NullGoalCostFunctionPlugin. The function
    * init() must be called afterwards.
    */
-  NullGoalCostFunctionPlugin() { goal_cost_fcn_ = nullptr; }
+  NullGoalCostFunctionPlugin()
+  {
+    goal_cost_fcn_ = nullptr;
+  }
 
   /**
    * @brief Destructor for NullGoalCostFunctionPlugin.
    */
-  virtual ~NullGoalCostFunctionPlugin() { goal_cost_fcn_ = nullptr; }
+  virtual ~NullGoalCostFunctionPlugin()
+  {
+    goal_cost_fcn_ = nullptr;
+  }
 
   /**
    * @brief init Initialise the graph::core::NullGoalCostFunction object,
@@ -62,9 +70,8 @@ public:
    * @param logger Pointer to a TraceLogger for logging.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const std::string &param_ns,
-                    const cnr_logger::TraceLoggerPtr &logger);
+  virtual bool init(const std::string& param_ns, const cnr_logger::TraceLoggerPtr& logger);
 };
 
-} // namespace core
-} // namespace graph
+}  // namespace core
+}  // namespace graph

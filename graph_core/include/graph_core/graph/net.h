@@ -30,8 +30,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/graph/subtree.h>
 #include <graph_core/util.h>
 
-namespace graph {
-namespace core {
+namespace graph
+{
+namespace core
+{
 /**
  * @class Net
  * @brief Class for defining a net, i.e. a graph that extends the tree allowing
@@ -40,8 +42,8 @@ namespace core {
 class Net;
 typedef std::shared_ptr<Net> NetPtr;
 
-class Net : public std::enable_shared_from_this<Net> {
-
+class Net : public std::enable_shared_from_this<Net>
+{
 #define NET_ERROR_TOLERANCE 1e-06
 
 protected:
@@ -94,8 +96,7 @@ protected:
    * costReEvaluationCondition. By default, it is a nullptr; The function should
    * take a ConnectionPtr as an argument and return a boolean value.
    */
-  std::shared_ptr<std::function<bool(const ConnectionPtr &connection)>>
-      cost_evaluation_condition_;
+  std::shared_ptr<std::function<bool(const ConnectionPtr& connection)>> cost_evaluation_condition_;
 
   /**
    * @brief Current time in the search process.
@@ -154,15 +155,10 @@ protected:
    * @param goal_node The goal node for the search.
    * @param cost2here The cost to reach the current node.
    */
-  void computeConnectionFromNodeToNode(const NodePtr &start_node,
-                                       const NodePtr &goal_node,
-                                       const double &cost2here);
-  void computeConnectionFromNodeToNode(const NodePtr &start_node,
-                                       const NodePtr &goal_node);
-  void computeConnectionFromNodeToNode(const NodePtr &start_node,
-                                       const NodePtr &goal_node,
-                                       const double &cost2here,
-                                       const double &cost2beat);
+  void computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here);
+  void computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node);
+  void computeConnectionFromNodeToNode(const NodePtr& start_node, const NodePtr& goal_node, const double& cost2here,
+                                       const double& cost2beat);
 
 public:
   /**
@@ -172,35 +168,47 @@ public:
    * @param tree The tree to be associated with the Net.
    * @param logger The cnr_logger::TraceLoggerPtr logger for logging operations.
    */
-  Net(const TreePtr &tree, const cnr_logger::TraceLoggerPtr &logger);
+  Net(const TreePtr& tree, const cnr_logger::TraceLoggerPtr& logger);
 
   /**
    * @brief Set the tree associated with the Net.
    *
    * @param tree The tree to be associated with the Net.
    */
-  void setTree(const TreePtr &tree) { linked_tree_ = tree; }
+  void setTree(const TreePtr& tree)
+  {
+    linked_tree_ = tree;
+  }
 
   /**
    * @brief Set the metrics for the Net.
    *
    * @param metrics The metrics to be set for the Net.
    */
-  void setMetrics(const MetricsPtr metrics) { metrics_ = metrics; }
+  void setMetrics(const MetricsPtr metrics)
+  {
+    metrics_ = metrics;
+  }
 
   /**
    * @brief Get the tree associated with the Net.
    *
    * @return The tree associated with the Net.
    */
-  TreePtr getTree() { return linked_tree_; }
+  TreePtr getTree()
+  {
+    return linked_tree_;
+  }
 
   /**
    * @brief Set the verbosity of the Net.
    *
    * @param verbose Flag indicating whether verbose output is enabled.
    */
-  void setVerbosity(const bool verbose) { verbose_ = verbose; }
+  void setVerbosity(const bool verbose)
+  {
+    verbose_ = verbose;
+  }
 
   /**
    * @brief Set whether the Net should search for every solution.
@@ -208,7 +216,8 @@ public:
    * @param search_every_solution Flag indicating whether to search for every
    * solution.
    */
-  void searchEverySolution(const bool search_every_solution) {
+  void searchEverySolution(const bool search_every_solution)
+  {
     search_every_solution_ = search_every_solution;
   }
 
@@ -217,9 +226,9 @@ public:
    *
    * @param condition The cost evaluation condition to be set.
    */
-  void setCostEvaluationCondition(
-      const std::shared_ptr<
-          std::function<bool(const ConnectionPtr &connection)>> &condition) {
+  void
+  setCostEvaluationCondition(const std::shared_ptr<std::function<bool(const ConnectionPtr& connection)>>& condition)
+  {
     cost_evaluation_condition_ = condition;
   }
 
@@ -240,13 +249,12 @@ public:
    * @return A multimap containing the vectors of connections found, sorted by
    * their cost.
    */
-  std::multimap<double, std::vector<ConnectionPtr>> &getConnectionToNode(
-      const NodePtr &node, const std::vector<NodePtr> &black_list = {},
-      const double &max_time = std::numeric_limits<double>::infinity());
-  std::multimap<double, std::vector<ConnectionPtr>> &getConnectionToNode(
-      const NodePtr &node, const double &cost2beat,
-      const std::vector<NodePtr> &black_list = {},
-      const double &max_time = std::numeric_limits<double>::infinity());
+  std::multimap<double, std::vector<ConnectionPtr>>&
+  getConnectionToNode(const NodePtr& node, const std::vector<NodePtr>& black_list = {},
+                      const double& max_time = std::numeric_limits<double>::infinity());
+  std::multimap<double, std::vector<ConnectionPtr>>&
+  getConnectionToNode(const NodePtr& node, const double& cost2beat, const std::vector<NodePtr>& black_list = {},
+                      const double& max_time = std::numeric_limits<double>::infinity());
 
   /**
    * @brief Get connections between two nodes with specific search parameters.
@@ -267,16 +275,14 @@ public:
    * @return A multimap containing the vectors of connections found, sorted by
    * their cost.
    */
-  std::multimap<double, std::vector<ConnectionPtr>> &getConnectionBetweenNodes(
-      const NodePtr &start_node, const NodePtr &goal_node,
-      const double &cost2beat, const std::vector<NodePtr> &black_list = {},
-      const double &max_time = std::numeric_limits<double>::infinity(),
-      const bool &search_in_tree = false);
-  std::multimap<double, std::vector<ConnectionPtr>> &getConnectionBetweenNodes(
-      const NodePtr &start_node, const NodePtr &goal_node,
-      const std::vector<NodePtr> &black_list = {},
-      const double &max_time = std::numeric_limits<double>::infinity());
+  std::multimap<double, std::vector<ConnectionPtr>>& getConnectionBetweenNodes(
+      const NodePtr& start_node, const NodePtr& goal_node, const double& cost2beat,
+      const std::vector<NodePtr>& black_list = {}, const double& max_time = std::numeric_limits<double>::infinity(),
+      const bool& search_in_tree = false);
+  std::multimap<double, std::vector<ConnectionPtr>>& getConnectionBetweenNodes(
+      const NodePtr& start_node, const NodePtr& goal_node, const std::vector<NodePtr>& black_list = {},
+      const double& max_time = std::numeric_limits<double>::infinity());
 };
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

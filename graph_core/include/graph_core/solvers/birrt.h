@@ -28,42 +28,46 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/rrt.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 class BiRRT;
 typedef std::shared_ptr<BiRRT> BiRRTPtr;
 
-class BiRRT : public RRT {
+class BiRRT : public RRT
+{
 protected:
   TreePtr goal_tree_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  BiRRT() : RRT() {} // set initialized_ false
+  BiRRT() : RRT()
+  {
+  }  // set initialized_ false
 
-  BiRRT(const MetricsPtr &metrics, const CollisionCheckerPtr &checker,
-        const SamplerPtr &sampler, const GoalCostFunctionPtr &goal_cost_fcn,
-        const cnr_logger::TraceLoggerPtr &logger)
-      : RRT(metrics, checker, sampler, goal_cost_fcn, logger) {
-  } // set initialized_ true
+  BiRRT(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
+        const GoalCostFunctionPtr& goal_cost_fcn, const cnr_logger::TraceLoggerPtr& logger)
+    : RRT(metrics, checker, sampler, goal_cost_fcn, logger)
+  {
+  }  // set initialized_ true
 
-  BiRRT(const MetricsPtr &metrics, const CollisionCheckerPtr &checker,
-        const SamplerPtr &sampler, const cnr_logger::TraceLoggerPtr &logger)
-      : RRT(metrics, checker, sampler, logger) {} // set initialized_ true
+  BiRRT(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
+        const cnr_logger::TraceLoggerPtr& logger)
+    : RRT(metrics, checker, sampler, logger)
+  {
+  }  // set initialized_ true
 
-  virtual bool addGoal(const NodePtr &goal_node,
-                       const double &max_time =
-                           std::numeric_limits<double>::infinity()) override;
-  virtual bool update(PathPtr &solution) override;
-  virtual bool update(const Eigen::VectorXd &configuration,
-                      PathPtr &solution) override;
-  virtual bool update(const NodePtr &n, PathPtr &solution) override;
+  virtual bool addGoal(const NodePtr& goal_node,
+                       const double& max_time = std::numeric_limits<double>::infinity()) override;
+  virtual bool update(PathPtr& solution) override;
+  virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution) override;
+  virtual bool update(const NodePtr& n, PathPtr& solution) override;
 
-  bool importFromSolver(const BiRRTPtr &solver);
-  bool importFromSolver(const TreeSolverPtr &solver) override;
+  bool importFromSolver(const BiRRTPtr& solver);
+  bool importFromSolver(const TreeSolverPtr& solver) override;
 };
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

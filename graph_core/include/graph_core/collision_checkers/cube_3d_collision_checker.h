@@ -2,9 +2,10 @@
 
 #include "graph_core/collision_checkers/collision_checker_base.h"
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 /**
  * @class Cube3dCollisionChecker
  * @brief Collision checker for a 3D cube-shaped environment.
@@ -18,7 +19,8 @@ namespace core {
 class Cube3dCollisionChecker;
 typedef std::shared_ptr<Cube3dCollisionChecker> Cube3dCollisionCheckerPtr;
 
-class Cube3dCollisionChecker : public CollisionCheckerBase {
+class Cube3dCollisionChecker : public CollisionCheckerBase
+{
 public:
   /**
    * @brief If each joint has absolute value grater than 'abs_joint_threshold_',
@@ -34,11 +36,11 @@ public:
    * @param min_distance Distance between configurations checked for collisions
    * along a connection.
    */
-  Cube3dCollisionChecker(const cnr_logger::TraceLoggerPtr &logger,
-                         const double &abs_joint_threshold,
-                         const double &min_distance = 0.01)
-      : CollisionCheckerBase(logger, min_distance),
-        abs_joint_threshold_(abs_joint_threshold) {}
+  Cube3dCollisionChecker(const cnr_logger::TraceLoggerPtr& logger, const double& abs_joint_threshold,
+                         const double& min_distance = 0.01)
+    : CollisionCheckerBase(logger, min_distance), abs_joint_threshold_(abs_joint_threshold)
+  {
+  }
 
   /**
    * @brief Constructor for Cube3dCollisionChecker.
@@ -46,16 +48,18 @@ public:
    * @param min_distance Distance between configurations checked for collisions
    * along a connection.
    */
-  Cube3dCollisionChecker(const cnr_logger::TraceLoggerPtr &logger,
-                         const double &min_distance = 0.01)
-      : CollisionCheckerBase(logger, min_distance), abs_joint_threshold_(1.0) {}
+  Cube3dCollisionChecker(const cnr_logger::TraceLoggerPtr& logger, const double& min_distance = 0.01)
+    : CollisionCheckerBase(logger, min_distance), abs_joint_threshold_(1.0)
+  {
+  }
 
   /**
    * @brief Check for collision with the 3D cube.
    * @param configuration The robot configuration to check for collision.
    * @return True if the configuration is in collision, false otherwise.
    */
-  virtual bool check(const Eigen::VectorXd &configuration) {
+  virtual bool check(const Eigen::VectorXd& configuration)
+  {
     return configuration.cwiseAbs().maxCoeff() > abs_joint_threshold_;
   }
 
@@ -63,10 +67,11 @@ public:
    * @brief Clone the collision checker.
    * @return A shared pointer to the cloned collision checker.
    */
-  virtual CollisionCheckerPtr clone() override {
+  virtual CollisionCheckerPtr clone() override
+  {
     return std::make_shared<Cube3dCollisionChecker>(logger_, min_distance_);
   }
 };
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

@@ -27,22 +27,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/subtree.h>
 
-namespace graph {
-namespace core {
-Subtree::Subtree(const TreePtr &parent_tree, const NodePtr &root)
-    : Tree(root, parent_tree->getMaximumDistance(), parent_tree->getChecker(),
-           parent_tree->getMetrics(), parent_tree->getLogger(),
-           parent_tree->getUseKdTree()),
-      parent_tree_(parent_tree) {
+namespace graph
+{
+namespace core
+{
+Subtree::Subtree(const TreePtr& parent_tree, const NodePtr& root)
+  : Tree(root, parent_tree->getMaximumDistance(), parent_tree->getChecker(), parent_tree->getMetrics(),
+         parent_tree->getLogger(), parent_tree->getUseKdTree())
+  , parent_tree_(parent_tree)
+{
   populateTreeFromNode(root);
 }
 
-Subtree::Subtree(const TreePtr &parent_tree, const NodePtr &root,
-                 const std::vector<NodePtr> &black_list)
-    : Tree(root, parent_tree->getMaximumDistance(), parent_tree->getChecker(),
-           parent_tree->getMetrics(), parent_tree->getLogger(),
-           parent_tree->getUseKdTree()),
-      parent_tree_(parent_tree) {
+Subtree::Subtree(const TreePtr& parent_tree, const NodePtr& root, const std::vector<NodePtr>& black_list)
+  : Tree(root, parent_tree->getMaximumDistance(), parent_tree->getChecker(), parent_tree->getMetrics(),
+         parent_tree->getLogger(), parent_tree->getUseKdTree())
+  , parent_tree_(parent_tree)
+{
   double cost = std::numeric_limits<double>::infinity();
   Eigen::VectorXd focus1, focus2;
   focus1 = root->getConfiguration();
@@ -51,66 +52,65 @@ Subtree::Subtree(const TreePtr &parent_tree, const NodePtr &root,
   populateSubtreeInsideEllipsoid(root, focus1, focus2, cost, black_list);
 }
 
-Subtree::Subtree(const TreePtr &parent_tree, const NodePtr &root,
-                 const Eigen::VectorXd &focus1, const Eigen::VectorXd &focus2,
-                 const double &cost)
-    : Tree(root, parent_tree->getMaximumDistance(), parent_tree->getChecker(),
-           parent_tree->getMetrics(), parent_tree->getLogger(),
-           parent_tree->getUseKdTree()),
-      parent_tree_(parent_tree) {
+Subtree::Subtree(const TreePtr& parent_tree, const NodePtr& root, const Eigen::VectorXd& focus1,
+                 const Eigen::VectorXd& focus2, const double& cost)
+  : Tree(root, parent_tree->getMaximumDistance(), parent_tree->getChecker(), parent_tree->getMetrics(),
+         parent_tree->getLogger(), parent_tree->getUseKdTree())
+  , parent_tree_(parent_tree)
+{
   std::vector<NodePtr> black_list;
   populateSubtreeInsideEllipsoid(root, focus1, focus2, cost, black_list);
 }
 
-Subtree::Subtree(const TreePtr &parent_tree, const NodePtr &root,
-                 const Eigen::VectorXd &focus1, const Eigen::VectorXd &focus2,
-                 const double &cost, const std::vector<NodePtr> &black_list,
+Subtree::Subtree(const TreePtr& parent_tree, const NodePtr& root, const Eigen::VectorXd& focus1,
+                 const Eigen::VectorXd& focus2, const double& cost, const std::vector<NodePtr>& black_list,
                  const bool node_check)
-    : Tree(root, parent_tree->getMaximumDistance(), parent_tree->getChecker(),
-           parent_tree->getMetrics(), parent_tree->getLogger(),
-           parent_tree->getUseKdTree()),
-      parent_tree_(parent_tree) {
-  populateSubtreeInsideEllipsoid(root, focus1, focus2, cost, black_list,
-                                 node_check);
+  : Tree(root, parent_tree->getMaximumDistance(), parent_tree->getChecker(), parent_tree->getMetrics(),
+         parent_tree->getLogger(), parent_tree->getUseKdTree())
+  , parent_tree_(parent_tree)
+{
+  populateSubtreeInsideEllipsoid(root, focus1, focus2, cost, black_list, node_check);
 }
 
-Subtree::Subtree(const TreePtr &parent_tree, const NodePtr &root,
-                 const Eigen::VectorXd &goal, const double &cost,
-                 const std::vector<NodePtr> &black_list, const bool node_check)
-    : Tree(root, parent_tree->getMaximumDistance(), parent_tree->getChecker(),
-           parent_tree->getMetrics(), parent_tree->getLogger(),
-           parent_tree->getUseKdTree()),
-      parent_tree_(parent_tree) {
+Subtree::Subtree(const TreePtr& parent_tree, const NodePtr& root, const Eigen::VectorXd& goal, const double& cost,
+                 const std::vector<NodePtr>& black_list, const bool node_check)
+  : Tree(root, parent_tree->getMaximumDistance(), parent_tree->getChecker(), parent_tree->getMetrics(),
+         parent_tree->getLogger(), parent_tree->getUseKdTree())
+  , parent_tree_(parent_tree)
+{
   populateTreeFromNodeConsideringCost(root, goal, cost, black_list, node_check);
 }
 
-void Subtree::populateSubtreeInsideEllipsoid(
-    const NodePtr &root, const Eigen::VectorXd &focus1,
-    const Eigen::VectorXd &focus2, const double &cost,
-    const std::vector<NodePtr> &black_list, const bool node_check) {
-  if ((metrics_->utopia(root->getConfiguration(), focus1) +
-       metrics_->utopia(root->getConfiguration(), focus2)) < cost)
+void Subtree::populateSubtreeInsideEllipsoid(const NodePtr& root, const Eigen::VectorXd& focus1,
+                                             const Eigen::VectorXd& focus2, const double& cost,
+                                             const std::vector<NodePtr>& black_list, const bool node_check)
+{
+  if ((metrics_->utopia(root->getConfiguration(), focus1) + metrics_->utopia(root->getConfiguration(), focus2)) < cost)
     populateTreeFromNode(root, focus1, focus2, cost, black_list, node_check);
-  else {
+  else
+  {
     CNR_WARN(logger_, "Root of subtree is not inside the ellipsoid!");
-    CNR_INFO(logger_, "Root:\n " << *root << "\nFocus1: " << focus1.transpose()
-                                 << "\nFocus2: " << focus1.transpose()
+    CNR_INFO(logger_, "Root:\n " << *root << "\nFocus1: " << focus1.transpose() << "\nFocus2: " << focus1.transpose()
                                  << "\nCost: " << cost);
 
     populateTreeFromNode(root, black_list, node_check);
   }
 }
 
-void Subtree::addNode(const NodePtr &node, const bool &check_if_present) {
+void Subtree::addNode(const NodePtr& node, const bool& check_if_present)
+{
   Tree::addNode(node, check_if_present);
   parent_tree_->addNode(node, check_if_present);
 }
 
-void Subtree::hideFromSubtree(const NodePtr &node) {
+void Subtree::hideFromSubtree(const NodePtr& node)
+{
   assert(node);
-  if (nodes_->findNode(node)) {
+  if (nodes_->findNode(node))
+  {
     std::vector<NodePtr> successors = node->getChildren();
-    for (NodePtr &n : successors) {
+    for (NodePtr& n : successors)
+    {
       assert(n.get() != node.get());
       hideFromSubtree(n);
     }
@@ -120,10 +120,13 @@ void Subtree::hideFromSubtree(const NodePtr &node) {
   }
 }
 
-void Subtree::hideInvalidBranches(const NodePtr &node) {
+void Subtree::hideInvalidBranches(const NodePtr& node)
+{
   assert(node);
-  if (nodes_->findNode(node)) {
-    for (ConnectionPtr &c : node->getChildConnections()) {
+  if (nodes_->findNode(node))
+  {
+    for (ConnectionPtr& c : node->getChildConnections())
+    {
       assert(c->getChild().get() != node.get());
       if (c->getCost() == std::numeric_limits<double>::infinity())
         hideFromSubtree(c->getChild());
@@ -136,12 +139,14 @@ void Subtree::hideInvalidBranches(const NodePtr &node) {
   }
 }
 
-void Subtree::removeNode(const NodePtr &node) {
+void Subtree::removeNode(const NodePtr& node)
+{
   nodes_->deleteNode(node, true);
   parent_tree_->removeNode(node);
 }
 
-void Subtree::purgeThisNode(NodePtr &node, unsigned int &removed_nodes) {
+void Subtree::purgeThisNode(NodePtr& node, unsigned int& removed_nodes)
+{
   /*NB: if the subtree is defined inside an ellipsoid, the node could be part of
   the parent tree but not of the subtree (it is not in nodes_ of subtree but it
   is a successor of a node of the subtree). In this case, if the node is not in
@@ -151,56 +156,50 @@ void Subtree::purgeThisNode(NodePtr &node, unsigned int &removed_nodes) {
   assert(node);
   node->disconnect();
 
-  if (nodes_->findNode(node)) {
+  if (nodes_->findNode(node))
+  {
     Subtree::removeNode(node);
     removed_nodes++;
-  } else {
-    if (parent_tree_->isInTree(node)) {
+  }
+  else
+  {
+    if (parent_tree_->isInTree(node))
+    {
       parent_tree_->removeNode(node);
       removed_nodes++;
     }
   }
 }
 
-SubtreePtr Subtree::createSubtree(const TreePtr &parent_tree,
-                                  const NodePtr &root) {
+SubtreePtr Subtree::createSubtree(const TreePtr& parent_tree, const NodePtr& root)
+{
   return std::make_shared<Subtree>(parent_tree, root);
 }
 
-SubtreePtr Subtree::createSubtree(const TreePtr &parent_tree,
-                                  const NodePtr &root,
-                                  const std::vector<NodePtr> &black_list) {
+SubtreePtr Subtree::createSubtree(const TreePtr& parent_tree, const NodePtr& root,
+                                  const std::vector<NodePtr>& black_list)
+{
   return std::make_shared<Subtree>(parent_tree, root, black_list);
 }
 
-SubtreePtr Subtree::createSubtree(const TreePtr &parent_tree,
-                                  const NodePtr &root,
-                                  const Eigen::VectorXd &focus1,
-                                  const Eigen::VectorXd &focus2,
-                                  const double &cost) {
+SubtreePtr Subtree::createSubtree(const TreePtr& parent_tree, const NodePtr& root, const Eigen::VectorXd& focus1,
+                                  const Eigen::VectorXd& focus2, const double& cost)
+{
   return std::make_shared<Subtree>(parent_tree, root, focus1, focus2, cost);
 }
 
-SubtreePtr Subtree::createSubtree(const TreePtr &parent_tree,
-                                  const NodePtr &root,
-                                  const Eigen::VectorXd &focus1,
-                                  const Eigen::VectorXd &focus2,
-                                  const double &cost,
-                                  const std::vector<NodePtr> &black_list,
-                                  const bool node_check) {
-  return std::make_shared<Subtree>(parent_tree, root, focus1, focus2, cost,
-                                   black_list, node_check);
+SubtreePtr Subtree::createSubtree(const TreePtr& parent_tree, const NodePtr& root, const Eigen::VectorXd& focus1,
+                                  const Eigen::VectorXd& focus2, const double& cost,
+                                  const std::vector<NodePtr>& black_list, const bool node_check)
+{
+  return std::make_shared<Subtree>(parent_tree, root, focus1, focus2, cost, black_list, node_check);
 }
 
-SubtreePtr Subtree::createSubtree(const TreePtr &parent_tree,
-                                  const NodePtr &root,
-                                  const Eigen::VectorXd &goal,
-                                  const double &cost,
-                                  const std::vector<NodePtr> &black_list,
-                                  const bool node_check) {
-  return std::make_shared<Subtree>(parent_tree, root, goal, cost, black_list,
-                                   node_check);
+SubtreePtr Subtree::createSubtree(const TreePtr& parent_tree, const NodePtr& root, const Eigen::VectorXd& goal,
+                                  const double& cost, const std::vector<NodePtr>& black_list, const bool node_check)
+{
+  return std::make_shared<Subtree>(parent_tree, root, goal, cost, black_list, node_check);
 }
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

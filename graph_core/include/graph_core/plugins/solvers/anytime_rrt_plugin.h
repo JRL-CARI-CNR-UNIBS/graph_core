@@ -29,9 +29,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/plugins/solvers/tree_solver_plugin.h>
 #include <graph_core/solvers/anytime_rrt.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 /**
  * @class AnytimeRRTPlugin
  * @brief This class implements a wrapper to graph::core::AnytimeRRT to allow
@@ -39,7 +40,8 @@ namespace core {
  * graph::core::AnytimeRRT object.
  */
 
-class AnytimeRRTPlugin : public TreeSolverPlugin {
+class AnytimeRRTPlugin : public TreeSolverPlugin
+{
 protected:
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -48,7 +50,9 @@ public:
    * @brief Empty constructor for AnytimeRRTPlugin. The function
    * AnytimeRRTPlugin::init() must be called afterwards.
    */
-  AnytimeRRTPlugin() : TreeSolverPlugin() {}
+  AnytimeRRTPlugin() : TreeSolverPlugin()
+  {
+  }
 
   /**
    * @brief init Initialise the object, defining its main attributes.
@@ -63,17 +67,14 @@ public:
    * @param logger The logger for logging messages.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const std::string &param_ns,
-                    const graph::core::MetricsPtr &metrics,
-                    const graph::core::CollisionCheckerPtr &checker,
-                    const graph::core::SamplerPtr &sampler,
-                    const graph::core::GoalCostFunctionPtr &goal_cost_fcn,
-                    const cnr_logger::TraceLoggerPtr &logger) {
-    solver_ = std::make_shared<graph::core::AnytimeRRT>(
-        metrics, checker, sampler, goal_cost_fcn, logger);
+  virtual bool init(const std::string& param_ns, const graph::core::MetricsPtr& metrics,
+                    const graph::core::CollisionCheckerPtr& checker, const graph::core::SamplerPtr& sampler,
+                    const graph::core::GoalCostFunctionPtr& goal_cost_fcn, const cnr_logger::TraceLoggerPtr& logger)
+  {
+    solver_ = std::make_shared<graph::core::AnytimeRRT>(metrics, checker, sampler, goal_cost_fcn, logger);
     return true;
   }
 };
 
-} // namespace core
-} // namespace graph
+}  // namespace core
+}  // namespace graph

@@ -28,9 +28,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/path_optimizers/path_optimizer_base.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 class PathLocalOptimizer;
 typedef std::shared_ptr<PathLocalOptimizer> PathLocalOptimizerPtr;
 
@@ -43,8 +44,8 @@ typedef std::shared_ptr<PathLocalOptimizer> PathLocalOptimizerPtr;
  * for local path optimization. It includes features such as warping to smooth
  * the path and simplification to remove unnecessary nodes.
  */
-class PathLocalOptimizer : public PathOptimizerBase {
-
+class PathLocalOptimizer : public PathOptimizerBase
+{
 protected:
   /**
    * @brief Vector indicating whether warping changes were successful for each
@@ -106,9 +107,8 @@ protected:
    * @return Returns true if the bisection process results in an improvement,
    * false otherwise.
    */
-  bool bisection(const size_t &connection_idx, const Eigen::VectorXd &center,
-                 const Eigen::VectorXd &direction, const double min_step_size,
-                 double max_distance, double min_distance);
+  bool bisection(const size_t& connection_idx, const Eigen::VectorXd& center, const Eigen::VectorXd& direction,
+                 const double min_step_size, double max_distance, double min_distance);
 
   /**
    * @brief Perform one optimization step.
@@ -119,21 +119,20 @@ protected:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  PathLocalOptimizer(const CollisionCheckerPtr &checker,
-                     const MetricsPtr &metrics,
-                     const cnr_logger::TraceLoggerPtr &logger);
+  PathLocalOptimizer(const CollisionCheckerPtr& checker, const MetricsPtr& metrics,
+                     const cnr_logger::TraceLoggerPtr& logger);
 
   /**
    * @brief Configure the optimizer reading parameters with cnr_param library.
    */
-  virtual void config(const std::string &param_ns) override;
+  virtual void config(const std::string& param_ns) override;
 
   /**
    * @brief Set the input path for optimization. It calls base class setPath and
    * resets 'change_warp_'.
    * @param path The input path to be optimized.
    */
-  void setPath(const PathPtr &path) override;
+  void setPath(const PathPtr& path) override;
 
   /**
    * @brief Attempt to bevel the path by adjusting configurations.
@@ -150,9 +149,8 @@ public:
    * @param max_time The maximum time limit for the warping process.
    * @return Returns true if any warping changes were made, false otherwise.
    */
-  bool warp(const double &min_conn_length = 0.1,
-            const double min_step_size = 0.01,
-            const double &max_time = std::numeric_limits<double>::infinity());
+  bool warp(const double& min_conn_length = 0.1, const double min_step_size = 0.01,
+            const double& max_time = std::numeric_limits<double>::infinity());
 
   /**
    * @brief Simplify the path by skipping nodes.
@@ -167,8 +165,8 @@ public:
    * removal.
    * @return True if the path is simplified, false otherwise.
    */
-  bool simplify(const double &min_conn_length = 0.1);
+  bool simplify(const double& min_conn_length = 0.1);
 };
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

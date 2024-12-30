@@ -27,16 +27,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/solvers/rrt.h>
 
-namespace graph {
-namespace core {
-
-bool RRT::addGoal(const NodePtr &goal_node, const double &max_time) {
-  if (!configured_) {
+namespace graph
+{
+namespace core
+{
+bool RRT::addGoal(const NodePtr& goal_node, const double& max_time)
+{
+  if (!configured_)
+  {
     CNR_ERROR(logger_, "Solver is not configured!");
     return false;
   }
 
-  if (not sampler_->inBounds(goal_node->getConfiguration())) {
+  if (not sampler_->inBounds(goal_node->getConfiguration()))
+  {
     CNR_WARN(logger_, "Goal not in bounds");
     return false;
   }
@@ -51,27 +55,30 @@ bool RRT::addGoal(const NodePtr &goal_node, const double &max_time) {
   return true;
 }
 
-bool RRT::addStart(const NodePtr &start_node, const double &max_time) {
-  if (!configured_) {
+bool RRT::addStart(const NodePtr& start_node, const double& max_time)
+{
+  if (!configured_)
+  {
     CNR_ERROR(logger_, "Solver is not configured!");
     return false;
   }
 
-  if (not sampler_->inBounds(start_node->getConfiguration())) {
+  if (not sampler_->inBounds(start_node->getConfiguration()))
+  {
     CNR_WARN(logger_, "Start not in bounds");
     return false;
   }
 
   solved_ = false;
-  start_tree_ = std::make_shared<Tree>(start_node, max_distance_, checker_,
-                                       metrics_, logger_, use_kdtree_);
+  start_tree_ = std::make_shared<Tree>(start_node, max_distance_, checker_, metrics_, logger_, use_kdtree_);
 
   setProblem(max_time);
 
   return true;
 }
 
-bool RRT::addStartTree(const TreePtr &start_tree, const double &max_time) {
+bool RRT::addStartTree(const TreePtr& start_tree, const double& max_time)
+{
   assert(start_tree);
   start_tree_ = start_tree;
   solved_ = false;
@@ -79,7 +86,8 @@ bool RRT::addStartTree(const TreePtr &start_tree, const double &max_time) {
   setProblem(max_time);
   return true;
 }
-void RRT::resetProblem() {
+void RRT::resetProblem()
+{
   goal_node_.reset();
   start_tree_.reset();
   problem_set_ = false;
@@ -87,10 +95,12 @@ void RRT::resetProblem() {
   can_improve_ = true;
 }
 
-bool RRT::update(PathPtr &solution) {
+bool RRT::update(PathPtr& solution)
+{
   CNR_TRACE(logger_, "RRT::update");
 
-  if (solved_) {
+  if (solved_)
+  {
     CNR_DEBUG(logger_, "already found a solution");
     solution = solution_;
     can_improve_ = false;
@@ -103,10 +113,12 @@ bool RRT::update(PathPtr &solution) {
   return RRT::update(sampler_->sample(), solution);
 }
 
-bool RRT::update(const Eigen::VectorXd &configuration, PathPtr &solution) {
+bool RRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
+{
   CNR_TRACE(logger_, "RRT::update");
 
-  if (solved_) {
+  if (solved_)
+  {
     CNR_DEBUG(logger_, "already found a solution");
     solution = solution_;
     can_improve_ = false;
@@ -115,21 +127,19 @@ bool RRT::update(const Eigen::VectorXd &configuration, PathPtr &solution) {
 
   NodePtr new_start_node;
   bool add_to_start;
-  add_to_start = extend_ ? start_tree_->extend(configuration, new_start_node)
-                         : start_tree_->connect(configuration, new_start_node);
+  add_to_start = extend_ ? start_tree_->extend(configuration, new_start_node) :
+                           start_tree_->connect(configuration, new_start_node);
 
-  if (add_to_start) {
-    if ((new_start_node->getConfiguration() - goal_node_->getConfiguration())
-            .norm() < max_distance_) {
-      if (checker_->checkConnection(new_start_node->getConfiguration(),
-                                    goal_node_->getConfiguration())) {
-        ConnectionPtr conn =
-            std::make_shared<Connection>(new_start_node, goal_node_, logger_);
+  if (add_to_start)
+  {
+    if ((new_start_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
+    {
+      if (checker_->checkConnection(new_start_node->getConfiguration(), goal_node_->getConfiguration()))
+      {
+        ConnectionPtr conn = std::make_shared<Connection>(new_start_node, goal_node_, logger_);
         conn->setCost(metrics_->cost(new_start_node, goal_node_));
         conn->add();
-        solution_ =
-            std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_),
-                                   metrics_, checker_, logger_);
+        solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_, logger_);
         solution_->setTree(start_tree_);
         start_tree_->addNode(goal_node_);
         path_cost_ = solution_->cost();
@@ -146,31 +156,31 @@ bool RRT::update(const Eigen::VectorXd &configuration, PathPtr &solution) {
   return false;
 }
 
-bool RRT::update(const NodePtr &n, PathPtr &solution) {
+bool RRT::update(const NodePtr& n, PathPtr& solution)
+{
   CNR_DEBUG(logger_, "RRT::update");
 
-  if (solved_) {
+  if (solved_)
+  {
     CNR_DEBUG(logger_, "already found a solution");
     solution = solution_;
     return true;
   }
 
   NodePtr new_start_node;
-  bool add_to_start = extend_ ? start_tree_->extendToNode(n, new_start_node)
-                              : start_tree_->connectToNode(n, new_start_node);
+  bool add_to_start =
+      extend_ ? start_tree_->extendToNode(n, new_start_node) : start_tree_->connectToNode(n, new_start_node);
 
-  if (add_to_start) {
-    if ((new_start_node->getConfiguration() - goal_node_->getConfiguration())
-            .norm() < max_distance_) {
-      if (checker_->checkConnection(new_start_node->getConfiguration(),
-                                    goal_node_->getConfiguration())) {
-        ConnectionPtr conn =
-            std::make_shared<Connection>(new_start_node, goal_node_, logger_);
+  if (add_to_start)
+  {
+    if ((new_start_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
+    {
+      if (checker_->checkConnection(new_start_node->getConfiguration(), goal_node_->getConfiguration()))
+      {
+        ConnectionPtr conn = std::make_shared<Connection>(new_start_node, goal_node_, logger_);
         conn->setCost(metrics_->cost(new_start_node, goal_node_));
         conn->add();
-        solution_ =
-            std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_),
-                                   metrics_, checker_, logger_);
+        solution_ = std::make_shared<Path>(start_tree_->getConnectionToNode(goal_node_), metrics_, checker_, logger_);
         solution_->setTree(start_tree_);
         start_tree_->addNode(goal_node_);
         path_cost_ = solution_->cost();
@@ -186,5 +196,5 @@ bool RRT::update(const NodePtr &n, PathPtr &solution) {
   return false;
 }
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

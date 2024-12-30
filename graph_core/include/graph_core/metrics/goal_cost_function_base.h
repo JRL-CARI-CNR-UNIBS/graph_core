@@ -28,9 +28,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/node.h>
 #include <graph_core/util.h>
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 /**
  * @class GoalCostFunctionBase
  * @brief Base class for defining goal cost functions.
@@ -39,23 +40,32 @@ namespace core {
  * functions associated with goal configurations in path planning. Users can
  * derive from this class to implement custom cost functions.
  */
-class GoalCostFunctionBase {
+class GoalCostFunctionBase
+{
 public:
   /**
    * @brief Default constructor for GoalCostFunctionBase.
    */
-  GoalCostFunctionBase() {}
+  GoalCostFunctionBase()
+  {
+  }
 
   /**
    * @brief Calculate the cost for a given goal configuration.
    * @param q The goal configuration for which the cost is calculated.
    * @return The cost associated with the goal configuration.
    */
-  virtual double cost(const Eigen::VectorXd &q) { return 0; }
-  double cost(const NodePtr &node) { return cost(node->getConfiguration()); }
+  virtual double cost(const Eigen::VectorXd& q)
+  {
+    return 0;
+  }
+  double cost(const NodePtr& node)
+  {
+    return cost(node->getConfiguration());
+  }
 };
 
 typedef std::shared_ptr<GoalCostFunctionBase> GoalCostFunctionPtr;
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

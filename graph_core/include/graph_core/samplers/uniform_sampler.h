@@ -32,9 +32,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/util.h>
 #include <random>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 /**
  * @class UniformSampler
  * @brief Sampling uniformly in the search space.
@@ -45,7 +46,8 @@ namespace core {
 class UniformSampler;
 typedef std::shared_ptr<UniformSampler> UniformSamplerPtr;
 
-class UniformSampler : public SamplerBase {
+class UniformSampler : public SamplerBase
+{
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -53,9 +55,9 @@ public:
    * @brief Empty constructor for UniformSampler. The function init() must be
    * called afterwards.
    */
-  UniformSampler()
-      : SamplerBase() // set initialized_ false
-  {}
+  UniformSampler() : SamplerBase()  // set initialized_ false
+  {
+  }
 
   /**
    * @brief Constructor for UniformSampler.
@@ -63,11 +65,11 @@ public:
    * @param upper_bound Upper bounds for each dimension.
    * @param logger TraceLogger for logging.
    */
-  UniformSampler(const Eigen::VectorXd &lower_bound,
-                 const Eigen::VectorXd &upper_bound,
-                 const cnr_logger::TraceLoggerPtr &logger)
-      : SamplerBase(lower_bound, upper_bound, logger) // set initialized_ true
-  {}
+  UniformSampler(const Eigen::VectorXd& lower_bound, const Eigen::VectorXd& upper_bound,
+                 const cnr_logger::TraceLoggerPtr& logger)
+    : SamplerBase(lower_bound, upper_bound, logger)  // set initialized_ true
+  {
+  }
 
   /**
    * @brief Generate a sampled configuration.
@@ -81,13 +83,19 @@ public:
    *
    * @param cost Cost to be set.
    */
-  virtual void setCost(const double &cost) override { cost_ = cost; }
+  virtual void setCost(const double& cost) override
+  {
+    cost_ = cost;
+  }
 
   /**
    * @brief Check if the sampler collapse. It has no effect on this sampler.
    * @return True if bounds collapse, false otherwise.
    */
-  virtual bool collapse() override { return false; }
+  virtual bool collapse() override
+  {
+    return false;
+  }
 
   /**
    * @brief Creates a clone of the UniformSampler object.
@@ -96,5 +104,5 @@ public:
   virtual SamplerPtr clone() override;
 };
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

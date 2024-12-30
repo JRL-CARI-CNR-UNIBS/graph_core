@@ -29,9 +29,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cnr_class_loader/register_macro.hpp>
 #include <graph_core/metrics/goal_cost_function_base.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 /**
  * @class GoalCostFunctionBasePlugin
  * @brief This class implements a wrapper to graph::core::GoalCostFunctionBase
@@ -41,8 +42,8 @@ namespace core {
 class GoalCostFunctionBasePlugin;
 typedef std::shared_ptr<GoalCostFunctionBasePlugin> GoalCostFunctionPluginPtr;
 
-class GoalCostFunctionBasePlugin
-    : public std::enable_shared_from_this<GoalCostFunctionBasePlugin> {
+class GoalCostFunctionBasePlugin : public std::enable_shared_from_this<GoalCostFunctionBasePlugin>
+{
 protected:
   /**
    * @brief metrics_ is the graph::core::GoalCostFunctionBase object built and
@@ -57,19 +58,26 @@ public:
    * @brief Empty constructor for GoalCostFunctionBasePlugin. The function
    * init() must be called afterwards.
    */
-  GoalCostFunctionBasePlugin() { goal_cost_fcn_ = nullptr; }
+  GoalCostFunctionBasePlugin()
+  {
+    goal_cost_fcn_ = nullptr;
+  }
 
   /**
    * @brief Destructor for GoalCostFunctionBasePlugin.
    */
-  virtual ~GoalCostFunctionBasePlugin() { goal_cost_fcn_ = nullptr; }
+  virtual ~GoalCostFunctionBasePlugin()
+  {
+    goal_cost_fcn_ = nullptr;
+  }
 
   /**
    * @brief getCostFunction return the graph::core::GoalCostFunctionPtr object
    * built by the plugin.
    * @return the graph::core::GoalCostFunctionPtr object built.
    */
-  virtual graph::core::GoalCostFunctionPtr getCostFunction() {
+  virtual graph::core::GoalCostFunctionPtr getCostFunction()
+  {
     return goal_cost_fcn_;
   }
 
@@ -81,9 +89,8 @@ public:
    * @param logger Pointer to a TraceLogger for logging.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const std::string &param_ns,
-                    const cnr_logger::TraceLoggerPtr &logger) = 0;
+  virtual bool init(const std::string& param_ns, const cnr_logger::TraceLoggerPtr& logger) = 0;
 };
 
-} // namespace core
-} // namespace graph
+}  // namespace core
+}  // namespace graph

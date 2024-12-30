@@ -31,16 +31,21 @@ PSEUDO CODE :
 #pragma once
 
 #include <graph_core/datastructure/nearest_neighbors.h>
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 class KdTree;
 typedef std::shared_ptr<KdTree> KdTreePtr;
 class KdNode;
 typedef std::shared_ptr<KdNode> KdNodePtr;
 typedef std::weak_ptr<KdNode> KdNodeWeakPtr;
 
-enum SearchDirection { Left, Right };
+enum SearchDirection
+{
+  Left,
+  Right
+};
 
 /**
  * @brief Node class for the k-d tree data structure.
@@ -51,7 +56,8 @@ enum SearchDirection { Left, Right };
  * as insertion, searching for the nearest neighbor, finding nodes within a
  * certain radius, and finding k-nearest neighbors.
  */
-class KdNode : public std::enable_shared_from_this<KdNode> {
+class KdNode : public std::enable_shared_from_this<KdNode>
+{
   friend class KdTree;
 
 public:
@@ -61,8 +67,7 @@ public:
    * @param node The node to be stored in the KdNode.
    * @param dimension The dimension along which the tree is split.
    */
-  KdNode(const NodePtr &node, const int &dimension,
-         const cnr_logger::TraceLoggerPtr &logger);
+  KdNode(const NodePtr& node, const int& dimension, const cnr_logger::TraceLoggerPtr& logger);
   /**
    * @brief Destructor for the KdNode class.
    */
@@ -84,7 +89,10 @@ public:
    * @brief Get a shared pointer to this KdNode.
    * @return A shared pointer to this KdNode.
    */
-  KdNodePtr pointer() { return shared_from_this(); }
+  KdNodePtr pointer()
+  {
+    return shared_from_this();
+  }
 
   /**
    * @brief Get the left child of the node.
@@ -108,26 +116,26 @@ public:
    * @brief Set the left child of the node.
    * @param kdnode The left child to set.
    */
-  void left(const KdNodePtr &kdnode);
+  void left(const KdNodePtr& kdnode);
 
   /**
    * @brief Set the right child of the node.
    * @param kdnode The right child to set.
    */
-  void right(const KdNodePtr &kdnode);
+  void right(const KdNodePtr& kdnode);
 
   /**
    * @brief Set the parent of the node.
    * @param kdnode The parent to set.
    */
-  void parent(const KdNodeWeakPtr &kdnode);
+  void parent(const KdNodeWeakPtr& kdnode);
 
   /**
    * @brief Delete the node from the tree.
    * @param disconnect_node Flag indicating whether to disconnect the node from
    * the graph/tree.
    */
-  void deleteNode(const bool &disconnect_node = false);
+  void deleteNode(const bool& disconnect_node = false);
 
   /**
    * @brief Restore the node in the tree setting deleted_ flag false.
@@ -138,14 +146,14 @@ public:
    * @brief Insert a node into the tree.
    * @param node The node to insert.
    */
-  void insert(const NodePtr &node);
+  void insert(const NodePtr& node);
 
   /**
    * @brief Find the node with the minimum value in the given dimension.
    * @param dim The dimension along which to find the minimum.
    * @return The KdNode with the minimum value in the specified dimension.
    */
-  KdNodePtr findMin(const int &dim);
+  KdNodePtr findMin(const int& dim);
 
   /**
    * @brief Find the nearest neighbor to a given configuration.
@@ -154,8 +162,7 @@ public:
    * @param best The node that is the nearest neighbor.
    * @param best_distance The distance to the nearest neighbor.
    */
-  void nearestNeighbor(const Eigen::VectorXd &configuration, NodePtr &best,
-                       double &best_distance);
+  void nearestNeighbor(const Eigen::VectorXd& configuration, NodePtr& best, double& best_distance);
 
   /**
    * @brief Find nodes within a certain radius of a given configuration.
@@ -163,8 +170,7 @@ public:
    * @param radius The search radius.
    * @param nodes Multimap to store nodes within the specified radius.
    */
-  void near(const Eigen::VectorXd &configuration, const double &radius,
-            std::multimap<double, NodePtr> &nodes);
+  void near(const Eigen::VectorXd& configuration, const double& radius, std::multimap<double, NodePtr>& nodes);
 
   /**
    * @brief Find k-nearest neighbors to a given configuration.
@@ -172,8 +178,7 @@ public:
    * @param k The number of nearest neighbors to find.
    * @param nodes Multimap to store k-nearest neighbors.
    */
-  void kNearestNeighbors(const Eigen::VectorXd &configuration, const size_t &k,
-                         std::multimap<double, NodePtr> &nodes);
+  void kNearestNeighbors(const Eigen::VectorXd& configuration, const size_t& k, std::multimap<double, NodePtr>& nodes);
 
   /**
    * @brief Find a specific node in the tree.
@@ -181,19 +186,19 @@ public:
    * @param kdnode A reference to a pointer that will store the found KdNode.
    * @return True if the node is found, false otherwise.
    */
-  bool findNode(const NodePtr &node, KdNodePtr &kdnode);
+  bool findNode(const NodePtr& node, KdNodePtr& kdnode);
 
   /**
    * @brief Get all nodes in the tree.
    * @param nodes Vector to store all nodes in the tree.
    */
-  void getNodes(std::vector<NodePtr> &nodes);
+  void getNodes(std::vector<NodePtr>& nodes);
 
   /**
    * @brief Disconnect nodes not present in a white list.
    * @param white_list Vector of nodes to keep connected.
    */
-  void disconnectNodes(const std::vector<NodePtr> &white_list);
+  void disconnectNodes(const std::vector<NodePtr>& white_list);
 
   /**
    * @brief Output stream operator for a KdNode.
@@ -205,9 +210,9 @@ public:
    * @param kdnode The KdNode to be printed.
    * @return A reference to the output stream for chaining.
    */
-  friend std::ostream &operator<<(std::ostream &os, const KdNode &kdnode);
+  friend std::ostream& operator<<(std::ostream& os, const KdNode& kdnode);
 
-  friend std::ostream &operator<<(std::ostream &os, const KdTree &kdtree);
+  friend std::ostream& operator<<(std::ostream& os, const KdTree& kdtree);
 
 protected:
   /**
@@ -251,7 +256,7 @@ protected:
    * cnr_logger library. Ensure that the logger is properly configured and
    * available for use.
    */
-  const cnr_logger::TraceLoggerPtr &logger_;
+  const cnr_logger::TraceLoggerPtr& logger_;
 };
 
 /**
@@ -259,7 +264,8 @@ protected:
  * @brief NearestNeighbors implementation using a k-d tree data structure for
  * storing nodes.
  */
-class KdTree : public NearestNeighbors {
+class KdTree : public NearestNeighbors
+{
   friend class KdNode;
 
 public:
@@ -272,7 +278,7 @@ public:
   /**
    * @brief Constructor for the KdTree class.
    */
-  KdTree(const cnr_logger::TraceLoggerPtr &logger);
+  KdTree(const cnr_logger::TraceLoggerPtr& logger);
 
   /**
    * @brief Destructor for the KdTree class.
@@ -285,7 +291,7 @@ public:
    *
    * @param node The node to be inserted.
    */
-  virtual void insert(const NodePtr &node) override;
+  virtual void insert(const NodePtr& node) override;
 
   /**
    * @brief Implementation of the clear function to clear the nearest neighbors
@@ -305,7 +311,7 @@ public:
    * @return A pointer to the node with the minimum value in the specified
    * dimension. If the k-d tree is empty, returns nullptr.
    */
-  NodePtr findMin(const int &dim);
+  NodePtr findMin(const int& dim);
 
   /**
    * @brief Implementation of the nearestNeighbor function for finding the
@@ -316,8 +322,7 @@ public:
    * @param best Reference to the pointer to the best-matching node.
    * @param best_distance Reference to the distance to the best-matching node.
    */
-  virtual void nearestNeighbor(const Eigen::VectorXd &configuration,
-                               NodePtr &best, double &best_distance) override;
+  virtual void nearestNeighbor(const Eigen::VectorXd& configuration, NodePtr& best, double& best_distance) override;
 
   /**
    * @brief Implementation of the near function for finding nodes within a
@@ -328,8 +333,7 @@ public:
    * @return A multimap containing nodes and their distances within the
    * specified radius.
    */
-  virtual std::multimap<double, NodePtr>
-  near(const Eigen::VectorXd &configuration, const double &radius) override;
+  virtual std::multimap<double, NodePtr> near(const Eigen::VectorXd& configuration, const double& radius) override;
 
   /**
    * @brief Implementation of the kNearestNeighbors function for finding k
@@ -339,9 +343,8 @@ public:
    * @param k The number of nearest neighbors to find.
    * @return A multimap containing k nodes and their distances.
    */
-  virtual std::multimap<double, NodePtr>
-  kNearestNeighbors(const Eigen::VectorXd &configuration,
-                    const size_t &k) override;
+  virtual std::multimap<double, NodePtr> kNearestNeighbors(const Eigen::VectorXd& configuration,
+                                                           const size_t& k) override;
 
   /**
    * @brief Implementation of the findNode function for checking if a node
@@ -350,7 +353,7 @@ public:
    * @param node The node to check.
    * @return True if the node exists, false otherwise.
    */
-  virtual bool findNode(const NodePtr &node) override;
+  virtual bool findNode(const NodePtr& node) override;
 
   /**
    * @brief Find a specific node in the k-d tree.
@@ -362,7 +365,7 @@ public:
    * @return True if the node is found, false otherwise. If found, kdnode will
    * point to the corresponding KdNode.
    */
-  bool findNode(const NodePtr &node, KdNodePtr &kdnode);
+  bool findNode(const NodePtr& node, KdNodePtr& kdnode);
 
   /**
    * @brief Implementation of the deleteNode function for deleting a node from
@@ -379,8 +382,7 @@ public:
    * @param disconnect_node If true, disconnect the node from the graph.
    * @return True if the deletion is successful, false otherwise.
    */
-  virtual bool deleteNode(const NodePtr &node,
-                          const bool &disconnect_node = false) override;
+  virtual bool deleteNode(const NodePtr& node, const bool& disconnect_node = false) override;
 
   /**
    * @brief Implementation of the restoreNode function for restoring a
@@ -389,7 +391,7 @@ public:
    * @param node The node to restore.
    * @return True if the restoration is successful, false otherwise.
    */
-  virtual bool restoreNode(const NodePtr &node) override;
+  virtual bool restoreNode(const NodePtr& node) override;
 
   /**
    * @brief Implementation of the getNodes function for getting all nodes in the
@@ -406,7 +408,7 @@ public:
    * @param white_list A vector of nodes to be excluded from the disconnection
    * process.
    */
-  virtual void disconnectNodes(const std::vector<NodePtr> &white_list) override;
+  virtual void disconnectNodes(const std::vector<NodePtr>& white_list) override;
 
   /**
    * @brief deletedNodesThreshold Returns the deleted_nodes_threshold_,
@@ -432,7 +434,7 @@ public:
    * @param kdtree The KdTree to be printed.
    * @return A reference to the output stream for chaining.
    */
-  friend std::ostream &operator<<(std::ostream &os, const KdTree &kdtree);
+  friend std::ostream& operator<<(std::ostream& os, const KdTree& kdtree);
 
 protected:
   /**
@@ -448,5 +450,5 @@ protected:
   unsigned int deleted_nodes_threshold_;
 };
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

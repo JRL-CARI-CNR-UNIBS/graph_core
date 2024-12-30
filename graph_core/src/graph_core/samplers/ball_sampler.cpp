@@ -27,31 +27,39 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/samplers/ball_sampler.h>
 
-namespace graph {
-namespace core {
-void BallSampler::config() {
-  if (not initialized_) {
+namespace graph
+{
+namespace core
+{
+void BallSampler::config()
+{
+  if (not initialized_)
+  {
     CNR_ERROR(logger_, "Ball sampler not initialised, cannot configure");
     return;
   }
 
-  if (cost_ < 0.0) {
+  if (cost_ < 0.0)
+  {
     CNR_FATAL(logger_, "cost should be >= 0");
     throw std::invalid_argument("cost should be >= 0");
   }
 
-  if (ball_center_.rows() != ndof_) {
+  if (ball_center_.rows() != ndof_)
+  {
     CNR_FATAL(logger_, "ball center should have the same size of ndof");
-    throw std::invalid_argument(
-        "ball center should have the same size of ndof");
+    throw std::invalid_argument("ball center should have the same size of ndof");
   }
 
   ball_.setRandom(ndof_, 1);
 }
 
-Eigen::VectorXd BallSampler::sample() {
-  if (cost_ < std::numeric_limits<double>::infinity()) {
-    for (int itrial = 0; itrial < 100; itrial++) {
+Eigen::VectorXd BallSampler::sample()
+{
+  if (cost_ < std::numeric_limits<double>::infinity())
+  {
+    for (int itrial = 0; itrial < 100; itrial++)
+    {
       ball_.setRandom(ndof_, 1);
       ball_ *= std::pow(ud_(gen_), 1.0 / (double)ndof_) / ball_.norm();
 
@@ -60,19 +68,22 @@ Eigen::VectorXd BallSampler::sample() {
         return q;
     }
 
-    CNR_WARN(logger_, "BallSampler has not found a sample in the ball that "
-                      "respects the bounds");
+    CNR_WARN(logger_,
+             "BallSampler has not found a sample in the ball that "
+             "respects the bounds");
   }
 
   // Sample everywhere
   return 0.5 * (lower_bound_ + upper_bound_) +
-         Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(
-             0.5 * (lower_bound_ - upper_bound_));
+         Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(0.5 * (lower_bound_ - upper_bound_));
 }
 
-bool BallSampler::inBounds(const Eigen::VectorXd &q) {
-  for (unsigned int iax = 0; iax < ndof_; iax++) {
-    if (q(iax) > upper_bound_(iax) || q(iax) < lower_bound_(iax)) {
+bool BallSampler::inBounds(const Eigen::VectorXd& q)
+{
+  for (unsigned int iax = 0; iax < ndof_; iax++)
+  {
+    if (q(iax) > upper_bound_(iax) || q(iax) < lower_bound_(iax))
+    {
       return false;
     }
   }
@@ -82,18 +93,20 @@ bool BallSampler::inBounds(const Eigen::VectorXd &q) {
     return (q - ball_center_).norm() < cost_;
 }
 
-void BallSampler::setCost(const double &cost) {
-  if (cost_ < 0.0) {
+void BallSampler::setCost(const double& cost)
+{
+  if (cost_ < 0.0)
+  {
     CNR_FATAL(logger_, "cost should be >= 0");
     throw std::invalid_argument("cost should be >= 0");
   }
   cost_ = cost;
 }
 
-SamplerPtr BallSampler::clone() {
-  return std::make_shared<BallSampler>(ball_center_, lower_bound_, upper_bound_,
-                                       logger_, cost_);
+SamplerPtr BallSampler::clone()
+{
+  return std::make_shared<BallSampler>(ball_center_, lower_bound_, upper_bound_, logger_, cost_);
 }
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

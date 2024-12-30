@@ -32,9 +32,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/util.h>
 #include <random>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 /**
  * @class BallSampler
  * @brief Sampling in a defined ball.
@@ -45,7 +46,8 @@ namespace core {
 class BallSampler;
 typedef std::shared_ptr<BallSampler> BallSamplerPtr;
 
-class BallSampler : public SamplerBase {
+class BallSampler : public SamplerBase
+{
 protected:
   /**
    * @brief ball_center_ center of the ball.
@@ -71,9 +73,9 @@ public:
    * @brief Empty constructor for BallSampler. The function init() must be
    * called afterwards.
    */
-  BallSampler()
-      : SamplerBase() // set initialized_ false
-  {}
+  BallSampler() : SamplerBase()  // set initialized_ false
+  {
+  }
 
   /**
    * @brief Constructor for BallSampler.
@@ -83,13 +85,13 @@ public:
    * @param logger TraceLogger for logging.
    * @param radius radius of the ball (default: infinity).
    */
-  BallSampler(const Eigen::VectorXd &ball_center,
-              const Eigen::VectorXd &lower_bound,
-              const Eigen::VectorXd &upper_bound,
-              const cnr_logger::TraceLoggerPtr &logger, const double &radius)
-      : SamplerBase(lower_bound, upper_bound, logger,
-                    radius), // set initialized_ true
-        ball_center_(ball_center) {
+  BallSampler(const Eigen::VectorXd& ball_center, const Eigen::VectorXd& lower_bound,
+              const Eigen::VectorXd& upper_bound, const cnr_logger::TraceLoggerPtr& logger, const double& radius)
+    : SamplerBase(lower_bound, upper_bound, logger,
+                  radius)
+    ,  // set initialized_ true
+    ball_center_(ball_center)
+  {
     config();
   }
 
@@ -104,11 +106,10 @@ public:
    * @param radius radius of the ball (default: infinity).
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool
-  init(const Eigen::VectorXd &ball_center, const Eigen::VectorXd &lower_bound,
-       const Eigen::VectorXd &upper_bound,
-       const cnr_logger::TraceLoggerPtr &logger,
-       const double &radius = std::numeric_limits<double>::infinity()) {
+  virtual bool init(const Eigen::VectorXd& ball_center, const Eigen::VectorXd& lower_bound,
+                    const Eigen::VectorXd& upper_bound, const cnr_logger::TraceLoggerPtr& logger,
+                    const double& radius = std::numeric_limits<double>::infinity())
+  {
     if (not SamplerBase::init(lower_bound, upper_bound, logger, radius))
       return false;
 
@@ -129,26 +130,32 @@ public:
    * @param q Configuration to check.
    * @return True if in bounds, false otherwise.
    */
-  virtual bool inBounds(const Eigen::VectorXd &q) override;
+  virtual bool inBounds(const Eigen::VectorXd& q) override;
 
   /**
    * @brief Get the ball center of the ball sampler.
    * @return Ball center of the ball sampler.
    */
-  const Eigen::VectorXd &getBallCenter() { return ball_center_; }
+  const Eigen::VectorXd& getBallCenter()
+  {
+    return ball_center_;
+  }
 
   /**
    * @brief Set the cost associated with the sampler.
    *
    * @param cost Cost to be set.
    */
-  virtual void setCost(const double &cost) override;
+  virtual void setCost(const double& cost) override;
 
   /**
    * @brief Check if the informed bounds collapse (focii distance exceeds cost).
    * @return True if bounds collapse, false otherwise.
    */
-  virtual bool collapse() override { return false; }
+  virtual bool collapse() override
+  {
+    return false;
+  }
 
   /**
    * @brief Creates a clone of the BallSampler object.
@@ -157,5 +164,5 @@ public:
   virtual SamplerPtr clone() override;
 };
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

@@ -29,5 +29,4 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * @brief Register class to be loaded with cnr_class_loader
  */
 #include <graph_core/plugins/solvers/rrt_star_plugin.h>
-CLASS_LOADER_REGISTER_CLASS(graph::core::RRTStarPlugin,
-                            graph::core::TreeSolverPlugin)
+CLASS_LOADER_REGISTER_CLASS(graph::core::RRTStarPlugin, graph::core::TreeSolverPlugin)

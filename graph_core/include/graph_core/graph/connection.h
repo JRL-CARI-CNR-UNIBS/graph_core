@@ -28,9 +28,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/node.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 /**
  * @class Connection
  * @brief Class for defining connection between nodes of a graph.
@@ -40,7 +41,8 @@ namespace core {
  *  - net: do not belong to the tree  -> a node can have multiple net parent
  * connections. The tree can not see these connections.
  */
-class Connection : public std::enable_shared_from_this<Connection> {
+class Connection : public std::enable_shared_from_this<Connection>
+{
   friend class Node;
 
 protected:
@@ -158,8 +160,7 @@ public:
    * @param logger The cnr_logger::TraceLoggerPtr logger for logging operations.
    * @param is_net Boolean indicating if the connection is a net connection.
    */
-  Connection(const NodePtr &parent, const NodePtr &child,
-             const cnr_logger::TraceLoggerPtr &logger,
+  Connection(const NodePtr& parent, const NodePtr& child, const cnr_logger::TraceLoggerPtr& logger,
              const bool is_net = false);
 
   /**
@@ -170,7 +171,10 @@ public:
    *
    * @return Returns a shared pointer to the Connection.
    */
-  ConnectionPtr pointer() { return shared_from_this(); }
+  ConnectionPtr pointer()
+  {
+    return shared_from_this();
+  }
 
   /**
    * @brief Checks if the Connection is a net connection.
@@ -178,7 +182,10 @@ public:
    * @return Returns true if the Connection is a net connection, false
    * otherwise.
    */
-  bool isNet() const { return flags_[idx_net_]; }
+  bool isNet() const
+  {
+    return flags_[idx_net_];
+  }
 
   /**
    * @brief Checks if the Connection has been recently checked.
@@ -186,14 +193,18 @@ public:
    * @return Returns true if the Connection has been recently checked, false
    * otherwise.
    */
-  bool isRecentlyChecked() const { return flags_[idx_recently_checked_]; }
+  bool isRecentlyChecked() const
+  {
+    return flags_[idx_recently_checked_];
+  }
 
   /**
    * @brief Sets the recently checked status of the Connection.
    *
    * @param checked Boolean indicating the recently checked status to be set.
    */
-  void setRecentlyChecked(bool checked) {
+  void setRecentlyChecked(bool checked)
+  {
     flags_[idx_recently_checked_] = checked;
   }
 
@@ -203,7 +214,8 @@ public:
    *
    * @return Returns true if the Connection is valid, false otherwise.
    */
-  bool isValid() const {
+  bool isValid() const
+  {
     return (flags_[idx_parent_valid_] && flags_[idx_child_valid_]);
   }
 
@@ -212,21 +224,30 @@ public:
    *
    * @param cost The cost value to be set for the Connection.
    */
-  void setCost(const double &cost) { cost_ = cost; }
+  void setCost(const double& cost)
+  {
+    cost_ = cost;
+  }
 
   /**
    * @brief Gets the cost of the Connection.
    *
    * @return Returns a reference to the cost value of the Connection.
    */
-  const double &getCost() const { return cost_; }
+  const double& getCost() const
+  {
+    return cost_;
+  }
 
   /**
    * @brief Gets the Euclidean norm of the Connection.
    *
    * @return Returns the Euclidean norm of the Connection.
    */
-  double norm() const { return euclidean_norm_; }
+  double norm() const
+  {
+    return euclidean_norm_;
+  }
 
   /**
    * @brief Retrieves a pointer to the TraceLogger associated with the node.
@@ -237,14 +258,18 @@ public:
    *
    * @return A constant reference to the TraceLogger pointer.
    */
-  const cnr_logger::TraceLoggerPtr &getLogger() const { return logger_; }
+  const cnr_logger::TraceLoggerPtr& getLogger() const
+  {
+    return logger_;
+  }
 
   /**
    * @brief Gets the parent Node of the Connection.
    *
    * @return Returns a shared pointer to the parent Node of the Connection.
    */
-  NodePtr getParent() const {
+  NodePtr getParent() const
+  {
     //    assert(not parent_.expired());
     return parent_.lock();
   }
@@ -254,7 +279,10 @@ public:
    *
    * @return Returns a shared pointer to the child Node of the Connection.
    */
-  NodePtr getChild() const { return child_; }
+  NodePtr getChild() const
+  {
+    return child_;
+  }
 
   /**
    * @brief Sets the value of a flag at the specified index.
@@ -271,7 +299,7 @@ public:
    * @param flag The value to set for the flag.
    * @return Returns true if the flag is successfully set, and false otherwise.
    */
-  bool setFlag(const size_t &idx, const bool flag);
+  bool setFlag(const size_t& idx, const bool flag);
 
   /**
    * @brief Sets a new flag with the provided value and returns its index.
@@ -290,7 +318,10 @@ public:
    *
    * @param likelihood The likelihood value to be set.
    */
-  void setLikelihood(const double &likelihood) { likelihood_ = likelihood; }
+  void setLikelihood(const double& likelihood)
+  {
+    likelihood_ = likelihood;
+  }
 
   /**
    * @brief Retrieves the value of the flag at the specified index.
@@ -306,7 +337,7 @@ public:
    * @return Returns the value of the flag at the specified index or the default
    * value if the index is out of range.
    */
-  bool getFlag(const size_t &idx, const bool default_value);
+  bool getFlag(const size_t& idx, const bool default_value);
 
   /**
    * @brief Adds the Connection to the corresponding nodes' connection vectors.
@@ -387,7 +418,7 @@ public:
    * @param toll Tolerance for the comparison.
    * @return Returns true if the connections are parallel, false otherwise.
    */
-  bool isParallel(const ConnectionPtr &conn, const double &toll = 1e-06);
+  bool isParallel(const ConnectionPtr& conn, const double& toll = 1e-06);
 
   /**
    * @brief Projects a point onto the connection and calculates the distance
@@ -405,9 +436,8 @@ public:
    * @param verbose Flag to enable verbose logging (default is false).
    * @return Returns the projected point on the connection.
    */
-  Eigen::VectorXd projectOnConnection(const Eigen::VectorXd &point,
-                                      double &distance, bool &in_conn,
-                                      const bool &verbose = false);
+  Eigen::VectorXd projectOnConnection(const Eigen::VectorXd& point, double& distance, bool& in_conn,
+                                      const bool& verbose = false);
 
   /**
    * @brief Gets the number of reserved flags for the Connection class.
@@ -417,7 +447,8 @@ public:
    *
    * @return Returns the number of reserved flags.
    */
-  static unsigned int getReservedFlagsNumber() {
+  static unsigned int getReservedFlagsNumber()
+  {
     return number_reserved_flags_;
   }
 
@@ -426,8 +457,7 @@ public:
    */
   ~Connection();
 
-  friend std::ostream &operator<<(std::ostream &os,
-                                  const Connection &connection);
+  friend std::ostream& operator<<(std::ostream& os, const Connection& connection);
 };
 
 /**
@@ -441,7 +471,7 @@ public:
  * @param connection The Connection object to be printed.
  * @return The modified output stream.
  */
-std::ostream &operator<<(std::ostream &os, const Connection &connection);
+std::ostream& operator<<(std::ostream& os, const Connection& connection);
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph

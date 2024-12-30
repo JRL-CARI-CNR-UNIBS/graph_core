@@ -35,8 +35,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/samplers/informed_sampler.h>
 #include <graph_core/util.h>
 
-namespace graph {
-namespace core {
+namespace graph
+{
+namespace core
+{
 /**
  * @class Tree
  * @brief Class for defining a tree.
@@ -48,7 +50,8 @@ typedef std::shared_ptr<MetricsBase> MetricsPtr;
 class Tree;
 typedef std::shared_ptr<Tree> TreePtr;
 
-class Tree : public std::enable_shared_from_this<Tree> {
+class Tree : public std::enable_shared_from_this<Tree>
+{
 protected:
   /**
    * @brief Pointer to the root node of the tree.
@@ -121,9 +124,8 @@ protected:
    * @param removed_nodes A reference to an unsigned int, counting the number of
    * nodes removed.
    */
-  void purgeNodeOutsideEllipsoid(NodePtr &node, const SamplerPtr &sampler,
-                                 const std::vector<NodePtr> &white_list,
-                                 unsigned int &removed_nodes);
+  void purgeNodeOutsideEllipsoid(NodePtr& node, const SamplerPtr& sampler, const std::vector<NodePtr>& white_list,
+                                 unsigned int& removed_nodes);
   /**
    * @brief Recursively purges nodes outside multiple ellipsoid regions based on
    * informed samplers.
@@ -144,10 +146,8 @@ protected:
    * @param removed_nodes A reference to an unsigned int, counting the number of
    * nodes removed.
    */
-  void purgeNodeOutsideEllipsoids(NodePtr &node,
-                                  const std::vector<SamplerPtr> &samplers,
-                                  const std::vector<NodePtr> &white_list,
-                                  unsigned int &removed_nodes);
+  void purgeNodeOutsideEllipsoids(NodePtr& node, const std::vector<SamplerPtr>& samplers,
+                                  const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
 
   /**
    * @brief Populates the tree with nodes based on specified criteria from a
@@ -174,17 +174,12 @@ protected:
    * @param node_check If true, each successor undergoes a collision check and
    * is added to the tree only if valid.
    */
-  void populateTreeFromNode(const NodePtr &node, const Eigen::VectorXd &focus1,
-                            const Eigen::VectorXd &focus2, const double &cost,
-                            const std::vector<NodePtr> &black_list,
-                            const bool node_check = false);
-  void populateTreeFromNode(const NodePtr &node, const Eigen::VectorXd &focus1,
-                            const Eigen::VectorXd &focus2, const double &cost,
-                            const bool node_check = false);
-  void populateTreeFromNode(const NodePtr &node,
-                            const std::vector<NodePtr> &black_list,
-                            const bool node_check = false);
-  void populateTreeFromNode(const NodePtr &node, const bool node_check = false);
+  void populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2,
+                            const double& cost, const std::vector<NodePtr>& black_list, const bool node_check = false);
+  void populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focus1, const Eigen::VectorXd& focus2,
+                            const double& cost, const bool node_check = false);
+  void populateTreeFromNode(const NodePtr& node, const std::vector<NodePtr>& black_list, const bool node_check = false);
+  void populateTreeFromNode(const NodePtr& node, const bool node_check = false);
 
   /**
    * @brief Populates the tree with nodes based on specified criteria from a
@@ -206,9 +201,8 @@ protected:
    * @param node_check If true, each successor undergoes a collision check and
    * is added to the tree only if valid.
    */
-  void populateTreeFromNodeConsideringCost(
-      const NodePtr &node, const Eigen::VectorXd &goal, const double &cost,
-      const std::vector<NodePtr> &black_list, const bool node_check = false);
+  void populateTreeFromNodeConsideringCost(const NodePtr& node, const Eigen::VectorXd& goal, const double& cost,
+                                           const std::vector<NodePtr>& black_list, const bool node_check = false);
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -239,9 +233,8 @@ public:
    * @param use_kdtree A constant reference to a bool indicating whether to use
    * a k-d tree for nearest neighbor queries (default is true).
    */
-  Tree(const NodePtr &root, const double &max_distance,
-       const CollisionCheckerPtr &checker, const MetricsPtr &metrics,
-       const cnr_logger::TraceLoggerPtr &logger, const bool &use_kdtree = true);
+  Tree(const NodePtr& root, const double& max_distance, const CollisionCheckerPtr& checker, const MetricsPtr& metrics,
+       const cnr_logger::TraceLoggerPtr& logger, const bool& use_kdtree = true);
 
   /**
    * @brief Checks if the tree is considered a subtree.
@@ -249,21 +242,30 @@ public:
    * @return Returns false, indicating that the tree is not considered a
    * subtree.
    */
-  virtual bool isSubtree() { return false; }
+  virtual bool isSubtree()
+  {
+    return false;
+  }
 
   /**
    * @brief Retrieves a constant reference to the root node of the tree.
    *
    * @return Returns a constant reference to the root node of the tree.
    */
-  const NodePtr &getRoot() { return root_; }
+  const NodePtr& getRoot()
+  {
+    return root_;
+  }
 
   /**
    * @brief Retrieves a vector of all nodes in the tree.
    *
    * @return Returns a vector of NodePtr containing all nodes in the tree.
    */
-  std::vector<NodePtr> getNodes() { return nodes_->getNodes(); }
+  std::vector<NodePtr> getNodes()
+  {
+    return nodes_->getNodes();
+  }
 
   /**
    * @brief Retrieves the leaves of the tree.
@@ -274,7 +276,7 @@ public:
    *
    * @param leaves A vector of NodePtr to store the leaf nodes of the tree.
    */
-  void getLeaves(std::vector<NodePtr> &leaves);
+  void getLeaves(std::vector<NodePtr>& leaves);
 
   /**
    * @brief Changes the root of the tree to the specified node.
@@ -289,7 +291,7 @@ public:
    * @return Returns true if the root is successfully changed, and false
    * otherwise.
    */
-  bool changeRoot(const NodePtr &node);
+  bool changeRoot(const NodePtr& node);
 
   /**
    * @brief Adds a node to the tree, optionally checking for its presence.
@@ -304,8 +306,7 @@ public:
    * @param check_if_present A boolean flag indicating whether to check if the
    * node is already present in the tree.
    */
-  virtual void addNode(const NodePtr &node,
-                       const bool &check_if_present = true);
+  virtual void addNode(const NodePtr& node, const bool& check_if_present = true);
 
   /**
    * @brief Removes a node from the tree.
@@ -317,7 +318,7 @@ public:
    *
    * @param node The node to be removed from the tree.
    */
-  virtual void removeNode(const NodePtr &node);
+  virtual void removeNode(const NodePtr& node);
 
   /**
    * @brief Attempts to extend the tree to the provided configuration.
@@ -336,8 +337,7 @@ public:
    * the closest node in the tree.
    * @return Returns true if the extension is possible, and false otherwise.
    */
-  bool tryExtend(const Eigen::VectorXd &configuration,
-                 Eigen::VectorXd &next_configuration, NodePtr &closest_node);
+  bool tryExtend(const Eigen::VectorXd& configuration, Eigen::VectorXd& next_configuration, NodePtr& closest_node);
 
   /**
    * @brief Attempts to extend the tree from a given node to a new
@@ -363,8 +363,7 @@ public:
    * starting point for the extension.
    * @return Returns true if the extension is possible, and false otherwise.
    */
-  bool tryExtendFromNode(const Eigen::VectorXd &configuration,
-                         Eigen::VectorXd &next_configuration, NodePtr &node);
+  bool tryExtendFromNode(const Eigen::VectorXd& configuration, Eigen::VectorXd& next_configuration, NodePtr& node);
 
   /**
    * @brief Attempts to extend the tree to the provided configuration if the
@@ -389,10 +388,8 @@ public:
    * @return Returns true if the extension is possible and the whole path from
    * the root to the new configuration is collisione-free, and false otherwise.
    */
-  bool tryExtendWithPathCheck(const Eigen::VectorXd &configuration,
-                              Eigen::VectorXd &next_configuration,
-                              NodePtr &closest_node,
-                              std::vector<ConnectionPtr> &checked_connections);
+  bool tryExtendWithPathCheck(const Eigen::VectorXd& configuration, Eigen::VectorXd& next_configuration,
+                              NodePtr& closest_node, std::vector<ConnectionPtr>& checked_connections);
 
   /**
    * @brief Attempts to extend the tree from a given node to the provided
@@ -423,9 +420,8 @@ public:
    * @return Returns true if the extension is possible and the whole path from
    * the root to the new configuration is collisione-free, and false otherwise.
    */
-  bool tryExtendFromNodeWithPathCheck(
-      const Eigen::VectorXd &configuration, Eigen::VectorXd &next_configuration,
-      NodePtr &node, std::vector<ConnectionPtr> &checked_connections);
+  bool tryExtendFromNodeWithPathCheck(const Eigen::VectorXd& configuration, Eigen::VectorXd& next_configuration,
+                                      NodePtr& node, std::vector<ConnectionPtr>& checked_connections);
 
   /**
    * @brief Selects the final configuration for tree expansion, which will start
@@ -449,9 +445,8 @@ public:
    * @return Returns the distance between the input configuration and the
    * current node's configuration.
    */
-  double selectNextConfiguration(const Eigen::VectorXd &configuration,
-                                 Eigen::VectorXd &next_configuration,
-                                 const NodePtr &node);
+  double selectNextConfiguration(const Eigen::VectorXd& configuration, Eigen::VectorXd& next_configuration,
+                                 const NodePtr& node);
 
   /**
    * @brief Extends the tree by attempting to add a new node based on the
@@ -473,9 +468,8 @@ public:
    * be set to the connection between the existing and new nodes.
    * @return Returns true if the extension is successful, and false otherwise.
    */
-  bool extend(const Eigen::VectorXd &configuration, NodePtr &new_node,
-              ConnectionPtr &connection);
-  bool extend(const Eigen::VectorXd &configuration, NodePtr &new_node);
+  bool extend(const Eigen::VectorXd& configuration, NodePtr& new_node, ConnectionPtr& connection);
+  bool extend(const Eigen::VectorXd& configuration, NodePtr& new_node);
 
   /**
    * @brief Extends the tree by attempting to add a new node based on the
@@ -504,12 +498,10 @@ public:
    * containing the connections checked during the path check.
    * @return Returns true if the extension is successful, and false otherwise.
    */
-  bool extendWithPathCheck(const Eigen::VectorXd &configuration,
-                           NodePtr &new_node, ConnectionPtr &connection,
-                           std::vector<ConnectionPtr> &checked_connections);
-  bool extendWithPathCheck(const Eigen::VectorXd &configuration,
-                           NodePtr &new_node,
-                           std::vector<ConnectionPtr> &checked_connections);
+  bool extendWithPathCheck(const Eigen::VectorXd& configuration, NodePtr& new_node, ConnectionPtr& connection,
+                           std::vector<ConnectionPtr>& checked_connections);
+  bool extendWithPathCheck(const Eigen::VectorXd& configuration, NodePtr& new_node,
+                           std::vector<ConnectionPtr>& checked_connections);
 
   /**
    * @brief Extends the tree to a newly created node by establishing a
@@ -528,8 +520,7 @@ public:
    * be set to the connection between the two nodes.
    * @return Returns true if the extension is successful, and false otherwise.
    */
-  bool extendOnly(NodePtr &closest_node, NodePtr &new_node,
-                  ConnectionPtr &connection);
+  bool extendOnly(NodePtr& closest_node, NodePtr& new_node, ConnectionPtr& connection);
 
   /**
    * @brief Extends the tree to include a specified node.
@@ -548,7 +539,7 @@ public:
    * @return Returns true if the tree is extended to include the node, and false
    * otherwise.
    */
-  bool extendToNode(const NodePtr &node, NodePtr &new_node);
+  bool extendToNode(const NodePtr& node, NodePtr& new_node);
 
   /**
    * @brief Connects the tree to a specified configuration by repeatedly
@@ -570,7 +561,7 @@ public:
    * @return Returns true if the tree is successfully connected to the specified
    * configuration, and false otherwise.
    */
-  bool connect(const Eigen::VectorXd &configuration, NodePtr &new_node);
+  bool connect(const Eigen::VectorXd& configuration, NodePtr& new_node);
 
   /**
    * @brief Implements an informed extension method that prioritizes nodes with
@@ -604,10 +595,8 @@ public:
    * @return Returns true if the tree is successfully extended to the specified
    * configuration, and false otherwise.
    */
-  bool
-  informedExtend(const Eigen::VectorXd &configuration, // Used in AnytimeRRT
-                 NodePtr &new_node, const Eigen::VectorXd &goal,
-                 const double &cost2beat, const double &bias);
+  bool informedExtend(const Eigen::VectorXd& configuration,  // Used in AnytimeRRT
+                      NodePtr& new_node, const Eigen::VectorXd& goal, const double& cost2beat, const double& bias);
 
   /**
    * @brief Connects the tree to a specified node.
@@ -630,9 +619,8 @@ public:
    * @return Returns true if the tree is successfully connected to the specified
    * node, and false otherwise.
    */
-  bool connectToNode(
-      const NodePtr &node, NodePtr &new_node,
-      const double &max_time = std::numeric_limits<double>::infinity());
+  bool connectToNode(const NodePtr& node, NodePtr& new_node,
+                     const double& max_time = std::numeric_limits<double>::infinity());
 
   /**
    * @brief Rewires the tree by potentially updating parent and/or child
@@ -658,10 +646,8 @@ public:
    * @return Returns true if the rewire operation results in improved
    * connections, and false otherwise.
    */
-  bool rewireOnly(NodePtr &node, double r_rewire,
-                  const std::vector<NodePtr> &white_list,
-                  const int &what_rewire = 0);
-  bool rewireOnly(NodePtr &node, double r_rewire, const int &what_rewire = 0);
+  bool rewireOnly(NodePtr& node, double r_rewire, const std::vector<NodePtr>& white_list, const int& what_rewire = 0);
+  bool rewireOnly(NodePtr& node, double r_rewire, const int& what_rewire = 0);
 
   /**
    * @brief Rewires the tree by potentially updating parent and/or child
@@ -691,14 +677,10 @@ public:
    * @return Returns true if the rewire operation results in improved
    * connections, and false otherwise.
    */
-  bool rewireOnlyWithPathCheck(NodePtr &node,
-                               std::vector<ConnectionPtr> &checked_connections,
-                               double r_rewire,
-                               const std::vector<NodePtr> &white_list,
-                               const int &what_rewire = 0);
-  bool rewireOnlyWithPathCheck(NodePtr &node,
-                               std::vector<ConnectionPtr> &checked_connections,
-                               double r_rewire, const int &what_rewire = 0);
+  bool rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& checked_connections, double r_rewire,
+                               const std::vector<NodePtr>& white_list, const int& what_rewire = 0);
+  bool rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& checked_connections, double r_rewire,
+                               const int& what_rewire = 0);
 
   /**
    * @brief Rewires the tree after extending it from a given configuration
@@ -718,9 +700,8 @@ public:
    * @return Returns true if the extension and rewire operations are successful,
    * and false otherwise.
    */
-  bool rewire(const Eigen::VectorXd &configuration, double r_rewire,
-              NodePtr &new_node);
-  bool rewire(const Eigen::VectorXd &configuration, double r_rewire);
+  bool rewire(const Eigen::VectorXd& configuration, double r_rewire, NodePtr& new_node);
+  bool rewire(const Eigen::VectorXd& configuration, double r_rewire);
 
   /**
    * @brief Rewires the tree after extending it to a given configuration with
@@ -745,16 +726,11 @@ public:
    * @return Returns true if the extension and rewire operations are successful,
    * and false otherwise.
    */
-  bool rewireWithPathCheck(const Eigen::VectorXd &configuration,
-                           std::vector<ConnectionPtr> &checked_connections,
-                           double r_rewire,
-                           const std::vector<NodePtr> &white_list,
-                           NodePtr &new_node);
-  bool rewireWithPathCheck(const Eigen::VectorXd &configuration,
-                           std::vector<ConnectionPtr> &checked_connections,
-                           double r_rewire, NodePtr &new_node);
-  bool rewireWithPathCheck(const Eigen::VectorXd &configuration,
-                           std::vector<ConnectionPtr> &checked_connections,
+  bool rewireWithPathCheck(const Eigen::VectorXd& configuration, std::vector<ConnectionPtr>& checked_connections,
+                           double r_rewire, const std::vector<NodePtr>& white_list, NodePtr& new_node);
+  bool rewireWithPathCheck(const Eigen::VectorXd& configuration, std::vector<ConnectionPtr>& checked_connections,
+                           double r_rewire, NodePtr& new_node);
+  bool rewireWithPathCheck(const Eigen::VectorXd& configuration, std::vector<ConnectionPtr>& checked_connections,
                            double r_rewire);
 
   /**
@@ -774,8 +750,8 @@ public:
    * @return Returns true if the extension and rewire operations are successful,
    * and false otherwise.
    */
-  bool rewireToNode(const NodePtr &n, double r_rewire, NodePtr &new_node);
-  bool rewireToNode(const NodePtr &n, double r_rewire);
+  bool rewireToNode(const NodePtr& n, double r_rewire, NodePtr& new_node);
+  bool rewireToNode(const NodePtr& n, double r_rewire);
 
   /**
    * @brief Checks the validity of the path to a specific node.
@@ -794,11 +770,9 @@ public:
    * connections along the path to the target node.
    * @return Returns true if the path to the node is valid, and false otherwise.
    */
-  bool checkPathToNode(const NodePtr &node,
-                       std::vector<ConnectionPtr> &checked_connections,
-                       std::vector<ConnectionPtr> &path_connections);
-  bool checkPathToNode(const NodePtr &node,
-                       std::vector<ConnectionPtr> &checked_connections);
+  bool checkPathToNode(const NodePtr& node, std::vector<ConnectionPtr>& checked_connections,
+                       std::vector<ConnectionPtr>& path_connections);
+  bool checkPathToNode(const NodePtr& node, std::vector<ConnectionPtr>& checked_connections);
 
   /**
    * @brief Finds the closest existing node in the tree to a given
@@ -813,7 +787,7 @@ public:
    * @return Returns a pointer to the closest existing node in the tree to the
    * specified configuration.
    */
-  NodePtr findClosestNode(const Eigen::VectorXd &configuration);
+  NodePtr findClosestNode(const Eigen::VectorXd& configuration);
 
   /**
    * @brief Calculates the cost to reach a specific node from the tree's root.
@@ -841,7 +815,7 @@ public:
    * @return Returns a vector of ConnectionPtr representing the connections
    * along the path from the root to the specified node.
    */
-  std::vector<ConnectionPtr> getConnectionToNode(const NodePtr &node);
+  std::vector<ConnectionPtr> getConnectionToNode(const NodePtr& node);
 
   /**
    * @brief Keeps only the branch specified by a vector of connections in the
@@ -855,7 +829,7 @@ public:
    * representing the connections specifying the branch to be retained.
    * @return Returns true if the operation is successful, and false otherwise.
    */
-  bool keepOnlyThisBranch(const std::vector<ConnectionPtr> &connections);
+  bool keepOnlyThisBranch(const std::vector<ConnectionPtr>& connections);
 
   /**
    * @brief Adds a branch to the tree based on a sequence of connections.
@@ -879,7 +853,7 @@ public:
    * @note If the input vector 'connections' is empty, the function returns
    * false.
    */
-  bool addBranch(const std::vector<ConnectionPtr> &connections);
+  bool addBranch(const std::vector<ConnectionPtr>& connections);
 
   /**
    * @brief Adds the nodes of an additional tree to the current tree.
@@ -907,9 +881,7 @@ public:
    * @return Returns true if the nodes of the additional tree are successfully
    * added to the current tree, and false otherwise.
    */
-  bool
-  addTree(TreePtr &additional_tree,
-          const double &max_time = std::numeric_limits<double>::infinity());
+  bool addTree(TreePtr& additional_tree, const double& max_time = std::numeric_limits<double>::infinity());
 
   /**
    * @brief Cleans the tree by removing nodes, except the root.
@@ -932,8 +904,7 @@ public:
    * target configuration. The multimap associates the distances with the
    * corresponding NodePtr instances.
    */
-  std::multimap<double, NodePtr> near(const NodePtr &node,
-                                      const double &radius);
+  std::multimap<double, NodePtr> near(const NodePtr& node, const double& radius);
 
   /**
    * @brief Finds the K nearest neighbors of a given node.
@@ -947,8 +918,8 @@ public:
    * distances from the target configuration. The multimap associates the
    * distances with the corresponding NodePtr instances.
    */
-  std::multimap<double, NodePtr> nearK(const NodePtr &node);
-  std::multimap<double, NodePtr> nearK(const Eigen::VectorXd &conf);
+  std::multimap<double, NodePtr> nearK(const NodePtr& node);
+  std::multimap<double, NodePtr> nearK(const Eigen::VectorXd& conf);
 
   /**
    * @brief Checks if a given node is present in the tree.
@@ -960,13 +931,16 @@ public:
    * @return Returns true if the given node is found in the tree, and false
    * otherwise.
    */
-  bool isInTree(const NodePtr &node);
+  bool isInTree(const NodePtr& node);
 
   /**
    * @brief Retrieves the total number of nodes in the tree.
    * @return Returns the total number of nodes in the tree.
    */
-  unsigned int getNumberOfNodes() const { return nodes_->size(); }
+  unsigned int getNumberOfNodes() const
+  {
+    return nodes_->size();
+  }
 
   /**
    * @brief Purges nodes outside an ellipsoid region based on a given sampler
@@ -987,12 +961,9 @@ public:
    * @return Returns the number of nodes purged from the tree outside the
    *ellipsoid region.
    */
-  unsigned int
-  purgeNodesOutsideEllipsoid(const SamplerPtr &sampler,
-                             const std::vector<NodePtr> &white_list);
-  unsigned int
-  purgeNodesOutsideEllipsoids(const std::vector<SamplerPtr> &samplers,
-                              const std::vector<NodePtr> &white_list);
+  unsigned int purgeNodesOutsideEllipsoid(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list);
+  unsigned int purgeNodesOutsideEllipsoids(const std::vector<SamplerPtr>& samplers,
+                                           const std::vector<NodePtr>& white_list);
 
   /**
    * @brief Purges nodes from the tree based on specified conditions and
@@ -1018,8 +989,7 @@ public:
    * should be performed.
    * @return Returns the number of nodes purged from the tree.
    */
-  unsigned int purgeNodes(const SamplerPtr &sampler,
-                          const std::vector<NodePtr> &white_list,
+  unsigned int purgeNodes(const SamplerPtr& sampler, const std::vector<NodePtr>& white_list,
                           const bool check_bounds = true);
 
   /**
@@ -1034,7 +1004,7 @@ public:
    * @param removed_nodes A reference to an unsigned int, counting the number of
    * nodes removed.
    */
-  virtual void purgeThisNode(NodePtr &node, unsigned int &removed_nodes);
+  virtual void purgeThisNode(NodePtr& node, unsigned int& removed_nodes);
 
   /**
    * @brief Recursively purges nodes starting from the specified node and
@@ -1054,10 +1024,8 @@ public:
    * @return Returns true if the specified node and its descendants are
    * successfully purged, and false otherwise.
    */
-  virtual bool purgeFromHere(NodePtr &node,
-                             const std::vector<NodePtr> &white_list,
-                             unsigned int &removed_nodes);
-  virtual bool purgeFromHere(NodePtr &node);
+  virtual bool purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, unsigned int& removed_nodes);
+  virtual bool purgeFromHere(NodePtr& node);
 
   /**
    * @brief Checks if the tree needs cleaning based on the current number of
@@ -1071,7 +1039,10 @@ public:
    * @return Returns true if the tree needs cleaning (i.e., the current number
    * of nodes exceeds the maximum), and false otherwise.
    */
-  bool needCleaning() { return (getNumberOfNodes() > maximum_nodes_); }
+  bool needCleaning()
+  {
+    return (getNumberOfNodes() > maximum_nodes_);
+  }
 
   /**
    * @brief Rechecks collision status for the subtree rooted at the specified
@@ -1090,7 +1061,7 @@ public:
    * @return Returns true if the subtree rooted at the specified node is
    * collision-free, and false otherwise.
    */
-  bool recheckCollisionFromNode(NodePtr &n);
+  bool recheckCollisionFromNode(NodePtr& n);
 
   /**
    * @brief Rechecks collision status for the entire tree.
@@ -1113,7 +1084,10 @@ public:
    *
    * @return Returns a constant reference to the maximum distance parameter.
    */
-  const double &getMaximumDistance() const { return max_distance_; }
+  const double& getMaximumDistance() const
+  {
+    return max_distance_;
+  }
 
   /**
    * @brief Retrieves a reference to the MetricsPtr associated with the tree.
@@ -1123,7 +1097,10 @@ public:
    *
    * @return Returns a reference to the MetricsPtr associated with the tree.
    */
-  MetricsPtr &getMetrics() { return metrics_; }
+  MetricsPtr& getMetrics()
+  {
+    return metrics_;
+  }
 
   /**
    * @brief Retrieves a reference to the CollisionCheckerPtr associated with the
@@ -1135,7 +1112,10 @@ public:
    * @return Returns a reference to the CollisionCheckerPtr associated with the
    * tree.
    */
-  CollisionCheckerPtr &getChecker() { return checker_; }
+  CollisionCheckerPtr& getChecker()
+  {
+    return checker_;
+  }
 
   /**
    * @brief Sets the CollisionCheckerPtr for the tree.
@@ -1143,7 +1123,10 @@ public:
    * @param checker The CollisionCheckerPtr to be set for the tree.
    */
 
-  void setChecker(const CollisionCheckerPtr &checker) { checker_ = checker; }
+  void setChecker(const CollisionCheckerPtr& checker)
+  {
+    checker_ = checker;
+  }
 
   /**
    * @brief Sets the MetricsPtr for the tree.
@@ -1151,7 +1134,10 @@ public:
    * @param metrics The MetricsPtr to be set for the tree.
    */
 
-  void setMetrics(const MetricsPtr &metrics) { metrics_ = metrics; }
+  void setMetrics(const MetricsPtr& metrics)
+  {
+    metrics_ = metrics;
+  }
 
   /**
    * @brief Retrieves a pointer to the TraceLogger associated with the path.
@@ -1162,12 +1148,18 @@ public:
    *
    * @return A constant reference to the TraceLogger pointer.
    */
-  const cnr_logger::TraceLoggerPtr &getLogger() const { return logger_; }
+  const cnr_logger::TraceLoggerPtr& getLogger() const
+  {
+    return logger_;
+  }
 
   /**
    * @brief Sets the TraceLogger associated with the path.
    */
-  void setLogger(const cnr_logger::TraceLoggerPtr &logger) { logger_ = logger; }
+  void setLogger(const cnr_logger::TraceLoggerPtr& logger)
+  {
+    logger_ = logger;
+  }
 
   /**
    * @brief Retrieves the flag indicating the use of a Kd-tree in the tree
@@ -1176,7 +1168,10 @@ public:
    * @return Returns true if a Kd-tree is used in the tree structure, and false
    * otherwise.
    */
-  bool getUseKdTree() { return use_kdtree_; }
+  bool getUseKdTree()
+  {
+    return use_kdtree_;
+  }
 
   /**
    * @brief Convert the Tree to a YAML::Node.
@@ -1199,7 +1194,7 @@ public:
    *
    * @param file_name The name of the file to write the YAML representation to.
    */
-  void toYAML(const std::string &file_name) const;
+  void toYAML(const std::string& file_name) const;
 
   /**
    * @brief Output stream operator for a Tree.
@@ -1212,7 +1207,7 @@ public:
    * @param tree The Tree to be printed.
    * @return A reference to the output stream for chaining.
    */
-  friend std::ostream &operator<<(std::ostream &os, const Tree &tree);
+  friend std::ostream& operator<<(std::ostream& os, const Tree& tree);
 
   /**
    * @brief Create a Tree from a YAML::Node.
@@ -1232,9 +1227,8 @@ public:
    * @return A TreePtr constructed from the YAML::Node. If an error occurs
    * during construction, returns nullptr.
    */
-  static TreePtr fromYAML(const YAML::Node &yaml, const MetricsPtr &metrics,
-                          const CollisionCheckerPtr &checker,
-                          const cnr_logger::TraceLoggerPtr &logger);
+  static TreePtr fromYAML(const YAML::Node& yaml, const MetricsPtr& metrics, const CollisionCheckerPtr& checker,
+                          const cnr_logger::TraceLoggerPtr& logger);
 };
 
 /**
@@ -1263,9 +1257,7 @@ public:
  * @throws std::invalid_argument if an error occurs while retrieving the
  * parameter.
  */
-bool get_param(const cnr_logger::TraceLoggerPtr &logger,
-               const std::string &param_ns, const std::string &param_name,
-               TreePtr &param, const MetricsPtr &metrics,
-               const CollisionCheckerPtr &checker);
-} // end namespace core
-} // end namespace graph
+bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string& param_ns, const std::string& param_name,
+               TreePtr& param, const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
+}  // end namespace core
+}  // end namespace graph

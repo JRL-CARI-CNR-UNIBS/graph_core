@@ -31,9 +31,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <graph_core/metrics/goal_cost_function_base.h>
 #include <graph_core/samplers/sampler_base.h>
 
-namespace graph {
-namespace core {
-
+namespace graph
+{
+namespace core
+{
 class TreeSolver;
 typedef std::shared_ptr<TreeSolver> TreeSolverPtr;
 
@@ -45,7 +46,8 @@ typedef std::shared_ptr<TreeSolver> TreeSolverPtr;
  * algorithms. It includes functionality for configuring the solver, setting up
  * the problem, and solving for a solution path.
  */
-class TreeSolver : public std::enable_shared_from_this<TreeSolver> {
+class TreeSolver : public std::enable_shared_from_this<TreeSolver>
+{
 protected:
   /**
    * @brief Pointer to the metrics used for evaluating paths.
@@ -201,14 +203,13 @@ protected:
    * @return true if setting the problem and finding a solution is successful,
    * false otherwise.
    */
-  virtual bool
-  setProblem(const double &max_time = std::numeric_limits<double>::infinity());
+  virtual bool setProblem(const double& max_time = std::numeric_limits<double>::infinity());
 
   /**
    * @brief printMyself
    * @param os
    */
-  virtual void printMyself(std::ostream &os) const;
+  virtual void printMyself(std::ostream& os) const;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -217,7 +218,8 @@ public:
    * @brief Empty constructor for TreeSolver. The function init() must be called
    * afterwards.
    */
-  TreeSolver() {
+  TreeSolver()
+  {
     path_cost_ = std::numeric_limits<double>::infinity();
     goal_cost_ = 0.0;
     cost_ = std::numeric_limits<double>::infinity();
@@ -237,20 +239,17 @@ public:
    * the goal.
    * @param logger The logger for logging messages.
    */
-  TreeSolver(const MetricsPtr &metrics, const CollisionCheckerPtr &checker,
-             const SamplerPtr &sampler,
-             const GoalCostFunctionPtr &goal_cost_fcn,
-             const cnr_logger::TraceLoggerPtr &logger)
-      : metrics_(metrics), checker_(checker), sampler_(sampler),
-        goal_cost_fcn_(goal_cost_fcn), logger_(logger) {
+  TreeSolver(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
+             const GoalCostFunctionPtr& goal_cost_fcn, const cnr_logger::TraceLoggerPtr& logger)
+    : metrics_(metrics), checker_(checker), sampler_(sampler), goal_cost_fcn_(goal_cost_fcn), logger_(logger)
+  {
     init(metrics, checker, sampler, goal_cost_fcn, logger);
   }
 
-  TreeSolver(const MetricsPtr &metrics, const CollisionCheckerPtr &checker,
-             const SamplerPtr &sampler,
-             const cnr_logger::TraceLoggerPtr &logger)
-      : metrics_(metrics), checker_(checker), sampler_(sampler),
-        logger_(logger) {
+  TreeSolver(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
+             const cnr_logger::TraceLoggerPtr& logger)
+    : metrics_(metrics), checker_(checker), sampler_(sampler), logger_(logger)
+  {
     init(metrics, checker, sampler, logger);
   }
 
@@ -267,12 +266,11 @@ public:
    * @param logger The logger for logging messages.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const MetricsPtr &metrics,
-                    const CollisionCheckerPtr &checker,
-                    const SamplerPtr &sampler,
-                    const GoalCostFunctionPtr &goal_cost_fcn,
-                    const cnr_logger::TraceLoggerPtr &logger) {
-    if (initialized_) {
+  virtual bool init(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
+                    const GoalCostFunctionPtr& goal_cost_fcn, const cnr_logger::TraceLoggerPtr& logger)
+  {
+    if (initialized_)
+    {
       CNR_WARN(logger_, "Solver already initialised!");
       return false;
     }
@@ -292,12 +290,10 @@ public:
     return true;
   }
 
-  virtual bool init(const MetricsPtr &metrics,
-                    const CollisionCheckerPtr &checker,
-                    const SamplerPtr &sampler,
-                    const cnr_logger::TraceLoggerPtr &logger) {
-    GoalCostFunctionPtr goal_cost_fcn =
-        std::make_shared<GoalCostFunctionBase>();
+  virtual bool init(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
+                    const cnr_logger::TraceLoggerPtr& logger)
+  {
+    GoalCostFunctionPtr goal_cost_fcn = std::make_shared<GoalCostFunctionBase>();
     return init(metrics, checker, sampler, goal_cost_fcn, logger);
   }
 
@@ -310,13 +306,16 @@ public:
    * @param param_ns The namespace under which the parameters are searched for.
    * @return true if configuration is successful, false otherwise.
    */
-  virtual bool config(const std::string &param_ns);
+  virtual bool config(const std::string& param_ns);
 
   /**
    * @brief getInitialized tells if the object has been initialised.
    * @return the 'initialized_' flag.
    */
-  bool getInitialized() { return initialized_; }
+  bool getInitialized()
+  {
+    return initialized_;
+  }
 
   /**
    * @brief Update is the single step of the search for a solution.
@@ -331,9 +330,13 @@ public:
    * @param solution The output solution path.
    * @return true if the solution is updated, false otherwise.
    */
-  virtual bool update(PathPtr &solution) = 0;
-  virtual bool update(const NodePtr &n, PathPtr &solution) { return false; }
-  virtual bool update(const Eigen::VectorXd &configuration, PathPtr &solution) {
+  virtual bool update(PathPtr& solution) = 0;
+  virtual bool update(const NodePtr& n, PathPtr& solution)
+  {
+    return false;
+  }
+  virtual bool update(const Eigen::VectorXd& configuration, PathPtr& solution)
+  {
     return false;
   }
 
@@ -347,9 +350,8 @@ public:
    * @param max_time The maximum allowed time for solving.
    * @return true if a solution is found, false otherwise.
    */
-  virtual bool
-  solve(PathPtr &solution, const unsigned int &max_iter = 100,
-        const double &max_time = std::numeric_limits<double>::infinity());
+  virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100,
+                     const double& max_time = std::numeric_limits<double>::infinity());
 
   /**
    * @brief Set the start node of the path planning problem.
@@ -361,9 +363,8 @@ public:
    * @param max_time The maximum allowed time for adding the start node.
    * @return true if the start node is added successfully, false otherwise.
    */
-  virtual bool addStart(
-      const NodePtr &start_node,
-      const double &max_time = std::numeric_limits<double>::infinity()) = 0;
+  virtual bool addStart(const NodePtr& start_node,
+                        const double& max_time = std::numeric_limits<double>::infinity()) = 0;
 
   /**
    * @brief Set the goal node of the path planning problem.
@@ -375,9 +376,7 @@ public:
    * @param max_time The maximum allowed time for adding the goal node.
    * @return true if the goal node is added successfully, false otherwise.
    */
-  virtual bool
-  addGoal(const NodePtr &goal_node,
-          const double &max_time = std::numeric_limits<double>::infinity()) = 0;
+  virtual bool addGoal(const NodePtr& goal_node, const double& max_time = std::numeric_limits<double>::infinity()) = 0;
 
   /**
    * @brief Set a tree to be used to solve the path planning problem.
@@ -389,9 +388,8 @@ public:
    * @param max_time The maximum allowed time for adding the start tree.
    * @return true if the start tree is added successfully, false otherwise.
    */
-  virtual bool addStartTree(
-      const TreePtr &start_tree,
-      const double &max_time = std::numeric_limits<double>::infinity()) = 0;
+  virtual bool addStartTree(const TreePtr& start_tree,
+                            const double& max_time = std::numeric_limits<double>::infinity()) = 0;
 
   /**
    * @brief Compute a path planning path between given configurations.
@@ -408,17 +406,13 @@ public:
    * @param max_iter The maximum number of iterations.
    * @return true if a solution is found, false otherwise.
    */
-  virtual bool
-  computePath(const NodePtr &start_node, const NodePtr &goal_node,
-              const std::string &param_ns, PathPtr &solution,
-              const double &max_time = std::numeric_limits<double>::infinity(),
-              const unsigned int &max_iter = 10000);
-  virtual bool
-  computePath(const Eigen::VectorXd &start_conf,
-              const Eigen::VectorXd &goal_conf, const std::string &param_ns,
-              PathPtr &solution,
-              const double &max_time = std::numeric_limits<double>::infinity(),
-              const unsigned int &max_iter = 10000);
+  virtual bool computePath(const NodePtr& start_node, const NodePtr& goal_node, const std::string& param_ns,
+                           PathPtr& solution, const double& max_time = std::numeric_limits<double>::infinity(),
+                           const unsigned int& max_iter = 10000);
+  virtual bool computePath(const Eigen::VectorXd& start_conf, const Eigen::VectorXd& goal_conf,
+                           const std::string& param_ns, PathPtr& solution,
+                           const double& max_time = std::numeric_limits<double>::infinity(),
+                           const unsigned int& max_iter = 10000);
 
   /**
    * @brief Reset the path planning problem.
@@ -451,7 +445,7 @@ public:
    * @return Returns true if the solution is valid and set successfully, false
    * otherwise.
    */
-  virtual bool setSolution(const PathPtr &solution);
+  virtual bool setSolution(const PathPtr& solution);
 
   /**
    * @brief Import solver parameters from another solver.
@@ -463,7 +457,7 @@ public:
    * @param solver The source solver.
    * @return true if the import is successful, false otherwise.
    */
-  virtual bool importFromSolver(const TreeSolverPtr &solver);
+  virtual bool importFromSolver(const TreeSolverPtr& solver);
 
   /**
    * @brief Get the cost associated with the current solution.
@@ -472,7 +466,10 @@ public:
    *
    * @return A constant reference to the cost.
    */
-  const double &cost() const { return cost_; }
+  const double& cost() const
+  {
+    return cost_;
+  }
 
   /**
    * @brief Set the goal cost function for the solver.
@@ -481,7 +478,8 @@ public:
    *
    * @param goal_cost_fcn The goal cost function to be set.
    */
-  void setGoalCostFunction(const GoalCostFunctionPtr &goal_cost_fcn) {
+  void setGoalCostFunction(const GoalCostFunctionPtr& goal_cost_fcn)
+  {
     goal_cost_fcn_ = goal_cost_fcn;
   }
 
@@ -498,7 +496,10 @@ public:
    * @return A constant reference to 'can_improve_', which tells if the planner
    * could be able to improve the solution.
    */
-  const bool &canImprove() const { return can_improve_; }
+  const bool& canImprove() const
+  {
+    return can_improve_;
+  }
 
   /**
    * @brief Check if a solution has been found.
@@ -510,7 +511,10 @@ public:
    *
    * @return A constant reference to the solution status.
    */
-  const bool &solved() const { return solved_; }
+  const bool& solved() const
+  {
+    return solved_;
+  }
 
   /**
    * @brief Check if the problem has been set, i.e., the setProblem function has
@@ -518,7 +522,10 @@ public:
    *
    * @return A constant reference to the problem status.
    */
-  const bool &problemStatus() const { return problem_set_; }
+  const bool& problemStatus() const
+  {
+    return problem_set_;
+  }
 
   /**
    * @brief Check if the solver is configured, i.e., the config function has
@@ -529,7 +536,10 @@ public:
    *
    * @return A constant reference to the configuration status.
    */
-  const bool &configured() const { return configured_; }
+  const bool& configured() const
+  {
+    return configured_;
+  }
 
   /**
    * @brief Get the degree of freedom of the search space of this path planning
@@ -540,7 +550,10 @@ public:
    *
    * @return A constant reference to the degree of freedom.
    */
-  const unsigned int &dof() const { return dof_; }
+  const unsigned int& dof() const
+  {
+    return dof_;
+  }
 
   /**
    * @brief Get the goal cost function.
@@ -549,7 +562,10 @@ public:
    *
    * @return A pointer to the goal cost function.
    */
-  GoalCostFunctionPtr getGoalCostFunction() const { return goal_cost_fcn_; }
+  GoalCostFunctionPtr getGoalCostFunction() const
+  {
+    return goal_cost_fcn_;
+  }
 
   /**
    * @brief Get the start tree of the path planning problem.
@@ -558,7 +574,10 @@ public:
    *
    * @return A pointer to the start tree.
    */
-  TreePtr getStartTree() const { return start_tree_; }
+  TreePtr getStartTree() const
+  {
+    return start_tree_;
+  }
 
   /**
    * @brief Get the solution path.
@@ -567,19 +586,28 @@ public:
    *
    * @return A pointer to the solution path.
    */
-  PathPtr getSolution() const { return solution_; }
+  PathPtr getSolution() const
+  {
+    return solution_;
+  }
 
   /**
    * @brief Set the sampler.
    * @param sampler The sampler to be set.
    */
-  void setSampler(const SamplerPtr &sampler) { sampler_ = sampler; }
+  void setSampler(const SamplerPtr& sampler)
+  {
+    sampler_ = sampler;
+  }
 
   /**
    * @brief Get the sampler used by the solver.
    * @return A pointer to the sampler.
    */
-  SamplerPtr getSampler() const { return sampler_; }
+  SamplerPtr getSampler() const
+  {
+    return sampler_;
+  }
 
   /**
    * @brief Get the cost of the path.
@@ -589,7 +617,10 @@ public:
    *
    * @return The cost of the path.
    */
-  double getPathCost() const { return path_cost_; }
+  double getPathCost() const
+  {
+    return path_cost_;
+  }
 
   /**
    * @brief Get the goal cost.
@@ -598,7 +629,10 @@ public:
    *
    * @return The goal cost.
    */
-  double getGoalCost() const { return goal_cost_; }
+  double getGoalCost() const
+  {
+    return goal_cost_;
+  }
 
   /**
    * @brief Get the total cost.
@@ -608,7 +642,10 @@ public:
    *
    * @return The total cost.
    */
-  double getCost() const { return cost_; }
+  double getCost() const
+  {
+    return cost_;
+  }
 
   /**
    * @brief Set the collision checker for the solver.
@@ -617,7 +654,10 @@ public:
    *
    * @param checker The collision checker to be set.
    */
-  void setChecker(const CollisionCheckerPtr &checker) { checker_ = checker; }
+  void setChecker(const CollisionCheckerPtr& checker)
+  {
+    checker_ = checker;
+  }
 
   /**
    * @brief Get the collision checker used by the solver.
@@ -626,7 +666,10 @@ public:
    *
    * @return A pointer to the collision checker.
    */
-  CollisionCheckerPtr getChecker() const { return checker_; }
+  CollisionCheckerPtr getChecker() const
+  {
+    return checker_;
+  }
 
   /**
    * @brief Set the metrics for evaluating paths.
@@ -635,7 +678,10 @@ public:
    *
    * @param metrics The metrics to be set.
    */
-  void setMetrics(const MetricsPtr &metrics) { metrics_ = metrics; }
+  void setMetrics(const MetricsPtr& metrics)
+  {
+    metrics_ = metrics;
+  }
 
   /**
    * @brief Get the metrics used by the solver.
@@ -644,7 +690,10 @@ public:
    *
    * @return A pointer to the metrics.
    */
-  MetricsPtr getMetrics() const { return metrics_; }
+  MetricsPtr getMetrics() const
+  {
+    return metrics_;
+  }
 
   /**
    * @brief Get the goal node of the path planning problem.
@@ -653,7 +702,10 @@ public:
    *
    * @return A pointer to the goal node.
    */
-  virtual NodePtr getGoal() { return goal_node_; }
+  virtual NodePtr getGoal()
+  {
+    return goal_node_;
+  }
 
   /**
    * @brief Set the maximum distance used for tree expansion.
@@ -662,7 +714,10 @@ public:
    *
    * @param distance The maximum distance to be set.
    */
-  void setMaxDistance(const double &distance) { max_distance_ = distance; }
+  void setMaxDistance(const double& distance)
+  {
+    max_distance_ = distance;
+  }
 
   /**
    * @brief Get the maximum distance used by the solver.
@@ -671,7 +726,10 @@ public:
    *
    * @return The maximum distance.
    */
-  double getMaxDistance() { return max_distance_; }
+  double getMaxDistance()
+  {
+    return max_distance_;
+  }
 
   /**
    * @brief Update the cost based on the solution.
@@ -680,7 +738,8 @@ public:
    *
    * @return The updated total cost.
    */
-  double updateCost() {
+  double updateCost()
+  {
     path_cost_ = solution_->cost();
     goal_cost_ = goal_cost_fcn_->cost(goal_node_);
     cost_ = path_cost_ + goal_cost_;
@@ -698,7 +757,7 @@ public:
    * @return The computed rewire radius.
    */
   double computeRewireRadius();
-  double computeRewireRadius(const SamplerPtr &sampler);
+  double computeRewireRadius(const SamplerPtr& sampler);
 
   /**
    * @brief Performs the last operations before solving the planning problem.
@@ -708,9 +767,12 @@ public:
    * under the namespace param_ns_ set with the function config().
    * @return true if successfull.
    */
-  virtual bool finalizeProblem() { return true; }
+  virtual bool finalizeProblem()
+  {
+    return true;
+  }
 
-  friend std::ostream &operator<<(std::ostream &os, const TreeSolver &solver);
+  friend std::ostream& operator<<(std::ostream& os, const TreeSolver& solver);
 };
 
 /**
@@ -723,10 +785,11 @@ public:
  * @param solver The TreeSolver object to be printed.
  * @return The modified output stream.
  */
-inline std::ostream &operator<<(std::ostream &os, const TreeSolver &solver) {
+inline std::ostream& operator<<(std::ostream& os, const TreeSolver& solver)
+{
   solver.printMyself(os);
   return os;
 }
 
-} // end namespace core
-} // end namespace graph
+}  // end namespace core
+}  // end namespace graph
