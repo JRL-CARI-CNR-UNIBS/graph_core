@@ -14,7 +14,7 @@
 Developed and tested for Ubuntu 20.04, 22.04 and Ubuntu-latest.
 
 
-### Tutorials
+## Tutorials
 See [this page](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/docs/tutorial/tutorial_intro.md) for tutorials.
 
 ## Dependencies
