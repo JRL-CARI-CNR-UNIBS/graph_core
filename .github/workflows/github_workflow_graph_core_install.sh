@@ -5,7 +5,7 @@ if [ -z "$PATH_TO_WS" ]; then
     mkdir -p graph_core_ws/build
     mkdir -p graph_core_ws/install
     cd graph_core_ws
-    export PATH_TO_WS="$(pwd)"cd
+    export PATH_TO_WS="$(pwd)"
 
     echo "Workspace Path: $PATH_TO_WS"
     echo "PATH_TO_WS=$PATH_TO_WS" >> $GITHUB_ENV
