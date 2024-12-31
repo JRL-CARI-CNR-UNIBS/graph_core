@@ -82,9 +82,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-get_property(TARGETS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS)
-message(STATUS "Available targets at this point: ${TARGETS}")
-
 # Link dependencies
 target_link_libraries(${PROJECT_NAME} PUBLIC
     Eigen3::Eigen
