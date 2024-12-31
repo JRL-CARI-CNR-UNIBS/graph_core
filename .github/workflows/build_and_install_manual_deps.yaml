@@ -9,7 +9,7 @@ on:
       - master
 
 jobs:
-  install-and-run:
+  install-and-run-manual-deps:
     runs-on: ubuntu-latest
     strategy:
       matrix:

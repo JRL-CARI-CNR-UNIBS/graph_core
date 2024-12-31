@@ -1,6 +1,13 @@
 #!/bin/bash
+
+if [ -z "$PATH_TO_WS" ]; then
+    mkdir -p graph_core_ws/src
+    cd graph_core_ws
+    export PATH_TO_WS="$(pwd)"
+fi
+
+echo "PATH_TO_WS=$PATH_TO_WS" >> $GITHUB_ENV
 echo "Workspace Path: $PATH_TO_WS"
-cd $PATH_TO_WS
 
 # Install graph_core
 cd $PATH_TO_WS/src
