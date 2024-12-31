@@ -2,8 +2,10 @@
 
 if [ -z "$PATH_TO_WS" ]; then
     mkdir -p graph_core_ws/src
+    mkdir -p graph_core_ws/build
+    mkdir -p graph_core_ws/install
     cd graph_core_ws
-    export PATH_TO_WS="$(pwd)"
+    export PATH_TO_WS="$(pwd)"cd
 
     echo "Workspace Path: $PATH_TO_WS"
     echo "PATH_TO_WS=$PATH_TO_WS" >> $GITHUB_ENV
@@ -11,6 +13,10 @@ if [ -z "$PATH_TO_WS" ]; then
     export PATH="$PATH_TO_WS/install/bin:$PATH"
     export LD_LIBRARY_PATH="$PATH_TO_WS/install/lib"
     export CMAKE_PREFIX_PATH="$PATH_TO_WS/install"
+
+    echo "PATH: $PATH"
+    echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
+    echo "CMAKE_PREFIX_PATH: $CMAKE_PREFIX_PATH"
 
     echo "PATH=$PATH_TO_WS/install/bin:$PATH" >> "$GITHUB_ENV"
     echo "LD_LIBRARY_PATH=$PATH_TO_WS/install/lib" >> "$GITHUB_ENV"
