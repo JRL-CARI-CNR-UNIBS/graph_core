@@ -9,7 +9,7 @@ on:
       - master
 
 jobs:
-  install-and-run:
+  install-and-run-manual-deps:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -24,6 +24,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt install -y libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
+
+      - name: Build & Install cnr_common
+        run: |
+          chmod +x .github/workflows/github_workflow_cnr_common_install.sh 
+          .github/workflows/github_workflow_cnr_common_install.sh
 
       - name: Build & Install graph_core
         run: |

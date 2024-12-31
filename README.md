@@ -6,12 +6,13 @@
 `graph_core` is an open-source C++ library for sampling-based robot path planning. It provides essential tools for solving path planning problems, includes state-of-the-art algorithms, and streamlines the development of new algorithms.
 
 ## Status
-
-
 [![build check](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/actions/workflows/build_and_install.yaml/badge.svg)](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/actions/workflows/build_and_install.yaml)
 [![clang-format check](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/actions/workflows/clang-format.yaml/badge.svg)](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/actions/workflows/clang-format.yaml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/1755d91be93e4c86912929a5e9ad04e8)](https://app.codacy.com/gh/JRL-CARI-CNR-UNIBS/graph_core/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 ![Status](https://img.shields.io/badge/License-BSD3-green)
+
+Developed and tested for Ubuntu 20.04, 22.04 and Ubuntu-latest.
+
 
 ### Tutorials
 See [this page](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/docs/tutorial/tutorial_intro.md) for tutorials.
@@ -30,10 +31,20 @@ Furthermore, it relies on the following packages:
 - [cnr_param](https://github.com/CNR-STIIMA-IRAS/cnr_param): Package to read and set parameters. It depends on [cnr_yaml](https://github.com/CNR-STIIMA-IRAS/cnr_yaml).
 - [cnr_class_loader](https://github.com/JRL-CARI-CNR-UNIBS/cnr_class_loader): Provides a way to load classes as plugins.
 
-For detailed instructions on downloading and installing these dependencies, refer to the [cnr_common](https://github.com/JRL-CARI-CNR-UNIBS/cnr_common) page.
+These packages require the following system dependencies. Install them by running
+
+```bash
+sudo apt update
+sudo apt -y install libboost-all-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
+```
+
+To simplify installation and dependency resolution, `graph_core` uses [CPM](https://github.com/cpm-cmake/CPM.cmake) to automatically download and integrate the required GitHub packages (`cnr_logger`, `cnr_yaml`, `cnr_param`, `cnr_class_loader`) into your build process.
+If you'd prefer to install the dependencies manually instead of relying on CPM, you can refer to the [cnr_common](https://github.com/JRL-CARI-CNR-UNIBS/cnr_common) page. When installed locally, `graph_core` will automatically detect and use the locally installed versions of the dependencies.
 
 ## Installation 
-Follow these steps to compile and install `graph_core`using CMake: 
+Follow these steps to compile and install `graph_core`using CMake.
+
+Note: If you want to automatically install dependencies using CPM and have ROS1 installed on your system, it is recommended not to source ROS1 before building `graph_core`. This avoids potential conflicts between `graph_core` dependencies installed via CPM and catkin.
 
 1. Set the workspace directory path:
     ```bash
@@ -62,4 +73,13 @@ if [[ ":$CMAKE_PREFIX_PATH:" != *":path_to_your_ws/install:"* ]]; then
     export CMAKE_PREFIX_PATH="path_to_your_ws/install:$CMAKE_PREFIX_PATH"
 fi
 ``` 
-Replace `path_to_your_ws/install` with the actual path to your install folder. These settings are necessary to make the installed libraries visible. However, `graph_core` can also be compiled in both ROS1 and ROS2 workspaces. For a ROS1 workspace, ensure you have set `catkin config --install`. In this case, you do not need to export the paths as shown above.
+
+Replace `path_to_your_ws/install` with the actual path to your install folder. These settings are necessary to make the installed libraries visible. 
+
+The `cnr_param` library requires a directory to store its parameters. You can set this directory by adding the following line to your `~/.bashrc` file:
+
+```bash
+export CNR_PARAM_ROOT_DIRECTORY="/tmp/cnr_param"
+```
+
+<!-- However, `graph_core` can also be compiled in both ROS1 and ROS2 workspaces. For a ROS1 workspace, ensure you have set `catkin config --install`. In this case, you do not need to export the paths as shown above. -->
