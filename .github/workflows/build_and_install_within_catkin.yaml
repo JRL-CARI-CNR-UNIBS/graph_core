@@ -1,0 +1,39 @@
+name: build-within-catkin
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  install-and-run-within-catkin:
+    runs-on: ubuntu-20.04
+    container:
+      image: ros:noetic
+
+    steps:
+      - name: Setup ROS Environment
+        run: |
+          echo "Setting up ROS environment"
+          source /opt/ros/noetic/setup.bash
+          sudo apt-get update
+          sudo apt-get install -y python3-catkin-tools
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
+
+      - name: Build & Install graph_core in Catkin Workspace
+        run: |
+          # Ensure the script is executable
+          chmod +x .github/workflows/github_workflow_graph_core_install _within_catkin.sh
+          
+          # Run the installation script
+          .github/workflows/github_workflow_graph_core_install _within_catkin.sh

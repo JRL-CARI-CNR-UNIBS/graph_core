@@ -1,4 +1,4 @@
-name: build
+name: build-manual-deps
 
 on:
   push:
