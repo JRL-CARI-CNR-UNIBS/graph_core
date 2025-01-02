@@ -20,7 +20,7 @@ jobs:
           echo "Setting up ROS environment"
           source /opt/ros/noetic/setup.bash
           sudo apt-get update
-          sudo apt-get install -y python3-catkin-tools
+          sudo apt-get install -y  python3.6 python3-catkin-tools
 
       - name: Checkout repository
         uses: actions/checkout@v3
