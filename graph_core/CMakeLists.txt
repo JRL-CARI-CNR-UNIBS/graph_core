@@ -27,6 +27,15 @@ option(BUILD_TESTS "Build the test executables" ON)
 # Dependencies
 include(cmake_config/Dependencies.cmake)
 
+# Configure RPATH for libraries
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+list(APPEND CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
+set(CMAKE_BUILD_RPATH "")
+
+message(STATUS "${BLUE}CMAKE_INSTALL_RPATH=${CMAKE_INSTALL_RPATH}${RESET}")
+
 # Library target
 add_library(${PROJECT_NAME} SHARED
     # Graph components
@@ -74,7 +83,7 @@ add_library(${PROJECT_NAME} SHARED
 )
 
 # Add dependencies
-add_dependencies(${PROJECT_NAME} cnr_logger::cnr_logger cnr_yaml::cnr_yaml cnr_param::cnr_param cnr_class_loader::cnr_class_loader)
+add_dependencies(${PROJECT_NAME} cnr_logger::cnr_logger cnr_param::cnr_param cnr_class_loader::cnr_class_loader)
 
 # Include directories
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -86,7 +95,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 target_link_libraries(${PROJECT_NAME} PUBLIC
     Eigen3::Eigen
     cnr_logger::cnr_logger
-    cnr_yaml::cnr_yaml
     cnr_param::cnr_param
     cnr_class_loader::cnr_class_loader
 )
@@ -144,6 +152,11 @@ install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
     DESTINATION "share/${PROJECT_NAME}/cmake"
 )
+
+# Ensure cnr_yaml cmake_alternative is copied during installation
+if(CLONE_CNR_YAML_CMAKE_ALTERNATIVE)
+    include(cmake_config/FixInstallationPath.cmake)
+endif()
 
 # Custom uninstall target
 if(ADD_CUSTOM_UNINSTALL)
