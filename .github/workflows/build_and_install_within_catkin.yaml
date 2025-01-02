@@ -36,7 +36,7 @@ jobs:
         shell: bash
         run: |
           # Ensure the script is executable
-          chmod +x .github/workflows/github_workflow_graph_core_install _within_catkin.sh
+          chmod +x .github/workflows/github_workflow_graph_core_install_within_catkin.sh
           
           # Run the installation script
-          .github/workflows/github_workflow_graph_core_install _within_catkin.sh
+          .github/workflows/github_workflow_graph_core_install_within_catkin.sh
