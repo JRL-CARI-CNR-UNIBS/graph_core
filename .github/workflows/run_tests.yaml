@@ -29,5 +29,5 @@ jobs:
 
       - name: Run GTESTS
         run: |
-          cd ${{ env.PATH_TO_WS }}/install/bin/graph_core/tests
+          cd ${{ env.PATH_TO_WS }}/install/bin/graph_core/tests/src
           ./run_all_tests logger_param.yaml
