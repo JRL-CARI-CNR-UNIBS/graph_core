@@ -36,6 +36,6 @@ jobs:
       - name: Save workspace
         uses: actions/upload-artifact@v4
         with:
-          name: workspace-artifact
+          name: workspace-artifact-${{ matrix.ubuntu_version }}
           path: ${{ github.workspace }}
 
