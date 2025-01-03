@@ -38,4 +38,3 @@ jobs:
         with:
           name: workspace-artifact-${{ matrix.ubuntu_version }}
           path: ${{ github.workspace }}
-

@@ -12,9 +12,14 @@ jobs:
     strategy:
       matrix:
         ubuntu_version: [ubuntu-20.04, ubuntu-22.04, ubuntu-latest]
-      fail-fast: true
 
     steps:
+      - name: List available artifacts
+        run: |
+          curl -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/artifacts
+
       - name: Download workspace artifact
         uses: actions/download-artifact@v4
         with:
