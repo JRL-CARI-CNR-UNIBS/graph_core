@@ -14,37 +14,18 @@ jobs:
         os: [ubuntu-20.04, ubuntu-22.04, ubuntu-latest]
 
     steps:
-      - name: Fetch artifacts from the previous workflow
-        id: get-artifact
-        run: |
-          echo "Fetching available artifacts from the previous workflow..."
-          ARTIFACT_NAME="workspace-artifact-${{ matrix.os }}"
-          ARTIFACTS=$(curl -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-                            -H "Accept: application/vnd.github.v3+json" \
-                            https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/artifacts)
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-          # Find the corresponding artifact
-          ARTIFACT_ID=$(echo "$ARTIFACTS" | jq -r --arg ARTIFACT_NAME "$ARTIFACT_NAME" \
-                          '.artifacts[] | select(.name == $ARTIFACT_NAME) | .id')
-
-          if [ -z "$ARTIFACT_ID" ]; then
-            echo "Error: Artifact with name $ARTIFACT_NAME not found."
-            exit 1
-          fi
-
-          echo "Found artifact with name: $ARTIFACT_NAME and ID: $ARTIFACT_ID"
-          echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_ENV
-
-      - name: Download workspace artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ env.artifact_name }}
-          path: workspace
-
-      - name: Install runtime dependencies
+      - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
+
+      - name: Build & Install graph_core
+        run: |
+          chmod +x .github/workflows/github_workflow_graph_core_install.sh 
+          .github/workflows/github_workflow_graph_core_install.sh
 
       - name: Run GTESTS
         run: |
