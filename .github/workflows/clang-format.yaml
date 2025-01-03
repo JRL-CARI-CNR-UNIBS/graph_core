@@ -36,7 +36,11 @@ jobs:
 
           for FILE in $FILES; do
             echo "Checking $FILE..."
-            clang-format --style=file --assume-filename="$CLANG_FORMAT_FILE" -n $FILE || FORMATTING_ISSUES=1
+            DIFF=$(clang-format --Werror --style=file --assume-filename="$CLANG_FORMAT_FILE" $FILE | diff $FILE -)
+            if [ "$DIFF" != "" ]; then
+              echo "Formatting issues detected in $FILE."
+              FORMATTING_ISSUES=1
+            fi
           done
 
           if [ $FORMATTING_ISSUES -ne 0 ]; then
