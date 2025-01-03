@@ -2,19 +2,23 @@ name: run gtests
 
 on:
   workflow_run:
-    workflows: ["build"] # Nome del workflow precedente
+    workflows: ["build"]
     types:
       - completed
 
 jobs:
   run-tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ubuntu_version: [ubuntu-20.04, ubuntu-22.04, ubuntu-latest]
+      fail-fast: true
 
     steps:
-      - name: Download workspace
-        uses: actions/download-artifact@v3
+      - name: Download workspace artifact
+        uses: actions/download-artifact@v4
         with:
-          name: workspace-artifact
+          name: workspace-artifact-${{ matrix.ubuntu_version }}
           path: workspace
 
       - name: Install runtime dependencies
@@ -24,5 +28,5 @@ jobs:
 
       - name: Run GTESTS
         run: |
-          cd install/bin/graph_core/tests
+          cd workspace/install/bin/graph_core/tests
           ./run_all_tests

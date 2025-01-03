@@ -13,7 +13,6 @@ int main(int argc, char** argv)
 
   cnr_logger::TraceLoggerPtr logger = std::make_shared<cnr_logger::TraceLogger>("graph_core_tests_logger", logger_file);
 
-
   int n_kdnodes = 10;
   int threshold = std::numeric_limits<int>::max();
 
@@ -27,7 +26,8 @@ int main(int argc, char** argv)
   }
 
   if (argc > 4)
-    CNR_WARN(logger, cnr_logger::RESET() << cnr_logger::BOLDYELLOW() << "Number of inputs to the program should be <=3");
+    CNR_WARN(logger,
+             cnr_logger::RESET() << cnr_logger::BOLDYELLOW() << "Number of inputs to the program should be <=3");
 
   graph::core::KdTreePtr kdtree = std::make_shared<graph::core::KdTree>(logger);
   kdtree->deletedNodesThreshold(threshold);
