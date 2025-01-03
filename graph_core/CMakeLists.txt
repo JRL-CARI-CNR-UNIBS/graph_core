@@ -174,14 +174,17 @@ file(GLOB_RECURSE ALL_SOURCE_FILES *.cpp *.h)
 
 add_custom_target(
     format
-    COMMAND ${CMAKE_COMMAND} -E echo "Checking for clang-format..."
-    COMMAND ${CMAKE_COMMAND} -E env command -v clang-format > /dev/null || ${CMAKE_COMMAND} -E echo "clang-format not found, skipping format target"
-    COMMAND ${CMAKE_COMMAND} -E echo "Searching for .clang-format file..."
-    COMMAND find ${CMAKE_SOURCE_DIR} -name ".clang-format" -print
-    COMMAND ${CMAKE_COMMAND} -E echo "Running clang-format on the following files:"
-    COMMAND ${CMAKE_COMMAND} -E echo ${ALL_SOURCE_FILES}
-    COMMAND clang-format -i --style=file --assume-filename=${CMAKE_SOURCE_DIR}/.clang-format ${ALL_SOURCE_FILES}
+    COMMAND chmod +x cmake_config/clang_format_target.sh
+    COMMAND cmake_config/clang_format_target.sh
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Auto clang-format for all *.cpp and *.h files"
+    COMMENT "Running clang-format on all source files"
 )
+
+
+
+
+
+
+
+
 

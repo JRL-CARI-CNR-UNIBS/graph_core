@@ -147,9 +147,15 @@ static inline bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std
   std::string what, full_param_name = param_ns + "/" + param_name;
   if (cnr::param::has(full_param_name, what))
   {
-    if (not cnr::param::get(
-            full_param_name, param, what, true,
-            { cnr::param::ModulesID::MAPPED_FILE, cnr::param::ModulesID::ROS1, cnr::param::ModulesID::ROS2 }))
+    std::vector<cnr::param::ModulesID> modules;
+    if (cnr::param::is_mapped_file_avaliable())
+      modules.push_back(cnr::param::ModulesID::MAPPED_FILE);
+    if (cnr::param::is_ros1_avaliable())
+      modules.push_back(cnr::param::ModulesID::ROS1);
+    if (cnr::param::is_ros2_avaliable())
+      modules.push_back(cnr::param::ModulesID::ROS2);
+
+    if (not cnr::param::get(full_param_name, param, what, true, modules))
     {
       CNR_ERROR(logger, "Cannot load " << full_param_name + " parameter.\n" << what);
       throw std::invalid_argument("Cannot load " + full_param_name + " parameter.");
@@ -185,9 +191,15 @@ static inline bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std
   std::string what, full_param_name = param_ns + "/" + param_name;
   if (cnr::param::has(full_param_name, what))
   {
-    if (not cnr::param::get(
-            full_param_name, param, what, true,
-            { cnr::param::ModulesID::MAPPED_FILE, cnr::param::ModulesID::ROS1, cnr::param::ModulesID::ROS2 }))
+    std::vector<cnr::param::ModulesID> modules;
+    if (cnr::param::is_mapped_file_avaliable())
+      modules.push_back(cnr::param::ModulesID::MAPPED_FILE);
+    if (cnr::param::is_ros1_avaliable())
+      modules.push_back(cnr::param::ModulesID::ROS1);
+    if (cnr::param::is_ros2_avaliable())
+      modules.push_back(cnr::param::ModulesID::ROS2);
+
+    if (not cnr::param::get(full_param_name, param, what, true, modules))
     {
       CNR_ERROR(logger, "Cannot load " << full_param_name + " parameter.\n" << what);
       throw std::invalid_argument("Cannot load " + full_param_name + " parameter.");

@@ -37,7 +37,7 @@ public:
    * along a connection.
    */
   Cube3dCollisionChecker(const cnr_logger::TraceLoggerPtr& logger, const double& abs_joint_threshold,
-                         const double& min_distance = 0.01)
+                         const double& min_distance)
     : CollisionCheckerBase(logger, min_distance), abs_joint_threshold_(abs_joint_threshold)
   {
   }
@@ -58,7 +58,7 @@ public:
    * @param configuration The robot configuration to check for collision.
    * @return True if the configuration is in collision, false otherwise.
    */
-  virtual bool check(const Eigen::VectorXd& configuration)
+  virtual bool check(const Eigen::VectorXd& configuration) override
   {
     return configuration.cwiseAbs().maxCoeff() > abs_joint_threshold_;
   }

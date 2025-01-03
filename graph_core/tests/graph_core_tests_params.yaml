@@ -1,0 +1,12 @@
+graph_core_tests:
+  min_cc_distance: 0.01
+  abs_joint_threshold: 1.0
+  max_distance: 0.25
+  use_kdtree: true
+  extend: false
+  utopia_tolerance: 0.01
+  max_time: 5.0
+  rewire_factor: 1.1
+  simplify_max_conn_length: 0.05
+  warp_min_conn_length: 0.1
+  warp_min_step_size: 0.05

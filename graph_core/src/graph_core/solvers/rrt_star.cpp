@@ -43,7 +43,7 @@ bool RRTStar::config(const std::string& param_ns)
   RRT::config(param_ns);
 
   solved_ = false;
-  get_param(logger_, param_ns_, "rewire_radius", r_rewire_, 2.0 * max_distance_);
+  get_param(logger_, param_ns_, "rewire_factor", rewire_factor_, 1.1);
   return true;
 }
 
@@ -57,6 +57,7 @@ bool RRTStar::importFromSolver(const RRTStarPtr& solver)
   if (RRT::importFromSolver(std::static_pointer_cast<RRT>(solver)))
   {
     r_rewire_ = solver->r_rewire_;
+    rewire_factor_ = solver->rewire_factor_;
     return true;
   }
   else
@@ -76,13 +77,6 @@ bool RRTStar::importFromSolver(const TreeSolverPtr& solver)
   {
     return TreeSolver::importFromSolver(solver);
   }
-}
-
-void RRTStar::updateRewireRadius()
-{
-  // TO DO: update rewire radius as stated by RRT* paper
-  // r_rewire_ =
-  return;
 }
 
 bool RRTStar::update(PathPtr& solution)
@@ -187,7 +181,7 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
     return true;
   }
 
-  r_rewire_ = computeRewireRadius();
+  updateRewireRadius();
 
   if (not solved_)
   {
@@ -225,9 +219,6 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
   {
     CNR_TRACE(logger_, "RRT* -> improving");
 
-    // double r_rewire = std::min(start_tree_->getMaximumDistance(),
-    // r_rewire_factor_ * sampler_->getSpecificVolume() *
-    // std::pow(std::log(start_tree_->getNumberOfNodes())/start_tree_->getNumberOfNodes(),1./dof_));
     bool improved = start_tree_->rewireToNode(n, r_rewire_);
 
     if (improved)
@@ -277,6 +268,21 @@ bool RRTStar::solve(PathPtr& solution, const unsigned int& max_iter, const doubl
             best_utopia_ * utopia_tolerance_);
 
   return solved;
+}
+
+void RRTStar::updateRewireRadius()
+{
+  return updateRewireRadius(sampler_);
+}
+
+void RRTStar::updateRewireRadius(const SamplerPtr& sampler)
+{
+  double dimension = (double)dof_;
+  double r_rrt = rewire_factor_ * std::pow(2.0 * (1.0 + 1.0 / dimension), 1.0 / dimension) *
+                 std::pow(sampler->getSpecificVolume(), 1.0 / dimension);
+  double cardDbl = start_tree_->getNumberOfNodes() + 1.0;
+  r_rewire_ = (r_rrt * std::pow(log(cardDbl) / cardDbl, 1.0 / dimension));
+  return;
 }
 
 }  // end namespace core

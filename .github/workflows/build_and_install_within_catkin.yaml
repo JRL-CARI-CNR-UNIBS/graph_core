@@ -29,12 +29,12 @@ jobs:
       - name: Install dependencies
         shell: bash
         run: |
-          sudo apt install -y libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
+          sudo apt install -y git libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
 
       - name: Build & Install graph_core in Catkin Workspace
         shell: bash
         run: |
-          chmod +x .github/workflows/github_workflow_graph_core_install.sh 
-          .github/workflows/github_workflow_graph_core_install.sh
+          chmod +x .github/workflows/github_workflow_graph_core_install_within_catkin.sh 
+          .github/workflows/github_workflow_graph_core_install_within_catkin.sh
 
       

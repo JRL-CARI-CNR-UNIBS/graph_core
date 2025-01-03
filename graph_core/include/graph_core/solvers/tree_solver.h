@@ -748,18 +748,6 @@ public:
   }
 
   /**
-   * @brief Computes the rewire radius.
-   *
-   * This function calculates the rewire radius based on the dimensionality
-   * of the problem space and the specific volume of the sampler.
-   *
-   * @param sampler A shared pointer to a sampler object.
-   * @return The computed rewire radius.
-   */
-  double computeRewireRadius();
-  double computeRewireRadius(const SamplerPtr& sampler);
-
-  /**
    * @brief Performs the last operations before solving the planning problem.
    * It must be called after setProblem() and before solve() (see computePath()
    * as an example). By default it does nothing, but in general it can be used

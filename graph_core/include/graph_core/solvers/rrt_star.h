@@ -38,9 +38,26 @@ typedef std::shared_ptr<RRTStar> RRTStarPtr;
 class RRTStar : public RRT
 {
 protected:
+  /**
+   * @brief The rewiring factor, r_rrt = rewire_factor_ \times r_rrt* > r_rrt*
+  */
+  double rewire_factor_ = 1.1;
+
+  /**
+   * @brief r_rewire_ the rewire radius
+   */
   double r_rewire_;
 
-  void updateRewireRadius();
+  /**
+   * @brief Update the rewire radius.
+   *
+   * This function calculates the rewire radius based on the dimensionality
+   * of the problem space and the specific volume of the sampler.
+   *
+   * @param sampler A shared pointer to a sampler object.
+   */
+  virtual void updateRewireRadius();
+  virtual void updateRewireRadius(const SamplerPtr& sampler);
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
