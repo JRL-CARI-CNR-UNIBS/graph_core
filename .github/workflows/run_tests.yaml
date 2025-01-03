@@ -1,31 +1,45 @@
-name: run gtests
+name: run-tests
 
 on:
   workflow_run:
-    workflows: ["build"]
+    workflows: ["build"] # Name of the previous workflow
     types:
       - completed
 
 jobs:
-  run-tests:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        ubuntu_version: [ubuntu-20.04, ubuntu-22.04, ubuntu-latest]
+        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-latest]
 
     steps:
-      - name: List workflow artifacts
+      - name: Fetch artifacts from the previous workflow
+        id: get-artifact
         run: |
-          curl -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/artifacts
+          echo "Fetching available artifacts from the previous workflow..."
+          ARTIFACT_NAME="workspace-artifact-${{ matrix.os }}"
+          ARTIFACTS=$(curl -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+                            -H "Accept: application/vnd.github.v3+json" \
+                            https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/artifacts)
 
-      - name: Download workspace artifact
+          # Find the corresponding artifact
+          ARTIFACT_ID=$(echo "$ARTIFACTS" | jq -r --arg ARTIFACT_NAME "$ARTIFACT_NAME" \
+                          '.artifacts[] | select(.name == $ARTIFACT_NAME) | .id')
+
+          if [ -z "$ARTIFACT_ID" ]; then
+            echo "Error: Artifact with name $ARTIFACT_NAME not found."
+            exit 1
+          fi
+
+          echo "Found artifact with name: $ARTIFACT_NAME and ID: $ARTIFACT_ID"
+          echo "::set-output name=artifact_id::$ARTIFACT_ID"
+
+      - name: Download corresponding artifact
         uses: actions/download-artifact@v4
         with:
-          name: workspace-artifact-${{ matrix.ubuntu_version }}
+          artifact-id: ${{ steps.get-artifact.outputs.artifact_id }}
           path: workspace
-          run-id: ${{ github.event.workflow_run.id }}
 
       - name: Install runtime dependencies
         run: |
