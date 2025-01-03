@@ -30,8 +30,11 @@ jobs:
           chmod +x .github/workflows/github_workflow_graph_core_install.sh 
           .github/workflows/github_workflow_graph_core_install.sh
 
+      - name: Debug workspace
+        run: ls -R ${{ github.workspace }}
+
       - name: Save workspace
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: workspace-artifact
           path: ${{ github.workspace }}
