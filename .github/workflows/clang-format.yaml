@@ -32,22 +32,13 @@ jobs:
 
           echo "Using .clang-format from: $(realpath "$CLANG_FORMAT_FILE")"
 
-          FORMATTING_ISSUES=0
-
           for FILE in $FILES; do
             echo "Checking $FILE..."
-            DIFF=$(clang-format --Werror --style=file --assume-filename="$CLANG_FORMAT_FILE" $FILE | diff $FILE -)
-            if [ "$DIFF" != "" ]; then
-              echo "Formatting issues detected in $FILE."
-              FORMATTING_ISSUES=1
-            fi
+            clang-format --style=file --assume-filename="$CLANG_FORMAT_FILE" -n $FILE #show where the issues are
+            clang-format --Werror --style=file --assume-filename="$CLANG_FORMAT_FILE" -n $FILE #throw the error
           done
 
-          if [ $FORMATTING_ISSUES -ne 0 ]; then
-            echo "Formatting issues detected. Please run clang-format to fix them."
-            exit 1
-          else
-            echo "All files are correctly formatted."
-          fi
+          echo "All files are correctly formatted."
+
         shell: bash
 
