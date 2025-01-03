@@ -1,7 +1,7 @@
 #!/bin/bash
 
-CATKIN_WS=~/graph_core_catkin_ws
-GRAPH_CORE_REPO="https://github.com/JRL-CARI-CNR-UNIBS/graph_core.git"
+export CATKIN_WS="~/graph_core_catkin_ws"
+export GRAPH_CORE_REPO="https://github.com/JRL-CARI-CNR-UNIBS/graph_core.git"
 
 # Create Catkin workspace
 echo "Setting up Catkin workspace at $CATKIN_WS..."
