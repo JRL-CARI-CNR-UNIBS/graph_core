@@ -1,24 +1,36 @@
 #!/bin/bash
+set -e
 
-mkdir graph_core_ws
-cd graph_core_ws
-export PATH_TO_WS="$(pwd)"
+# Source ROS Noetic setup
+echo "Sourcing ROS Noetic"
+source /opt/ros/noetic/setup.bash
 
-echo "PATH_TO_WS=$PATH_TO_WS"
-echo "Workspace Path: $PATH_TO_WS"
+# Define workspace paths
+WORKSPACE_DIR=$(pwd)/graph_core_ws
+SRC_DIR=$WORKSPACE_DIR/src
 
-# Clone graph_core
-mkdir -p "$PATH_TO_WS"/src
-cd "$PATH_TO_WS"/src
-git clone https://github.com/JRL-CARI-CNR-UNIBS/graph_core.git
+# Create the workspace and source folder
+echo "Setting up Catkin workspace at $WORKSPACE_DIR"
+mkdir -p $SRC_DIR
+cd $WORKSPACE_DIR
+
+# Clone graph_core into the src folder if not already present
+if [ ! -d "$SRC_DIR/graph_core" ]; then
+    echo "Cloning graph_core repository into $SRC_DIR"
+    git clone https://github.com/JRL-CARI-CNR-UNIBS/graph_core.git $SRC_DIR/graph_core
+fi
+
+# Check for missing catkin package
+if [ ! -d "$SRC_DIR/catkin" ]; then
+    echo "Cloning catkin package into $SRC_DIR"
+    git clone https://github.com/ros/catkin.git $SRC_DIR/catkin
+fi
 
 # Build the workspace
-echo "Building the workspace..."
-cd $PATH_TO_WS
-catkin config --install
-catkin build -cs --verbose
+echo "Building the Catkin workspace"
+catkin config --extend /opt/ros/noetic
+catkin build
 
-# Source the setup script
-source $PATH_TO_WS/install/setup.bash
-
-echo "graph_core installation completed successfully!"
+# Source the workspace setup
+echo "Sourcing workspace setup"
+source $WORKSPACE_DIR/devel/setup.bash
