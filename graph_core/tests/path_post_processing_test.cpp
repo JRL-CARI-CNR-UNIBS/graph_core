@@ -8,9 +8,14 @@
 int main(int argc, char** argv)
 {
   // Load the logger's configuration
-  std::string logger_file = std::string(TEST_DIR) + "/logger_param.yaml";
-  ;
-  cnr_logger::TraceLoggerPtr logger = std::make_shared<cnr_logger::TraceLogger>("graph_core_tests_logger", logger_file);
+  std::string path_to_config_folder = std::string(TEST_DIR);
+  std::string logger_file = path_to_config_folder + "/logger_param.yaml";
+
+  if (argc > 1)
+    logger_file = path_to_config_folder + "/" + std::string(argv[1]);  // or take it from argument
+
+  cnr_logger::TraceLoggerPtr logger =
+      std::make_shared<cnr_logger::TraceLogger>("path_post_processing_test", logger_file);
 
   // Load params
   std::string command = "cnr_param_server --path-to-file " + std::string(TEST_DIR) + "/graph_core_tests_params.yaml";

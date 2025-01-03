@@ -20,9 +20,14 @@ This tutorial provides a concise guide on computing paths using `graph_core`. Wh
 
 ```cpp
 // Load the logger's configuration
-std::string path_to_config_folder = std::string(TEST_DIR); // path to the logger folder. In this case it is defined in the CMakeLists.txt
+std::string path_to_config_folder = std::string(TEST_DIR);
 std::string logger_file = path_to_config_folder + "/logger_param.yaml";
-cnr_logger::TraceLoggerPtr logger = std::make_shared<cnr_logger::TraceLogger>("graph_core_tests_logger", logger_file);
+
+if (argc > 1)
+  logger_file = path_to_config_folder + "/" + std::string(argv[1]);  // or take it from argument
+
+cnr_logger::TraceLoggerPtr logger =
+    std::make_shared<cnr_logger::TraceLogger>("compute_path_test", logger_file);
 ```
 3. Define the foo collision checker, a cost function, a sampler, and finally the solver.
    To handle parameters, you can utilize [cnr_param](https://github.com/CNR-STIIMA-IRAS/cnr_param), which leverages [yaml-cpp](https://github.com/jbeder/yaml-cpp) to read parameter values from YAML files. `cnr_param` also integrates with the ROS and ROS2 parameter ecosystems, making it versatile for different applications. See the `cnr_param` repository for further details. Additionally, `graph_core` provides a wrapper function to simplify parameter retrieval, helping to streamline the setup process. You can find the main utility functions offered by `graph_core` [here](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/graph_core/include/graph_core/util.h).

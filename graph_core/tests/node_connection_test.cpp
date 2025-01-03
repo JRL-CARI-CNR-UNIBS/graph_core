@@ -4,11 +4,14 @@
 
 int main(int argc, char** argv)
 {
-  std::string file_path = std::string(TEST_DIR) + "/logger_param.yaml";
-  std::cout << "file_path = " << file_path << std::endl;
+  // Load the logger's configuration
+  std::string path_to_config_folder = std::string(TEST_DIR);
+  std::string logger_file = path_to_config_folder + "/logger_param.yaml";
 
-  // Create the logger
-  cnr_logger::TraceLoggerPtr logger = std::make_shared<cnr_logger::TraceLogger>("node_connection_test", file_path);
+  if (argc > 1)
+    logger_file = path_to_config_folder + "/" + std::string(argv[1]);  // or take it from argument
+
+  cnr_logger::TraceLoggerPtr logger = std::make_shared<cnr_logger::TraceLogger>("node_connection_test", logger_file);
 
   // Tests
   CNR_INFO(logger, cnr_logger::RESET() << cnr_logger::WHITE() << " --- Create random configurations ---");

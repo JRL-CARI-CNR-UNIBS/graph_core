@@ -1,0 +1,3 @@
+appenders: ["file"]
+levels: ["debug"]
+file_name: "graph_core_gtests"
