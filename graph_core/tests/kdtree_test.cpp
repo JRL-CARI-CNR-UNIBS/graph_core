@@ -4,25 +4,30 @@
 
 int main(int argc, char** argv)
 {
-  std::string file_path = std::string(TEST_DIR) + "/logger_param.yaml";
-  std::cout << "file_path = " << file_path << std::endl;
-  // Create the logger
-  cnr_logger::TraceLoggerPtr logger = std::make_shared<cnr_logger::TraceLogger>("kdtree_test", file_path);
+  // Load the logger's configuration
+  std::string path_to_config_folder = std::string(TEST_DIR);
+  std::string logger_file = path_to_config_folder + "/logger_param.yaml";
+
+  if (argc > 1)
+    logger_file = path_to_config_folder + "/" + std::string(argv[1]);  // or take it from argument
+
+  cnr_logger::TraceLoggerPtr logger = std::make_shared<cnr_logger::TraceLogger>("graph_core_tests_logger", logger_file);
+
 
   int n_kdnodes = 10;
   int threshold = std::numeric_limits<int>::max();
 
-  if (argc == 2)
-    n_kdnodes = std::atoi(argv[1]);
-
   if (argc == 3)
+    n_kdnodes = std::atoi(argv[2]);
+
+  if (argc == 4)
   {
-    n_kdnodes = std::atoi(argv[1]);
-    threshold = std::atoi(argv[2]);
+    n_kdnodes = std::atoi(argv[2]);
+    threshold = std::atoi(argv[3]);
   }
 
-  if (argc > 3)
-    CNR_WARN(logger, cnr_logger::RESET() << cnr_logger::BOLDYELLOW() << "Number of inputs to the program should be 3");
+  if (argc > 4)
+    CNR_WARN(logger, cnr_logger::RESET() << cnr_logger::BOLDYELLOW() << "Number of inputs to the program should be <=3");
 
   graph::core::KdTreePtr kdtree = std::make_shared<graph::core::KdTree>(logger);
   kdtree->deletedNodesThreshold(threshold);

@@ -9,7 +9,11 @@ int main(int argc, char** argv)
   // Load the logger's configuration
   std::string path_to_config_folder = std::string(TEST_DIR);
   std::string logger_file = path_to_config_folder + "/logger_param.yaml";
-  cnr_logger::TraceLoggerPtr logger = std::make_shared<cnr_logger::TraceLogger>("graph_core_tests_logger", logger_file);
+
+  if (argc > 1)
+    logger_file = path_to_config_folder + "/" + std::string(argv[1]);  // or take it from argument
+
+  cnr_logger::TraceLoggerPtr logger = std::make_shared<cnr_logger::TraceLogger>("compute_path_test", logger_file);
 
   // Load params
   std::string command =
@@ -34,7 +38,7 @@ int main(int argc, char** argv)
                          default_min_cc_distance);  // wrapper to cnr_param functions
 
   double abs_joint_threshold;  // parameter specific for this foo collision checker: if a joint absolute value is less
-                               // than this threshold, the configuration is considered not valid
+  // than this threshold, the configuration is considered not valid
   double default_abs_joint_threshold = 1.0;
   graph::core::get_param(logger, param_ns, "abs_joint_threshold", abs_joint_threshold, default_abs_joint_threshold);
 

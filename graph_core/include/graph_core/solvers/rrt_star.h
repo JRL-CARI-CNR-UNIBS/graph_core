@@ -40,7 +40,7 @@ class RRTStar : public RRT
 protected:
   /**
    * @brief The rewiring factor, r_rrt = rewire_factor_ \times r_rrt* > r_rrt*
-  */
+   */
   double rewire_factor_ = 1.1;
 
   /**

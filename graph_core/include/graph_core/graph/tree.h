@@ -203,6 +203,7 @@ protected:
    */
   void populateTreeFromNodeConsideringCost(const NodePtr& node, const Eigen::VectorXd& goal, const double& cost,
                                            const std::vector<NodePtr>& black_list, const bool node_check = false);
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

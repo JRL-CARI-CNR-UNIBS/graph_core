@@ -111,10 +111,6 @@ endif()
 install(DIRECTORY include/${PROJECT_NAME}
     DESTINATION include)
 
-# Install files
-install(FILES tests/logger_param.yaml
-    DESTINATION "share/${PROJECT_NAME}/tests")
-
 # Install targets
 install(
     TARGETS ${PROJECT_NAME}
