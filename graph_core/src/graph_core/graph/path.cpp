@@ -1488,7 +1488,7 @@ PathPtr Path::fromYAML(const YAML::Node& yaml, const MetricsPtr& metrics, const 
     nodes.push_back(node);
   }
 
-  CNR_WARN(logger, "Path created from yaml but no tree is available, remember to add it!");
+  CNR_DEBUG(logger, "Path created from yaml but no tree is available, remember to add it!");
 
   return std::make_shared<Path>(nodes, metrics, checker, logger);
 }
