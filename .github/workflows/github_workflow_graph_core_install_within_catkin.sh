@@ -1,27 +1,24 @@
 #!/bin/bash
 
-export CATKIN_WS="~/graph_core_catkin_ws"
-export GRAPH_CORE_REPO="https://github.com/JRL-CARI-CNR-UNIBS/graph_core.git"
+mkdir graph_core_ws
+cd graph_core_ws
+export PATH_TO_WS="$(pwd)"
 
-# Create Catkin workspace
-echo "Setting up Catkin workspace at $CATKIN_WS..."
-mkdir -p $CATKIN_WS/src
-cd $CATKIN_WS
-catkin config --install
+echo "PATH_TO_WS=$PATH_TO_WS"
+echo "Workspace Path: $PATH_TO_WS"
 
-# Clone the graph_core repository
-if [ ! -d "$CATKIN_WS/src/graph_core" ]; then
-  echo "Cloning graph_core repository..."
-  cd $CATKIN_WS/src
-  git clone $GRAPH_CORE_REPO
-fi
+# Clone graph_core
+mkdir -p "$PATH_TO_WS"/src
+cd "$PATH_TO_WS"/src
+git clone https://github.com/JRL-CARI-CNR-UNIBS/graph_core.git
 
 # Build the workspace
 echo "Building the workspace..."
-cd $CATKIN_WS
+cd $PATH_TO_WS
+catkin config --install
 catkin build -cs --verbose
 
 # Source the setup script
-source $CATKIN_WS/install/setup.bash
+source $PATH_TO_WS/install/setup.bash
 
 echo "graph_core installation completed successfully!"
