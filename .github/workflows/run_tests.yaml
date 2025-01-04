@@ -2,7 +2,7 @@ name: run-tests
 
 on:
   workflow_run:
-    workflows: ["build"] # Name of the previous workflow
+    workflows: ["build"]
     types:
       - completed
 
@@ -14,6 +14,13 @@ jobs:
         os: [ubuntu-20.04, ubuntu-22.04, ubuntu-latest]
 
     steps:
+      - name: Check branch (debug)
+        run: echo "Branch: ${{ github.event.workflow_run.head_branch }}"
+      
+      - name: Skip tests if not on pull-req or master
+        if: ${{ !contains(['master', 'devel', 'pull_req'], github.event.workflow_run.head_branch) }}
+        run: echo "Skipping workflow for branch ${{ github.event.workflow_run.head_branch }}"
+
       - name: Checkout repository
         uses: actions/checkout@v3
 
