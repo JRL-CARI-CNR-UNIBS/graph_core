@@ -29,5 +29,6 @@ jobs:
 
       - name: Run GTESTS
         run: |
+          export CNR_PARAM_ROOT_DIRECTORY="/tmp/cnr_param"
           cd ${{ env.PATH_TO_WS }}/install/bin/graph_core/tests/src
           ./run_all_tests logger_param.yaml
