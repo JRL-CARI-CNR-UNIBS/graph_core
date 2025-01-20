@@ -3,7 +3,7 @@
 # Directory base del progetto (una directory sopra lo script)
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
-echo "Checking for clang-format..."
+echo "Checking for clang-format in $PROJECT_DIR..."
 
 if ! command -v clang-format > /dev/null 2>&1; then
     echo "clang-format not found, skipping format target"
