@@ -12,9 +12,9 @@ SRC_DIR=$WORKSPACE_DIR/src
 # Create the workspace and source folder
 echo "Setting up Catkin workspace at $WORKSPACE_DIR"
 mkdir -p $SRC_DIR
-cd $WORKSPACE_DIR
 
 # Clone graph_core into the src folder if not already present
+cd $WORKSPACE_DIR
 if [ ! -d "$SRC_DIR/graph_core" ]; then
     echo "Cloning graph_core repository into $SRC_DIR"
     git clone https://github.com/JRL-CARI-CNR-UNIBS/graph_core.git $SRC_DIR/graph_core
@@ -25,12 +25,14 @@ cd $SRC_DIR
 vcs import < graph_core/deps.repos
 
 # Check for missing catkin package
+cd $WORKSPACE_DIR
 if [ ! -d "$SRC_DIR/catkin" ]; then
     echo "Cloning catkin package into $SRC_DIR"
     git clone https://github.com/ros/catkin.git $SRC_DIR/catkin
 fi
 
 # Build the workspace
+cd $WORKSPACE_DIR
 echo "Building the Catkin workspace"
 catkin config --extend /opt/ros/noetic
 catkin build --cmake-args -DUSE_ROS1=OFF
