@@ -61,15 +61,15 @@ jobs:
 
           cd "$PATH_TO_WS"
           mkdir -p build/cnr_logger
-          cmake -S cnr_common/cnr_logger -B build/cnr_logger -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install
+          cmake -S cnr_common/cnr_logger -B build/cnr_logger -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install -DUSE_ROS1=OFF -DCOMPILE_EXAMPLE=OFF -DENABLE_TESTING=OFF-DENABLE_COVERAGE_TESTING=OFF
           make -C build/cnr_logger install
 
           mkdir -p build/cnr_yaml
-          cmake -S cnr_common/cnr_yaml -B build/cnr_yaml -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install
+          cmake -S cnr_common/cnr_yaml -B build/cnr_yaml -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install -DBUILD_UNIT_TESTS=OFF
           make -C build/cnr_yaml install
 
           mkdir -p build/cnr_param
-          cmake -S cnr_common/cnr_param -B build/cnr_param -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install
+          cmake -S cnr_common/cnr_param -B build/cnr_param -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install -DCOMPILE_MAPPED_FILE_MODULE=ON -DBUILD_UNIT_TESTS=OFF -DBUILD_INTEGRATION_TESTS=OFF -DRETRIVE_DEPENDENCIES=OFF -DBUILD_INTEGRATION_TESTS=OFF -DBUILD_AS_A_CATKIN_PACKAGE=OFF
           make -C build/cnr_param install
 
           mkdir -p build/cnr_class_loader
