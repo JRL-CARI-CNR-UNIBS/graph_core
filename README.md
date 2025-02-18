@@ -39,7 +39,7 @@ sudo apt -y install libboost-all-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev 
 ```
 
 To simplify installation and dependency resolution, `graph_core` uses [CPM](https://github.com/cpm-cmake/CPM.cmake) to automatically download and integrate the required GitHub packages (`cnr_logger`, `cnr_yaml`, `cnr_param`, `cnr_class_loader`) into your build process.
-If you'd prefer to install the dependencies manually instead of relying on CPM, you can refer to the [cnr_common](https://github.com/JRL-CARI-CNR-UNIBS/cnr_common) page. In that case, `graph_core` will automatically detect and use the manually installed versions of the dependencies.
+If you'd prefer to install the dependencies manually instead of relying on CPM, you can refer to the [cnr_common](https://github.com/JRL-CARI-CNR-UNIBS/cnr_common) page, or use [vcstool](https://github.com/dirk-thomas/vcstool) with the [`deps.repos` file](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/deps.repos). In these cases, `graph_core` will automatically detect and link against the manually installed dependencies. Manual installation is recommended if other packages in your environment also depend on any of `graph_core`'s dependencies, ensuring consistency and avoiding redundant installations.
 
 ## Installation 
 Follow these steps to compile and install `graph_core` using CMake.

@@ -20,17 +20,11 @@ if [ ! -d "$SRC_DIR/graph_core" ]; then
     git clone https://github.com/JRL-CARI-CNR-UNIBS/graph_core.git $SRC_DIR/graph_core
 fi
 
-# Check for missing catkin package
-if [ ! -d "$SRC_DIR/catkin" ]; then
-    echo "Cloning catkin package into $SRC_DIR"
-    git clone https://github.com/ros/catkin.git $SRC_DIR/catkin
-fi
-
 # Build the workspace
 echo "Building the Catkin workspace"
 catkin config --extend /opt/ros/noetic
-catkin build
+catkin build -cs --cmake-args -DUSE_ROS1=OFF
 
 # Source the workspace setup
 echo "Sourcing workspace setup"
-source $WORKSPACE_DIR/devel/setup.bash
+source $WORKSPACE_DIR/install/setup.bash

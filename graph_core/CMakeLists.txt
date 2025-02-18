@@ -10,7 +10,7 @@ endif()
 # Compiler flags
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     if(CMAKE_BUILD_TYPE MATCHES "Release")
-        add_compile_options(-funroll-loops -Wall -Ofast -flto -O3) #-O3
+        add_compile_options(-funroll-loops -Wall -Ofast -flto -O3)
     endif()
     if(CMAKE_BUILD_TYPE MATCHES "Debug")
         add_compile_options(-Wall -g -Og)
