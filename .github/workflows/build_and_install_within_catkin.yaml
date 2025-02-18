@@ -53,6 +53,7 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
           path: '$SRC_DIR/graph_core'
 
       - name: Build & Install graph_core in Catkin Workspace
