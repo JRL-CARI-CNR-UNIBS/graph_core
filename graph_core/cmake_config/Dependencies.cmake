@@ -1,3 +1,10 @@
+# CMake policies
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+  cmake_policy(SET CMP0148 NEW)
+endif()
+
+# Deps
 find_package(Eigen3 REQUIRED COMPONENTS Core Dense Geometry)
 
 file(

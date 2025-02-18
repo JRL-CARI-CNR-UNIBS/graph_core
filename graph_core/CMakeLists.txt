@@ -24,12 +24,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(ADD_CUSTOM_UNINSTALL "Add uninstall target" ON)
 option(BUILD_TESTS "Build the test executables" ON)
 
-# CMake policies
-if(POLICY CMP0167)
-  cmake_policy(SET CMP0167 NEW)
-  cmake_policy(SET CMP0148 NEW)
-endif()
-
 # Dependencies
 include(cmake_config/Dependencies.cmake)
 
@@ -154,11 +148,6 @@ install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
     DESTINATION "share/${PROJECT_NAME}/cmake"
 )
-
-# Ensure cnr_yaml cmake_alternative is copied during installation
-if(CLONE_CNR_YAML_CMAKE_ALTERNATIVE)
-    include(cmake_config/FixInstallationPath.cmake)
-endif()
 
 # Custom uninstall target
 if(ADD_CUSTOM_UNINSTALL)
