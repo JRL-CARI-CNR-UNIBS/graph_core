@@ -52,4 +52,4 @@ jobs:
           path: '$SRC_DIR/graph_core'
 
       - name: Build & Install graph_core in Catkin Workspace
-        run: catkin build -cs --cmake-args -DUSE_ROS1=OFF
+        run: cd $WORKSPACE_DIR && catkin build -cs
