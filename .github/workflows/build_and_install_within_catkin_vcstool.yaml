@@ -55,6 +55,7 @@ jobs:
         shell: bash
         run: |
           cd $SRC_DIR
+          ls -la
           vcs import < graph_core/deps.repos
 
       - name: Build & Install graph_core in Catkin Workspace
