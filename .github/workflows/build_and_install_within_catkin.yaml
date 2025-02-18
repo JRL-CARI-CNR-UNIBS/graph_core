@@ -33,23 +33,23 @@ jobs:
           source /opt/ros/noetic/setup.bash
 
           WORKSPACE_DIR=$(pwd)/graph_core_ws
-          SRC_DIR=$WORKSPACE_DIR/src
 
           echo "WORKSPACE_DIR=$(pwd)/graph_core_ws" >> "$GITHUB_ENV"
-          echo "SRC_DIR=$WORKSPACE_DIR/src" >> "$GITHUB_ENV"
 
           echo "Setting up Catkin workspace at $WORKSPACE_DIR"
-          mkdir -p $SRC_DIR
+          mkdir -p $WORKSPACE_DIR/src
           cd $WORKSPACE_DIR
 
           catkin init
           catkin config --extend /opt/ros/noetic
           catkin config --install
 
+          ls -la
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          path: '$SRC_DIR/graph_core'
+          path: $WORKSPACE_DIR/src/graph_core
 
       - name: Build & Install graph_core in Catkin Workspace
         shell: bash
