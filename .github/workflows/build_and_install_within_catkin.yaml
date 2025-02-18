@@ -22,7 +22,6 @@ jobs:
 
     steps:
       - name: Setup ROS Environment
-        shell: bash
         run: |
           echo "Setting up ROS environment"
           source /opt/ros/noetic/setup.bash
@@ -30,13 +29,11 @@ jobs:
           sudo apt install -y python3-catkin-tools
 
       - name: Install dependencies
-        shell: bash
         run: |
           sudo apt update
           sudo apt install -y git libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
 
       - name: Setup Catkin Workspace
-        shell: bash
         run: |
           echo "Sourcing ROS Noetic"
           source /opt/ros/noetic/setup.bash
@@ -56,8 +53,7 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v4
-          repository: 'JRL-CARI-CNR-UNIBS/graph_core'
-          path: '$SRC_DIRC/graph_core'
+          path: '$SRC_DIR/graph_core'
 
       - name: Build & Install
         run: |
