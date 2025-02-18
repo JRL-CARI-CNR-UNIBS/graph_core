@@ -54,7 +54,7 @@ jobs:
       - name: Download deps with vcstool
         shell: bash
         run: |
-          cd ${{env.WORKSPACE_DIR }}
+          cd ${{env.WORKSPACE_DIR }}/src
           vcs import < graph_core/deps.repos
 
       - name: Build & Install graph_core in Catkin Workspace
