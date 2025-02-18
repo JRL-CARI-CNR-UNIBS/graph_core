@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y python3-catkin-tools libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
+          sudo apt install -y python3-catkin-tools libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev python3-vcstools
 
       - name: Setup Catkin Workspace
         shell: bash
@@ -50,6 +50,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: '$SRC_DIR/graph_core'
+
+      - name: Download deps with vcstool
+        shell: bash
+        run: |
+          cd $SRC_DIR
+          vcs import < graph_core/deps.repos
 
       - name: Build & Install graph_core in Catkin Workspace
         shell: bash
