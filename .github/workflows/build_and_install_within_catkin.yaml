@@ -34,6 +34,7 @@ jobs:
           sudo apt install -y git libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
 
       - name: Setup Catkin Workspace
+        shell: bash
         run: |
           echo "Sourcing ROS Noetic"
           source /opt/ros/noetic/setup.bash
