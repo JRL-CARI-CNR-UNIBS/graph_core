@@ -1,4 +1,4 @@
-name: build-within-catkin
+name: build-within-catkin-vcstool
 
 on:
   push:
