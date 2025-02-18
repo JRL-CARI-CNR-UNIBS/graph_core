@@ -31,7 +31,7 @@ jobs:
           sudo apt update
           sudo apt install -y libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
 
-      - name: Setup workspace
+      - name: Build & Install
         run: |
           mkdir -p src
           mkdir -p build
@@ -39,6 +39,7 @@ jobs:
           export PATH_TO_WS="$(pwd)"
 
           echo "Workspace Path: $PATH_TO_WS"
+          ls -la
 
           export PATH="$PATH_TO_WS/install/bin:$PATH"
           export LD_LIBRARY_PATH="$PATH_TO_WS/install/lib"
@@ -47,11 +48,7 @@ jobs:
           echo "PATH: $PATH"
           echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
           echo "CMAKE_PREFIX_PATH: $CMAKE_PREFIX_PATH"
-
-      - name: Build & Install
-        run: |
-          cd $PATH_TO_WS
-          ls -la
+          
           mkdir -p build/graph_core
           cmake -S . -B build/graph_core -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install
           make -C build/graph_core install
