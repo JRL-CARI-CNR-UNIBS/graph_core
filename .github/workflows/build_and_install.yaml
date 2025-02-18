@@ -48,7 +48,7 @@ jobs:
           echo "PATH: $PATH"
           echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
           echo "CMAKE_PREFIX_PATH: $CMAKE_PREFIX_PATH"
-          
+
           mkdir -p build/graph_core
-          cmake -S . -B build/graph_core -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install
+          cmake -S graph_core -B build/graph_core -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install
           make -C build/graph_core install
