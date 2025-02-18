@@ -54,9 +54,6 @@ jobs:
       - name: Build & Install graph_core in Catkin Workspace
         shell: bash
         run: |
-          cd $WORKSPACE_DIR
-          ls -la
-          cd src
-          ls -la
+          cd ${{env.WORKSPACE_DIR }}
           catkin build -cs
           source install/setup.bash
