@@ -21,22 +21,15 @@ jobs:
       image: ros:noetic
 
     steps:
-      - name: Setup ROS Environment
-        run: |
-          echo "Setting up ROS environment"
-          source /opt/ros/noetic/setup.bash
-          sudo apt update
-          sudo apt install -y python3-catkin-tools
-
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y git libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
+          sudo apt install -y python3-catkin-tools libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
 
       - name: Setup Catkin Workspace
         shell: bash
         run: |
-          echo "Sourcing ROS Noetic"
+          echo "Setting up ROS environment"
           source /opt/ros/noetic/setup.bash
 
           WORKSPACE_DIR=$(pwd)/graph_core_ws
@@ -49,6 +42,7 @@ jobs:
           mkdir -p $SRC_DIR
           cd $WORKSPACE_DIR
 
+          catkin init
           catkin config --extend /opt/ros/noetic
           catkin config --install
 
