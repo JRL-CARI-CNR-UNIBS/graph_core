@@ -31,7 +31,7 @@ jobs:
           sudo apt update
           sudo apt install -y libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
 
-      - name: Build & Install graph_core
+      - name: Setup workspace
         run: |
           mkdir -p src
           mkdir -p build
@@ -48,6 +48,10 @@ jobs:
           echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
           echo "CMAKE_PREFIX_PATH: $CMAKE_PREFIX_PATH"
 
+      - name: Build & Install
+        run: |
+          cd $PATH_TO_WS
+          ls -la
           mkdir -p build/graph_core
-          cmake -B build/graph_core -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install
+          cmake -S . -B build/graph_core -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install
           make -C build/graph_core install
