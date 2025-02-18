@@ -44,8 +44,6 @@ If you'd prefer to install the dependencies manually instead of relying on CPM, 
 ## Installation 
 Follow these steps to compile and install `graph_core` using CMake.
 
-Note: If you want to automatically install dependencies using CPM and have ROS1 installed on your system, it is recommended not to source ROS1 before building `graph_core`. This avoids potential conflicts between `graph_core` dependencies installed via CPM and catkin.
-
 1. Set the workspace directory path:
     ```bash
     export PATH_TO_WS=path_to_your_ws
@@ -72,8 +70,6 @@ if [[ ":$CMAKE_PREFIX_PATH:" != *":${PATH_TO_GRAPH_CORE_WS}/install:"* ]]; then
 fi
 ``` 
 
-These settings are necessary to make the installed libraries visible. 
-
 ## Installing within a Catkin workspace
 To build `graph_core` within a Catkin workspace, ensure you have set `catkin config --install`. You do not need to export the paths as shown above, but you need to source the `install/setup.bash` file.
 
@@ -82,7 +78,7 @@ In your `~/.bashrc`, add `source path_to_your_catkin_ws/install/setup.bash`.
 **Note**: If you installed `graph_core` dependencies automatically via CPM and another package in your workspace requires one of those dependencies (e.g., `cnr_param`) but not `graph_core`, you have two options:
 
 - Option 1 [Recommended]: Build and install `graph_core` (and its dependencies) in a non-catkin workspace, then build other packages in a secondary (cascade) catkin workspace.
-- Option 2: Download `graph_core` and its dependencies in a catkin workspace (e.g., using vcstool and the .repos file), build using `catkin build --camke-args -DUSE_ROS1=OFF`, and source it.
+- Option 2: Download `graph_core` and its dependencies in a catkin workspace (e.g., using vcstool and the .repos file), build using `catkin build`, and source it.
 
 ## Final configuration
 The `cnr_param` library requires a directory to store its parameters. You can set this directory by adding the following line to your `~/.bashrc` file:
