@@ -33,7 +33,6 @@ jobs:
 
       - name: Build & Install cnr_common
         run: |
-          mkdir -p src
           mkdir -p build
           mkdir -p install
 
@@ -61,9 +60,21 @@ jobs:
           . update_submodules.sh
 
           cd "$PATH_TO_WS"
-          cp cnr_common/build_template.sh build.sh
-          chmod +x build.sh
-          . build.sh
+          mkdir -p build/cnr_logger
+          cmake -S cnr_logger -B build/cnr_logger -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install
+          make -C build/cnr_logger install
+
+          mkdir -p build/cnr_yaml
+          cmake -S cnr_yaml -B build/cnr_yaml -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install
+          make -C build/cnr_yaml install
+
+          mkdir -p build/cnr_param
+          cmake -S cnr_param -B build/cnr_param -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install
+          make -C build/cnr_param install
+
+          mkdir -p build/cnr_class_loader
+          cmake -S cnr_class_loader -B build/cnr_class_loader -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install
+          make -C build/cnr_class_loader install
 
       - name: Build & Install graph_core
         run: |
