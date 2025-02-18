@@ -1,0 +1,68 @@
+name: build-within-catkin
+
+on:
+  push:
+    branches:
+      - master
+      - devel
+      - pull_req
+  pull_request:
+    branches:
+      - master
+      - devel
+      - pull_req
+  schedule:
+    - cron: '0 8 * * *'
+
+jobs:
+  install-and-run-within-catkin:
+    runs-on: ubuntu-20.04
+    container:
+      image: ros:noetic
+
+    steps:
+      - name: Setup ROS Environment
+        shell: bash
+        run: |
+          echo "Setting up ROS environment"
+          source /opt/ros/noetic/setup.bash
+          sudo apt update
+          sudo apt install -y python3-catkin-tools
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          sudo apt update
+          sudo apt install -y git libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
+
+      - name: Setup Catkin Workspace
+        shell: bash
+        run: |
+          echo "Sourcing ROS Noetic"
+          source /opt/ros/noetic/setup.bash
+
+          WORKSPACE_DIR=$(pwd)/graph_core_ws
+          SRC_DIR=$WORKSPACE_DIR/src
+
+          echo "WORKSPACE_DIR=$(pwd)/graph_core_ws" >> "$GITHUB_ENV"
+          echo "SRC_DIR=$WORKSPACE_DIR/src" >> "$GITHUB_ENV"
+
+          echo "Setting up Catkin workspace at $WORKSPACE_DIR"
+          mkdir -p $SRC_DIR
+          cd $WORKSPACE_DIR
+
+          catkin config --extend /opt/ros/noetic
+          catkin config --install
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+          repository: 'JRL-CARI-CNR-UNIBS/graph_core'
+          path: '$SRC_DIRC/graph_core'
+
+      - name: Build & Install
+        run: |
+            echo "Building the Catkin workspace"
+            catkin build -cs --cmake-args -DUSE_ROS1=OFF
+
+      
+
