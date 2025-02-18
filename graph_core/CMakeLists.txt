@@ -24,6 +24,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(ADD_CUSTOM_UNINSTALL "Add uninstall target" ON)
 option(BUILD_TESTS "Build the test executables" ON)
 
+# CMake policies
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+  cmake_policy(SET CMP0148 NEW)
+endif()
+
 # Dependencies
 include(cmake_config/Dependencies.cmake)
 
