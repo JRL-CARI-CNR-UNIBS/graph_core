@@ -1,0 +1,56 @@
+name: run-tests
+
+on:
+  workflow_run:
+    workflows: ["build"] # Name of the previous workflow
+    types:
+      - completed
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
+
+      - name: Build & Install
+        run: |
+          mkdir -p build
+          mkdir -p install
+
+          export PATH_TO_WS="$(pwd)"
+          echo "PATH_TO_WS=$PATH_TO_WS" >> "$GITHUB_ENV"
+
+          echo "Workspace Path: $PATH_TO_WS"
+          ls -la
+
+          export PATH="$PATH_TO_WS/install/bin:$PATH"
+          export LD_LIBRARY_PATH="$PATH_TO_WS/install/lib"
+          export CMAKE_PREFIX_PATH="$PATH_TO_WS/install"
+
+          echo "PATH=$PATH_TO_WS/install/bin:$PATH" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$PATH_TO_WS/install/lib" >> "$GITHUB_ENV"
+          echo "CMAKE_PREFIX_PATH=$PATH_TO_WS/install" >> "$GITHUB_ENV"
+
+          echo "PATH: $PATH"
+          echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
+          echo "CMAKE_PREFIX_PATH: $CMAKE_PREFIX_PATH"
+
+          mkdir -p build/graph_core
+          cmake -S graph_core -B build/graph_core -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install
+          make -C build/graph_core install
+
+      - name: Run GTESTS
+        run: |
+          export CNR_PARAM_ROOT_DIRECTORY="/tmp/cnr_param"
+          cd ${{ env.PATH_TO_WS }}/install/bin/graph_core/tests/src
+          ./run_all_tests logger_param.yaml
