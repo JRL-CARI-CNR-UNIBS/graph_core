@@ -49,7 +49,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          path: $WORKSPACE_DIR/src/graph_core
+          path: "${{env.WORKSPACE_DIR }}/src/graph_core"
 
       - name: Download deps with vcstool
         shell: bash
