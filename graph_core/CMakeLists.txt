@@ -10,7 +10,7 @@ endif()
 # Compiler flags
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     if(CMAKE_BUILD_TYPE MATCHES "Release")
-        add_compile_options(-funroll-loops -Wall -Ofast -flto -O3) #-O3
+        add_compile_options(-funroll-loops -Wall -Ofast -flto -O3)
     endif()
     if(CMAKE_BUILD_TYPE MATCHES "Debug")
         add_compile_options(-Wall -g -Og)
@@ -148,11 +148,6 @@ install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
     DESTINATION "share/${PROJECT_NAME}/cmake"
 )
-
-# Ensure cnr_yaml cmake_alternative is copied during installation
-if(CLONE_CNR_YAML_CMAKE_ALTERNATIVE)
-    include(cmake_config/FixInstallationPath.cmake)
-endif()
 
 # Custom uninstall target
 if(ADD_CUSTOM_UNINSTALL)

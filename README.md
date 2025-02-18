@@ -39,7 +39,7 @@ sudo apt -y install libboost-all-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev 
 ```
 
 To simplify installation and dependency resolution, `graph_core` uses [CPM](https://github.com/cpm-cmake/CPM.cmake) to automatically download and integrate the required GitHub packages (`cnr_logger`, `cnr_yaml`, `cnr_param`, `cnr_class_loader`) into your build process.
-If you'd prefer to install the dependencies manually instead of relying on CPM, you can refer to the [cnr_common](https://github.com/JRL-CARI-CNR-UNIBS/cnr_common) page. In that case, `graph_core` will automatically detect and use the manually installed versions of the dependencies.
+If you'd prefer to install the dependencies manually instead of relying on CPM, you can refer to the [cnr_common](https://github.com/JRL-CARI-CNR-UNIBS/cnr_common) page, or use [vcstool](https://github.com/dirk-thomas/vcstool) with the [`deps.repos` file](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/deps.repos). In these cases, `graph_core` will automatically detect and link against the manually installed dependencies. Manual installation is recommended if other packages in your environment also depend on any of `graph_core`'s dependencies, ensuring consistency and avoiding redundant installations.
 
 ## Installation 
 Follow these steps to compile and install `graph_core` using CMake.
@@ -75,14 +75,14 @@ fi
 These settings are necessary to make the installed libraries visible. 
 
 ## Installing within a Catkin workspace
-`graph_core` can also be built within a Catkin workspace. Ensure you have set `catkin config --install`. In this case, you do not need to export the paths as shown above, but you need to source the `install/setup.bash` file.
+To build `graph_core` within a Catkin workspace, ensure you have set `catkin config --install`. You do not need to export the paths as shown above, but you need to source the `install/setup.bash` file.
 
 In your `~/.bashrc`, add `source path_to_your_catkin_ws/install/setup.bash`.
 
 **Note**: If you installed `graph_core` dependencies automatically via CPM and another package in your workspace requires one of those dependencies (e.g., `cnr_param`) but not `graph_core`, you have two options:
 
-- Option 1 [Recommended]: Build and install `graph_core` (and its dependencies) in one workspace, source it, and then build other packages in a secondary (cascade) workspace.
-- Option 2: Build everything in the same workspace. Be aware that you may need to build twice. Some packages might fail in the first build but succeed in the second, once dependencies are resolved.
+- Option 1 [Recommended]: Build and install `graph_core` (and its dependencies) in a non-catkin workspace, then build other packages in a secondary (cascade) catkin workspace.
+- Option 2: Download `graph_core` and its dependencies in a catkin workspace (e.g., using vcstool and the .repos file), build using `catkin build --camke-args -DUSE_ROS1=OFF`, and source it.
 
 ## Final configuration
 The `cnr_param` library requires a directory to store its parameters. You can set this directory by adding the following line to your `~/.bashrc` file:
@@ -90,5 +90,3 @@ The `cnr_param` library requires a directory to store its parameters. You can se
 ```bash
 export CNR_PARAM_ROOT_DIRECTORY="/tmp/cnr_param"
 ```
-
-<!-- However, `graph_core` can also be compiled in both ROS1 and ROS2 workspaces. For a ROS1 workspace, ensure you have set `catkin config --install`. In this case, you do not need to export the paths as shown above. -->

@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
@@ -33,10 +33,51 @@ jobs:
 
       - name: Build & Install cnr_common
         run: |
-          chmod +x .github/workflows/github_workflow_cnr_common_install.sh 
-          .github/workflows/github_workflow_cnr_common_install.sh
+          mkdir -p build
+          mkdir -p install
+
+          export PATH_TO_WS="$(pwd)"
+          echo "PATH_TO_WS=$PATH_TO_WS" >> $GITHUB_ENV
+          echo "Workspace Path: $PATH_TO_WS"
+          ls -la
+
+          export PATH="$PATH_TO_WS/install/bin:$PATH"
+          export LD_LIBRARY_PATH="$PATH_TO_WS/install/lib"
+          export CMAKE_PREFIX_PATH="$PATH_TO_WS/install"
+
+          echo "PATH=$PATH_TO_WS/install/bin:$PATH" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$PATH_TO_WS/install/lib" >> "$GITHUB_ENV"
+          echo "CMAKE_PREFIX_PATH=$PATH_TO_WS/install" >> "$GITHUB_ENV"
+
+          echo "PATH: $PATH"
+          echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
+          echo "CMAKE_PREFIX_PATH: $CMAKE_PREFIX_PATH"
+
+          git clone --recurse-submodules https://github.com/JRL-CARI-CNR-UNIBS/cnr_common.git
+
+          cd cnr_common
+          git submodule update --init --recursive
+          . update_submodules.sh
+
+          cd "$PATH_TO_WS"
+          mkdir -p build/cnr_logger
+          cmake -S cnr_common/cnr_logger -B build/cnr_logger -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install -DUSE_ROS1=OFF -DCOMPILE_EXAMPLE=OFF -DENABLE_TESTING=OFF-DENABLE_COVERAGE_TESTING=OFF
+          make -C build/cnr_logger install
+
+          mkdir -p build/cnr_yaml
+          cmake -S cnr_common/cnr_yaml -B build/cnr_yaml -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install -DBUILD_UNIT_TESTS=OFF
+          make -C build/cnr_yaml install
+
+          mkdir -p build/cnr_param
+          cmake -S cnr_common/cnr_param -B build/cnr_param -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install -DCOMPILE_MAPPED_FILE_MODULE=ON -DBUILD_UNIT_TESTS=OFF -DBUILD_INTEGRATION_TESTS=OFF -DRETRIVE_DEPENDENCIES=OFF -DBUILD_INTEGRATION_TESTS=OFF -DBUILD_AS_A_CATKIN_PACKAGE=OFF
+          make -C build/cnr_param install
+
+          mkdir -p build/cnr_class_loader
+          cmake -S cnr_common/cnr_class_loader -B build/cnr_class_loader -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install
+          make -C build/cnr_class_loader install
 
       - name: Build & Install graph_core
         run: |
-          chmod +x .github/workflows/github_workflow_graph_core_install.sh 
-          .github/workflows/github_workflow_graph_core_install.sh
+          mkdir -p build/graph_core
+          cmake -S graph_core -B build/graph_core -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install
+          make -C build/graph_core install

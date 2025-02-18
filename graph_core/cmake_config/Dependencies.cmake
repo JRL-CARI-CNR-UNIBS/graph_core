@@ -1,3 +1,10 @@
+# CMake policies
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+  cmake_policy(SET CMP0148 NEW)
+endif()
+
+# Deps
 find_package(Eigen3 REQUIRED COMPONENTS Core Dense Geometry)
 
 file(
@@ -16,14 +23,15 @@ CPMFindPackage(
   GIT_TAG master
   OPTIONS 
     "USE_ROS1 OFF"
+    "ENABLE_TESTING OFF"
+    "ENABLE_COVERAGE_TESTING OFF"
+    "COMPILE_EXAMPLE OFF"
 )
 
 message("\n-----------------------------------------------\n")
 
 # If cnr_param is not already installed on the system, install cnr_yaml before cnr_param.
-# cnr_yaml could be already installed or missing. If it is missing and ROS1 is sourced,
-# fix the installation path of cnr_yaml from install/share/cnr_yaml/cmake_alternative to
-# install/share/cnr_yaml/cmake (see cnr_yaml cmake configuration files).
+# cnr_yaml could be already installed or missing.
 
 string(ASCII 27 Esc)
 set(RESET "${Esc}[m")
@@ -44,16 +52,6 @@ if(NOT cnr_param_FOUND)
       OPTIONS
         "BUILD_UNIT_TESTS OFF"
     )
-
-    # Attempt to detect Catkin
-    find_package(catkin QUIET)
-    if(catkin_FOUND)
-      message(STATUS "${BLUE}Catkin found.${RESET}")
-      set(CLONE_CNR_YAML_CMAKE_ALTERNATIVE ON)
-    else()
-      message(STATUS "${BLUE}Catkin not found.${RESET}")
-    endif()
-    message(STATUS "${BLUE}CLONE_CNR_YAML_CMAKE_ALTERNATIVE=${CLONE_CNR_YAML_CMAKE_ALTERNATIVE}${RESET}")
   endif()
 endif()
 
@@ -65,8 +63,11 @@ CPMFindPackage(
   GIT_TAG master
   OPTIONS  
     "COMPILE_MAPPED_FILE_MODULE ON"
-    "BUILD_UNBUILD_UNIT_TESTS OFF"
+    "BUILD_UNIT_TESTS OFF"
     "BUILD_INTEGRATION_TESTS OFF"
+    "RETRIVE_DEPENDENCIES OFF"
+    "BUILD_INTEGRATION_TESTS OFF"
+    "BUILD_AS_A_CATKIN_PACKAGE OFF"
 )
 
 message("\n-----------------------------------------------\n")
