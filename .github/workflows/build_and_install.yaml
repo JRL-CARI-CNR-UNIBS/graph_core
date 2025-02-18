@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
@@ -33,5 +33,21 @@ jobs:
 
       - name: Build & Install graph_core
         run: |
-          chmod +x .github/workflows/github_workflow_graph_core_install.sh 
-          .github/workflows/github_workflow_graph_core_install.sh
+          mkdir -p src
+          mkdir -p build
+          mkdir -p install
+          export PATH_TO_WS="$(pwd)"
+
+          echo "Workspace Path: $PATH_TO_WS"
+
+          export PATH="$PATH_TO_WS/install/bin:$PATH"
+          export LD_LIBRARY_PATH="$PATH_TO_WS/install/lib"
+          export CMAKE_PREFIX_PATH="$PATH_TO_WS/install"
+
+          echo "PATH: $PATH"
+          echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
+          echo "CMAKE_PREFIX_PATH: $CMAKE_PREFIX_PATH"
+
+          mkdir -p build/graph_core
+          cmake -B build/graph_core -DCMAKE_INSTALL_PREFIX=$PATH_TO_WS/install
+          make -C build/graph_core install
