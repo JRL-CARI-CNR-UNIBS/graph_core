@@ -145,7 +145,7 @@ Eigen::VectorXd Path::pointOnCurvilinearAbscissa(const double& abscissa, Connect
 
       connection = conn;
       return conn->getParent()->getConfiguration() +
-          ratio * (conn->getChild()->getConfiguration() - conn->getParent()->getConfiguration());
+             ratio * (conn->getChild()->getConfiguration() - conn->getParent()->getConfiguration());
     }
     euclidean_norm += conn->norm();
   }
@@ -349,8 +349,8 @@ void Path::setConnections(const std::vector<ConnectionPtr>& conn)
                   "parent of a connection is different from the child "
                   "of the previous connection!");
         throw std::runtime_error(
-              "parent of a connection is different from the "
-              "child of the previous connection!");
+            "parent of a connection is different from the "
+            "child of the previous connection!");
       }
     }
     child = connection->getChild();
@@ -376,8 +376,8 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, size_t&
   // overlapping connections
   std::vector<NodePtr> nodes = getNodes();
   std::vector<NodePtr>::iterator it = std::find_if(nodes.begin(), nodes.end(), [&](NodePtr& n) -> bool {
-      return (configuration - n->getConfiguration()).norm() <= TOLERANCE;
-});
+    return (configuration - n->getConfiguration()).norm() <= TOLERANCE;
+  });
 
   if (it < nodes.end())
   {
@@ -502,8 +502,8 @@ Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::V
 
     if (verbose)
       CNR_INFO(logger_, "dist from past projection " << (candidate_projection - past_projection).norm() << " s "
-               << candidate_abscissa << " ds " << ds << " distance "
-               << candidate_distance << " min distance " << min_distance);
+                                                     << candidate_abscissa << " ds " << ds << " distance "
+                                                     << candidate_distance << " min distance " << min_distance);
 
     if (candidate_distance < min_distance)
     {
@@ -583,7 +583,7 @@ bool Path::removeNode(const NodePtr& node, const size_t& idx_conn, const std::ve
   ConnectionPtr conn_parent_node = connections_.at(idx_conn);
   ConnectionPtr conn_node_child = connections_.at(idx_conn + 1);
 
-  if(conn_parent_node->norm()==0.0 || conn_node_child->norm()==0.0)
+  if (conn_parent_node->norm() == 0.0 || conn_node_child->norm() == 0.0)
     return false;
 
   bool parallel = conn_parent_node->isParallel(conn_node_child, toll);
@@ -789,7 +789,7 @@ int Path::resample(const double& max_distance)
     {
       is_a_new_node = false;
       conf = conn->getParent()->getConfiguration() +
-          (conn->getChild()->getConfiguration() - conn->getParent()->getConfiguration()) * (max_distance / length);
+             (conn->getChild()->getConfiguration() - conn->getParent()->getConfiguration()) * (max_distance / length);
       addNodeAtCurrentConfig(conf, conn, true, is_a_new_node);
 
       if (is_a_new_node)
@@ -802,20 +802,20 @@ int Path::resample(const double& max_distance)
   }
 
   assert([&]() -> bool {
-           if (nodes_added == 0)
-           return true;
-           else
-           {
-             if ((connections_.size() - initial_size) == nodes_added)
-             return true;
-             else
-             {
-               CNR_INFO(logger_, "\nconnections_ " << connections_.size() << "\ninitial size " << initial_size
-               << "\nnodes_added " << nodes_added);
-               return false;
-             }
-           }
-         }());
+    if (nodes_added == 0)
+      return true;
+    else
+    {
+      if ((connections_.size() - initial_size) == nodes_added)
+        return true;
+      else
+      {
+        CNR_INFO(logger_, "\nconnections_ " << connections_.size() << "\ninitial size " << initial_size
+                                            << "\nnodes_added " << nodes_added);
+        return false;
+      }
+    }
+  }());
 
   return nodes_added;
 }
@@ -881,8 +881,8 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
               cost_child = std::numeric_limits<double>::infinity();
 
               checker_->checkConnection(actual_node->getConfiguration(), parent->getConfiguration()) ?
-                    (cost_parent = metrics_->cost(parent->getConfiguration(), actual_node->getConfiguration())) :
-                    (cost_parent = std::numeric_limits<double>::infinity());
+                  (cost_parent = metrics_->cost(parent->getConfiguration(), actual_node->getConfiguration())) :
+                  (cost_parent = std::numeric_limits<double>::infinity());
             }
             else
             {
@@ -998,8 +998,8 @@ PathPtr Path::getSubpathToConf(const Eigen::VectorXd& conf, const bool clone)
               "Conf does not belong to the path, subpath to conf can "
               "not be computed");
     throw std::invalid_argument(
-          "Conf does not belong to the path, subpath to "
-          "conf can not be computed");
+        "Conf does not belong to the path, subpath to "
+        "conf can not be computed");
   }
 
   bool is_net = conn->isNet();
@@ -1029,8 +1029,8 @@ PathPtr Path::getSubpathToConf(const Eigen::VectorXd& conf, const bool clone)
     if (conn->getCost() == std::numeric_limits<double>::infinity())
     {
       checker_->checkConnection(conn->getParent()->getConfiguration(), node->getConfiguration()) ?
-            (cost = metrics_->cost(conn->getParent()->getConfiguration(), node->getConfiguration())) :
-            (cost = std::numeric_limits<double>::infinity());
+          (cost = metrics_->cost(conn->getParent()->getConfiguration(), node->getConfiguration())) :
+          (cost = std::numeric_limits<double>::infinity());
     }
     else
       cost = metrics_->cost(conn->getParent()->getConfiguration(), node->getConfiguration());
@@ -1083,8 +1083,8 @@ PathPtr Path::getSubpathFromConf(const Eigen::VectorXd& conf, const bool clone)
               "Conf does not belong to the path, subpath from conf "
               "can not be computed");
     throw std::invalid_argument(
-          "Conf does not belong to the path, subpath "
-          "from conf can not be computed");
+        "Conf does not belong to the path, subpath "
+        "from conf can not be computed");
   }
 
   bool is_net = conn->isNet();
@@ -1116,8 +1116,8 @@ PathPtr Path::getSubpathFromConf(const Eigen::VectorXd& conf, const bool clone)
     if (conn->getCost() == std::numeric_limits<double>::infinity())
     {
       checker_->checkConnection(node->getConfiguration(), conn->getChild()->getConfiguration()) ?
-            (cost = metrics_->cost(node->getConfiguration(), conn->getChild()->getConfiguration())) :
-            (cost = std::numeric_limits<double>::infinity());
+          (cost = metrics_->cost(node->getConfiguration(), conn->getChild()->getConfiguration())) :
+          (cost = std::numeric_limits<double>::infinity());
     }
     else
       cost = metrics_->cost(node->getConfiguration(), conn->getChild()->getConfiguration());
@@ -1156,8 +1156,8 @@ PathPtr Path::getSubpathToNode(const Eigen::VectorXd& conf)
               "node of the path");
 
     throw std::invalid_argument(
-          "No subpath available, the node is equal to "
-          "the first node of the path");
+        "No subpath available, the node is equal to "
+        "the first node of the path");
   }
 
   if ((conf - goal_node_->getConfiguration()).norm() < TOLERANCE)
@@ -1241,13 +1241,13 @@ bool Path::isValid(const CollisionCheckerPtr& this_checker)
     computeCost();
 
   assert([&]() -> bool {
-           if (valid && cost_ == std::numeric_limits<double>::infinity())
-           {
-             return false;
-           }
+    if (valid && cost_ == std::numeric_limits<double>::infinity())
+    {
+      return false;
+    }
 
-           return true;
-         }());
+    return true;
+  }());
 
   return valid;
 }
@@ -1355,7 +1355,7 @@ bool Path::isValidFromConf(const Eigen::VectorXd& conf, const size_t& conn_idx, 
     else
     {
       CNR_INFO(logger_, "Conf is equal to goal, no connection to validate from here. Conf: "
-               << conf.transpose() << " goal: " << goal_node_->getConfiguration().transpose());
+                            << conf.transpose() << " goal: " << goal_node_->getConfiguration().transpose());
       validity = true;
       assert(0);
     }
@@ -1374,7 +1374,7 @@ bool Path::isValidFromConf(const Eigen::VectorXd& conf, const size_t& conn_idx, 
     }
 
     if (conn_idx < connections_.size() - 1)  // even if the checker has failed, this check is
-      // important to update the cost of all the connections
+                                             // important to update the cost of all the connections
     {
       if (not isValidFromConn(connections_.at(conn_idx + 1), checker))
       {
