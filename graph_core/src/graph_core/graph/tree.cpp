@@ -66,7 +66,8 @@ bool Tree::tryExtend(const Eigen::VectorXd& configuration, Eigen::VectorXd& next
   return tryExtendFromNode(configuration, next_configuration, closest_node);
 }
 
-bool Tree::tryExtendFromNode(const Eigen::VectorXd& configuration, Eigen::VectorXd& next_configuration, NodePtr& node)
+bool Tree::tryExtendFromNode(const Eigen::VectorXd& configuration, Eigen::VectorXd& next_configuration,
+                             const NodePtr& node)
 {
   assert(node);
   double distance = selectNextConfiguration(configuration, next_configuration, node);
@@ -113,11 +114,7 @@ double Tree::selectNextConfiguration(const Eigen::VectorXd& configuration, Eigen
 
   double distance = (node->getConfiguration() - configuration).norm();
 
-  if (distance < TOLERANCE)
-  {
-    next_configuration = configuration;
-  }
-  else if (distance < max_distance_)
+  if (distance <= max_distance_)
   {
     next_configuration = configuration;
   }
@@ -200,20 +197,14 @@ bool Tree::extendToNode(const NodePtr& node, NodePtr& new_node)
   NodePtr closest_node;
   Eigen::VectorXd next_configuration;
   if (!tryExtend(node->getConfiguration(), next_configuration, closest_node))
-  {
     return false;
-  }
 
   if ((next_configuration - node->getConfiguration()).norm() < TOLERANCE)
-  {
-    new_node = node;
-    addNode(node);
-  }
+    new_node = node;  // we have already checked if node is in tree
   else
-  {
     new_node = std::make_shared<Node>(next_configuration, logger_);
-    addNode(new_node, false);
-  }
+
+  addNode(new_node, false);
 
   double cost = metrics_->cost(closest_node, new_node);
   ConnectionPtr conn = std::make_shared<Connection>(closest_node, new_node, logger_);
@@ -1122,14 +1113,13 @@ void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focu
     }
     else
     {
-      if ((metrics_->utopia(n->getConfiguration(), focus1) + metrics_->utopia(n->getConfiguration(), focus2)) <
-          cost)  // CHIEDI A MANUEL SE UTOPIA O NORMA
+      if ((metrics_->utopia(n->getConfiguration(), focus1) + metrics_->utopia(n->getConfiguration(), focus2)) < cost)
       {
         if (node_check)
         {
           if (!checker_->check(n->getConfiguration()))
           {
-            // set the cost of the connetion to infinity?? CHIEDI A MANUEL
+            // set the cost of the connetion to infinity??
             continue;
           }
         }

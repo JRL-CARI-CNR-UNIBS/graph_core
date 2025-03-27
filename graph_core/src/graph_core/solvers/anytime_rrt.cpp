@@ -370,7 +370,7 @@ bool AnytimeRRT::improveUpdate(const Eigen::VectorXd& point, PathPtr& solution)
   NodePtr new_node;
   if (new_tree_->informedExtend(point, new_node, tmp_goal_node_->getConfiguration(), cost2beat_, bias_))
   {
-    if ((new_node->getConfiguration() - tmp_goal_node_->getConfiguration()).norm() < max_distance_)
+    if ((new_node->getConfiguration() - tmp_goal_node_->getConfiguration()).norm() <= max_distance_)
     {
       std::vector<ConnectionPtr> conn2node = new_tree_->getConnectionToNode(new_node);
       double cost_node2goal = metrics_->cost(new_node, tmp_goal_node_);

@@ -132,7 +132,7 @@ bool RRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 
   if (add_to_start)
   {
-    if ((new_start_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
+    if ((new_start_node->getConfiguration() - goal_node_->getConfiguration()).norm() <= max_distance_)
     {
       if (checker_->checkConnection(new_start_node->getConfiguration(), goal_node_->getConfiguration()))
       {
@@ -173,7 +173,7 @@ bool RRT::update(const NodePtr& n, PathPtr& solution)
 
   if (add_to_start)
   {
-    if ((new_start_node->getConfiguration() - goal_node_->getConfiguration()).norm() < max_distance_)
+    if ((new_start_node->getConfiguration() - goal_node_->getConfiguration()).norm() <= max_distance_)
     {
       if (checker_->checkConnection(new_start_node->getConfiguration(), goal_node_->getConfiguration()))
       {

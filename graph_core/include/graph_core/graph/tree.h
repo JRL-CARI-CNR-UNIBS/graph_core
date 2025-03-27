@@ -363,7 +363,8 @@ public:
    * starting point for the extension.
    * @return Returns true if the extension is possible, and false otherwise.
    */
-  bool tryExtendFromNode(const Eigen::VectorXd& configuration, Eigen::VectorXd& next_configuration, NodePtr& node);
+  bool tryExtendFromNode(const Eigen::VectorXd& configuration, Eigen::VectorXd& next_configuration,
+                         const NodePtr& node);
 
   /**
    * @brief Attempts to extend the tree to the provided configuration if the

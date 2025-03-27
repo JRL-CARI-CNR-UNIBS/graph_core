@@ -35,35 +35,7 @@ Path::Path(std::vector<ConnectionPtr> connections, const MetricsPtr& metrics, co
            const cnr_logger::TraceLoggerPtr& logger)
   : connections_(connections), metrics_(metrics), checker_(checker), logger_(logger)
 {
-  assert(connections_.size() > 0);
-
-  start_node_ = connections_.front()->getParent();
-  goal_node_ = connections_.back()->getChild();
-
-  cost_ = 0;
-
-  NodePtr previous_child = nullptr;
-  for (const ConnectionPtr& conn : connections_)
-  {
-    cost_ += conn->getCost();
-
-    if (previous_child)
-    {
-      if (previous_child != conn->getParent())
-      {
-        for (const ConnectionPtr& c : connections_)
-          CNR_WARN(logger_, *c);
-
-        CNR_FATAL(logger_,
-                  "parent of a connection is different from the child "
-                  "of the previous connection!");
-        throw std::runtime_error(
-            "parent of a connection is different from the "
-            "child of the previous connection!");
-      }
-    }
-    previous_child = conn->getChild();
-  }
+  setConnections(connections);
 }
 
 Path::Path(std::vector<NodePtr> nodes, const MetricsPtr& metrics, const CollisionCheckerPtr& checker,
@@ -114,7 +86,7 @@ PathPtr Path::clone()
 
     conn = std::make_shared<Connection>(parent, child, logger_);
     conn->setCost(connections_.at(i - 1)->getCost());  // update also the internal time of
-                                                       // the cloned connection
+    // the cloned connection
     conn->add();
 
     assert(child->getParentConnectionsSize() == 1);
@@ -124,7 +96,7 @@ PathPtr Path::clone()
 
     new_conn_vector.push_back(conn);
     parent = child;  // NB: parent of connection i+1 must be the child (same
-                     // object) of connection i
+    // object) of connection i
   }
 
   PathPtr new_path = std::make_shared<Path>(new_conn_vector, metrics_, checker_, logger_);
@@ -133,7 +105,7 @@ PathPtr Path::clone()
   //  //set cloned metrics and checker externally if needed
 
   new_path->setTree(nullptr);  // nodes are cloned, so the cloned path does not
-                               // belong to the original tree
+  // belong to the original tree
 
   return new_path;
 }
@@ -193,7 +165,6 @@ double Path::curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf, size_t& idx
               "The configuration does not belong to the path -> the "
               "curvilinear abscissa can not be computed");
     CNR_INFO(logger_, "conf: " << conf.transpose());
-    assert(0);
     return abscissa;
   }
   else
@@ -612,6 +583,9 @@ bool Path::removeNode(const NodePtr& node, const size_t& idx_conn, const std::ve
   ConnectionPtr conn_parent_node = connections_.at(idx_conn);
   ConnectionPtr conn_node_child = connections_.at(idx_conn + 1);
 
+  if (conn_parent_node->norm() == 0.0 || conn_node_child->norm() == 0.0)
+    return false;
+
   bool parallel = conn_parent_node->isParallel(conn_node_child, toll);
   bool parent_cond = ((node->getParentConnectionsSize() + node->getNetParentConnectionsSize()) == 1);
   bool child_cond = ((node->getChildConnectionsSize() + node->getNetChildConnectionsSize()) == 1);
@@ -619,7 +593,7 @@ bool Path::removeNode(const NodePtr& node, const size_t& idx_conn, const std::ve
   if (parallel && parent_cond && child_cond)
   {
     assert(not tree_ || node != tree_->getRoot());  // node must have 1 parent (root must have
-                                                    // zero) and 1 child (root may have many)
+    // zero) and 1 child (root may have many)
 
     bool is_net = conn_node_child->isNet();
     new_conn =
