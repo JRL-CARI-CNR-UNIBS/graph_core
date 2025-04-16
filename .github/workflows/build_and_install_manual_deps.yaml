@@ -58,6 +58,7 @@ jobs:
 
           cd cnr_common
           git submodule update --init --recursive
+          ls -la
           . update_submodules.sh
 
           cd "$PATH_TO_WS"
