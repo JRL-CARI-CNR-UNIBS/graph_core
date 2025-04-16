@@ -16,9 +16,9 @@ on:
 
 jobs:
   install-and-run-within-catkin:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest 
     container:
-      image: ros:noetic
+      image: osrf/ros:noetic-desktop-full  
 
     steps:
       - name: Install dependencies
@@ -31,19 +31,14 @@ jobs:
         run: |
           echo "Setting up ROS environment"
           source /opt/ros/noetic/setup.bash
-
           WORKSPACE_DIR=$(pwd)/graph_core_ws
-
           echo "WORKSPACE_DIR=$(pwd)/graph_core_ws" >> "$GITHUB_ENV"
-
           echo "Setting up Catkin workspace at $WORKSPACE_DIR"
           mkdir -p $WORKSPACE_DIR/src
           cd $WORKSPACE_DIR
-
           catkin init
           catkin config --extend /opt/ros/noetic
           catkin config --install
-
           ls -la
 
       - name: Checkout repository
