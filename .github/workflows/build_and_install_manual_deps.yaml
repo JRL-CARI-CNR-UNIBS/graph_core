@@ -58,6 +58,7 @@ jobs:
 
           cd cnr_common
           git submodule update --init --recursive
+          chmod +x update_submodules.sh
           ls -la
           . update_submodules.sh
 
