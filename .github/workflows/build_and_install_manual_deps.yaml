@@ -60,7 +60,7 @@ jobs:
           git submodule update --init --recursive
           chmod +x update_submodules.sh
           ls -la
-          . update_submodules.sh
+          ./update_submodules.sh
 
           cd "$PATH_TO_WS"
           mkdir -p build/cnr_logger
