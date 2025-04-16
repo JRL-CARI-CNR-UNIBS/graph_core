@@ -9,8 +9,6 @@ on:
   pull_request:
     branches:
       - master
-      - devel
-      - pull_req
 
 jobs:
   clang-format:
