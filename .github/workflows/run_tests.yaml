@@ -5,10 +5,8 @@ on:
     workflows: ["build"] # Name of the previous workflow
     types:
       - completed
-
 jobs:
   test:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
         ubuntu_version: [ubuntu:20.04, ubuntu:22.04, ubuntu:latest]
@@ -23,6 +21,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          export DEBIAN_FRONTEND=noninteractive
           apt update
           apt install -y cmake build-essential git libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
 
