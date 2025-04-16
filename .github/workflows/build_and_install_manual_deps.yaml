@@ -9,18 +9,18 @@ on:
   pull_request:
     branches:
       - master
-      - devel
-      - pull_req
   schedule:
     - cron: '0 8 * * *'
 
 jobs:
-  install-and-run-manual-deps:
-    runs-on: ubuntu-latest
+  install-and-run:
     strategy:
       matrix:
-        ubuntu_version: [ubuntu-20.04, ubuntu-22.04, ubuntu-latest]
+        ubuntu_version: [ubuntu:20.04, ubuntu:22.04, ubuntu:latest]
       fail-fast: true
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.ubuntu_version }}
 
     steps:
       - name: Checkout repository
@@ -28,8 +28,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt update
-          sudo apt install -y libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
+          export DEBIAN_FRONTEND=noninteractive
+          apt update
+          apt install -y cmake build-essential git libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
 
       - name: Build & Install cnr_common
         run: |
@@ -57,7 +58,9 @@ jobs:
 
           cd cnr_common
           git submodule update --init --recursive
-          . update_submodules.sh
+          chmod +x update_submodules.sh
+          ls -la
+          ./update_submodules.sh
 
           cd "$PATH_TO_WS"
           mkdir -p build/cnr_logger

@@ -11,7 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-latest]
+        ubuntu_version: [ubuntu:20.04, ubuntu:22.04, ubuntu:latest]
+      fail-fast: true
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.ubuntu_version }}
 
     steps:
       - name: Checkout repository
@@ -19,11 +23,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt update
-          sudo apt install -y libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
+          apt update
+          apt install -y cmake build-essential git libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
 
       - name: Build & Install
         run: |
+          export DEBIAN_FRONTEND=noninteractive
           mkdir -p build
           mkdir -p install
 

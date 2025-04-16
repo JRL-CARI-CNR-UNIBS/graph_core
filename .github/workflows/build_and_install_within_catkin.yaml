@@ -9,8 +9,6 @@ on:
   pull_request:
     branches:
       - master
-      - devel
-      - pull_req
   schedule:
     - cron: '0 8 * * *'
 
