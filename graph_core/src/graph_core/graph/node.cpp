@@ -96,6 +96,18 @@ void Node::addParentConnection(const ConnectionPtr& connection)
     throw std::runtime_error("child of connection is not this node");
   }
 
+  if (parent_connections_.size()>0)
+  {
+    CNR_ERROR(logger_, "a tree node should have only a parent");
+    CNR_ERROR(logger_, "node configuration" << getConfiguration().transpose());
+    for (const NodePtr& p: getParents())
+      CNR_ERROR(logger_, "actual parent connection = " << p << " conf " << p->getConfiguration().transpose());
+
+    const NodePtr& p=connection->getParent();
+    CNR_ERROR(logger_, "wrong connection to be added = " << p << " conf " << p->getConfiguration().transpose());
+
+    throw std::runtime_error("a tree node should have only a parent");
+  }
   parent_connections_.push_back(connection);
 
   // Set connection's child as valid
