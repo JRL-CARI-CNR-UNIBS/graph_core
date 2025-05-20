@@ -257,8 +257,13 @@ bool KdNode::findNode(const NodePtr& node, KdNodePtr& kdnode)
   // is this node?
   if (node_ == node)
   {
-    kdnode = pointer();
-    return true;
+    if (deleted_)
+      return false;
+    else
+    {
+      kdnode = pointer();
+      return true;
+    }
   }
   // otherwise search the node
   if (node->getConfiguration()(dimension_) >= node_->getConfiguration()(dimension_))  // goRight
