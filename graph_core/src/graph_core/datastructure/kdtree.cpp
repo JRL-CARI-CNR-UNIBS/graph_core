@@ -257,7 +257,7 @@ bool KdNode::findNode(const NodePtr& node, KdNodePtr& kdnode)
   // is this node?
   if (node_ == node)
   {
-    if(deleted_)
+    if (deleted_)
       return false;
     else
     {
