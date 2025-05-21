@@ -90,7 +90,7 @@ int KdNode::dimension()
 
 bool KdNode::insert(const NodePtr& node)
 {
-  if(node == node_)
+  if (node == node_)
   {
     this->restoreNode();
     return false;
@@ -260,7 +260,7 @@ bool KdNode::findNode(const NodePtr& node, KdNodePtr& kdnode)
 
 bool KdNode::deleteNode(const bool& disconnect_node)
 {
-  if(not deleted_)
+  if (not deleted_)
   {
     deleted_ = true;
     if (disconnect_node)
@@ -289,7 +289,7 @@ void KdNode::getNodes(std::vector<NodePtr>& nodes)
 
 void KdNode::disconnectNodes(const std::vector<NodePtr>& white_list)
 {
-  if(deleted_)
+  if (deleted_)
     return;
 
   if (std::find(white_list.begin(), white_list.end(), node_) == white_list.end())
@@ -335,7 +335,7 @@ void KdTree::insert(const NodePtr& node)
     return;
   }
 
-  if(not root_->insert(node)) //false if a previously deleted KdNode is restored
+  if (not root_->insert(node))  // false if a previously deleted KdNode is restored
     deleted_nodes_--;
 
   return;
@@ -398,7 +398,7 @@ bool KdTree::deleteNode(const NodePtr& node, const bool& disconnect_node)
   if (not findNode(node, kdnode))
     return false;
 
-  if(kdnode->deleteNode(disconnect_node))
+  if (kdnode->deleteNode(disconnect_node))
   {
     size_--;
     deleted_nodes_++;
@@ -406,10 +406,10 @@ bool KdTree::deleteNode(const NodePtr& node, const bool& disconnect_node)
     if (deleted_nodes_ > deleted_nodes_threshold_ && size_ > 0)
     {
       CNR_DEBUG(logger_, "number of deleted nodes (" << deleted_nodes_ << ") is greater than the threshold ("
-                << deleted_nodes_threshold_ << "), kdtree is built from scratch");
+                                                     << deleted_nodes_threshold_ << "), kdtree is built from scratch");
 
       bool root_was_deleted = root_->deleted_;
-      root_->restoreNode();                     // set deleted_ to false to have it into nodes vector
+      root_->restoreNode();  // set deleted_ to false to have it into nodes vector
       // below (we want the root regardless its "deleted_"
       // flag)
       std::vector<NodePtr> nodes = getNodes();  // contains also the root
@@ -439,7 +439,7 @@ void KdTree::deletedNodesThreshold(const unsigned int t)
     CNR_WARN(logger_,
              "deleted_nodes_threshold_ cannot bet set because it "
              "should be at least 2 and you are trying to set "
-             << t);
+                 << t);
     return;
   }
   deleted_nodes_threshold_ = t;
