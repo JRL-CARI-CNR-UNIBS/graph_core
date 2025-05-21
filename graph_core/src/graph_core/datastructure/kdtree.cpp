@@ -43,7 +43,6 @@ KdNode::KdNode(const NodePtr& node, const int& dimension, const cnr_logger::Trac
 
 KdNode::~KdNode()
 {
-  //  CNR_DEBUG(logger_,"destroying kdnode "<<this);
   left_ = nullptr;
   right_ = nullptr;
   node_ = nullptr;
@@ -89,8 +88,14 @@ int KdNode::dimension()
   return dimension_;
 }
 
-void KdNode::insert(const NodePtr& node)
+bool KdNode::insert(const NodePtr& node)
 {
+  if (node == node_)
+  {
+    this->restoreNode();
+    return false;
+  }
+
   int size = node->getConfiguration().size();
   int next_dim = (dimension_ == (size - 1)) ? 0 : dimension_ + 1;
   if (node->getConfiguration()(dimension_) >= node_->getConfiguration()(dimension_))  // goRight
@@ -99,9 +104,11 @@ void KdNode::insert(const NodePtr& node)
     {
       right_ = std::make_shared<KdNode>(node, next_dim, logger_);
       right_->parent(pointer());
+
+      return true;
     }
     else
-      right_->insert(node);
+      return right_->insert(node);
   }
   else  // goLeft
   {
@@ -109,42 +116,11 @@ void KdNode::insert(const NodePtr& node)
     {
       left_ = std::make_shared<KdNode>(node, next_dim, logger_);
       left_->parent(pointer());
+
+      return true;
     }
     else
-      left_->insert(node);
-  }
-}
-
-KdNodePtr KdNode::findMin(const int& dim)
-{
-  if (dimension_ == dim)
-  {
-    if (not left_)
-      return pointer();
-    else
-      return left_->findMin(dim);
-  }
-  else
-  {
-    if (not left_ and not right_)
-      return pointer();
-
-    KdNodePtr min_left, min_right;
-
-    if (left_)
-      min_left = left_->findMin(dim);
-
-    if (right_)
-      min_right = right_->findMin(dim);
-
-    KdNodePtr min_kdnode = pointer();
-
-    if (min_left && (min_left->node()->getConfiguration()(dim) < min_kdnode->node()->getConfiguration()(dim)))
-      min_kdnode = min_left;
-    if (min_right && (min_right->node()->getConfiguration()(dim) < min_kdnode->node()->getConfiguration()(dim)))
-      min_kdnode = min_right;
-
-    return min_kdnode;
+      return left_->insert(node);
   }
 }
 
@@ -258,7 +234,9 @@ bool KdNode::findNode(const NodePtr& node, KdNodePtr& kdnode)
   if (node_ == node)
   {
     if (deleted_)
+    {
       return false;
+    }
     else
     {
       kdnode = pointer();
@@ -280,11 +258,18 @@ bool KdNode::findNode(const NodePtr& node, KdNodePtr& kdnode)
   }
 }
 
-void KdNode::deleteNode(const bool& disconnect_node)
+bool KdNode::deleteNode(const bool& disconnect_node)
 {
-  deleted_ = true;
-  if (disconnect_node)
-    node_->disconnect();
+  if (not deleted_)
+  {
+    deleted_ = true;
+    if (disconnect_node)
+      node_->disconnect();
+
+    return true;
+  }
+  else
+    return false;
 }
 
 void KdNode::restoreNode()
@@ -304,6 +289,9 @@ void KdNode::getNodes(std::vector<NodePtr>& nodes)
 
 void KdNode::disconnectNodes(const std::vector<NodePtr>& white_list)
 {
+  if (deleted_)
+    return;
+
   if (std::find(white_list.begin(), white_list.end(), node_) == white_list.end())
     node_->disconnect();
   if (left_)
@@ -346,7 +334,10 @@ void KdTree::insert(const NodePtr& node)
                                      logger_);  // parent_=nullptr by default
     return;
   }
-  root_->insert(node);
+
+  if (not root_->insert(node))  // false if a previously deleted KdNode is restored
+    deleted_nodes_--;
+
   return;
 }
 
@@ -358,13 +349,6 @@ bool KdTree::clear()
   root_ = nullptr;
 
   return true;
-}
-
-NodePtr KdTree::findMin(const int& dim)
-{
-  if (not root_)
-    return nullptr;
-  return root_->findMin(dim)->node();
 }
 
 void KdTree::nearestNeighbor(const Eigen::VectorXd& configuration, NodePtr& best, double& best_distance)
@@ -414,28 +398,30 @@ bool KdTree::deleteNode(const NodePtr& node, const bool& disconnect_node)
   if (not findNode(node, kdnode))
     return false;
 
-  size_--;
-  deleted_nodes_++;
-  kdnode->deleteNode(disconnect_node);
-
-  if (deleted_nodes_ > deleted_nodes_threshold_ && size_ > 0)
+  if (kdnode->deleteNode(disconnect_node))
   {
-    CNR_DEBUG(logger_, "number of deleted nodes (" << deleted_nodes_ << ") is greater than the threshold ("
-                                                   << deleted_nodes_threshold_ << "), kdtree is built from scratch");
+    size_--;
+    deleted_nodes_++;
 
-    bool root_was_deleted = root_->deleted_;
-    root_->restoreNode();                     // set deleted_ to false to have it into nodes vector
-                                              // below (we want the root regardless its "deleted_"
-                                              // flag)
-    std::vector<NodePtr> nodes = getNodes();  // contains also the root
+    if (deleted_nodes_ > deleted_nodes_threshold_ && size_ > 0)
+    {
+      CNR_DEBUG(logger_, "number of deleted nodes (" << deleted_nodes_ << ") is greater than the threshold ("
+                                                     << deleted_nodes_threshold_ << "), kdtree is built from scratch");
 
-    clear();  // clear the KdTree
+      bool root_was_deleted = root_->deleted_;
+      root_->restoreNode();  // set deleted_ to false to have it into nodes vector
+      // below (we want the root regardless its "deleted_"
+      // flag)
+      std::vector<NodePtr> nodes = getNodes();  // contains also the root
 
-    for (const NodePtr& n : nodes)
-      insert(n);
+      clear();  // clear the KdTree
 
-    if (root_was_deleted)
-      deleteNode(root_->node_, disconnect_node);
+      for (const NodePtr& n : nodes)
+        insert(n);
+
+      if (root_was_deleted)
+        deleteNode(root_->node_, disconnect_node);
+    }
   }
 
   return true;
