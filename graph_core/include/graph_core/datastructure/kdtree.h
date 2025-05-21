@@ -134,8 +134,9 @@ public:
    * @brief Delete the node from the tree.
    * @param disconnect_node Flag indicating whether to disconnect the node from
    * the graph/tree.
+   * @return True if the node is removed, false otherwise.
    */
-  void deleteNode(const bool& disconnect_node = false);
+  bool deleteNode(const bool& disconnect_node = false);
 
   /**
    * @brief Restore the node in the tree setting deleted_ flag false.
@@ -145,15 +146,9 @@ public:
   /**
    * @brief Insert a node into the tree.
    * @param node The node to insert.
+   * @return True if a new KdNode is created, false if a previously deleted KdNode is restored.
    */
-  void insert(const NodePtr& node);
-
-  /**
-   * @brief Find the node with the minimum value in the given dimension.
-   * @param dim The dimension along which to find the minimum.
-   * @return The KdNode with the minimum value in the specified dimension.
-   */
-  KdNodePtr findMin(const int& dim);
+  bool insert(const NodePtr& node);
 
   /**
    * @brief Find the nearest neighbor to a given configuration.
@@ -300,18 +295,6 @@ public:
    * @return True if successful, false otherwise.
    */
   virtual bool clear();
-
-  /**
-   * @brief Find the node with the minimum value in the specified dimension.
-   *
-   * This function searches the k-d tree to find the node with the minimum value
-   * in the specified dimension.
-   *
-   * @param dim The dimension to search for the minimum value.
-   * @return A pointer to the node with the minimum value in the specified
-   * dimension. If the k-d tree is empty, returns nullptr.
-   */
-  NodePtr findMin(const int& dim);
 
   /**
    * @brief Implementation of the nearestNeighbor function for finding the
