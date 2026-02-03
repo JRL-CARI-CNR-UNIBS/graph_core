@@ -107,7 +107,7 @@ protected:
    * @return Returns true if the bisection process results in an improvement,
    * false otherwise.
    */
-  bool bisection(const size_t& connection_idx, const Eigen::VectorXd& center, const Eigen::VectorXd& direction,
+  virtual bool bisection(const size_t& connection_idx, const Eigen::VectorXd& center, const Eigen::VectorXd& direction,
                  const double min_step_size, double max_distance, double min_distance);
 
   /**
@@ -115,7 +115,7 @@ protected:
    * @param solution Output parameter where the optimized path will be stored.
    * @return True if the optimization step was successful, false otherwise.
    */
-  bool step() override;
+  virtual bool step() override;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -149,7 +149,7 @@ public:
    * @param max_time The maximum time limit for the warping process.
    * @return Returns true if any warping changes were made, false otherwise.
    */
-  bool warp(const double& min_conn_length = 0.1, const double min_step_size = 0.01,
+  virtual bool warp(const double& min_conn_length = 0.1, const double min_step_size = 0.01,
             const double& max_time = std::numeric_limits<double>::infinity());
 
   /**
@@ -165,7 +165,7 @@ public:
    * removal.
    * @return True if the path is simplified, false otherwise.
    */
-  bool simplify(const double& min_conn_length = 0.1);
+  virtual bool simplify(const double& min_conn_length = 0.1);
 };
 
 }  // end namespace core
