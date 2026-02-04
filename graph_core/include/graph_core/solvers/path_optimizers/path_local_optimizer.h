@@ -108,7 +108,7 @@ protected:
    * false otherwise.
    */
   virtual bool bisection(const size_t& connection_idx, const Eigen::VectorXd& center, const Eigen::VectorXd& direction,
-                 const double min_step_size, double max_distance, double min_distance);
+                         const double min_step_size, double max_distance, double min_distance);
 
   /**
    * @brief Perform one optimization step.
@@ -150,7 +150,7 @@ public:
    * @return Returns true if any warping changes were made, false otherwise.
    */
   virtual bool warp(const double& min_conn_length = 0.1, const double min_step_size = 0.01,
-            const double& max_time = std::numeric_limits<double>::infinity());
+                    const double& max_time = std::numeric_limits<double>::infinity());
 
   /**
    * @brief Simplify the path by skipping nodes.
