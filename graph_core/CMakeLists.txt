@@ -19,6 +19,7 @@ endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_compile_definitions(EIGEN_MAX_ALIGN_BYTES=16)
 
 # Options
 option(ADD_CUSTOM_UNINSTALL "Add uninstall target" ON)

@@ -71,7 +71,8 @@ public:
    */
   virtual double cost(const Eigen::VectorXd& configuration1, const Eigen::VectorXd& configuration2) override
   {
-    return (configuration1 - configuration2).norm();
+    Eigen::VectorXd diff = configuration1 - configuration2;
+    return diff.norm();
   }
   virtual double cost(const NodePtr& node1, const NodePtr& node2) override
   {
@@ -87,6 +88,8 @@ public:
    */
   virtual double utopia(const Eigen::VectorXd& configuration1, const Eigen::VectorXd& configuration2) override
   {
+    Eigen::VectorXd diff = configuration1 - configuration2;
+    return diff.norm();
     return (configuration1 - configuration2).norm();
   }
   virtual double utopia(const NodePtr& node1, const NodePtr& node2) override

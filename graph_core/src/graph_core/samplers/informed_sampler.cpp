@@ -172,9 +172,9 @@ Eigen::VectorXd InformedSampler::sample()
         return q.cwiseProduct(inv_scale_);  // q = q_scaled/scale
     }
 
-    CNR_WARN(logger_,
-             "InformedSampler has not found a sample in the informed "
-             "set that respects the bounds");
+    CNR_DEBUG(logger_,
+              "InformedSampler has not found a sample in the informed "
+              "set that respects the bounds");
     return center_bound_ + Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(bound_width_);
   }
 }
