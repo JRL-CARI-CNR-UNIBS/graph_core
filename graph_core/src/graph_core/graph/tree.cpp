@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <graph_core/graph/tree.h>
+#include <unordered_set>
 
 namespace graph
 {
@@ -941,8 +942,11 @@ void Tree::purgeNodeOutsideEllipsoid(NodePtr& node, const SamplerPtr& sampler, c
   {
     // if node is outside the admissible set, remove it and its successors if
     // they are not in the white list.
-    if (std::find(white_list.begin(), white_list.end(), node) != white_list.end())
-      return;
+    for (const NodePtr& wn : white_list)
+    {
+      if (wn == node)
+        return;
+    }
     purgeFromHere(node, white_list, removed_nodes);
   }
   return;
@@ -955,10 +959,28 @@ void Tree::purgeNodeOutsideEllipsoids(NodePtr& node, const std::vector<SamplerPt
     return;
   assert(node);
 
-  // check if it belongs to a admissible informed set or the white list
-  bool inbound = std::find(white_list.begin(), white_list.end(), node) != white_list.end();
-  for (const SamplerPtr& sampler : samplers)
-    inbound = inbound || sampler->inBounds(node->getConfiguration());
+  // check if it belongs to an admissible informed set or the white list
+  bool inbound = false;
+  for (const NodePtr& wn : white_list)
+  {
+    if (wn == node)
+    {
+      inbound = true;
+      break;
+    }
+  }
+
+  if (!inbound)
+  {
+    for (const SamplerPtr& sampler : samplers)
+    {
+      if (sampler->inBounds(node->getConfiguration()))
+      {
+        inbound = true;
+        break;
+      }
+    }
+  }
 
   if (inbound)
   {
@@ -1063,15 +1085,12 @@ void Tree::purgeThisNode(NodePtr& node, unsigned int& removed_nodes)
 
 void Tree::cleanTree()
 {
-  std::vector<NodePtr> successors;
-  std::vector<NodePtr> white_list;
-  unsigned int removed_nodes;
-  successors = root_->getChildren();
-  for (NodePtr& n : successors)
-  {
-    if (isInTree(n))
-      purgeFromHere(n, white_list, removed_nodes);
-  }
+  std::vector<NodePtr> white_list = { root_ };
+  nodes_->disconnectNodes(white_list);
+  root_->disconnectChildConnections();
+  root_->disconnectNetChildConnections();
+  nodes_->clear();
+  nodes_->insert(root_);
 }
 
 void Tree::populateTreeFromNode(const NodePtr& node, const bool node_check)

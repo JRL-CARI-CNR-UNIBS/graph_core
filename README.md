@@ -86,3 +86,80 @@ The `cnr_param` library requires a directory to store its parameters. You can se
 ```bash
 export CNR_PARAM_ROOT_DIRECTORY="/tmp/cnr_param"
 ```
+
+---
+
+## Modifications from `master` (`apple_Test` branch)
+
+This repository branch (`apple_Test`) introduces specific enhancements, bug fixes, and performance optimizations designed for high-performance multi-goal planning in robotics applications (specifically tested within the autonomous apple harvesting pipeline).
+
+### Summary of Changes
+
+| File | Change Type | Purpose / Description |
+|---|---|---|
+| `graph_core/CMakeLists.txt` | Build System / Compatibility | Upgraded C++ standard to C++20 and defined `EIGEN_MAX_ALIGN_BYTES=16` for ROS 2 Jazzy / Eigen alignment safety. |
+| `graph_core/include/graph_core/metrics/euclidean_metrics.h` | Code Cleanliness / Optimization | Split configuration difference evaluation into explicit `Eigen::VectorXd diff` before `.norm()` calculation to ensure clean compiler vectorization and avoid template ambiguity. |
+| `graph_core/src/graph_core/samplers/informed_sampler.cpp` | Logging / Performance | Downgraded bounded-sample warning from `CNR_WARN` to `CNR_DEBUG` to eliminate high-frequency terminal log spam and I/O latency during constrained informed sampling. |
+| `graph_core/src/graph_core/graph/tree.cpp` | Performance Optimization | Optimized ellipsoid pruning checks (`purgeNodeOutsideEllipsoid` and `purgeNodeOutsideEllipsoids`) with short-circuit evaluation, and completely overhauled `cleanTree()` to run in $O(N)$ without repeated KD-Tree rebuilds. |
+| `graph_core/tests/path.yaml`, `tree.yaml` | Testing / Datasets | Updated scenario trajectories and tree configuration datasets for apple harvesting verification. |
+
+### Detailed Technical Breakdown
+
+#### 1. C++20 Standard and Eigen Alignment Fix (`graph_core/CMakeLists.txt`)
+- **C++ Standard**: Explicitly configured `set(CMAKE_CXX_STANDARD 20)` and `set(CMAKE_CXX_STANDARD_REQUIRED ON)` to match the modern ROS 2 Jazzy and C++20 toolchain.
+- **Eigen Alignment**: Added compile definition `add_compile_definitions(EIGEN_MAX_ALIGN_BYTES=16)`. This resolves segmentation faults and undefined behaviors originating from differing memory alignment assumptions between Eigen fixed-size vector types and standard library allocators under GCC/Clang on modern x86_64 architectures.
+
+#### 2. Euclidean Metrics Vectorization (`euclidean_metrics.h`)
+- In `EuclideanMetrics::cost()` and `EuclideanMetrics::utopia()`, explicit temporaries are stored:
+  ```cpp
+  Eigen::VectorXd diff = configuration1 - configuration2;
+  return diff.norm();
+  ```
+  This guarantees standard evaluation order and aids SIMD vectorization across diverse compiler optimization levels.
+
+#### 3. Informed Sampler Log Flooding Prevention (`informed_sampler.cpp`)
+- In `InformedSampler::sample()`, when a sample inside the informed ellipsoid falls outside configuration space limits after max attempts, the notice was reduced from `CNR_WARN` to `CNR_DEBUG`.
+- In multi-goal planners (e.g. `mIRRT*`), rejecting out-of-joint-limit samples in tightly constrained spaces occurs hundreds of times per second. Suppressing the terminal output completely eliminates console I/O blocking.
+
+#### 4. Tree Pruning & Reset Optimizations (`tree.cpp`)
+When planning with large trees (thousands of nodes), tree pruning and resetting operations previously caused noticeable execution freezes. Two critical bottlenecks were resolved:
+- **Short-circuiting in `purgeNodeOutsideEllipsoids`**:
+  Previously, all samplers were evaluated regardless of whether the node was already confirmed to be inside an admissible set or present in the whitelist:
+  ```cpp
+  // Old implementation: evaluates all samplers unconditionally
+  bool inbound = std::find(white_list.begin(), white_list.end(), node) != white_list.end();
+  for (const SamplerPtr& sampler : samplers)
+    inbound = inbound || sampler->inBounds(node->getConfiguration());
+  ```
+  Now, the check exits early as soon as whitelist membership or any sampler confirms admissibility:
+  ```cpp
+  // Optimized implementation: short-circuits immediately
+  bool inbound = false;
+  for (const NodePtr& wn : white_list) {
+    if (wn == node) { inbound = true; break; }
+  }
+  if (!inbound) {
+    for (const SamplerPtr& sampler : samplers) {
+      if (sampler->inBounds(node->getConfiguration())) {
+        inbound = true;
+        break;
+      }
+    }
+  }
+  ```
+- **$O(N)$ Tree Clearing in `cleanTree()`**:
+  Previously, `Tree::cleanTree()` invoked `purgeFromHere(n, white_list, removed_nodes)` recursively across all children. For each node, it called `deleteNode()`, which repeatedly triggered full KD-Tree rebuilds whenever `deleted_nodes_ > deleted_nodes_threshold_`, leading to severe $O(N \log N \times \text{rebuilds})$ or $O(N^2)$ stalls.
+  The new implementation disconnects all nodes in a single $O(N)$ pass and resets the KD-Tree in $O(1)$:
+  ```cpp
+  void Tree::cleanTree()
+  {
+    std::vector<NodePtr> white_list = { root_ };
+    nodes_->disconnectNodes(white_list);
+    root_->disconnectChildConnections();
+    root_->disconnectNetChildConnections();
+    nodes_->clear();
+    nodes_->insert(root_);
+  }
+  ```
+  This eliminates all solver stalls when purging discarded or completed trees.
+
