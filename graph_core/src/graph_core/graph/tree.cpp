@@ -794,19 +794,28 @@ std::vector<ConnectionPtr> Tree::getConnectionToNode(const NodePtr& node)
   std::vector<ConnectionPtr> connections;
   NodePtr tmp_node = node;
 
+  const size_t max_hops = (nodes_ && nodes_->size() > 0) ? (nodes_->size() + 10) : 10000;
+
   while (tmp_node != root_)
   {
-    if (node->getParentConnectionsSize() != 1)
+    if (tmp_node->getParentConnectionsSize() != 1)
     {
       CNR_ERROR(logger_, "a tree node should have only a parent");
-      CNR_ERROR(logger_, "node \n" << *node);
+      CNR_ERROR(logger_, "node \n" << *tmp_node);
       CNR_INFO(logger_, "current root " << root_);
-      CNR_INFO(logger_, "node " << node);
+      CNR_INFO(logger_, "node " << tmp_node);
 
       throw std::runtime_error("a tree node should have only a parent");
     }
     connections.push_back(tmp_node->parentConnection(0));
     tmp_node = tmp_node->parentConnection(0)->getParent();
+
+    if (connections.size() > max_hops)
+    {
+      CNR_ERROR(logger_, "Cycle or corrupted branch detected in Tree::getConnectionToNode (hops: "
+                         << connections.size() << " > " << max_hops << ")");
+      throw std::runtime_error("Cycle detected in Tree::getConnectionToNode");
+    }
   }
   std::reverse(connections.begin(), connections.end());
 
