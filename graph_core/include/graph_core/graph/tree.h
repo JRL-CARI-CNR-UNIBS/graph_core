@@ -90,14 +90,12 @@ protected:
   NearestNeighborsPtr nodes_;
 
   /**
-   * @brief Pointer to a TraceLogger instance for logging.
+   * @brief Pointer to the logger for logging.
    *
-   * This member variable represents a pointer to a TraceLogger instance,
-   * allowing to perform logging operations. TraceLogger is a part of the
-   * cnr_logger library. Ensure that the logger is properly configured and
-   * available for use.
+   * Logger used for messages (see graph_core/logger.h). It can be null:
+   * in that case nothing is logged.
    */
-  cnr_logger::TraceLoggerPtr logger_;
+  LoggerPtr logger_;
 
   /**
    * @brief Pointer to the collision checker.
@@ -228,13 +226,13 @@ public:
    * the collision checker used by the tree.
    * @param metrics A constant reference to a MetricsPtr representing the
    * metrics used by the tree.
-   * @param logger A constant reference to a cnr_logger::TraceLoggerPtr
+   * @param logger A constant reference to a LoggerPtr
    * representing the logger used by the tree.
    * @param use_kdtree A constant reference to a bool indicating whether to use
    * a k-d tree for nearest neighbor queries (default is true).
    */
   Tree(const NodePtr& root, const double& max_distance, const CollisionCheckerPtr& checker, const MetricsPtr& metrics,
-       const cnr_logger::TraceLoggerPtr& logger, const bool& use_kdtree = true);
+       const LoggerPtr& logger, const bool& use_kdtree = true);
 
   /**
    * @brief Checks if the tree is considered a subtree.
@@ -1141,23 +1139,23 @@ public:
   }
 
   /**
-   * @brief Retrieves a pointer to the TraceLogger associated with the path.
+   * @brief Retrieves a pointer to the Logger associated with the path.
    *
-   * This member function provides read-only access to the TraceLogger instance
+   * This member function provides read-only access to the Logger instance
    * associated with the path, allowing external components to access and
    * utilize the logging capabilities.
    *
-   * @return A constant reference to the TraceLogger pointer.
+   * @return A constant reference to the Logger pointer.
    */
-  const cnr_logger::TraceLoggerPtr& getLogger() const
+  const LoggerPtr& getLogger() const
   {
     return logger_;
   }
 
   /**
-   * @brief Sets the TraceLogger associated with the path.
+   * @brief Sets the Logger associated with the path.
    */
-  void setLogger(const cnr_logger::TraceLoggerPtr& logger)
+  void setLogger(const LoggerPtr& logger)
   {
     logger_ = logger;
   }
@@ -1224,41 +1222,13 @@ public:
    * @param yaml The YAML::Node containing 'nodes' and 'connections' fields.
    * @param metrics The MetricsPtr for computing connection costs.
    * @param checker The CollisionCheckerPtr for collision checking.
-   * @param logger The TraceLoggerPtr for logging error messages.
+   * @param logger The LoggerPtr for logging error messages.
    * @return A TreePtr constructed from the YAML::Node. If an error occurs
    * during construction, returns nullptr.
    */
   static TreePtr fromYAML(const YAML::Node& yaml, const MetricsPtr& metrics, const CollisionCheckerPtr& checker,
-                          const cnr_logger::TraceLoggerPtr& logger);
+                          const LoggerPtr& logger);
 };
 
-/**
- * @brief Static inline function to get a parameter from the parameter server
- * and set it to a given TreePtr.
- *
- * This function attempts to retrieve a parameter named `param_name` from the
- * parameter namespace `param_ns`, and assigns its value to the TreePtr `param`.
- * If the parameter is found, it is set to the TreePtr and the function returns
- * true. If the parameter is not found, a warning is logged and the function
- * returns false. If an error occurs while retrieving the parameter, an error is
- * logged and an invalid_argument exception is thrown. Additionally, it sets the
- * logger, metrics, and collision checker for the retrieved TreePtr.
- *
- * @param logger A pointer to a TraceLogger object used for logging messages.
- * @param param_ns The namespace of the parameter on the parameter server.
- * @param param_name The name of the parameter to retrieve.
- * @param param Reference to the PathPtr where the parameter value will be
- * assigned.
- * @param metrics A pointer to the Metrics object to be set for the retrieved
- * TreePtr.
- * @param checker A pointer to the CollisionChecker object to be set for the
- * retrieved TreePtr.
- * @return True if the parameter is successfully retrieved and assigned, false
- * otherwise.
- * @throws std::invalid_argument if an error occurs while retrieving the
- * parameter.
- */
-bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string& param_ns, const std::string& param_name,
-               TreePtr& param, const MetricsPtr& metrics, const CollisionCheckerPtr& checker);
 }  // end namespace core
 }  // end namespace graph

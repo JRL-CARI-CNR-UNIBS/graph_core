@@ -31,8 +31,7 @@ namespace graph
 {
 namespace core
 {
-Connection::Connection(const NodePtr& parent, const NodePtr& child, const cnr_logger::TraceLoggerPtr& logger,
-                       const bool is_net)
+Connection::Connection(const NodePtr& parent, const NodePtr& child, const LoggerPtr& logger, const bool is_net)
   : parent_(parent), child_(child), logger_(logger)
 {
   assert(getParent());
@@ -62,7 +61,7 @@ bool Connection::setFlag(const size_t& idx, const bool flag)
   {
     if (idx < number_reserved_flags_)
     {
-      CNR_ERROR(logger_, "can't overwrite a default flag");
+      GC_ERROR(logger_, "can't overwrite a default flag");
       return false;
     }
     else
@@ -71,7 +70,7 @@ bool Connection::setFlag(const size_t& idx, const bool flag)
   else  // the flag should already exist or you should ask to create a flag at
         // idx = flags_.size()
   {
-    CNR_ERROR(logger_, "flags size " << flags_.size() << " and you want to set a flag in position " << idx);
+    GC_ERROR(logger_, "flags size " << flags_.size() << " and you want to set a flag in position " << idx);
     return false;
   }
 
@@ -173,7 +172,7 @@ Eigen::VectorXd Connection::projectOnConnection(const Eigen::VectorXd& point, do
   if (point == parent)
   {
     if (verbose)
-      CNR_INFO(logger_, "point is parent");
+      GC_INFO(logger_, "point is parent");
 
     in_conn = true;
     distance = 0.0;
@@ -182,7 +181,7 @@ Eigen::VectorXd Connection::projectOnConnection(const Eigen::VectorXd& point, do
   else if (point == child)
   {
     if (verbose)
-      CNR_INFO(logger_, "point is child");
+      GC_INFO(logger_, "point is child");
 
     in_conn = true;
     distance = 0.0;
@@ -211,10 +210,10 @@ Eigen::VectorXd Connection::projectOnConnection(const Eigen::VectorXd& point, do
     ((s >= 0.0) && (s <= conn_length)) ? (in_conn = true) : (in_conn = false);
 
     if (verbose)
-      CNR_INFO(logger_, "in_conn: " << in_conn << " dist: " << distance << " s: " << s
-                                    << " point_length: " << point_length << " conn_length: " << euclidean_norm_
-                                    << " projection: " << projection.transpose() << " parent: " << parent.transpose()
-                                    << " child: " << child.transpose());
+      GC_INFO(logger_, "in_conn: " << in_conn << " dist: " << distance << " s: " << s
+                                   << " point_length: " << point_length << " conn_length: " << euclidean_norm_
+                                   << " projection: " << projection.transpose() << " parent: " << parent.transpose()
+                                   << " child: " << child.transpose());
 
     return projection;
   }
@@ -235,12 +234,12 @@ Connection::~Connection()
                           // parent's connections and child's connections
     if (flags_[idx_parent_valid_] || flags_[idx_child_valid_])
     {
-      CNR_FATAL(logger_,
-                "Parent and/or child have not been disconnected from "
-                "the connection that is being destroyed!\n "
-                    << this << " (" << getParent() << ")-->(" << getChild() << ")");
-      CNR_FATAL(logger_, "parent is valid? " << flags_[idx_parent_valid_]);
-      CNR_FATAL(logger_, "child is valid? " << flags_[idx_child_valid_]);
+      GC_FATAL(logger_,
+               "Parent and/or child have not been disconnected from "
+               "the connection that is being destroyed!\n "
+                   << this << " (" << getParent() << ")-->(" << getChild() << ")");
+      GC_FATAL(logger_, "parent is valid? " << flags_[idx_parent_valid_]);
+      GC_FATAL(logger_, "child is valid? " << flags_[idx_child_valid_]);
       return false;
     }
     return true;
@@ -251,9 +250,9 @@ bool Connection::isParallel(const ConnectionPtr& conn, const double& toll)
 {
   if (euclidean_norm_ == 0.0 || conn->norm() == 0.0)
   {
-    CNR_ERROR(logger_, "A connection has norm zero");
-    CNR_ERROR(logger_, "This conn " << this << "\n" << *this);
-    CNR_ERROR(logger_, "Other conn " << conn << "\n" << *conn);
+    GC_ERROR(logger_, "A connection has norm zero");
+    GC_ERROR(logger_, "This conn " << this << "\n" << *this);
+    GC_ERROR(logger_, "Other conn " << conn << "\n" << *conn);
 
     throw std::invalid_argument("A connection has norm zero");
   }

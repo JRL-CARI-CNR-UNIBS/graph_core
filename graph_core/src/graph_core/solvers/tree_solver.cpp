@@ -31,17 +31,17 @@ namespace graph
 {
 namespace core
 {
-bool TreeSolver::config(const std::string& param_ns)
+bool TreeSolver::config(const ParamMap& params)
 {
-  param_ns_ = param_ns;
-  get_param(logger_, param_ns_, "max_distance", max_distance_, 1.0);
-  get_param(logger_, param_ns_, "use_kdtree", use_kdtree_, true);
-  get_param(logger_, param_ns_, "extend", extend_, false);
-  get_param(logger_, param_ns_, "utopia_tolerance", utopia_tolerance_, 0.01);
+  params_ = params;
+  get_param(logger_, params_, "max_distance", max_distance_, 1.0);
+  get_param(logger_, params_, "use_kdtree", use_kdtree_, true);
+  get_param(logger_, params_, "extend", extend_, false);
+  get_param(logger_, params_, "utopia_tolerance", utopia_tolerance_, 0.01);
 
   if (utopia_tolerance_ <= 0.0)
   {
-    CNR_WARN(logger_, "utopia_tolerance cannot be negative, set equal to 0.0");
+    GC_WARN(logger_, "utopia_tolerance cannot be negative, set equal to 0.0");
     utopia_tolerance_ = 0.0;
   }
   utopia_tolerance_ += 1.0;
@@ -94,7 +94,7 @@ bool TreeSolver::setProblem(const double& max_time)
     start_tree_->addNode(goal_node_);
 
     solved_ = true;
-    CNR_TRACE(logger_, "A direct solution is found\n" << *solution_);
+    GC_TRACE(logger_, "A direct solution is found\n" << *solution_);
   }
   else
   {
@@ -130,20 +130,20 @@ bool TreeSolver::solve(PathPtr& solution, const unsigned int& max_iter, const do
 }
 
 bool TreeSolver::computePath(const Eigen::VectorXd& start_conf, const Eigen::VectorXd& goal_conf,
-                             const std::string& param_ns, PathPtr& solution, const double& max_time,
+                             const ParamMap& params, PathPtr& solution, const double& max_time,
                              const unsigned int& max_iter)
 {
   NodePtr start_node = std::make_shared<Node>(start_conf, logger_);
   NodePtr goal_node = std::make_shared<Node>(goal_conf, logger_);
 
-  return computePath(start_node, goal_node, param_ns, solution, max_time, max_iter);
+  return computePath(start_node, goal_node, params, solution, max_time, max_iter);
 }
 
-bool TreeSolver::computePath(const NodePtr& start_node, const NodePtr& goal_node, const std::string& param_ns,
+bool TreeSolver::computePath(const NodePtr& start_node, const NodePtr& goal_node, const ParamMap& params,
                              PathPtr& solution, const double& max_time, const unsigned int& max_iter)
 {
   resetProblem();
-  this->config(param_ns);
+  this->config(params);
   if (not addStart(start_node))
     return false;
   if (not addGoal(goal_node))
@@ -154,7 +154,7 @@ bool TreeSolver::computePath(const NodePtr& start_node, const NodePtr& goal_node
   auto tic = graph_time::now();
   if (!solve(solution, max_iter, max_time))
   {
-    CNR_WARN(logger_, "No solutions found. Time: " << toSeconds(graph_time::now(), tic) << ", max time: " << max_time);
+    GC_WARN(logger_, "No solutions found. Time: " << toSeconds(graph_time::now(), tic) << ", max time: " << max_time);
     return false;
   }
   return true;
@@ -164,19 +164,19 @@ bool TreeSolver::setSolution(const PathPtr& solution)
 {
   if (not solution)
   {
-    CNR_WARN(logger_, "Solution is empty");
+    GC_WARN(logger_, "Solution is empty");
     return false;
   }
 
   if (not solution->getTree())
   {
-    CNR_WARN(logger_, "Tree is empty");
+    GC_WARN(logger_, "Tree is empty");
     return false;
   }
 
   if (not configured_)
   {
-    CNR_WARN(logger_, "Solver not configured");
+    GC_WARN(logger_, "Solver not configured");
     return false;
   }
 
@@ -204,27 +204,27 @@ bool TreeSolver::setSolution(const PathPtr& solution)
 
     problem_set_ = true;
 
-    CNR_DEBUG(logger_, "Solution set. Solved %d, can improve? %d, cost %f, utopia %f", solved_, can_improve_, cost_,
-              best_utopia_ * utopia_tolerance_);
+    GC_DEBUG(logger_, "Solution set. Solved " << solved_ << ", can improve? " << can_improve_ << ", cost " << cost_
+                                              << ", utopia " << best_utopia_ * utopia_tolerance_);
     return true;
   }
   else
   {
-    CNR_WARN(logger_, "Invalid solution, not set in the solver");
+    GC_WARN(logger_, "Invalid solution, not set in the solver");
     return false;
   }
 }
 
 bool TreeSolver::importFromSolver(const TreeSolverPtr& solver)
 {
-  CNR_DEBUG(logger_, "Import from Tree solver");
+  GC_DEBUG(logger_, "Import from Tree solver");
 
   if (this == solver.get())  // Avoid self-assignment
     return true;
 
-  if (not config(solver->param_ns_))
+  if (not config(solver->params_))
   {
-    CNR_ERROR(logger_, "Cannot import from the solver because the configuration failed");
+    GC_ERROR(logger_, "Cannot import from the solver because the configuration failed");
     return false;
   }
 
@@ -236,7 +236,7 @@ bool TreeSolver::importFromSolver(const TreeSolverPtr& solver)
   configured_ = solver->configured_;
   start_tree_ = solver->start_tree_;
   dof_ = solver->dof_;
-  param_ns_ = solver->param_ns_;
+  params_ = solver->params_;
   max_distance_ = solver->max_distance_;
   extend_ = solver->extend_;
   utopia_tolerance_ = solver->utopia_tolerance_;

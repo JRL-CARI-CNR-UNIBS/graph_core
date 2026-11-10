@@ -45,7 +45,7 @@ public:
   /**
    * @brief Default constructor for NullGoalCostFunction.
    */
-  NullGoalCostFunction(const cnr_logger::TraceLoggerPtr& logger) : logger_(logger)
+  NullGoalCostFunction(const LoggerPtr& logger) : logger_(logger)
   {
   }
 
@@ -61,14 +61,12 @@ public:
 
 protected:
   /**
-   * @brief Pointer to a TraceLogger instance for logging.
+   * @brief Pointer to the logger for logging.
    *
-   * This member variable represents a pointer to a TraceLogger instance,
-   * allowing to perform logging operations. TraceLogger is a part of the
-   * cnr_logger library. Ensure that the logger is properly configured and
-   * available for use.
+   * Logger used for messages (see graph_core/logger.h). It can be null:
+   * in that case nothing is logged.
    */
-  cnr_logger::TraceLoggerPtr logger_;
+  LoggerPtr logger_;
 };
 
 }  // end namespace core

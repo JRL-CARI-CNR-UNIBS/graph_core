@@ -77,14 +77,12 @@ protected:
   double likelihood_;
 
   /**
-   * @brief Pointer to a TraceLogger instance for logging.
+   * @brief Pointer to the logger for logging.
    *
-   * This member variable represents a pointer to a TraceLogger instance,
-   * allowing to perform logging operations. TraceLogger is a part of the
-   * cnr_logger library. Ensure that the logger is properly configured and
-   * available for use.
+   * Logger used for messages (see graph_core/logger.h). It can be null:
+   * in that case nothing is logged.
    */
-  cnr_logger::TraceLoggerPtr logger_;
+  LoggerPtr logger_;
 
   /**
    * @brief Vector of boolean flags.
@@ -157,11 +155,10 @@ public:
    *
    * @param parent The NodePtr to the parent Node.
    * @param child The NodePtr to the child Node.
-   * @param logger The cnr_logger::TraceLoggerPtr logger for logging operations.
+   * @param logger The LoggerPtr logger for logging operations.
    * @param is_net Boolean indicating if the connection is a net connection.
    */
-  Connection(const NodePtr& parent, const NodePtr& child, const cnr_logger::TraceLoggerPtr& logger,
-             const bool is_net = false);
+  Connection(const NodePtr& parent, const NodePtr& child, const LoggerPtr& logger, const bool is_net = false);
 
   /**
    * @brief Returns a shared pointer to the Connection.
@@ -250,15 +247,15 @@ public:
   }
 
   /**
-   * @brief Retrieves a pointer to the TraceLogger associated with the node.
+   * @brief Retrieves a pointer to the Logger associated with the node.
    *
-   * This member function provides read-only access to the TraceLogger instance
+   * This member function provides read-only access to the Logger instance
    * associated with the node, allowing external components to access and
    * utilize the logging capabilities.
    *
-   * @return A constant reference to the TraceLogger pointer.
+   * @return A constant reference to the Logger pointer.
    */
-  const cnr_logger::TraceLoggerPtr& getLogger() const
+  const LoggerPtr& getLogger() const
   {
     return logger_;
   }

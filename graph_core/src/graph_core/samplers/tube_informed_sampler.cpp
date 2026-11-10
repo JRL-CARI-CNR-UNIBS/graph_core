@@ -106,7 +106,7 @@ bool TubeInformedSampler::setRadius(const double& radius)
 {
   if (radius <= 0)
   {
-    CNR_WARN(logger_, "Radius should be positive");
+    GC_WARN(logger_, "Radius should be positive");
     return false;
   }
   radius_ = radius;
@@ -117,7 +117,7 @@ bool TubeInformedSampler::setLocalBias(const double& local_bias)
 {
   if ((local_bias < 0) || (local_bias > 1))
   {
-    CNR_WARN(logger_, "Local bias should be between 0-1");
+    GC_WARN(logger_, "Local bias should be between 0-1");
     return false;
   }
   local_bias_ = local_bias;

@@ -171,12 +171,12 @@ public:
    * @param lower_bound Lower bounds for each dimension.
    * @param upper_bound Upper bounds for each dimension.
    * @param scale Scaling factors for each dimension (default: 1).
-   * @param logger TraceLogger for logging.
+   * @param logger Logger for logging.
    * @param cost Cost of the path (default: infinity).
    */
   InformedSampler(const Eigen::VectorXd& focus_1, const Eigen::VectorXd& focus_2, const Eigen::VectorXd& lower_bound,
-                  const Eigen::VectorXd& upper_bound, const Eigen::VectorXd& scale,
-                  const cnr_logger::TraceLoggerPtr& logger, const double& cost)
+                  const Eigen::VectorXd& upper_bound, const Eigen::VectorXd& scale, const LoggerPtr& logger,
+                  const double& cost)
     : SamplerBase(lower_bound, upper_bound, logger,
                   cost)
     ,  // set initialized_ true
@@ -192,7 +192,7 @@ public:
     config();
   }
   InformedSampler(const Eigen::VectorXd& focus_1, const Eigen::VectorXd& focus_2, const Eigen::VectorXd& lower_bound,
-                  const Eigen::VectorXd& upper_bound, const cnr_logger::TraceLoggerPtr& logger,
+                  const Eigen::VectorXd& upper_bound, const LoggerPtr& logger,
                   const double& cost = std::numeric_limits<double>::infinity())
     : SamplerBase(lower_bound, upper_bound, logger,
                   cost)
@@ -218,13 +218,12 @@ public:
    * @param lower_bound Lower bounds for each dimension.
    * @param upper_bound Upper bounds for each dimension.
    * @param scale Scaling factors for each dimension (default: 1).
-   * @param logger TraceLogger for logging.
+   * @param logger Logger for logging.
    * @param cost Cost of the path (default: infinity).
    * @return True if correctly initialised, False if already initialised.
    */
   virtual bool init(const Eigen::VectorXd& focus_1, const Eigen::VectorXd& focus_2, const Eigen::VectorXd& lower_bound,
-                    const Eigen::VectorXd& upper_bound, const Eigen::VectorXd& scale,
-                    const cnr_logger::TraceLoggerPtr& logger,
+                    const Eigen::VectorXd& upper_bound, const Eigen::VectorXd& scale, const LoggerPtr& logger,
                     const double& cost = std::numeric_limits<double>::infinity())
   {
     if (not SamplerBase::init(lower_bound, upper_bound, logger, cost))
@@ -240,7 +239,7 @@ public:
   }
 
   virtual bool init(const Eigen::VectorXd& focus_1, const Eigen::VectorXd& focus_2, const Eigen::VectorXd& lower_bound,
-                    const Eigen::VectorXd& upper_bound, const cnr_logger::TraceLoggerPtr& logger,
+                    const Eigen::VectorXd& upper_bound, const LoggerPtr& logger,
                     const double& cost = std::numeric_limits<double>::infinity())
   {
     if (not SamplerBase::init(lower_bound, upper_bound, logger, cost))

@@ -56,7 +56,7 @@ public:
   }  // set initialized_ false
 
   AnytimeRRT(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
-             const GoalCostFunctionPtr& goal_cost_fcn, const cnr_logger::TraceLoggerPtr& logger)
+             const GoalCostFunctionPtr& goal_cost_fcn, const LoggerPtr& logger)
     : RRT(metrics, checker, sampler, goal_cost_fcn,
           logger)  // set initialized_ true
   {
@@ -64,7 +64,7 @@ public:
   }
 
   AnytimeRRT(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
-             const cnr_logger::TraceLoggerPtr& logger)
+             const LoggerPtr& logger)
     : RRT(metrics, checker, sampler, logger)  // set initialized_ true
   {
     setParameters();
@@ -84,7 +84,7 @@ public:
    * @return True if correctly initialised, False if already initialised.
    */
   virtual bool init(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
-                    const GoalCostFunctionPtr& goal_cost_fcn, const cnr_logger::TraceLoggerPtr& logger) override
+                    const GoalCostFunctionPtr& goal_cost_fcn, const LoggerPtr& logger) override
   {
     if (not RRT::init(metrics, checker, sampler, goal_cost_fcn,
                       logger))  // set initialized_ true
@@ -96,7 +96,7 @@ public:
   }
 
   virtual bool init(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
-                    const cnr_logger::TraceLoggerPtr& logger) override
+                    const LoggerPtr& logger) override
   {
     if (not RRT::init(metrics, checker, sampler,
                       logger))  // set initialized_ true
@@ -166,7 +166,7 @@ public:
 
   virtual bool solve(PathPtr& solution, const unsigned int& max_iter = 100,
                      const double& max_time = std::numeric_limits<double>::infinity()) override;
-  virtual bool config(const std::string& param_ns) override;
+  virtual bool config(const ParamMap& params) override;
   virtual void resetProblem() override;
   virtual bool improveUpdate(const Eigen::VectorXd& point, PathPtr& solution);
   virtual bool improveUpdate(PathPtr& solution);

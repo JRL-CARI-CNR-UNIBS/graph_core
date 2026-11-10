@@ -1,3 +1,4 @@
+#include "test_utils.h"
 // Graph core required headers
 #include <graph_core/solvers/rrt_star.h>
 #include <graph_core/samplers/uniform_sampler.h>
@@ -6,41 +7,28 @@
 
 int main(int argc, char** argv)
 {
-  // Load the logger's configuration
   std::string path_to_config_folder = std::string(TEST_DIR);
-  std::string logger_file = path_to_config_folder + "/logger_param.yaml";
 
-  if (argc > 1)
-    logger_file = path_to_config_folder + "/" + std::string(argv[1]);  // or take it from argument
+  // Logger: the log level can be passed as first argument
+  graph::core::LoggerPtr logger = graph_core_tests::makeLogger("compute_path_test", argc, argv);
+  if (not logger)
+    return 1;
 
-  cnr_logger::TraceLoggerPtr logger = std::make_shared<cnr_logger::TraceLogger>("compute_path_test", logger_file);
-
-  // Load params
-  std::string command =
-      "cnr_param_server --path-to-file " + std::string(TEST_DIR) +
-      "/graph_core_tests_params.yaml";  // use cnr_param utility to write parameters contained in this file
-  CNR_INFO(logger, "Executing command: " << command);
-  int ret_code = std::system(command.c_str());
-  if (ret_code != 0)
-  {
-    CNR_ERROR(logger, "Error: command " << command << " failed");
-    return ret_code;
-  }
-
-  // Define namespace for parameters retrieving. Parameters are defined and will be searched under this namespace
+  // Load the parameters. graph_core does not read parameters by itself: the application fills a ParamMap
+  // (here from a YAML file, in a ROS node from the node parameters) and passes it to the objects.
   std::string param_ns_base = "graph_core_tests";
-  std::string param_ns = "/" + param_ns_base;  // must begin with "/"
+  graph::core::ParamMap params =
+      graph_core_tests::loadParams(path_to_config_folder + "/graph_core_tests_params.yaml", param_ns_base);
 
   // Define the collision checker (foo collision checker)
   double min_cc_distance;  // distance between two configurations to be checked along a connection
   double default_min_cc_distance = 0.01;
-  graph::core::get_param(logger, param_ns, "min_cc_distance", min_cc_distance,
-                         default_min_cc_distance);  // wrapper to cnr_param functions
+  graph::core::get_param(logger, params, "min_cc_distance", min_cc_distance, default_min_cc_distance);
 
   double abs_joint_threshold;  // parameter specific for this foo collision checker: if a joint absolute value is less
   // than this threshold, the configuration is considered not valid
   double default_abs_joint_threshold = 1.0;
-  graph::core::get_param(logger, param_ns, "abs_joint_threshold", abs_joint_threshold, default_abs_joint_threshold);
+  graph::core::get_param(logger, params, "abs_joint_threshold", abs_joint_threshold, default_abs_joint_threshold);
 
   if (min_cc_distance <= 0)
     min_cc_distance = default_min_cc_distance;
@@ -76,8 +64,8 @@ int main(int argc, char** argv)
   goal_configuration << 1.5, 1.5, 1.5;
 
   // Optionally, you can load these directly from params
-  // graph::core::get_param(logger,param_ns,"start_configuration",start_configuration);
-  // graph::core::get_param(logger,param_ns,"goal_configuration",goal_configuration)
+  // graph::core::get_param(logger, params, "start_configuration", start_configuration);
+  // graph::core::get_param(logger, params, "goal_configuration", goal_configuration);
 
   graph::core::NodePtr start_node = std::make_shared<graph::core::Node>(start_configuration, logger);
   graph::core::NodePtr goal_node = std::make_shared<graph::core::Node>(goal_configuration, logger);
@@ -85,23 +73,23 @@ int main(int argc, char** argv)
   // Compute a path
   double max_time;  // seconds
   double default_max_time = 5.0;
-  graph::core::get_param(logger, param_ns, "max_time", max_time, default_max_time);
+  graph::core::get_param(logger, params, "max_time", max_time, default_max_time);
 
   size_t max_iter = 1000000;
   graph::core::PathPtr solution;
 
   graph::core::graph_time_point tic = graph::core::graph_time::now();
-  bool found = solver->computePath(start_node, goal_node, param_ns, solution, max_time, max_iter);
+  bool found = solver->computePath(start_node, goal_node, params, solution, max_time, max_iter);
   graph::core::graph_time_point toc = graph::core::graph_time::now();
 
   // Print out the solution and save it to a file
   double elapsed_time = graph::core::toSeconds(toc, tic);
-  CNR_INFO(logger, "Elapsed time: " << elapsed_time << " seconds");
+  GC_INFO(logger, "Elapsed time: " << elapsed_time << " seconds");
 
   if (found)
-    CNR_INFO(logger, cnr_logger::BOLDGREEN() << "Path found!\n" << *solution << cnr_logger::RESET());
+    GC_INFO(logger, graph::core::color::BOLDGREEN() << "Path found!\n" << *solution << graph::core::color::RESET());
   else
-    CNR_INFO(logger, cnr_logger::BOLDRED() << "Path not found!" << cnr_logger::RESET());
+    GC_INFO(logger, graph::core::color::BOLDRED() << "Path not found!" << graph::core::color::RESET());
 
   YAML::Node yaml_path, yaml_tree, yaml_path_ns, yaml_tree_ns;
   yaml_path["path"] = solution->toYAML();
@@ -119,7 +107,7 @@ int main(int argc, char** argv)
     fout_path.close();
   }
   else
-    CNR_ERROR(logger, "Error opening 'path.yaml' for writing.");
+    GC_ERROR(logger, "Error opening 'path.yaml' for writing.");
 
   if (fout_tree.is_open())
   {
@@ -127,7 +115,7 @@ int main(int argc, char** argv)
     fout_tree.close();
   }
   else
-    CNR_ERROR(logger, "Error opening 'tree.yaml' for writing.");
+    GC_ERROR(logger, "Error opening 'tree.yaml' for writing.");
 
   return 0;
 }

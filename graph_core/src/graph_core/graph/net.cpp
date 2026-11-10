@@ -31,7 +31,7 @@ namespace graph
 {
 namespace core
 {
-Net::Net(const TreePtr& tree, const cnr_logger::TraceLoggerPtr& logger) : logger_(logger)
+Net::Net(const TreePtr& tree, const LoggerPtr& logger) : logger_(logger)
 {
   verbose_ = false;
   search_every_solution_ = true;
@@ -138,7 +138,7 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
   auto tic_tot = now;
 
   if (verbose_)
-    CNR_INFO(logger_, "time in: " << toSeconds(graph_time::now(), tic_search_));
+    GC_INFO(logger_, "time in: " << toSeconds(graph_time::now(), tic_search_));
 
   // Depth-first search
   curse_of_dimensionality_++;
@@ -153,7 +153,7 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
     time_tot = now - tic_tot;
 
     if (verbose_)
-      CNR_INFO(logger_, "time return: " << time_tot.count());
+      GC_INFO(logger_, "time return: " << time_tot.count());
 
     return;
   }
@@ -177,15 +177,15 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
       time2now = toSeconds(tic_cycle, tic_search_);
 
       if (verbose_)
-        CNR_INFO(logger_, "Available time: " << max_time_ - time2now);
+        GC_INFO(logger_, "Available time: " << max_time_ - time2now);
 
       if (time2now > 0.9 * max_time_)
       {
         if (verbose_)
         {
           now = graph_time::now();
-          CNR_INFO(logger_, "Net max time exceeded! Time: " << time2now << " max time: " << max_time_);
-          CNR_INFO(logger_, "time return: " << toSeconds(now, tic_cycle));
+          GC_INFO(logger_, "Net max time exceeded! Time: " << time2now << " max time: " << max_time_);
+          GC_INFO(logger_, "time return: " << toSeconds(now, tic_cycle));
         }
         return;
       }
@@ -214,11 +214,9 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
 
         if (verbose_)
         {
-          CNR_INFO(logger_,
-                   "cost up to now %lf, cost to beat %f -> don't follow this "
-                   "branch!",
-                   cost2parent, cost_to_beat_);
-          CNR_INFO(logger_, "time don't follow branch: " << toSeconds(now, tic_cycle));
+          GC_INFO(logger_, "cost up to now " << cost2parent << ", cost to beat " << cost_to_beat_
+                                             << " -> don't follow this branch!");
+          GC_INFO(logger_, "time don't follow branch: " << toSeconds(now, tic_cycle));
         }
         continue;
       }
@@ -226,7 +224,7 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
       assert([&]() -> bool {
         if (not(cost2parent < cost_to_beat_))
         {
-          CNR_INFO(logger_, "cost to parent %f, cost to beat %f ", cost2parent, cost_to_beat_);
+          GC_INFO(logger_, "cost to parent " << cost2parent << ", cost to beat " << cost_to_beat_ << " ");
           return false;
         }
         return true;
@@ -241,11 +239,9 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
 
         if (verbose_)
         {
-          CNR_INFO(logger_,
-                   "cost heuristic through this node %lf, cost to beat %f -> "
-                   "don't follow this branch!",
-                   cost_heuristics, cost_to_beat_);
-          CNR_INFO(logger_, "time cost heuristics: " << toSeconds(now, tic_cycle));
+          GC_INFO(logger_, "cost heuristic through this node " << cost_heuristics << ", cost to beat " << cost_to_beat_
+                                                               << " -> don't follow this branch!");
+          GC_INFO(logger_, "time cost heuristics: " << toSeconds(now, tic_cycle));
         }
         continue;
       }
@@ -253,7 +249,7 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
       assert([&]() -> bool {
         if (not(cost_heuristics < cost_to_beat_))
         {
-          CNR_INFO(logger_, "cost heuristics %f, cost to beat %f ", cost_heuristics, cost_to_beat_);
+          GC_INFO(logger_, "cost heuristics " << cost_heuristics << ", cost to beat " << cost_to_beat_ << " ");
           return false;
         }
         return true;
@@ -279,9 +275,9 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
 
         if (verbose_)
         {
-          CNR_INFO(logger_, "New conn inserted: " << conn2parent << " " << *conn2parent << " cost up to now: "
-                                                  << cost2parent << " cost to beat: " << cost_to_beat_);
-          CNR_INFO(logger_, "Start node reached! Cost: " << cost2parent << " (cost to beat updated)");
+          GC_INFO(logger_, "New conn inserted: " << conn2parent << " " << *conn2parent << " cost up to now: "
+                                                 << cost2parent << " cost to beat: " << cost_to_beat_);
+          GC_INFO(logger_, "Start node reached! Cost: " << cost2parent << " (cost to beat updated)");
         }
 
         map_.insert(pair);
@@ -298,16 +294,16 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
 
           if (verbose_)
           {
-            CNR_INFO(logger_, "parent belongs to black list, skipping..");
-            CNR_INFO(logger_, "time black list: " << toSeconds(now, tic_cycle)
-                                                  << " check: " << toSeconds(now, time_black_list_check));
+            GC_INFO(logger_, "parent belongs to black list, skipping..");
+            GC_INFO(logger_, "time black list: " << toSeconds(now, tic_cycle)
+                                                 << " check: " << toSeconds(now, time_black_list_check));
           }
           continue;
         }
 
         now = graph_time::now();
         if (verbose_)
-          CNR_INFO(logger_, "time black list check: " << toSeconds(now, time_black_list_check));
+          GC_INFO(logger_, "time black list check: " << toSeconds(now, time_black_list_check));
 
         time_visited_list_check = graph_time::now();
         if (std::find(visited_nodes_.begin(), visited_nodes_.end(), parent) < visited_nodes_.end())
@@ -317,9 +313,9 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
 
           if (verbose_)
           {
-            CNR_INFO(logger_, "avoiding cycles...");
-            CNR_INFO(logger_, "time visited nodes: " << toSeconds(now, tic_cycle)
-                                                     << " check: " << toSeconds(now, time_visited_list_check));
+            GC_INFO(logger_, "avoiding cycles...");
+            GC_INFO(logger_, "time visited nodes: " << toSeconds(now, tic_cycle)
+                                                    << " check: " << toSeconds(now, time_visited_list_check));
           }
 
           continue;
@@ -329,7 +325,7 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
 
         now = graph_time::now();
         if (verbose_)
-          CNR_INFO(logger_, "time visited list check: " << toSeconds(now, time_visited_list_check));
+          GC_INFO(logger_, "time visited list check: " << toSeconds(now, time_visited_list_check));
 
         connections2parent_.push_back(conn2parent);
 
@@ -338,10 +334,10 @@ void Net::computeConnectionFromNodeToNode(const NodePtr& start_node, const NodeP
 
         if (verbose_)
         {
-          CNR_INFO(logger_, "New conn inserted: " << conn2parent << " " << *conn2parent << " cost up to now: "
-                                                  << cost2parent << " cost to beat: " << cost_to_beat_);
-          CNR_INFO(logger_,
-                   "time before: " << toSeconds(now, tic_search_) << " time cycle " << toSeconds(now, tic_cycle));
+          GC_INFO(logger_, "New conn inserted: " << conn2parent << " " << *conn2parent << " cost up to now: "
+                                                 << cost2parent << " cost to beat: " << cost_to_beat_);
+          GC_INFO(logger_,
+                  "time before: " << toSeconds(now, tic_search_) << " time cycle " << toSeconds(now, tic_cycle));
         }
 
         computeConnectionFromNodeToNode(start_node, parent, cost2parent);

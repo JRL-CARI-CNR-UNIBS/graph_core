@@ -63,10 +63,9 @@ public:
    * @brief Constructor for UniformSampler.
    * @param lower_bound Lower bounds for each dimension.
    * @param upper_bound Upper bounds for each dimension.
-   * @param logger TraceLogger for logging.
+   * @param logger Logger for logging.
    */
-  UniformSampler(const Eigen::VectorXd& lower_bound, const Eigen::VectorXd& upper_bound,
-                 const cnr_logger::TraceLoggerPtr& logger)
+  UniformSampler(const Eigen::VectorXd& lower_bound, const Eigen::VectorXd& upper_bound, const LoggerPtr& logger)
     : SamplerBase(lower_bound, upper_bound, logger)  // set initialized_ true
   {
   }

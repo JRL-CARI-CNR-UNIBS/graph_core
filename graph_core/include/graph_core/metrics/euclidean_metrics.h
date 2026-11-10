@@ -57,9 +57,9 @@ public:
 
   /**
    * @brief Constructs a EuclideanMetrics object.
-   * @param logger A shared pointer to a TraceLogger for logging.
+   * @param logger A shared pointer to a Logger for logging.
    */
-  EuclideanMetrics(const cnr_logger::TraceLoggerPtr& logger) : MetricsBase(logger)  // set initialized_ true
+  EuclideanMetrics(const LoggerPtr& logger) : MetricsBase(logger)  // set initialized_ true
   {
   }
 

@@ -67,18 +67,18 @@ public:
   }  // set initialized_ false
 
   RRTStar(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
-          const GoalCostFunctionPtr& goal_cost_fcn, const cnr_logger::TraceLoggerPtr& logger)
+          const GoalCostFunctionPtr& goal_cost_fcn, const LoggerPtr& logger)
     : RRT(metrics, checker, sampler, goal_cost_fcn, logger)
   {
   }  // set initialized_ true
 
   RRTStar(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
-          const cnr_logger::TraceLoggerPtr& logger)
+          const LoggerPtr& logger)
     : RRT(metrics, checker, sampler, logger)
   {
   }  // set initialized_ true
 
-  virtual bool config(const std::string& param_ns) override;
+  virtual bool config(const ParamMap& params) override;
   virtual bool addStartTree(const TreePtr& start_tree,
                             const double& max_time = std::numeric_limits<double>::infinity()) override;
   virtual bool update(PathPtr& solution) override;

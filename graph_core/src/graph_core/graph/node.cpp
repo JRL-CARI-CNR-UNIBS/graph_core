@@ -39,7 +39,7 @@ Node::Node(const Eigen::VectorXd& configuration) : logger_(nullptr)
   /*insert the defaults in flags_ here*/
 }
 
-Node::Node(const Eigen::VectorXd& configuration, const cnr_logger::TraceLoggerPtr& logger) : logger_(logger)
+Node::Node(const Eigen::VectorXd& configuration, const LoggerPtr& logger) : logger_(logger)
 {
   configuration_ = configuration;
   ndof_ = configuration_.size();
@@ -63,7 +63,7 @@ bool Node::setFlag(const size_t& idx, const bool flag)
   {
     if (idx < number_reserved_flags_)
     {
-      CNR_ERROR(logger_, "can't overwrite a default flag");
+      GC_ERROR(logger_, "can't overwrite a default flag");
       return false;
     }
     else
@@ -72,7 +72,7 @@ bool Node::setFlag(const size_t& idx, const bool flag)
   else  // the flag should already exist or you should ask to create a flag at
         // idx = flags_.size()
   {
-    CNR_ERROR(logger_, "flags size " << flags_.size() << " and you want to set a flag in position " << idx);
+    GC_ERROR(logger_, "flags size " << flags_.size() << " and you want to set a flag in position " << idx);
     return false;
   }
 
@@ -92,7 +92,7 @@ void Node::addParentConnection(const ConnectionPtr& connection)
 {
   if (connection->getChild() != pointer())
   {
-    CNR_FATAL(logger_, "child of connection is not this node");
+    GC_FATAL(logger_, "child of connection is not this node");
     throw std::runtime_error("child of connection is not this node");
   }
 
@@ -107,7 +107,7 @@ void Node::addChildConnection(const ConnectionPtr& connection)
 {
   if (connection->getParent() != pointer())
   {
-    CNR_FATAL(logger_, "parent of connection is not this node");
+    GC_FATAL(logger_, "parent of connection is not this node");
     throw std::runtime_error("parent of connection is not this node");
   }
 
@@ -122,7 +122,7 @@ void Node::addNetParentConnection(const ConnectionPtr& connection)
 {
   if (connection->getChild() != pointer())
   {
-    CNR_FATAL(logger_, "child of net connection is not this node");
+    GC_FATAL(logger_, "child of net connection is not this node");
     throw std::runtime_error("child of net connection is not this node");
   }
 
@@ -137,7 +137,7 @@ void Node::addNetChildConnection(const ConnectionPtr& connection)
 {
   if (connection->getParent() != pointer())
   {
-    CNR_FATAL(logger_, "parent of net connection is not this node");
+    GC_FATAL(logger_, "parent of net connection is not this node");
     throw std::runtime_error("parent of net connection is not this node");
   }
 
@@ -161,7 +161,7 @@ void Node::removeParentConnection(const std::vector<ConnectionWeakPtr>::iterator
 {
   if (it_conn == parent_connections_.end())
   {
-    CNR_FATAL(logger_, "connection is not in the parent vector");
+    GC_FATAL(logger_, "connection is not in the parent vector");
     throw std::invalid_argument("connection is not in the parent vector");
   }
   else
@@ -187,7 +187,7 @@ void Node::removeNetParentConnection(const std::vector<ConnectionWeakPtr>::itera
 {
   if (it_conn == net_parent_connections_.end())
   {
-    CNR_FATAL(logger_, "connection is not in the net parent vector");
+    GC_FATAL(logger_, "connection is not in the net parent vector");
     throw std::invalid_argument("connection is not in the net parent vector");
   }
   else
@@ -213,7 +213,7 @@ void Node::removeChildConnection(const std::vector<ConnectionPtr>::iterator& it_
 {
   if (it_conn == child_connections_.end())
   {
-    CNR_FATAL(logger_, "connection is not in the child vector");
+    GC_FATAL(logger_, "connection is not in the child vector");
     throw std::invalid_argument("connection is not in the child vector");
   }
   else
@@ -240,7 +240,7 @@ void Node::removeNetChildConnection(const std::vector<ConnectionPtr>::iterator& 
 {
   if (it_conn == net_child_connections_.end())
   {
-    CNR_FATAL(logger_, "connection is not in the net child vector");
+    GC_FATAL(logger_, "connection is not in the net child vector");
     throw std::invalid_argument("connection is not in the net child vector");
   }
   else
@@ -328,7 +328,7 @@ bool Node::switchParentConnection(const ConnectionPtr& net_connection)
                    [&net_connection](const ConnectionWeakPtr& conn) { return net_connection == conn.lock(); }) >=
       net_parent_connections_.end())
   {
-    CNR_FATAL(logger_, "it is not a parent net connection of the node!");
+    GC_FATAL(logger_, "it is not a parent net connection of the node!");
     return false;
   }
 
@@ -338,7 +338,7 @@ bool Node::switchParentConnection(const ConnectionPtr& net_connection)
   ConnectionPtr parent_connection = parent_connections_.front().lock();
   if (not parent_connection->convertToNetConnection())
   {
-    CNR_FATAL(logger_, "parent connection can't be converted into parent net connection!");
+    GC_FATAL(logger_, "parent connection can't be converted into parent net connection!");
     return false;
   }
 
@@ -348,7 +348,7 @@ bool Node::switchParentConnection(const ConnectionPtr& net_connection)
     parent_connection->convertToConnection();
     assert(parent_connections_.size() == 1);
 
-    CNR_FATAL(logger_, "parent net connection can't be converted into parent connection!");
+    GC_FATAL(logger_, "parent net connection can't be converted into parent connection!");
     return false;
   }
 
@@ -550,11 +550,11 @@ YAML::Node Node::toYAML() const
   return yaml;
 }
 
-NodePtr Node::fromYAML(const YAML::Node& yaml, const cnr_logger::TraceLoggerPtr& logger)
+NodePtr Node::fromYAML(const YAML::Node& yaml, const LoggerPtr& logger)
 {
   if (!yaml.IsSequence())
   {
-    CNR_ERROR(logger, "Cannot load a node from YAML::Node which does not contain a sequence");
+    GC_ERROR(logger, "Cannot load a node from YAML::Node which does not contain a sequence");
     return nullptr;
   }
 
@@ -600,30 +600,6 @@ std::ostream& operator<<(std::ostream& os, const Node& node)
   os << "net child connections = " << node.net_child_connections_.size() << std::endl;
 
   return os;
-}
-
-template <>
-bool get_param<NodePtr>(const cnr_logger::TraceLoggerPtr& logger, const std::string& param_ns,
-                        const std::string& param_name, NodePtr& param)
-{
-  std::string what, full_param_name = param_ns + "/" + param_name;
-  if (cnr::param::has(full_param_name, what))
-  {
-    YAML::Node yaml_node;
-    if (not cnr::param::get(full_param_name, yaml_node, what))
-    {
-      CNR_ERROR(logger, "Cannot load " << full_param_name + " parameter.\n" << what);
-      throw std::invalid_argument("Cannot load " + full_param_name + " parameter.");
-    }
-    else
-      param = graph::core::Node::fromYAML(yaml_node, logger);
-  }
-  else
-  {
-    CNR_WARN(logger, full_param_name + " parameter not available.\n" << what);
-    return false;
-  }
-  return true;
 }
 
 }  // end namespace core
