@@ -37,8 +37,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * ConsoleLogger is a ready-to-use implementation writing to std::cout/std::cerr.
  */
 
+#include <atomic>
 #include <cctype>
+#include <chrono>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -284,3 +287,31 @@ inline std::string BOLDWHITE()
 #define GC_ERROR(logger, stream) GC_LOG(logger, graph::core::LogLevel::Error, stream)
 /// Only logs, like CNR_FATAL: it does not abort the program.
 #define GC_FATAL(logger, stream) GC_LOG(logger, graph::core::LogLevel::Fatal, stream)
+
+/**
+ * @brief Like GC_LOG, but writes at most once every `period` seconds. The
+ * time of the last message is kept per call site (shared by all the objects
+ * using that line of code), as in ROS.
+ */
+#define GC_LOG_THROTTLE(logger, level, period, stream)                                                                 \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    static std::atomic<int64_t> gc_last_ns_{ std::numeric_limits<int64_t>::min() };                                    \
+    const int64_t gc_now_ns_ =                                                                                         \
+        std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch())      \
+            .count();                                                                                                  \
+    const int64_t gc_prev_ns_ = gc_last_ns_.load();                                                                    \
+    if (gc_prev_ns_ == std::numeric_limits<int64_t>::min() ||                                                          \
+        gc_now_ns_ - gc_prev_ns_ >= static_cast<int64_t>((period) * 1e9))                                              \
+    {                                                                                                                  \
+      gc_last_ns_.store(gc_now_ns_);                                                                                   \
+      GC_LOG(logger, level, stream);                                                                                   \
+    }                                                                                                                  \
+  } while (0)
+
+#define GC_TRACE_THROTTLE(logger, period, stream) GC_LOG_THROTTLE(logger, graph::core::LogLevel::Trace, period, stream)
+#define GC_DEBUG_THROTTLE(logger, period, stream) GC_LOG_THROTTLE(logger, graph::core::LogLevel::Debug, period, stream)
+#define GC_INFO_THROTTLE(logger, period, stream) GC_LOG_THROTTLE(logger, graph::core::LogLevel::Info, period, stream)
+#define GC_WARN_THROTTLE(logger, period, stream) GC_LOG_THROTTLE(logger, graph::core::LogLevel::Warn, period, stream)
+#define GC_ERROR_THROTTLE(logger, period, stream) GC_LOG_THROTTLE(logger, graph::core::LogLevel::Error, period, stream)
+#define GC_FATAL_THROTTLE(logger, period, stream) GC_LOG_THROTTLE(logger, graph::core::LogLevel::Fatal, period, stream)

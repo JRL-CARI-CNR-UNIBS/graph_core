@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <graph_core/params.h>
+#include <thread>
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -132,6 +133,53 @@ path: [[0, 0], [1, 1]]
   double max_distance;
   EXPECT_TRUE(graph::core::get_param(nullptr, solver, "max_distance", max_distance));
   EXPECT_DOUBLE_EQ(max_distance, 1.0);
+}
+
+// Logger: level filtering, null logger and throttling
+namespace
+{
+class CountingLogger : public graph::core::Logger
+{
+public:
+  int count = 0;
+  bool enabled(graph::core::LogLevel level) const override
+  {
+    return level >= graph::core::LogLevel::Info;
+  }
+  void log(graph::core::LogLevel, const char*, int, const std::string&) override
+  {
+    count++;
+  }
+};
+}  // namespace
+
+TEST(Logger, LevelsAndThrottle)
+{
+  auto logger = std::make_shared<CountingLogger>();
+  graph::core::LoggerPtr base = logger;
+
+  int evaluated = 0;
+  auto touch = [&evaluated] { return ++evaluated; };
+  GC_DEBUG(base, "not written " << touch());  // disabled: the message is not even built
+  EXPECT_EQ(logger->count, 0);
+  EXPECT_EQ(evaluated, 0);
+  GC_INFO(base, "written " << touch());
+  EXPECT_EQ(logger->count, 1);
+  EXPECT_EQ(evaluated, 1);
+
+  graph::core::LoggerPtr null_logger;
+  GC_ERROR(null_logger, "nothing happens");
+
+  // A single call site, called many times: written at most once per period
+  logger->count = 0;
+  auto throttled = [&base](int i) { GC_WARN_THROTTLE(base, 0.2, "throttled " << i); };
+  for (int i = 0; i < 100; i++)
+    throttled(i);
+  EXPECT_EQ(logger->count, 1);
+  std::this_thread::sleep_for(std::chrono::milliseconds(250));
+  for (int i = 0; i < 100; i++)
+    throttled(i);
+  EXPECT_EQ(logger->count, 2);
 }
 
 int main(int argc, char** argv)

@@ -24,6 +24,12 @@
 #define CNR_WARN(logger, stream) GC_WARN(logger, stream)
 #define CNR_ERROR(logger, stream) GC_ERROR(logger, stream)
 #define CNR_FATAL(logger, stream) GC_FATAL(logger, stream)
+#define CNR_TRACE_THROTTLE(logger, period, stream) GC_TRACE_THROTTLE(logger, period, stream)
+#define CNR_DEBUG_THROTTLE(logger, period, stream) GC_DEBUG_THROTTLE(logger, period, stream)
+#define CNR_INFO_THROTTLE(logger, period, stream) GC_INFO_THROTTLE(logger, period, stream)
+#define CNR_WARN_THROTTLE(logger, period, stream) GC_WARN_THROTTLE(logger, period, stream)
+#define CNR_ERROR_THROTTLE(logger, period, stream) GC_ERROR_THROTTLE(logger, period, stream)
+#define CNR_FATAL_THROTTLE(logger, period, stream) GC_FATAL_THROTTLE(logger, period, stream)
 
 namespace cnr_logger
 {
