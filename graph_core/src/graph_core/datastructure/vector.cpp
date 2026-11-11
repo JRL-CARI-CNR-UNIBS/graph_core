@@ -31,7 +31,7 @@ namespace graph
 {
 namespace core
 {
-Vector::Vector(const cnr_logger::TraceLoggerPtr& logger) : NearestNeighbors(logger)
+Vector::Vector(const LoggerPtr& logger) : NearestNeighbors(logger)
 {
 }
 

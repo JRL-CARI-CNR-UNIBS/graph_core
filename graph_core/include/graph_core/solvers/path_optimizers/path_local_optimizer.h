@@ -119,13 +119,12 @@ protected:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  PathLocalOptimizer(const CollisionCheckerPtr& checker, const MetricsPtr& metrics,
-                     const cnr_logger::TraceLoggerPtr& logger);
+  PathLocalOptimizer(const CollisionCheckerPtr& checker, const MetricsPtr& metrics, const LoggerPtr& logger);
 
   /**
-   * @brief Configure the optimizer reading parameters with cnr_param library.
+   * @brief Configure the optimizer reading its parameters from a ParamMap.
    */
-  virtual void config(const std::string& param_ns) override;
+  virtual void config(const ParamMap& params) override;
 
   /**
    * @brief Set the input path for optimization. It calls base class setPath and

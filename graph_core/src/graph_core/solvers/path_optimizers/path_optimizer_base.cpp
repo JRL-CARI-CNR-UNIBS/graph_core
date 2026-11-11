@@ -32,17 +32,17 @@ namespace graph
 namespace core
 {
 PathOptimizerBase::PathOptimizerBase(const CollisionCheckerPtr& checker, const MetricsPtr& metrics,
-                                     const cnr_logger::TraceLoggerPtr& logger)
+                                     const LoggerPtr& logger)
   : checker_(checker), metrics_(metrics), logger_(logger)
 {
   solved_ = false;
   configured_ = false;
 }
 
-void PathOptimizerBase::config(const std::string& param_ns)
+void PathOptimizerBase::config(const ParamMap& params)
 {
-  param_ns_ = param_ns;
-  get_param(logger_, param_ns_, "max_stall_gen", max_stall_gen_, (unsigned int)10);
+  params_ = params;
+  get_param(logger_, params_, "max_stall_gen", max_stall_gen_, (unsigned int)10);
 
   stall_gen_ = 0;
   configured_ = true;
@@ -52,7 +52,7 @@ void PathOptimizerBase::setPath(const PathPtr& path)
 {
   if (not path)
   {
-    CNR_WARN(logger_, "path is null");
+    GC_WARN(logger_, "path is null");
     return;
   }
 
@@ -70,7 +70,7 @@ bool PathOptimizerBase::solve(const unsigned int& max_iteration, const double& m
 {
   if (not configured_)
   {
-    CNR_ERROR(logger_, "Path local solver not configured!");
+    GC_ERROR(logger_, "Path local solver not configured!");
     return false;
   }
 
@@ -83,7 +83,7 @@ bool PathOptimizerBase::solve(const unsigned int& max_iteration, const double& m
   {
     if (solved_)
     {
-      CNR_DEBUG(logger_, "solved in %u iterations", iter);
+      GC_DEBUG(logger_, "solved in " << iter << " iterations");
       return true;
     }
     step();

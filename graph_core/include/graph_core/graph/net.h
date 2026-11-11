@@ -134,14 +134,12 @@ protected:
   int curse_of_dimensionality_;
 
   /**
-   * @brief Pointer to a TraceLogger instance for logging.
+   * @brief Pointer to the logger for logging.
    *
-   * This member variable represents a pointer to a TraceLogger instance,
-   * allowing to perform logging operations. TraceLogger is a part of the
-   * cnr_logger library. Ensure that the logger is properly configured and
-   * available for use.
+   * Logger used for messages (see graph_core/logger.h). It can be null:
+   * in that case nothing is logged.
    */
-  cnr_logger::TraceLoggerPtr logger_;
+  LoggerPtr logger_;
 
   /**
    * @brief Searches for paths in the net from a start node to a goal node.
@@ -166,9 +164,9 @@ public:
    * It gets the metrics from tree_
    *
    * @param tree The tree to be associated with the Net.
-   * @param logger The cnr_logger::TraceLoggerPtr logger for logging operations.
+   * @param logger The LoggerPtr logger for logging operations.
    */
-  Net(const TreePtr& tree, const cnr_logger::TraceLoggerPtr& logger);
+  Net(const TreePtr& tree, const LoggerPtr& logger);
 
   /**
    * @brief Set the tree associated with the Net.

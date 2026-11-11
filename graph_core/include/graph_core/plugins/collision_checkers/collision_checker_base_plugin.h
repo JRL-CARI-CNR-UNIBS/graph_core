@@ -84,15 +84,13 @@ public:
   /**
    * @brief init Initialise the graph::core::CollisionCheckerBase object,
    * defining its main attributes.
-   * @param param_ns defines the namespace under which parameter are searched
-   * for using cnr_param library. MoveitCollisionChecker requires group_name and
+   * @param params parameters of the object (see graph_core/params.h). MoveitCollisionChecker requires group_name and
    * checker_resolution as parameters.
    * @param planning_scene Pointer to the MoveIt! PlanningScene.
-   * @param logger Pointer to a TraceLogger for logging.
+   * @param logger Pointer to a Logger for logging.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const std::string& param_ns, const cnr_logger::TraceLoggerPtr& logger,
-                    const double& min_distance = 0.01) = 0;
+  virtual bool init(const ParamMap& params, const LoggerPtr& logger, const double& min_distance = 0.01) = 0;
 };
 
 }  // namespace core

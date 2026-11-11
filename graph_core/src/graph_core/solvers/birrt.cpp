@@ -33,7 +33,7 @@ namespace core
 {
 bool BiRRT::importFromSolver(const BiRRTPtr& solver)
 {
-  CNR_DEBUG(logger_, "Import from BiRRT solver");
+  GC_DEBUG(logger_, "Import from BiRRT solver");
 
   if (this == solver.get())  // Avoid self-assignment
     return true;
@@ -45,7 +45,7 @@ bool BiRRT::importFromSolver(const BiRRTPtr& solver)
   }
   else
   {
-    CNR_ERROR(logger_, "Import from solver failed");
+    GC_ERROR(logger_, "Import from solver failed");
     return false;
   }
 }
@@ -71,17 +71,17 @@ bool BiRRT::addGoal(const NodePtr& goal_node, const double& max_time)
 
 bool BiRRT::update(PathPtr& solution)
 {
-  CNR_TRACE(logger_, "RRTConnect::update");
+  GC_TRACE(logger_, "RRTConnect::update");
   if (solved_)
   {
-    CNR_TRACE(logger_, "alreay found a solution");
+    GC_TRACE(logger_, "alreay found a solution");
     solution = solution_;
     return true;
   }
 
   if (sampler_->collapse())
   {
-    CNR_TRACE(logger_, "collapsed");
+    GC_TRACE(logger_, "collapsed");
     return false;
   }
 
@@ -92,10 +92,10 @@ bool BiRRT::update(PathPtr& solution)
 
 bool BiRRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 {
-  CNR_TRACE(logger_, "RRTConnect::update");
+  GC_TRACE(logger_, "RRTConnect::update");
   if (solved_)
   {
-    CNR_TRACE(logger_, "already found a solution");
+    GC_TRACE(logger_, "already found a solution");
     solution = solution_;
     return true;
   }
@@ -115,15 +115,13 @@ bool BiRRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
   {
     distance = (new_start_node->getConfiguration() - new_goal_node->getConfiguration()).norm();
     tree_connected = (distance < TOLERANCE);
-    CNR_TRACE(logger_,
-              "Distance between node added to start tree and node added to "
-              "goal tree: %f (tolerance %f)",
-              distance, TOLERANCE);
+    GC_TRACE(logger_, "Distance between node added to start tree and node added to goal tree: "
+                          << distance << " (tolerance " << TOLERANCE << ")");
   }
 
   if (tree_connected)  // a solution is found
   {
-    CNR_TRACE(logger_, "Trees connected");
+    GC_TRACE(logger_, "Trees connected");
 
     NodePtr parent = new_goal_node->getParents().at(0);
     double cost_to_parent = new_goal_node->parentConnection(0)->getCost();
@@ -153,10 +151,10 @@ bool BiRRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 
 bool BiRRT::update(const NodePtr& n, PathPtr& solution)
 {
-  CNR_TRACE(logger_, "RRTConnect::update");
+  GC_TRACE(logger_, "RRTConnect::update");
   if (solved_)
   {
-    CNR_TRACE(logger_, "alreay find a solution");
+    GC_TRACE(logger_, "alreay find a solution");
     solution = solution_;
     return true;
   }
@@ -174,15 +172,13 @@ bool BiRRT::update(const NodePtr& n, PathPtr& solution)
   {
     distance = (new_start_node->getConfiguration() - new_goal_node->getConfiguration()).norm();
     tree_connected = (distance < TOLERANCE);
-    CNR_TRACE(logger_,
-              "Distance between node added to start tree and node added to "
-              "goal tree: %f (tolerance %f)",
-              distance, TOLERANCE);
+    GC_TRACE(logger_, "Distance between node added to start tree and node added to goal tree: "
+                          << distance << " (tolerance " << TOLERANCE << ")");
   }
 
   if (tree_connected)  // a solution is found
   {
-    CNR_TRACE(logger_, "Trees connected");
+    GC_TRACE(logger_, "Trees connected");
 
     NodePtr parent = new_goal_node->getParents().at(0);
     double cost_to_parent = new_goal_node->parentConnection(0)->getCost();

@@ -89,9 +89,9 @@ void Subtree::populateSubtreeInsideEllipsoid(const NodePtr& root, const Eigen::V
     populateTreeFromNode(root, focus1, focus2, cost, black_list, node_check);
   else
   {
-    CNR_WARN(logger_, "Root of subtree is not inside the ellipsoid!");
-    CNR_INFO(logger_, "Root:\n " << *root << "\nFocus1: " << focus1.transpose() << "\nFocus2: " << focus1.transpose()
-                                 << "\nCost: " << cost);
+    GC_WARN(logger_, "Root of subtree is not inside the ellipsoid!");
+    GC_INFO(logger_, "Root:\n " << *root << "\nFocus1: " << focus1.transpose() << "\nFocus2: " << focus1.transpose()
+                                << "\nCost: " << cost);
 
     populateTreeFromNode(root, black_list, node_check);
   }

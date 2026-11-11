@@ -15,50 +15,34 @@ This tutorial provides a concise guide on computing paths using `graph_core`. Wh
 #include <graph_core/collision_checkers/cube_3d_collision_checker.h>
 ```
 
-2. Create a logger object for logging purposes. 
-   For logging purposes, create a logger object using the [cnr_logger](https://github.com/CNR-STIIMA-IRAS/cnr_logger) library. This logger requires a configuration file that specifies where to print the logging information, along with other settings. For further details, refer to the [cnr_logger repository](https://github.com/CNR-STIIMA-IRAS/cnr_logger).
+2. Create a logger object for logging purposes.
+   `graph_core` writes its messages through a `graph::core::LoggerPtr` (see [logger.h](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/graph_core/include/graph_core/logger.h)). Here we use `graph::core::ConsoleLogger`, which prints to the terminal the messages at or above a given level. In a ROS application you can pass instead an adapter to the ROS logger (see the [README](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/README.md#logging-and-parameters)). A null logger disables logging.
 
 ```cpp
-// Load the logger's configuration
 std::string path_to_config_folder = std::string(TEST_DIR);
-std::string logger_file = path_to_config_folder + "/logger_param.yaml";
 
-if (argc > 1)
-  logger_file = path_to_config_folder + "/" + std::string(argv[1]);  // or take it from argument
-
-cnr_logger::TraceLoggerPtr logger =
-    std::make_shared<cnr_logger::TraceLogger>("compute_path_test", logger_file);
+graph::core::LoggerPtr logger =
+    std::make_shared<graph::core::ConsoleLogger>("compute_path_test", graph::core::LogLevel::Debug);
 ```
 3. Define the foo collision checker, a cost function, a sampler, and finally the solver.
-   To handle parameters, you can utilize [cnr_param](https://github.com/CNR-STIIMA-IRAS/cnr_param), which leverages [yaml-cpp](https://github.com/jbeder/yaml-cpp) to read parameter values from YAML files. `cnr_param` also integrates with the ROS and ROS2 parameter ecosystems, making it versatile for different applications. See the `cnr_param` repository for further details. Additionally, `graph_core` provides a wrapper function to simplify parameter retrieval, helping to streamline the setup process. You can find the main utility functions offered by `graph_core` [here](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/graph_core/include/graph_core/util.h).
+   `graph_core` does not read parameters by itself: the application fills a `graph::core::ParamMap` (a map from parameter name to value, see [params.h](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/graph_core/include/graph_core/params.h)) and passes it to the objects. Here the parameters are read from a YAML file with `graph::core::paramsFromYAML()`; in a ROS node you would copy them from the node parameters. `graph::core::get_param()` reads a single parameter from the map, with an optional default value.
 
 ```cpp
-// Load params
-  std::string command =
-      "cnr_param_server --path-to-file " + std::string(TEST_DIR) +
-      "/graph_core_tests_params.yaml";  // use cnr_param utility to write parameters contained in this file
-  CNR_INFO(logger, "Executing command: " << command);
-  int ret_code = std::system(command.c_str());
-  if (ret_code != 0)
-  {
-    CNR_ERROR(logger, "Error: command " << command << " failed");
-    return ret_code;
-  }
-
-// Define namespace for parameters retrieving. Parameters are defined and will be searched under this namespace
+// Load the parameters defined under "graph_core_tests" in the YAML file
 std::string param_ns_base = "graph_core_tests";
-std::string param_ns = "/" + param_ns_base;  // must begin with "/"
+graph::core::ParamMap params = graph::core::paramsFromYAML(
+    YAML::LoadFile(path_to_config_folder + "/graph_core_tests_params.yaml")[param_ns_base]);
 
 // Define the collision checker (foo collision checker)
 double min_cc_distance;  // distance between two configurations to be checked along a connection
 double default_min_cc_distance = 0.01;
-graph::core::get_param(logger, param_ns, "min_cc_distance", min_cc_distance,
-                        default_min_cc_distance);  // wrapper to cnr_param functions
+graph::core::get_param(logger, params, "min_cc_distance", min_cc_distance,
+                        default_min_cc_distance);
 
 double abs_joint_threshold;  // parameter specific for this foo collision checker: if a joint absolute value is less
                               // than this threshold, the configuration is considered not valid
 double default_abs_joint_threshold = 1.0;
-graph::core::get_param(logger, param_ns, "abs_joint_threshold", abs_joint_threshold, default_abs_joint_threshold);
+graph::core::get_param(logger, params, "abs_joint_threshold", abs_joint_threshold, default_abs_joint_threshold);
 
 if (min_cc_distance <= 0)
   min_cc_distance = default_min_cc_distance;
@@ -87,7 +71,7 @@ graph::core::TreeSolverPtr solver =
     std::make_shared<graph::core::RRTStar>(metrics, collision_checker, sampler, logger);
 ```
 
-4. Define the start and goal nodes for the path planning process. You can specify these configurations directly, or use the `graph::core::get_param(..)` function to read the start and goal configurations from parameter files. This approach allows you to manage configurations more flexibly, especially when working with complex or varying setups.
+4. Define the start and goal nodes for the path planning process. You can specify these configurations directly, or use the `graph::core::get_param(..)` function to read the start and goal configurations from the parameters. This approach allows you to manage configurations more flexibly, especially when working with complex or varying setups.
 
 ```cpp
 // Define start and goal nodes
@@ -98,26 +82,26 @@ Eigen::VectorXd goal_configuration(dof);
 goal_configuration << 1.5, 1.5, 1.5;
 
 // Optionally, you can load these directly from params
-// graph::core::get_param(logger,param_ns,"start_configuration",start_configuration);
-// graph::core::get_param(logger,param_ns,"goal_configuration",goal_configuration)
+// graph::core::get_param(logger, params, "start_configuration", start_configuration);
+// graph::core::get_param(logger, params, "goal_configuration", goal_configuration);
 
 graph::core::NodePtr start_node = std::make_shared<graph::core::Node>(start_configuration, logger);
 graph::core::NodePtr goal_node = std::make_shared<graph::core::Node>(goal_configuration, logger);
 ```
 
-5. With the solver set up, compute the path from the start to the goal node.
+5. With the solver set up, compute the path from the start to the goal node. `computePath()` configures the solver with `params` (e.g. `max_distance`, `use_kdtree`, `rewire_factor`) before solving.
 
 ```cpp
 // Compute a path
 double max_time;  // seconds
 double default_max_time = 5.0;
-graph::core::get_param(logger, param_ns, "max_time", max_time, default_max_time);
+graph::core::get_param(logger, params, "max_time", max_time, default_max_time);
 
 size_t max_iter = 1000000;
 graph::core::PathPtr solution;
 
 graph::core::graph_time_point tic = graph::core::graph_time::now();
-bool found = solver->computePath(start_node, goal_node, param_ns, solution, max_time, max_iter);
+bool found = solver->computePath(start_node, goal_node, params, solution, max_time, max_iter);
 graph::core::graph_time_point toc = graph::core::graph_time::now();
 ```
 
@@ -126,12 +110,12 @@ graph::core::graph_time_point toc = graph::core::graph_time::now();
 ```cpp
 // Print out the solution and save it to a file
 double elapsed_time = graph::core::toSeconds(toc, tic);
-CNR_INFO(logger, "Elapsed time: " << elapsed_time << " seconds");
+GC_INFO(logger, "Elapsed time: " << elapsed_time << " seconds");
 
 if (found)
-  CNR_INFO(logger, cnr_logger::BOLDGREEN() << "Path found!\n" << *solution << cnr_logger::RESET());
+  GC_INFO(logger, graph::core::color::BOLDGREEN() << "Path found!\n" << *solution << graph::core::color::RESET());
 else
-  CNR_INFO(logger, cnr_logger::BOLDRED() << "Path not found!" << cnr_logger::RESET());
+  GC_INFO(logger, graph::core::color::BOLDRED() << "Path not found!" << graph::core::color::RESET());
 
 YAML::Node yaml_path, yaml_tree, yaml_path_ns, yaml_tree_ns;
 yaml_path["path"] = solution->toYAML();
@@ -149,7 +133,7 @@ if (fout_path.is_open())
   fout_path.close();
 }
 else
-  CNR_ERROR(logger, "Error opening 'path.yaml' for writing.");
+  GC_ERROR(logger, "Error opening 'path.yaml' for writing.");
 
 if (fout_tree.is_open())
 {
@@ -157,7 +141,7 @@ if (fout_tree.is_open())
   fout_tree.close();
 }
 else
-  CNR_ERROR(logger, "Error opening 'tree.yaml' for writing.");
+  GC_ERROR(logger, "Error opening 'tree.yaml' for writing.");
 
 ```
 
@@ -170,21 +154,22 @@ else
 #include <graph_core/solvers/path_optimizers/path_local_optimizer.h>
 ```
 
-2. Load and print out the path and tree computed in the previous tutorial.
+2. Load and print out the path and tree computed in the previous tutorial. Paths and trees are data, not parameters: load them from the YAML files with `fromYAML()`.
 
 ```cpp
 // Load the path and tree computed in the first tutorial
-graph::core::PathPtr path;
-graph::core::get_param(logger, param_ns, "path", path, metrics, collision_checker);
+std::string param_ns = "graph_core_tests";
+YAML::Node yaml_path = YAML::LoadFile(path_to_config_folder + "/path.yaml")[param_ns]["path"];
+YAML::Node yaml_tree = YAML::LoadFile(path_to_config_folder + "/tree.yaml")[param_ns]["tree"];
 
-graph::core::TreePtr tree;
-graph::core::get_param(logger, param_ns, "tree", tree, metrics, collision_checker);
+graph::core::PathPtr path = graph::core::Path::fromYAML(yaml_path, metrics, collision_checker, logger);
+graph::core::TreePtr tree = graph::core::Tree::fromYAML(yaml_tree, metrics, collision_checker, logger);
 
 // Set the tree as the tree associated to the path
 path->setTree(tree);
 
-  CNR_INFO(logger, "Loaded path\n " << *path);
-  CNR_INFO(logger, "Loaded tree\n " << *tree);
+GC_INFO(logger, "Loaded path\n " << *path);
+GC_INFO(logger, "Loaded tree\n " << *tree);
 ```
 
 3. Clone the path. Since we will apply some post processing to the path but not to the tree, we will work on an exact clone of the original path to keep integrity between it and its tree. The clone has the same waypoints but stored within different nodes instances and does not have any tree associated. It shares the same metrics and collision checker with the original path. However, you can clone also them if you want to work on different instances. We will not do it here.
@@ -210,20 +195,20 @@ path_opt->setPath(cloned_path);
 
 double warp_min_conn_length;
 double default_warp_min_conn_length = 0.1;
-graph::core::get_param(logger, param_ns, "warp_min_conn_length", warp_min_conn_length, default_warp_min_conn_length);
+graph::core::get_param(logger, params, "warp_min_conn_length", warp_min_conn_length, default_warp_min_conn_length);
 
 double warp_min_step_size;
 double default_warp_min_step_size = 0.05;
-graph::core::get_param(logger, param_ns, "warp_min_step_size", warp_min_step_size, default_warp_min_step_size);
+graph::core::get_param(logger, params, "warp_min_step_size", warp_min_step_size, default_warp_min_step_size);
 
 path_opt->warp(warp_min_conn_length, warp_min_step_size);
-CNR_INFO(logger, "Path after warp \n " << *cloned_path);
+GC_INFO(logger, "Path after warp \n " << *cloned_path);
 
 double simplify_max_conn_length;
 double default_simplify_max_conn_length = 0.05;
-graph::core::get_param(logger, param_ns, "simplify_max_conn_length", simplify_max_conn_length,
+graph::core::get_param(logger, params, "simplify_max_conn_length", simplify_max_conn_length,
                         default_simplify_max_conn_length);
 
 path_opt->simplify(simplify_max_conn_length);
-CNR_INFO(logger, "Path after simplify \n " << *cloned_path);
+GC_INFO(logger, "Path after simplify \n " << *cloned_path);
 ```

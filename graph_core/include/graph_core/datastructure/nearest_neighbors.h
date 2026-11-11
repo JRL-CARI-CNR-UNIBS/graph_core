@@ -44,7 +44,7 @@ public:
   /**
    * @brief Constructor for the NearestNeighbors class.
    */
-  NearestNeighbors(const cnr_logger::TraceLoggerPtr& logger) : logger_(logger)
+  NearestNeighbors(const LoggerPtr& logger) : logger_(logger)
   {
     deleted_nodes_ = 0;
     size_ = 0;
@@ -184,14 +184,12 @@ protected:
   unsigned int deleted_nodes_;
 
   /**
-   * @brief Pointer to a TraceLogger instance for logging.
+   * @brief Pointer to the logger for logging.
    *
-   * This member variable represents a pointer to a TraceLogger instance,
-   * allowing to perform logging operations. TraceLogger is a part of the
-   * cnr_logger library. Ensure that the logger is properly configured and
-   * available for use.
+   * Logger used for messages (see graph_core/logger.h). It can be null:
+   * in that case nothing is logged.
    */
-  cnr_logger::TraceLoggerPtr logger_;
+  LoggerPtr logger_;
 };
 
 typedef std::shared_ptr<NearestNeighbors> NearestNeighborsPtr;

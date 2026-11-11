@@ -58,14 +58,12 @@ protected:
   bool initialized_;
 
   /**
-   * @brief Pointer to a TraceLogger instance for logging.
+   * @brief Pointer to the logger for logging.
    *
-   * This member variable represents a pointer to a TraceLogger instance,
-   * allowing to perform logging operations. TraceLogger is a part of the
-   * cnr_logger library. Ensure that the logger is properly configured and
-   * available for use.
+   * Logger used for messages (see graph_core/logger.h). It can be null:
+   * in that case nothing is logged.
    */
-  cnr_logger::TraceLoggerPtr logger_;
+  LoggerPtr logger_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -81,9 +79,9 @@ public:
 
   /**
    * @brief Constructs a MetricsBase object.
-   * @param logger A shared pointer to a TraceLogger for logging.
+   * @param logger A shared pointer to a Logger for logging.
    */
-  MetricsBase(const cnr_logger::TraceLoggerPtr& logger) : logger_(logger)
+  MetricsBase(const LoggerPtr& logger) : logger_(logger)
   {
     initialized_ = true;
   }
@@ -92,14 +90,14 @@ public:
    * @brief init Initialise the object, defining its main attributes. At the end
    * of the function, the flag 'initialized_' is set to true and the object can
    * execute its main functions.
-   * @param logger Pointer to a TraceLogger for logging.
+   * @param logger Pointer to a Logger for logging.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const cnr_logger::TraceLoggerPtr& logger)
+  virtual bool init(const LoggerPtr& logger)
   {
     if (initialized_)
     {
-      CNR_WARN(logger_, "Metrics already initialised!");
+      GC_WARN(logger_, "Metrics already initialised!");
       return false;
     }
 

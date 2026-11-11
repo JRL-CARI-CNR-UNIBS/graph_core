@@ -67,7 +67,7 @@ public:
    * @param node The node to be stored in the KdNode.
    * @param dimension The dimension along which the tree is split.
    */
-  KdNode(const NodePtr& node, const int& dimension, const cnr_logger::TraceLoggerPtr& logger);
+  KdNode(const NodePtr& node, const int& dimension, const LoggerPtr& logger);
   /**
    * @brief Destructor for the KdNode class.
    */
@@ -244,14 +244,12 @@ protected:
   bool deleted_;
 
   /**
-   * @brief Pointer to a TraceLogger instance for logging.
+   * @brief Pointer to the logger for logging.
    *
-   * This member variable represents a pointer to a TraceLogger instance,
-   * allowing to perform logging operations. TraceLogger is a part of the
-   * cnr_logger library. Ensure that the logger is properly configured and
-   * available for use.
+   * Logger used for messages (see graph_core/logger.h). It can be null:
+   * in that case nothing is logged.
    */
-  const cnr_logger::TraceLoggerPtr& logger_;
+  const LoggerPtr& logger_;
 };
 
 /**
@@ -273,7 +271,7 @@ public:
   /**
    * @brief Constructor for the KdTree class.
    */
-  KdTree(const cnr_logger::TraceLoggerPtr& logger);
+  KdTree(const LoggerPtr& logger);
 
   /**
    * @brief Destructor for the KdTree class.

@@ -1,17 +1,13 @@
-#include <cnr_logger/cnr_logger.h>
+#include "test_utils.h"
 #include <graph_core/datastructure/kdtree.h>
 #include <random>
 
 int main(int argc, char** argv)
 {
-  // Load the logger's configuration
-  std::string path_to_config_folder = std::string(TEST_DIR);
-  std::string logger_file = path_to_config_folder + "/logger_param.yaml";
-
-  if (argc > 1)
-    logger_file = path_to_config_folder + "/" + std::string(argv[1]);  // or take it from argument
-
-  cnr_logger::TraceLoggerPtr logger = std::make_shared<cnr_logger::TraceLogger>("graph_core_tests_logger", logger_file);
+  // Logger: the log level can be passed as first argument
+  graph::core::LoggerPtr logger = graph_core_tests::makeLogger("graph_core_tests_logger", argc, argv);
+  if (not logger)
+    return 1;
 
   int n_kdnodes = 10;
   int threshold = std::numeric_limits<int>::max();
@@ -26,8 +22,8 @@ int main(int argc, char** argv)
   }
 
   if (argc > 4)
-    CNR_WARN(logger,
-             cnr_logger::RESET() << cnr_logger::BOLDYELLOW() << "Number of inputs to the program should be <=3");
+    GC_WARN(logger, graph::core::color::RESET()
+                        << graph::core::color::BOLDYELLOW() << "Number of inputs to the program should be <=3");
 
   graph::core::KdTreePtr kdtree = std::make_shared<graph::core::KdTree>(logger);
   kdtree->deletedNodesThreshold(threshold);
@@ -40,13 +36,13 @@ int main(int argc, char** argv)
     graph::core::NodePtr node = std::make_shared<graph::core::Node>(q, logger);
     nodes.push_back(node);
 
-    CNR_INFO(logger,
-             cnr_logger::RESET() << cnr_logger::WHITE() << " Random node -> " << q.transpose() << " (" << node << ")");
+    GC_INFO(logger, graph::core::color::RESET()
+                        << graph::core::color::WHITE() << " Random node -> " << q.transpose() << " (" << node << ")");
 
     kdtree->insert(node);
   }
 
-  CNR_INFO(logger, cnr_logger::RESET() << cnr_logger::YELLOW() << " KdTree: \n" << *kdtree);
+  GC_INFO(logger, graph::core::color::RESET() << graph::core::color::YELLOW() << " KdTree: \n" << *kdtree);
 
   std::mt19937 rng(std::random_device{}());
   std::uniform_int_distribution<int> dist(0, n_kdnodes - 1);
@@ -63,14 +59,16 @@ int main(int argc, char** argv)
   kdtree->findNode(nodes.at(n2), kdn2);
   kdtree->findNode(nodes.at(n3), kdn3);
 
-  CNR_INFO(logger, cnr_logger::RESET() << "Removing 3 nodes:\n\t-" << kdn1 << "\n\t-" << kdn2 << "\n\t-" << kdn3);
+  GC_INFO(logger, graph::core::color::RESET()
+                      << "Removing 3 nodes:\n\t-" << kdn1 << "\n\t-" << kdn2 << "\n\t-" << kdn3);
   kdtree->deleteNode(nodes.at(n1));
   kdtree->deleteNode(nodes.at(n2));
   kdtree->deleteNode(nodes.at(n3));
 
-  CNR_INFO(logger, cnr_logger::RESET() << cnr_logger::YELLOW() << " KdTree: \n" << *kdtree);
+  GC_INFO(logger, graph::core::color::RESET() << graph::core::color::YELLOW() << " KdTree: \n" << *kdtree);
   kdtree->print_deleted_nodes_ = true;
-  CNR_INFO(logger, cnr_logger::RESET() << cnr_logger::BLUE() << " KdTree with also deleted nodes: \n" << *kdtree);
+  GC_INFO(logger, graph::core::color::RESET() << graph::core::color::BLUE() << " KdTree with also deleted nodes: \n"
+                                              << *kdtree);
 
   return 0;
 }

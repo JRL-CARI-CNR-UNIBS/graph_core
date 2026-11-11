@@ -32,14 +32,14 @@ namespace graph
 namespace core
 {
 Path::Path(std::vector<ConnectionPtr> connections, const MetricsPtr& metrics, const CollisionCheckerPtr& checker,
-           const cnr_logger::TraceLoggerPtr& logger)
+           const LoggerPtr& logger)
   : connections_(connections), metrics_(metrics), checker_(checker), logger_(logger)
 {
   setConnections(connections);
 }
 
 Path::Path(std::vector<NodePtr> nodes, const MetricsPtr& metrics, const CollisionCheckerPtr& checker,
-           const cnr_logger::TraceLoggerPtr& logger)
+           const LoggerPtr& logger)
   : metrics_(metrics), checker_(checker), logger_(logger)
 {
   assert(nodes.size() > 0);
@@ -161,10 +161,10 @@ double Path::curvilinearAbscissaOfPoint(const Eigen::VectorXd& conf, size_t& idx
   ConnectionPtr connection = findConnection(conf, idx);
   if (connection == nullptr)
   {
-    CNR_ERROR(logger_,
-              "The configuration does not belong to the path -> the "
-              "curvilinear abscissa can not be computed");
-    CNR_INFO(logger_, "conf: " << conf.transpose());
+    GC_ERROR(logger_,
+             "The configuration does not belong to the path -> the "
+             "curvilinear abscissa can not be computed");
+    GC_INFO(logger_, "conf: " << conf.transpose());
     return abscissa;
   }
   else
@@ -185,10 +185,10 @@ double Path::curvilinearAbscissaOfPointGivenConnection(const Eigen::VectorXd& co
 
   if (conn_idx >= connections_.size())
   {
-    CNR_ERROR(logger_,
-              "The connection does not belong to the path -> the "
-              "curvilinear abscissa can not be computed");
-    CNR_INFO(logger_, "conn_idx: " << conn_idx);
+    GC_ERROR(logger_,
+             "The connection does not belong to the path -> the "
+             "curvilinear abscissa can not be computed");
+    GC_INFO(logger_, "conn_idx: " << conn_idx);
     return abscissa;
   }
 
@@ -219,7 +219,7 @@ double Path::getCostFromConf(const Eigen::VectorXd& conf)
 
   if (this_conn == nullptr)
   {
-    CNR_ERROR(logger_, "cost can't be computed");
+    GC_ERROR(logger_, "cost can't be computed");
     return 0;
   }
   else
@@ -265,7 +265,7 @@ double Path::getNormFromConf(const Eigen::VectorXd& conf)
 
   if (this_conn == nullptr)
   {
-    CNR_ERROR(logger_, "norm can't be computed");
+    GC_ERROR(logger_, "norm can't be computed");
     assert(0);
     return 0;
   }
@@ -320,7 +320,7 @@ ConnectionPtr Path::getConnection(const size_t& i) const
 {
   if (i < 0 || i >= connections_.size())
   {
-    CNR_WARN(logger_, "idx exceeds 'connections_' bounds");
+    GC_WARN(logger_, "idx exceeds 'connections_' bounds");
     return nullptr;
   }
   return connections_.at(i);
@@ -343,11 +343,11 @@ void Path::setConnections(const std::vector<ConnectionPtr>& conn)
       if (child != connection->getParent())
       {
         for (const ConnectionPtr& c : conn)
-          CNR_WARN(logger_, *c);
+          GC_WARN(logger_, *c);
 
-        CNR_FATAL(logger_,
-                  "parent of a connection is different from the child "
-                  "of the previous connection!");
+        GC_FATAL(logger_,
+                 "parent of a connection is different from the child "
+                 "of the previous connection!");
         throw std::runtime_error(
             "parent of a connection is different from the "
             "child of the previous connection!");
@@ -409,7 +409,7 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, size_t&
     err = std::abs(dist - distP - distC);
 
     if (verbose)
-      CNR_INFO(logger_, "dist %Lf, distP %Lf, distC %Lf, err %Lf", dist, distP, distC, err);
+      GC_INFO(logger_, "dist " << dist << ", distP " << distP << ", distC " << distC << ", err " << err);
 
     if (err < 1e-12)
     {
@@ -417,7 +417,7 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, size_t&
       idx = i;
 
       if (verbose)
-        CNR_INFO(logger_, "conn " << conn);
+        GC_INFO(logger_, "conn " << conn);
 
       return conn;
     }
@@ -425,9 +425,9 @@ ConnectionPtr Path::findConnection(const Eigen::VectorXd& configuration, size_t&
 
   if (verbose)
   {
-    CNR_INFO(logger_, "Connection not found");
-    CNR_INFO(logger_, "conf: " << configuration.transpose());
-    CNR_INFO(logger_, "path:\n" << *this);
+    GC_INFO(logger_, "Connection not found");
+    GC_INFO(logger_, "conf: " << configuration.transpose());
+    GC_INFO(logger_, "path:\n" << *this);
   }
 
   return nullptr;
@@ -458,7 +458,7 @@ Eigen::VectorXd Path::projectOnClosestConnection(const Eigen::VectorXd& point, c
   if (min_distance == std::numeric_limits<double>::infinity())
   {
     projection = findCloserNode(point)->getConfiguration();
-    CNR_ERROR(logger_, "projection on path not found");
+    GC_ERROR(logger_, "projection on path not found");
   }
 
   return projection;
@@ -488,7 +488,7 @@ Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::V
   bool last_run = false;
 
   if (verbose)
-    CNR_INFO(logger_, "path " << *this);
+    GC_INFO(logger_, "path " << *this);
 
   ds = 0.001;
 
@@ -501,9 +501,9 @@ Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::V
     candidate_distance = (candidate_projection - point).norm();
 
     if (verbose)
-      CNR_INFO(logger_, "dist from past projection " << (candidate_projection - past_projection).norm() << " s "
-                                                     << candidate_abscissa << " ds " << ds << " distance "
-                                                     << candidate_distance << " min distance " << min_distance);
+      GC_INFO(logger_, "dist from past projection " << (candidate_projection - past_projection).norm() << " s "
+                                                    << candidate_abscissa << " ds " << ds << " distance "
+                                                    << candidate_distance << " min distance " << min_distance);
 
     if (candidate_distance < min_distance)
     {
@@ -526,8 +526,8 @@ Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::V
 
   if (verbose)
   {
-    CNR_INFO(logger_, "abscissa " << abscissa << " projection " << projection.transpose());
-    CNR_INFO(logger_, "projection with conn " << *connection);
+    GC_INFO(logger_, "abscissa " << abscissa << " projection " << projection.transpose());
+    GC_INFO(logger_, "projection with conn " << *connection);
   }
 
   conn = connection;
@@ -535,7 +535,7 @@ Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::V
   if (connection->norm() < 1e-03)
   {
     if (verbose)
-      CNR_INFO(logger_, "Connection too short, keep approximated projection " << connection->norm());
+      GC_INFO(logger_, "Connection too short, keep approximated projection " << connection->norm());
 
     return projection;
   }
@@ -547,7 +547,7 @@ Eigen::VectorXd Path::projectOnPath(const Eigen::VectorXd& point, const Eigen::V
   {
     precise_projection = projection;
     if (verbose)
-      CNR_INFO(logger_, "keep approximated projection");
+      GC_INFO(logger_, "keep approximated projection");
   }
 
   return precise_projection;
@@ -576,7 +576,7 @@ bool Path::removeNode(const NodePtr& node, const size_t& idx_conn, const std::ve
 
   if (idx_conn < 0 || idx_conn > (connections_.size() - 1))
   {
-    CNR_INFO(logger_, "Node does not belong to the path");
+    GC_INFO(logger_, "Node does not belong to the path");
     return false;
   }
 
@@ -653,7 +653,7 @@ bool Path::removeNode(const NodePtr& node, const std::vector<NodePtr>& white_lis
 
   if (idx < 0)
   {
-    CNR_ERROR(logger_, "Node does not belong to the path");
+    GC_ERROR(logger_, "Node does not belong to the path");
     return false;
   }
 
@@ -666,7 +666,7 @@ bool Path::splitConnection(const ConnectionPtr& conn1, const ConnectionPtr& conn
   if ((*it)->getParent() != conn1->getParent() || (*it)->getChild() != conn2->getChild() ||
       conn1->getChild() != conn2->getParent())
   {
-    CNR_FATAL(logger_, "no matching of parent and/or child nodes");
+    GC_FATAL(logger_, "no matching of parent and/or child nodes");
     throw std::invalid_argument("no matching of parent and/or child nodes");
   }
 
@@ -711,10 +711,10 @@ bool Path::restoreConnection(const ConnectionPtr& conn, const NodePtr& node2remo
   if ((conn->getParent() != connections_.at(idx)->getParent()) ||
       (conn->getChild() != connections_.at(idx + 1)->getChild()))
   {
-    CNR_INFO(logger_, "the node to remove is not on the connection to restore!");
-    CNR_INFO(logger_, "conn " << *conn);
-    CNR_INFO(logger_, "conn parent " << *connections_.at(idx));
-    CNR_INFO(logger_, "conn child " << *connections_.at(idx + 1));
+    GC_INFO(logger_, "the node to remove is not on the connection to restore!");
+    GC_INFO(logger_, "conn " << *conn);
+    GC_INFO(logger_, "conn parent " << *connections_.at(idx));
+    GC_INFO(logger_, "conn child " << *connections_.at(idx + 1));
 
     return false;
   }
@@ -810,8 +810,8 @@ int Path::resample(const double& max_distance)
         return true;
       else
       {
-        CNR_INFO(logger_, "\nconnections_ " << connections_.size() << "\ninitial size " << initial_size
-                                            << "\nnodes_added " << nodes_added);
+        GC_INFO(logger_, "\nconnections_ " << connections_.size() << "\ninitial size " << initial_size
+                                           << "\nnodes_added " << nodes_added);
         return false;
       }
     }
@@ -842,7 +842,7 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
     std::vector<ConnectionPtr>::iterator it = std::find(connections_.begin(), connections_.end(), conn);
     if (it == connections_.end())
     {
-      CNR_INFO(logger_, "Not a connection of this path");
+      GC_INFO(logger_, "Not a connection of this path");
       return nullptr;
     }
 
@@ -922,7 +922,7 @@ NodePtr Path::addNodeAtCurrentConfig(const Eigen::VectorXd& configuration, Conne
     }
   }
 
-  CNR_ERROR(logger_, "Connection not found, the node can't be created");
+  GC_ERROR(logger_, "Connection not found, the node can't be created");
 
   return nullptr;
 }
@@ -931,7 +931,7 @@ NodePtr Path::findCloserNode(const Eigen::VectorXd& configuration, double& dist)
 {
   if (connections_.size() < 1)
   {
-    CNR_FATAL(logger_, "No connections");
+    GC_FATAL(logger_, "No connections");
     throw std::runtime_error("No connections");
   }
 
@@ -994,9 +994,9 @@ PathPtr Path::getSubpathToConf(const Eigen::VectorXd& conf, const bool clone)
 
   if (not conn)
   {
-    CNR_FATAL(logger_,
-              "Conf does not belong to the path, subpath to conf can "
-              "not be computed");
+    GC_FATAL(logger_,
+             "Conf does not belong to the path, subpath to conf can "
+             "not be computed");
     throw std::invalid_argument(
         "Conf does not belong to the path, subpath to "
         "conf can not be computed");
@@ -1079,9 +1079,9 @@ PathPtr Path::getSubpathFromConf(const Eigen::VectorXd& conf, const bool clone)
   ConnectionPtr conn = findConnection(conf, idx_conn);
   if (not conn)
   {
-    CNR_FATAL(logger_,
-              "Conf does not belong to the path, subpath from conf "
-              "can not be computed");
+    GC_FATAL(logger_,
+             "Conf does not belong to the path, subpath from conf "
+             "can not be computed");
     throw std::invalid_argument(
         "Conf does not belong to the path, subpath "
         "from conf can not be computed");
@@ -1149,11 +1149,11 @@ PathPtr Path::getSubpathToNode(const Eigen::VectorXd& conf)
 {
   if ((conf - start_node_->getConfiguration()).norm() < TOLERANCE)
   {
-    CNR_INFO(logger_, "configuration: " << conf.transpose());
-    CNR_INFO(logger_, "path:\n" << *this);
-    CNR_FATAL(logger_,
-              "No subpath available, the node is equal to the first "
-              "node of the path");
+    GC_INFO(logger_, "configuration: " << conf.transpose());
+    GC_INFO(logger_, "path:\n" << *this);
+    GC_FATAL(logger_,
+             "No subpath available, the node is equal to the first "
+             "node of the path");
 
     throw std::invalid_argument(
         "No subpath available, the node is equal to "
@@ -1178,9 +1178,9 @@ PathPtr Path::getSubpathToNode(const Eigen::VectorXd& conf)
     }
   }
 
-  CNR_INFO(logger_, "configuration: " << conf.transpose());
-  CNR_INFO(logger_, "path:\n" << *this);
-  CNR_FATAL(logger_, "The node doesn to belong to this path");
+  GC_INFO(logger_, "configuration: " << conf.transpose());
+  GC_INFO(logger_, "path:\n" << *this);
+  GC_FATAL(logger_, "The node doesn to belong to this path");
   throw std::invalid_argument("The node doesn to belong to this path");
 }
 
@@ -1193,9 +1193,9 @@ PathPtr Path::getSubpathFromNode(const Eigen::VectorXd& conf)
 {
   if ((conf - goal_node_->getConfiguration()).norm() < TOLERANCE)
   {
-    CNR_INFO(logger_, "configuration: " << conf.transpose());
-    CNR_INFO(logger_, "path:\n" << *this);
-    CNR_ERROR(logger_, "No subpath available, the node is equal to the last node of the path");
+    GC_INFO(logger_, "configuration: " << conf.transpose());
+    GC_INFO(logger_, "path:\n" << *this);
+    GC_ERROR(logger_, "No subpath available, the node is equal to the last node of the path");
 
     throw std::invalid_argument("No subpath available, the node is equal to the last node of the path");
   }
@@ -1218,9 +1218,9 @@ PathPtr Path::getSubpathFromNode(const Eigen::VectorXd& conf)
     }
   }
 
-  CNR_ERROR(logger_, "The node doesn't belong to this path");
-  CNR_INFO(logger_, "configuration: " << conf.transpose());
-  CNR_INFO(logger_, "path:\n" << *this);
+  GC_ERROR(logger_, "The node doesn't belong to this path");
+  GC_INFO(logger_, "configuration: " << conf.transpose());
+  GC_INFO(logger_, "path:\n" << *this);
 
   throw std::invalid_argument("The node doesn't belong to this path");
 
@@ -1354,8 +1354,8 @@ bool Path::isValidFromConf(const Eigen::VectorXd& conf, const size_t& conn_idx, 
     }
     else
     {
-      CNR_INFO(logger_, "Conf is equal to goal, no connection to validate from here. Conf: "
-                            << conf.transpose() << " goal: " << goal_node_->getConfiguration().transpose());
+      GC_INFO(logger_, "Conf is equal to goal, no connection to validate from here. Conf: "
+                           << conf.transpose() << " goal: " << goal_node_->getConfiguration().transpose());
       validity = true;
       assert(0);
     }
@@ -1417,7 +1417,7 @@ void Path::toYAML(const std::string& file_name, const bool reverse) const
   else
   {
     // Handle error opening the file
-    CNR_ERROR(logger_, "Error opening file: " << file_name);
+    GC_ERROR(logger_, "Error opening file: " << file_name);
   }
 }
 
@@ -1439,11 +1439,11 @@ YAML::Node Path::toYAML(const bool reverse) const
 }
 
 PathPtr Path::fromYAML(const YAML::Node& yaml, const MetricsPtr& metrics, const CollisionCheckerPtr& checker,
-                       const cnr_logger::TraceLoggerPtr& logger)
+                       const LoggerPtr& logger)
 {
   if (!yaml.IsSequence())
   {
-    CNR_ERROR(logger, "Cannot load a path from YAML::Node which does not contain a sequence");
+    GC_ERROR(logger, "Cannot load a path from YAML::Node which does not contain a sequence");
     return nullptr;
   }
 
@@ -1455,14 +1455,14 @@ PathPtr Path::fromYAML(const YAML::Node& yaml, const MetricsPtr& metrics, const 
     if (!node)
     {
       // Error creating a Node from YAML
-      CNR_ERROR(logger, "Error creating a Node from YAML");
+      GC_ERROR(logger, "Error creating a Node from YAML");
       return nullptr;
     }
 
     nodes.push_back(node);
   }
 
-  CNR_DEBUG(logger, "Path created from yaml but no tree is available, remember to add it!");
+  GC_DEBUG(logger, "Path created from yaml but no tree is available, remember to add it!");
 
   return std::make_shared<Path>(nodes, metrics, checker, logger);
 }
@@ -1506,29 +1506,6 @@ std::ostream& operator<<(std::ostream& os, const Path& path)
     os << *conn << std::endl;
 
   return os;
-}
-
-bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string& param_ns, const std::string& param_name,
-               PathPtr& param, const MetricsPtr& metrics, const CollisionCheckerPtr& checker)
-{
-  std::string what, full_param_name = param_ns + "/" + param_name;
-  if (cnr::param::has(full_param_name, what))
-  {
-    YAML::Node yaml_node;
-    if (not cnr::param::get(full_param_name, yaml_node, what))
-    {
-      CNR_ERROR(logger, "Cannot load " << full_param_name + " parameter.\n" << what);
-      throw std::invalid_argument("Cannot load " + full_param_name + " parameter.");
-    }
-    else
-      param = graph::core::Path::fromYAML(yaml_node, metrics, checker, logger);
-  }
-  else
-  {
-    CNR_WARN(logger, full_param_name + " parameter not available.\n" << what);
-    return false;
-  }
-  return true;
 }
 
 }  // end namespace core

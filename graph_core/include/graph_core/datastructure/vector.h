@@ -45,7 +45,7 @@ public:
   /**
    * @brief Constructor for the Vector class.
    */
-  Vector(const cnr_logger::TraceLoggerPtr& logger);
+  Vector(const LoggerPtr& logger);
 
   /**
    * @brief Implementation of the insert function for adding a node to the
