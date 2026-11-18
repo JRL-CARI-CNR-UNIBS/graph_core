@@ -16,7 +16,7 @@ This tutorial provides a concise guide on computing paths using `graph_core`. Wh
 ```
 
 2. Create a logger object for logging purposes.
-   `graph_core` writes its messages through a `graph::core::LoggerPtr` (see [logger.h](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/graph_core/include/graph_core/logger.h)). Here we use `graph::core::ConsoleLogger`, which prints to the terminal the messages at or above a given level. In a ROS application you can pass instead an adapter to the ROS logger (see the [README](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/README.md#logging-and-parameters)). A null logger disables logging.
+   `graph_core` writes its messages through a `graph::core::LoggerPtr` (see [logger.h](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/graph_core/include/graph_core/logger.h)). Here we use `graph::core::ConsoleLogger`, which prints to the terminal the messages at or above a given level. In a ROS 2 node you can pass instead an adapter to the node logger (see [Use graph_core in a ROS 2 node](#use-graph_core-in-a-ros-2-node)). A null logger disables logging.
 
 ```cpp
 std::string path_to_config_folder = std::string(TEST_DIR);
@@ -25,7 +25,7 @@ graph::core::LoggerPtr logger =
     std::make_shared<graph::core::ConsoleLogger>("compute_path_test", graph::core::LogLevel::Debug);
 ```
 3. Define the foo collision checker, a cost function, a sampler, and finally the solver.
-   `graph_core` does not read parameters by itself: the application fills a `graph::core::ParamMap` (a map from parameter name to value, see [params.h](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/graph_core/include/graph_core/params.h)) and passes it to the objects. Here the parameters are read from a YAML file with `graph::core::paramsFromYAML()`; in a ROS node you would copy them from the node parameters. `graph::core::get_param()` reads a single parameter from the map, with an optional default value.
+   `graph_core` does not read parameters by itself: the application fills a `graph::core::ParamMap` (a map from parameter name to value, see [params.h](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/graph_core/include/graph_core/params.h)) and passes it to the objects. Here the parameters are read from a YAML file with `graph::core::paramsFromYAML()`; in a ROS 2 node you would copy them from the node parameters (see [Use graph_core in a ROS 2 node](#use-graph_core-in-a-ros-2-node)). `graph::core::get_param()` reads a single parameter from the map, with an optional default value.
 
 ```cpp
 // Load the parameters defined under "graph_core_tests" in the YAML file
@@ -212,3 +212,57 @@ graph::core::get_param(logger, params, "simplify_max_conn_length", simplify_max_
 path_opt->simplify(simplify_max_conn_length);
 GC_INFO(logger, "Path after simplify \n " << *cloned_path);
 ```
+
+### Use graph_core in a ROS 2 node
+The two tutorials above do not depend on ROS. In a ROS 2 node the code is the same: only the logger and the source of the parameters change. The [README](https://github.com/JRL-CARI-CNR-UNIBS/graph_core/blob/master/README.md#using-graph_core-in-a-ros-2-package) gives the complete code of the two adapters, `RclcppLogger` and `paramsFromNode()`, and of a node computing a path.
+
+1. Add the dependencies to `package.xml` (`<depend>graph_core</depend>`, `<depend>rclcpp</depend>`) and link the target in `CMakeLists.txt`:
+
+```cmake
+find_package(graph_core REQUIRED)
+find_package(rclcpp REQUIRED)
+target_link_libraries(my_planner_node PUBLIC graph_core::graph_core rclcpp::rclcpp)
+```
+
+2. Replace the `ConsoleLogger` with the adapter to the node logger. The `graph_core` messages are then printed and published on `/rosout` as the other node messages, and their level is set with `--ros-args --log-level my_planner_node.graph_core:=debug`.
+
+```cpp
+auto node = std::make_shared<rclcpp::Node>("my_planner_node");
+graph::core::LoggerPtr logger = std::make_shared<RclcppLogger>(node->get_logger().get_child("graph_core"));
+```
+
+3. Replace `paramsFromYAML()` with `paramsFromNode()`, which copies the node parameters under a prefix into a `graph::core::ParamMap`. All the rest (`get_param()`, the solver, `computePath()`) is unchanged.
+
+```cpp
+// Parameters under "graph_core_tests." (e.g. graph_core_tests.max_distance -> max_distance)
+graph::core::ParamMap params = paramsFromNode(*node, "graph_core_tests");
+```
+
+4. Move the parameters into a ROS 2 parameter file. The content of `graph_core_tests_params.yaml` goes under the node name and `ros__parameters`:
+
+```yaml
+my_planner_node:
+  ros__parameters:
+    graph_core_tests:
+      min_cc_distance: 0.01
+      abs_joint_threshold: 1.0
+      max_distance: 0.25
+      use_kdtree: true
+      extend: false
+      utopia_tolerance: 0.01
+      max_time: 5.0
+      rewire_factor: 1.1
+      simplify_max_conn_length: 0.05
+      warp_min_conn_length: 0.1
+      warp_min_step_size: 0.05
+```
+
+and run the node with
+
+```bash
+ros2 run my_package my_planner_node --ros-args --params-file my_planner.yaml
+```
+
+5. Saved paths and trees are still loaded with `Path::fromYAML()` / `Tree::fromYAML()`: they are data, not ROS parameters.
+
+For collision checking against a MoveIt planning scene use [moveit_collision_checker](https://github.com/JRL-CARI-CNR-UNIBS/moveit_collision_checker) instead of the foo collision checker, and use [graph_display](https://github.com/JRL-CARI-CNR-UNIBS/graph_display) to show paths and trees in RViz.
