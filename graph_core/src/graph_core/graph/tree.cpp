@@ -27,6 +27,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/tree.h>
 
+#include <unordered_map>
+
 namespace graph
 {
 namespace core
@@ -766,24 +768,30 @@ std::multimap<double, NodePtr> Tree::nearK(const Eigen::VectorXd& conf)
 
 double Tree::costToNode(NodePtr node)
 {
+  // Hot path (called for every near node during the rewiring): walk up with raw pointers, locking the
+  // parent connection once per step. The nodes stay alive because the tree owns them.
   double cost = 0;
-  while (node != root_)
+  const Node* n = node.get();
+  const Node* root = root_.get();
+  while (n != root)
   {
-    if (node->getParentConnectionsSize() != 1)
+    if (n->getParentConnectionsSize() != 1)
     {
-      GC_ERROR(logger_, "a tree node should have exactly a parent!\n " << *node);
+      GC_ERROR(logger_, "a tree node should have exactly a parent!\n " << *n);
       return std::numeric_limits<double>::infinity();
     }
 
-    if (node->parentConnection(0)->getParent() == node)
+    const ConnectionPtr conn = n->parentConnection(0);
+    const Node* parent = conn->getParent().get();
+    if (parent == n)
     {
-      GC_FATAL(logger_, "node " << node.get() << "=\n" << *node);
-      GC_FATAL(logger_, "to parent\n" << *(node->parentConnection(0)));
+      GC_FATAL(logger_, "node " << n << "=\n" << *n);
+      GC_FATAL(logger_, "to parent\n" << *conn);
       GC_FATAL(logger_, "connection between the same node!");
       throw std::runtime_error("connection between the same node!");
     }
-    cost += node->parentConnection(0)->getCost();
-    node = node->parentConnection(0)->getParent();
+    cost += conn->getCost();
+    n = parent;
   }
   return cost;
 }
@@ -1192,29 +1200,32 @@ YAML::Node Tree::toYAML() const
   YAML::Node connections;
 
   std::vector<NodePtr> nodes_vector = nodes_->getNodes();
+
+  // Index of each node in nodes_vector: finding a child's index is O(1) instead of a linear search,
+  // so saving the tree is O(n) instead of O(n^2).
+  std::unordered_map<const Node*, std::size_t> node_index;
+  node_index.reserve(nodes_vector.size());
+  for (std::size_t inode = 0; inode < nodes_vector.size(); ++inode)
+    node_index.emplace(nodes_vector[inode].get(), inode);
+
   for (std::size_t inode = 0; inode < nodes_vector.size(); ++inode)
   {
-    const NodePtr& n = nodes_vector.at(inode);
+    const NodePtr& n = nodes_vector[inode];
     nodes.push_back(n->toYAML());
 
-    std::vector<NodePtr> children = n->getChildren();
-
-    for (std::size_t ichild = 0; ichild < children.size(); ++ichild)
+    for (const NodePtr& child : n->getChildren())
     {
-      for (std::size_t inodes = 0; inodes < nodes_vector.size(); ++inodes)
-      {
-        if (nodes_vector.at(inodes) == children.at(ichild))
-        {
-          YAML::Node connection;
-          connection.SetStyle(YAML::EmitterStyle::Flow);  // Set the style to flow style for a
-                                                          // more compact representation
+      auto it = node_index.find(child.get());
+      if (it == node_index.end())
+        continue;
 
-          connection.push_back(static_cast<int>(inode));
-          connection.push_back(static_cast<int>(inodes));
-          connections.push_back(connection);
-          break;
-        }
-      }
+      YAML::Node connection;
+      connection.SetStyle(YAML::EmitterStyle::Flow);  // Set the style to flow style for a
+                                                      // more compact representation
+
+      connection.push_back(static_cast<int>(inode));
+      connection.push_back(static_cast<int>(it->second));
+      connections.push_back(connection);
     }
   }
 

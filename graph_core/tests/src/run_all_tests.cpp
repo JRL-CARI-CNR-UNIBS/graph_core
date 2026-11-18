@@ -182,11 +182,99 @@ TEST(Logger, LevelsAndThrottle)
   EXPECT_EQ(logger->count, 2);
 }
 
+// Parameters: YAML corner cases (quoted scalars, YAML 1.2 integers, bool arrays)
+TEST(Params, YAMLCornerCases)
+{
+  YAML::Node yaml = YAML::Load(R"(
+quoted_int: "123"
+quoted_double: '1.0'
+quoted_bool: "true"
+quoted_list: ["1", "2"]
+decimal: 010
+octal: 0o10
+hex: 0x1F
+negative: -42
+too_big: 99999999999999999999
+flags: [true, false, true]
+mixed: [1, 2.5]
+plain_yes: yes
+)");
+  graph::core::ParamMap params = graph::core::paramsFromYAML(yaml);
+
+  std::string str;
+  EXPECT_TRUE(graph::core::get_param(nullptr, params, "quoted_int", str));
+  EXPECT_EQ(str, "123");
+  EXPECT_TRUE(graph::core::get_param(nullptr, params, "quoted_double", str));
+  EXPECT_EQ(str, "1.0");
+  EXPECT_TRUE(std::holds_alternative<std::string>(params.at("quoted_bool")));
+  std::vector<std::string> strs;
+  EXPECT_TRUE(graph::core::get_param(nullptr, params, "quoted_list", strs));
+  EXPECT_EQ(strs, (std::vector<std::string>{ "1", "2" }));
+
+  int64_t i;
+  EXPECT_TRUE(graph::core::get_param(nullptr, params, "decimal", i));
+  EXPECT_EQ(i, 10);
+  EXPECT_TRUE(graph::core::get_param(nullptr, params, "octal", i));
+  EXPECT_EQ(i, 8);
+  EXPECT_TRUE(graph::core::get_param(nullptr, params, "hex", i));
+  EXPECT_EQ(i, 31);
+  EXPECT_TRUE(graph::core::get_param(nullptr, params, "negative", i));
+  EXPECT_EQ(i, -42);
+  EXPECT_FALSE(std::holds_alternative<int64_t>(params.at("too_big")));  // out of int64 range: not an integer
+
+  std::vector<bool> flags;
+  EXPECT_TRUE(graph::core::get_param(nullptr, params, "flags", flags));
+  EXPECT_EQ(flags, (std::vector<bool>{ true, false, true }));
+  EXPECT_THROW(graph::core::get_param(nullptr, params, "mixed", flags), std::invalid_argument);
+
+  std::vector<double> mixed;
+  EXPECT_TRUE(graph::core::get_param(nullptr, params, "mixed", mixed));
+  EXPECT_EQ(mixed, (std::vector<double>{ 1.0, 2.5 }));
+
+  EXPECT_TRUE(std::holds_alternative<std::string>(params.at("plain_yes")));
+}
+
+// Logger: throttle corner cases
+TEST(Logger, ThrottleCornerCases)
+{
+  auto logger = std::make_shared<CountingLogger>();
+  graph::core::LoggerPtr base = logger;
+
+  // Infinite period: only the first message
+  auto forever = [&base] { GC_WARN_THROTTLE(base, std::numeric_limits<double>::infinity(), "once"); };
+  for (int i = 0; i < 10; i++)
+    forever();
+  EXPECT_EQ(logger->count, 1);
+
+  // Zero period: no throttling
+  logger->count = 0;
+  auto always = [&base] { GC_WARN_THROTTLE(base, 0.0, "always"); };
+  for (int i = 0; i < 10; i++)
+    always();
+  EXPECT_EQ(logger->count, 10);
+
+  // A disabled level neither builds the message nor starts the period
+  logger->count = 0;
+  int evaluated = 0;
+  auto touch = [&evaluated] { return ++evaluated; };
+  GC_DEBUG_THROTTLE(base, 100.0, "disabled " << touch());
+  EXPECT_EQ(evaluated, 0);
+  EXPECT_EQ(logger->count, 0);
+
+  // ConsoleLogger: the level can be changed at run time
+  graph::core::ConsoleLogger console("test", graph::core::LogLevel::Error);
+  EXPECT_FALSE(console.enabled(graph::core::LogLevel::Warn));
+  console.setLevel(graph::core::LogLevel::Debug);
+  EXPECT_TRUE(console.enabled(graph::core::LogLevel::Warn));
+  EXPECT_EQ(console.getLevel(), graph::core::LogLevel::Debug);
+}
+
 int main(int argc, char** argv)
 {
+  // InitGoogleTest first: it removes the --gtest_* flags, so argv[1] is the log level only if given
+  ::testing::InitGoogleTest(&argc, argv);
   if (argc > 1)
     log_level_ = std::string(argv[1]);
 
-  ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

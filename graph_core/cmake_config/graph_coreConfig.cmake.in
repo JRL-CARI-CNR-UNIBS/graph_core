@@ -9,7 +9,9 @@ find_dependency(cnr_class_loader REQUIRED)
 
 include("@CMAKE_INSTALL_PREFIX@/share/graph_core/cmake/graph_coreTargets.cmake")
 
-set_and_check(@PROJECT_NAME@_INCLUDE_DIRS "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@" ${Eigen3_INCLUDE_DIRS} ${YAML_CPP_INCLUDE_DIR} ${cnr_class_loader_INCLUDE_DIRS})
+# set_and_check takes a single path: check graph_core's include dir, then append the dependencies' ones
+set_and_check(@PROJECT_NAME@_INCLUDE_DIRS "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@")
+list(APPEND @PROJECT_NAME@_INCLUDE_DIRS ${Eigen3_INCLUDE_DIRS} ${YAML_CPP_INCLUDE_DIR} ${cnr_class_loader_INCLUDE_DIRS})
 set(@PROJECT_NAME@_LIBRARIES @PROJECT_NAME@ ${Eigen3_LIBRARIES} ${YAML_CPP_LIBRARIES} ${cnr_class_loader_LIBRARIES})
 
 

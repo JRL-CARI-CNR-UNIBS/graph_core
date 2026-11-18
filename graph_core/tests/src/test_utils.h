@@ -3,8 +3,10 @@
 #include <graph_core/logger.h>
 #include <graph_core/params.h>
 
+#include <filesystem>
 #include <iostream>
 #include <memory>
+#include <stdexcept>
 #include <string>
 
 namespace graph_core_tests
@@ -35,6 +37,20 @@ inline graph::core::LoggerPtr makeLogger(const std::string& name, int argc, char
  */
 inline graph::core::ParamMap loadParams(const std::string& file, const std::string& ns)
 {
-  return graph::core::paramsFromYAML(YAML::LoadFile(file)[ns]);
+  YAML::Node yaml = YAML::LoadFile(file)[ns];
+  if (not yaml.IsMap())
+    throw std::invalid_argument("loadParams: '" + ns + "' is not a map in " + file);
+  return graph::core::paramsFromYAML(yaml);
+}
+
+/**
+ * @brief Folder where the tests write their outputs (created if missing):
+ * <system temp dir>/graph_core_tests.
+ */
+inline std::string outputFolder()
+{
+  const std::filesystem::path folder = std::filesystem::temp_directory_path() / "graph_core_tests";
+  std::filesystem::create_directories(folder);
+  return folder.string();
 }
 }  // namespace graph_core_tests

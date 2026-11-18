@@ -86,10 +86,12 @@ int main(int argc, char** argv)
   double elapsed_time = graph::core::toSeconds(toc, tic);
   GC_INFO(logger, "Elapsed time: " << elapsed_time << " seconds");
 
-  if (found)
-    GC_INFO(logger, graph::core::color::BOLDGREEN() << "Path found!\n" << *solution << graph::core::color::RESET());
-  else
-    GC_INFO(logger, graph::core::color::BOLDRED() << "Path not found!" << graph::core::color::RESET());
+  if (not found || not solution)
+  {
+    GC_ERROR(logger, graph::core::color::BOLDRED() << "Path not found!" << graph::core::color::RESET());
+    return 1;
+  }
+  GC_INFO(logger, graph::core::color::BOLDGREEN() << "Path found!\n" << *solution << graph::core::color::RESET());
 
   YAML::Node yaml_path, yaml_tree, yaml_path_ns, yaml_tree_ns;
   yaml_path["path"] = solution->toYAML();
@@ -98,8 +100,11 @@ int main(int argc, char** argv)
   yaml_path_ns[param_ns_base] = yaml_path;
   yaml_tree_ns[param_ns_base] = yaml_tree;
 
-  std::ofstream fout_path(path_to_config_folder + "/path.yaml");
-  std::ofstream fout_tree(path_to_config_folder + "/tree.yaml");
+  // Save into a temporary folder: tests/path.yaml and tests/tree.yaml are tracked inputs of
+  // path_post_processing_test and must not change at every run.
+  const std::string output_folder = graph_core_tests::outputFolder();
+  std::ofstream fout_path(output_folder + "/path.yaml");
+  std::ofstream fout_tree(output_folder + "/tree.yaml");
 
   if (fout_path.is_open())
   {
@@ -107,7 +112,7 @@ int main(int argc, char** argv)
     fout_path.close();
   }
   else
-    GC_ERROR(logger, "Error opening 'path.yaml' for writing.");
+    GC_ERROR(logger, "Error opening '" << output_folder << "/path.yaml' for writing.");
 
   if (fout_tree.is_open())
   {
@@ -115,7 +120,8 @@ int main(int argc, char** argv)
     fout_tree.close();
   }
   else
-    GC_ERROR(logger, "Error opening 'tree.yaml' for writing.");
+    GC_ERROR(logger, "Error opening '" << output_folder << "/tree.yaml' for writing.");
 
+  GC_INFO(logger, "Path and tree saved in " << output_folder);
   return 0;
 }

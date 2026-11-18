@@ -60,7 +60,7 @@ namespace core
  * std::vector, as in ROS 2.
  */
 using ParamValue = std::variant<bool, int64_t, double, std::string, std::vector<double>, std::vector<int64_t>,
-                                std::vector<std::string>>;
+                                std::vector<std::string>, std::vector<bool>>;
 
 /**
  * @brief Parameter name -> value.
@@ -72,8 +72,10 @@ using ParamMap = std::map<std::string, ParamValue>;
  *
  * Nested maps are flattened joining the keys with `separator`, e.g.
  * {a: {b: 1}} -> {"a/b": 1}. Scalars become int64_t, double, bool (only for
- * true/false) or std::string. Sequences of scalars become vectors (int64_t if
- * all elements are integers, double if all are numbers, std::string
+ * true/false) or std::string; quoted scalars ("1", 'true') are always
+ * strings. Integers follow YAML 1.2: 010 is decimal, 0o10 octal, 0x10 hex.
+ * Sequences of scalars become vectors (int64_t if all elements are integers,
+ * double if all are numbers, bool if all are true/false, std::string
  * otherwise). Other values (e.g. sequences of sequences, as in a saved
  * Path/Tree) cannot be stored and are skipped: load them with fromYAML().
  *
@@ -130,8 +132,10 @@ struct is_eigen_vector<T, std::void_t<decltype(T::ColsAtCompileTime)>> : std::bo
 inline const char* typeName(const ParamValue& value)
 {
   static const char* names[] = {
-    "bool", "integer", "double", "string", "double array", "integer array", "string array"
+    "bool", "integer", "double", "string", "double array", "integer array", "string array", "bool array"
   };
+  static_assert(sizeof(names) / sizeof(names[0]) == std::variant_size_v<ParamValue>,
+                "typeName: one name per ParamValue alternative");
   return names[value.index()];
 }
 
@@ -196,19 +200,36 @@ bool convertScalar(const ParamValue& value, T& out, std::string& what)
   }
 }
 
+template <typename T, typename = void>
+struct element_type
+{
+  using type = typename T::value_type;  // std::vector
+};
+template <typename T>
+struct element_type<T, std::void_t<typename T::Scalar>>
+{
+  using type = typename T::Scalar;  // Eigen vector
+};
+
 /**
  * @brief Converts each element of `in` into an element of `out`.
+ *
+ * Each element goes through a temporary: std::vector<bool>::operator[] does
+ * not return a bool&.
  */
 template <typename Out, typename In>
 bool convertElements(const std::vector<In>& in, Out& out, std::string& what)
 {
+  using Elem = typename element_type<Out>::type;
   for (size_t i = 0; i < in.size(); i++)
   {
-    if (not convertScalar(ParamValue(in[i]), out[i], what))
+    Elem elem{};
+    if (not convertScalar(ParamValue(static_cast<In>(in[i])), elem, what))
     {
       what = "element " + std::to_string(i) + ": " + what;
       return false;
     }
+    out[i] = elem;
   }
   return true;
 }

@@ -40,6 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <atomic>
 #include <cctype>
 #include <chrono>
+#include <cstdint>
 #include <iostream>
 #include <limits>
 #include <memory>
@@ -146,8 +147,10 @@ class ConsoleLogger : public Logger
 {
 protected:
   std::string name_;
-  LogLevel min_level_;
-  mutable std::mutex mtx_;
+  /// Atomic, so enabled() (called by every GC_* macro) does not take the mutex.
+  std::atomic<LogLevel> min_level_;
+  /// Serialises the writes, so that lines of different threads do not mix.
+  std::mutex mtx_;
 
 public:
   /**
@@ -161,20 +164,17 @@ public:
 
   void setLevel(LogLevel min_level)
   {
-    std::lock_guard<std::mutex> lock(mtx_);
-    min_level_ = min_level;
+    min_level_.store(min_level, std::memory_order_relaxed);
   }
 
   LogLevel getLevel() const
   {
-    std::lock_guard<std::mutex> lock(mtx_);
-    return min_level_;
+    return min_level_.load(std::memory_order_relaxed);
   }
 
   bool enabled(LogLevel level) const override
   {
-    std::lock_guard<std::mutex> lock(mtx_);
-    return level >= min_level_;
+    return level >= min_level_.load(std::memory_order_relaxed);
   }
 
   void log(LogLevel level, const char* func, int line, const std::string& msg) override
@@ -260,6 +260,24 @@ inline std::string BOLDWHITE()
 }
 }  // namespace color
 
+namespace detail
+{
+/**
+ * @brief Converts a throttle period in seconds into nanoseconds, saturating:
+ * a period <= 0 or NaN gives 0 (no throttling), a huge or infinite period
+ * gives INT64_MAX (only the first message is written).
+ */
+inline int64_t throttlePeriodNs(double period_s)
+{
+  if (not(period_s > 0.0))
+    return 0;
+  const double ns = period_s * 1e9;
+  if (ns >= static_cast<double>(std::numeric_limits<int64_t>::max()))
+    return std::numeric_limits<int64_t>::max();
+  return static_cast<int64_t>(ns);
+}
+}  // namespace detail
+
 }  // namespace core
 }  // namespace graph
 
@@ -291,21 +309,30 @@ inline std::string BOLDWHITE()
 /**
  * @brief Like GC_LOG, but writes at most once every `period` seconds. The
  * time of the last message is kept per call site (shared by all the objects
- * using that line of code), as in ROS.
+ * using that line of code), as in ROS. The level is checked first, so a
+ * disabled call costs neither a clock read nor building the message, and a
+ * suppressed call does not reset the period. When several threads reach the
+ * call site together, only one of them writes.
  */
 #define GC_LOG_THROTTLE(logger, level, period, stream)                                                                 \
   do                                                                                                                   \
   {                                                                                                                    \
-    static std::atomic<int64_t> gc_last_ns_{ std::numeric_limits<int64_t>::min() };                                    \
-    const int64_t gc_now_ns_ =                                                                                         \
-        std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch())      \
-            .count();                                                                                                  \
-    const int64_t gc_prev_ns_ = gc_last_ns_.load();                                                                    \
-    if (gc_prev_ns_ == std::numeric_limits<int64_t>::min() ||                                                          \
-        gc_now_ns_ - gc_prev_ns_ >= static_cast<int64_t>((period) * 1e9))                                              \
+    const auto& gc_tlogger_ = (logger);                                                                                \
+    if (gc_tlogger_ && gc_tlogger_->enabled(level))                                                                    \
     {                                                                                                                  \
-      gc_last_ns_.store(gc_now_ns_);                                                                                   \
-      GC_LOG(logger, level, stream);                                                                                   \
+      static std::atomic<int64_t> gc_last_ns_{ std::numeric_limits<int64_t>::min() };                                  \
+      const int64_t gc_now_ns_ =                                                                                       \
+          std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch())    \
+              .count();                                                                                                \
+      int64_t gc_prev_ns_ = gc_last_ns_.load(std::memory_order_relaxed);                                               \
+      if ((gc_prev_ns_ == std::numeric_limits<int64_t>::min() ||                                                       \
+           gc_now_ns_ - gc_prev_ns_ >= graph::core::detail::throttlePeriodNs(period)) &&                               \
+          gc_last_ns_.compare_exchange_strong(gc_prev_ns_, gc_now_ns_, std::memory_order_relaxed))                     \
+      {                                                                                                                \
+        std::ostringstream gc_oss_;                                                                                    \
+        gc_oss_ << stream;                                                                                             \
+        gc_tlogger_->log(level, __func__, __LINE__, gc_oss_.str());                                                    \
+      }                                                                                                                \
     }                                                                                                                  \
   } while (0)
 
