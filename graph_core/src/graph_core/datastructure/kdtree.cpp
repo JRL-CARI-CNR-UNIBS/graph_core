@@ -27,6 +27,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/datastructure/kdtree.h>
 
+#include <cmath>
+
 namespace graph
 {
 namespace core
@@ -162,11 +164,12 @@ void KdNode::nearestNeighbor(const Eigen::VectorXd& configuration, NodePtr& best
 
 void KdNode::near(const Eigen::VectorXd& configuration, const double& radius, std::multimap<double, NodePtr>& nodes)
 {
-  double distance = (configuration - node_->getConfiguration()).norm();
+  // Compare squared distances: the square root is computed only for the nodes inside the ball
+  const double squared_distance = (configuration - node_->getConfiguration()).squaredNorm();
 
-  if ((not deleted_) and distance < radius)
+  if ((not deleted_) and radius > 0 and squared_distance < radius * radius)
   {
-    nodes.insert(std::pair<double, NodePtr>(distance, node_));
+    nodes.insert(std::pair<double, NodePtr>(std::sqrt(squared_distance), node_));
   }
 
   if (left_ && (configuration(dimension_) - radius) <= node_->getConfiguration()(dimension_))

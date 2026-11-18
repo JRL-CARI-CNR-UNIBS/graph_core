@@ -1,5 +1,9 @@
 #include <gtest/gtest.h>
 #include <graph_core/params.h>
+#include <graph_core/solvers/rrt_star.h>
+#include <graph_core/samplers/uniform_sampler.h>
+#include <graph_core/metrics/euclidean_metrics.h>
+#include <graph_core/collision_checkers/cube_3d_collision_checker.h>
 #include <thread>
 #include <cstdlib>
 #include <iostream>
@@ -267,6 +271,59 @@ TEST(Logger, ThrottleCornerCases)
   console.setLevel(graph::core::LogLevel::Debug);
   EXPECT_TRUE(console.enabled(graph::core::LogLevel::Warn));
   EXPECT_EQ(console.getLevel(), graph::core::LogLevel::Debug);
+}
+
+// Tree: near() (kd-tree, squared distances) must give the same nodes and distances as a brute-force search
+namespace
+{
+graph::core::TreePtr buildRRTStarTree(unsigned int iterations)
+{
+  using namespace graph::core;
+  LoggerPtr logger;  // null: nothing is printed
+  auto checker = std::make_shared<Cube3dCollisionChecker>(logger, 1.0, 0.01);
+  MetricsPtr metrics = std::make_shared<EuclideanMetrics>(logger);
+  Eigen::VectorXd lb = Eigen::VectorXd::Constant(3, -2.5), ub = Eigen::VectorXd::Constant(3, 2.5);
+  SamplerPtr sampler = std::make_shared<UniformSampler>(lb, ub, logger);
+  TreeSolverPtr solver = std::make_shared<RRTStar>(metrics, checker, sampler, logger);
+  ParamMap params = { { "max_distance", 0.25 }, { "rewire_factor", 1.1 } };
+  auto start = std::make_shared<Node>(Eigen::VectorXd::Constant(3, -1.5), logger);
+  auto goal = std::make_shared<Node>(Eigen::VectorXd::Constant(3, 1.5), logger);
+  PathPtr solution;
+  if (not solver->computePath(start, goal, params, solution, 1e9, iterations))
+    return nullptr;
+  return solution->getTree();
+}
+}  // namespace
+
+TEST(Tree, NearMatchesBruteForce)
+{
+  graph::core::TreePtr tree = buildRRTStarTree(2000);
+  ASSERT_TRUE(tree);
+  std::vector<graph::core::NodePtr> nodes = tree->getNodes();
+
+  for (double radius : { 0.3, 1.0, 0.0, -1.0 })
+  {
+    for (size_t i = 0; i < nodes.size(); i += 97)
+    {
+      const Eigen::VectorXd& q = nodes[i]->getConfiguration();
+      std::multimap<double, graph::core::NodePtr> found = tree->near(nodes[i], radius);
+
+      std::map<const graph::core::Node*, double> expected;
+      for (const graph::core::NodePtr& n : nodes)
+      {
+        const double d = (n->getConfiguration() - q).norm();
+        if (d < radius)
+          expected[n.get()] = d;
+      }
+      ASSERT_EQ(found.size(), expected.size()) << "radius " << radius;
+      for (const auto& p : found)
+      {
+        auto it = expected.find(p.second.get());
+        ASSERT_NE(it, expected.end());
+        EXPECT_NEAR(p.first, it->second, 1e-12);
+      }
+    }
+  }
 }
 
 int main(int argc, char** argv)
