@@ -1,3 +1,4 @@
+#pragma once
 /*
 Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS,
 manuel.beschi@unibs.it, c.tonola001@unibs.it All rights reserved.

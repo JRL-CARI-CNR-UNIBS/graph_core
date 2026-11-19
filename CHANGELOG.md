@@ -34,6 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `paramsFromYAML()`: quoted scalars stay strings, integers follow YAML 1.2 (`010` is decimal), arrays of booleans are supported.
 - Logger: lock-free `enabled()`; the throttled macros check the level first, saturate the period and let only one thread write per period.
 - `graph_coreConfig.cmake`: `set_and_check` was called with several paths.
+- `datastructure/vector.h` had no include guard: including it after `graph/tree.h` (which already includes it) redefined `graph::core::Vector`.
 
 ### Performance
 - `Tree::toYAML()` is O(n) instead of O(n^2).
