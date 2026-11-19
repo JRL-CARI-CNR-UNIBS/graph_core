@@ -35,11 +35,12 @@ namespace graph
 {
 namespace core
 {
-bool NullGoalCostFunctionPlugin::init(const std::string& param_ns, const cnr_logger::TraceLoggerPtr& logger)
+bool NullGoalCostFunctionPlugin::init(const ParamMap& params, const LoggerPtr& logger)
 {
-  CNR_TRACE(logger, "creating NullGoalCostFunction using namespace << " << param_ns);
+  (void)params;
+  GC_TRACE(logger, "creating NullGoalCostFunction");
   goal_cost_fcn_ = std::make_shared<NullGoalCostFunction>(logger);
-  CNR_TRACE(logger, "created NullGoalCostFunction");
+  GC_TRACE(logger, "created NullGoalCostFunction");
   return true;
 }
 

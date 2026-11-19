@@ -35,19 +35,19 @@ void BallSampler::config()
 {
   if (not initialized_)
   {
-    CNR_ERROR(logger_, "Ball sampler not initialised, cannot configure");
+    GC_ERROR(logger_, "Ball sampler not initialised, cannot configure");
     return;
   }
 
   if (cost_ < 0.0)
   {
-    CNR_FATAL(logger_, "cost should be >= 0");
+    GC_FATAL(logger_, "cost should be >= 0");
     throw std::invalid_argument("cost should be >= 0");
   }
 
   if (ball_center_.rows() != ndof_)
   {
-    CNR_FATAL(logger_, "ball center should have the same size of ndof");
+    GC_FATAL(logger_, "ball center should have the same size of ndof");
     throw std::invalid_argument("ball center should have the same size of ndof");
   }
 
@@ -68,9 +68,9 @@ Eigen::VectorXd BallSampler::sample()
         return q;
     }
 
-    CNR_WARN(logger_,
-             "BallSampler has not found a sample in the ball that "
-             "respects the bounds");
+    GC_WARN(logger_,
+            "BallSampler has not found a sample in the ball that "
+            "respects the bounds");
   }
 
   // Sample everywhere
@@ -97,7 +97,7 @@ void BallSampler::setCost(const double& cost)
 {
   if (cost_ < 0.0)
   {
-    CNR_FATAL(logger_, "cost should be >= 0");
+    GC_FATAL(logger_, "cost should be >= 0");
     throw std::invalid_argument("cost should be >= 0");
   }
   cost_ = cost;

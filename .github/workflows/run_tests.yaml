@@ -23,7 +23,7 @@ jobs:
         run: |
           export DEBIAN_FRONTEND=noninteractive
           apt update
-          apt install -y cmake build-essential git libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev liblog4cxx-dev libgtest-dev
+          apt install -y cmake build-essential git libboost-all-dev libeigen3-dev libyaml-cpp-dev libpoco-dev libgtest-dev
 
       - name: Build & Install
         run: |
@@ -55,6 +55,5 @@ jobs:
 
       - name: Run GTESTS
         run: |
-          export CNR_PARAM_ROOT_DIRECTORY="/tmp/cnr_param"
           cd ${{ env.PATH_TO_WS }}/install/bin/graph_core/tests/src
-          ./run_all_tests logger_param.yaml
+          ./run_all_tests

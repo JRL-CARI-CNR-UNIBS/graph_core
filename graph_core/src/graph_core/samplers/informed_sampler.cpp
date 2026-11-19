@@ -35,13 +35,13 @@ void InformedSampler::config()
 {
   if (not initialized_)
   {
-    CNR_ERROR(logger_, "Informed sampler not initialised, cannot configure");
+    GC_ERROR(logger_, "Informed sampler not initialised, cannot configure");
     return;
   }
 
   if (cost_ < 0.0)
   {
-    CNR_FATAL(logger_, "cost should be >= 0");
+    GC_FATAL(logger_, "cost should be >= 0");
     throw std::invalid_argument("cost should be >= 0");
   }
 
@@ -49,27 +49,27 @@ void InformedSampler::config()
 
   if (focus_1_not_scaled_.rows() != ndof_)
   {
-    CNR_FATAL(logger_, "focus 1 should have the same size of ndof");
+    GC_FATAL(logger_, "focus 1 should have the same size of ndof");
     throw std::invalid_argument("focus 1 should have the same size of ndof");
   }
   if (focus_2_not_scaled_.rows() != ndof_)
   {
-    CNR_FATAL(logger_, "focus 2 should have the same size of ndof");
+    GC_FATAL(logger_, "focus 2 should have the same size of ndof");
     throw std::invalid_argument("focus 2 should have the same size of ndof");
   }
   if (upper_bound_not_scaled_.rows() != ndof_)
   {
-    CNR_FATAL(logger_, "upper bound should have the same size of ndof");
+    GC_FATAL(logger_, "upper bound should have the same size of ndof");
     throw std::invalid_argument("upper bound should have the same size of ndof");
   }
   if (lower_bound_not_scaled_.rows() != ndof_)
   {
-    CNR_FATAL(logger_, "lower bound should have the same size of ndof");
+    GC_FATAL(logger_, "lower bound should have the same size of ndof");
     throw std::invalid_argument("lower bound should have the same size of ndof");
   }
   if (scale_.rows() != ndof_)
   {
-    CNR_FATAL(logger_, "scale should have the same size of ndof");
+    GC_FATAL(logger_, "scale should have the same size of ndof");
     throw std::invalid_argument("scale should have the same size of ndof");
   }
 
@@ -91,11 +91,11 @@ void InformedSampler::config()
 
   rot_matrix_ = computeRotationMatrix(focus_1_, focus_2_);
 
-  CNR_DEBUG(logger_, "rot_matrix_:\n" << rot_matrix_);
-  CNR_DEBUG(logger_, "ellipse center: " << ellipse_center_.transpose());
-  CNR_DEBUG(logger_, "focii_distance_: " << focii_distance_);
-  CNR_DEBUG(logger_, "center_bound_: " << center_bound_.transpose());
-  CNR_DEBUG(logger_, "bound_width_: " << bound_width_.transpose());
+  GC_DEBUG(logger_, "rot_matrix_:\n" << rot_matrix_);
+  GC_DEBUG(logger_, "ellipse center: " << ellipse_center_.transpose());
+  GC_DEBUG(logger_, "focii_distance_: " << focii_distance_);
+  GC_DEBUG(logger_, "center_bound_: " << center_bound_.transpose());
+  GC_DEBUG(logger_, "bound_width_: " << bound_width_.transpose());
 
   setCost(cost_);
   if (cost_ < std::numeric_limits<double>::infinity())
@@ -172,9 +172,9 @@ Eigen::VectorXd InformedSampler::sample()
         return q.cwiseProduct(inv_scale_);  // q = q_scaled/scale
     }
 
-    CNR_WARN(logger_,
-             "InformedSampler has not found a sample in the informed "
-             "set that respects the bounds");
+    GC_WARN(logger_,
+            "InformedSampler has not found a sample in the informed "
+            "set that respects the bounds");
     return center_bound_ + Eigen::MatrixXd::Random(ndof_, 1).cwiseProduct(bound_width_);
   }
 }
@@ -202,9 +202,9 @@ void InformedSampler::setCost(const double& cost)
 
   if (cost_ < focii_distance_)
   {
-    CNR_WARN(logger_, "cost is " << cost_ << " focii distance is " << focii_distance_);
-    CNR_WARN(logger_, "focus 1: " << focus_1_.transpose());
-    CNR_WARN(logger_, "focus 2: " << focus_2_.transpose());
+    GC_WARN(logger_, "cost is " << cost_ << " focii distance is " << focii_distance_);
+    GC_WARN(logger_, "focus 1: " << focus_1_.transpose());
+    GC_WARN(logger_, "focus 2: " << focus_2_.transpose());
     cost_ = focii_distance_;
     min_radius_ = 0.0;
   }

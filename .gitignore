@@ -5,3 +5,8 @@ kdev4/
 *.orig*
 *.autosave*
 *.idea
+
+# colcon output (when colcon is run from this folder)
+build/
+install/
+log/

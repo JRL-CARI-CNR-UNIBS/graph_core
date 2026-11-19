@@ -1,3 +1,4 @@
+#pragma once
 /*
 Copyright (c) 2024, Manuel Beschi and Cesare Tonola, JRL-CARI CNR-STIIMA/UNIBS,
 manuel.beschi@unibs.it, c.tonola001@unibs.it All rights reserved.
@@ -45,7 +46,7 @@ public:
   /**
    * @brief Constructor for the Vector class.
    */
-  Vector(const cnr_logger::TraceLoggerPtr& logger);
+  Vector(const LoggerPtr& logger);
 
   /**
    * @brief Implementation of the insert function for adding a node to the

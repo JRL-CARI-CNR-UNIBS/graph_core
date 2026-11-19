@@ -27,6 +27,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/datastructure/kdtree.h>
 
+#include <cmath>
+
 namespace graph
 {
 namespace core
@@ -35,7 +37,7 @@ namespace core
  *        ---- KdNode ----
  */
 
-KdNode::KdNode(const NodePtr& node, const int& dimension, const cnr_logger::TraceLoggerPtr& logger)
+KdNode::KdNode(const NodePtr& node, const int& dimension, const LoggerPtr& logger)
   : node_(node), dimension_(dimension), logger_(logger)
 {
   deleted_ = false;
@@ -162,11 +164,12 @@ void KdNode::nearestNeighbor(const Eigen::VectorXd& configuration, NodePtr& best
 
 void KdNode::near(const Eigen::VectorXd& configuration, const double& radius, std::multimap<double, NodePtr>& nodes)
 {
-  double distance = (configuration - node_->getConfiguration()).norm();
+  // Compare squared distances: the square root is computed only for the nodes inside the ball
+  const double squared_distance = (configuration - node_->getConfiguration()).squaredNorm();
 
-  if ((not deleted_) and distance < radius)
+  if ((not deleted_) and radius > 0 and squared_distance < radius * radius)
   {
-    nodes.insert(std::pair<double, NodePtr>(distance, node_));
+    nodes.insert(std::pair<double, NodePtr>(std::sqrt(squared_distance), node_));
   }
 
   if (left_ && (configuration(dimension_) - radius) <= node_->getConfiguration()(dimension_))
@@ -313,7 +316,7 @@ std::ostream& operator<<(std::ostream& os, const KdNode& kdnode)
  *        ---- KdTree ----
  */
 
-KdTree::KdTree(const cnr_logger::TraceLoggerPtr& logger) : NearestNeighbors(logger)
+KdTree::KdTree(const LoggerPtr& logger) : NearestNeighbors(logger)
 {
   print_deleted_nodes_ = false;
   deleted_nodes_threshold_ = std::numeric_limits<unsigned int>::max();
@@ -405,8 +408,8 @@ bool KdTree::deleteNode(const NodePtr& node, const bool& disconnect_node)
 
     if (deleted_nodes_ > deleted_nodes_threshold_ && size_ > 0)
     {
-      CNR_DEBUG(logger_, "number of deleted nodes (" << deleted_nodes_ << ") is greater than the threshold ("
-                                                     << deleted_nodes_threshold_ << "), kdtree is built from scratch");
+      GC_DEBUG(logger_, "number of deleted nodes (" << deleted_nodes_ << ") is greater than the threshold ("
+                                                    << deleted_nodes_threshold_ << "), kdtree is built from scratch");
 
       bool root_was_deleted = root_->deleted_;
       root_->restoreNode();  // set deleted_ to false to have it into nodes vector
@@ -436,10 +439,10 @@ void KdTree::deletedNodesThreshold(const unsigned int t)
 {
   if (t <= 1)
   {
-    CNR_WARN(logger_,
-             "deleted_nodes_threshold_ cannot bet set because it "
-             "should be at least 2 and you are trying to set "
-                 << t);
+    GC_WARN(logger_,
+            "deleted_nodes_threshold_ cannot bet set because it "
+            "should be at least 2 and you are trying to set "
+                << t);
     return;
   }
   deleted_nodes_threshold_ = t;

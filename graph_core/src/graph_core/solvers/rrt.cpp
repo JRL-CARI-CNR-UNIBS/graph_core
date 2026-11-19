@@ -35,13 +35,13 @@ bool RRT::addGoal(const NodePtr& goal_node, const double& max_time)
 {
   if (!configured_)
   {
-    CNR_ERROR(logger_, "Solver is not configured!");
+    GC_ERROR(logger_, "Solver is not configured!");
     return false;
   }
 
   if (not sampler_->inBounds(goal_node->getConfiguration()))
   {
-    CNR_WARN(logger_, "Goal not in bounds");
+    GC_WARN(logger_, "Goal not in bounds");
     return false;
   }
 
@@ -59,13 +59,13 @@ bool RRT::addStart(const NodePtr& start_node, const double& max_time)
 {
   if (!configured_)
   {
-    CNR_ERROR(logger_, "Solver is not configured!");
+    GC_ERROR(logger_, "Solver is not configured!");
     return false;
   }
 
   if (not sampler_->inBounds(start_node->getConfiguration()))
   {
-    CNR_WARN(logger_, "Start not in bounds");
+    GC_WARN(logger_, "Start not in bounds");
     return false;
   }
 
@@ -97,11 +97,11 @@ void RRT::resetProblem()
 
 bool RRT::update(PathPtr& solution)
 {
-  CNR_TRACE(logger_, "RRT::update");
+  GC_TRACE(logger_, "RRT::update");
 
   if (solved_)
   {
-    CNR_DEBUG(logger_, "already found a solution");
+    GC_DEBUG(logger_, "already found a solution");
     solution = solution_;
     can_improve_ = false;
     return true;
@@ -115,11 +115,11 @@ bool RRT::update(PathPtr& solution)
 
 bool RRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 {
-  CNR_TRACE(logger_, "RRT::update");
+  GC_TRACE(logger_, "RRT::update");
 
   if (solved_)
   {
-    CNR_DEBUG(logger_, "already found a solution");
+    GC_DEBUG(logger_, "already found a solution");
     solution = solution_;
     can_improve_ = false;
     return true;
@@ -158,11 +158,11 @@ bool RRT::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 
 bool RRT::update(const NodePtr& n, PathPtr& solution)
 {
-  CNR_DEBUG(logger_, "RRT::update");
+  GC_DEBUG(logger_, "RRT::update");
 
   if (solved_)
   {
-    CNR_DEBUG(logger_, "already found a solution");
+    GC_DEBUG(logger_, "already found a solution");
     solution = solution_;
     return true;
   }

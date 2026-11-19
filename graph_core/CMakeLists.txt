@@ -10,7 +10,7 @@ endif()
 # Compiler flags
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     if(CMAKE_BUILD_TYPE MATCHES "Release")
-        add_compile_options(-funroll-loops -Wall -Ofast -flto -O3)
+        add_compile_options(-funroll-loops -Wall -flto -O3)
     endif()
     if(CMAKE_BUILD_TYPE MATCHES "Debug")
         add_compile_options(-Wall -g -Og)
@@ -38,6 +38,9 @@ message(STATUS "${BLUE}CMAKE_INSTALL_RPATH=${CMAKE_INSTALL_RPATH}${RESET}")
 
 # Library target
 add_library(${PROJECT_NAME} SHARED
+    # Parameters
+    src/${PROJECT_NAME}/params.cpp
+
     # Graph components
     src/${PROJECT_NAME}/graph/node.cpp
     src/${PROJECT_NAME}/graph/connection.cpp
@@ -83,7 +86,7 @@ add_library(${PROJECT_NAME} SHARED
 )
 
 # Add dependencies
-add_dependencies(${PROJECT_NAME} cnr_logger::cnr_logger cnr_param::cnr_param cnr_class_loader::cnr_class_loader)
+add_dependencies(${PROJECT_NAME} cnr_class_loader::cnr_class_loader)
 
 # Include directories
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -94,8 +97,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 # Link dependencies
 target_link_libraries(${PROJECT_NAME} PUBLIC
     Eigen3::Eigen
-    cnr_logger::cnr_logger
-    cnr_param::cnr_param
+    ${GRAPH_CORE_YAML_CPP_TARGET}
     cnr_class_loader::cnr_class_loader
 )
 

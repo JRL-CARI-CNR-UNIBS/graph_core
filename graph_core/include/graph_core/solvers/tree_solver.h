@@ -111,7 +111,7 @@ protected:
   /**
    * @brief The namespace under which the parameters are searched for.
    */
-  std::string param_ns_;
+  ParamMap params_;
 
   /**
    * @brief Maximum distance considered by the solver for tree expansion.
@@ -177,14 +177,12 @@ protected:
   double best_utopia_ = std::numeric_limits<double>::infinity();
 
   /**
-   * @brief Pointer to a TraceLogger instance for logging.
+   * @brief Pointer to the logger for logging.
    *
-   * This member variable represents a pointer to a TraceLogger instance,
-   * allowing to perform logging operations. TraceLogger is a part of the
-   * cnr_logger library. Ensure that the logger is properly configured and
-   * available for use.
+   * Logger used for messages (see graph_core/logger.h). It can be null:
+   * in that case nothing is logged.
    */
-  cnr_logger::TraceLoggerPtr logger_;
+  LoggerPtr logger_;
 
   /**
    * @brief Set the path planning problem and attempt to find a solution.
@@ -240,14 +238,14 @@ public:
    * @param logger The logger for logging messages.
    */
   TreeSolver(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
-             const GoalCostFunctionPtr& goal_cost_fcn, const cnr_logger::TraceLoggerPtr& logger)
+             const GoalCostFunctionPtr& goal_cost_fcn, const LoggerPtr& logger)
     : metrics_(metrics), checker_(checker), sampler_(sampler), goal_cost_fcn_(goal_cost_fcn), logger_(logger)
   {
     init(metrics, checker, sampler, goal_cost_fcn, logger);
   }
 
   TreeSolver(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
-             const cnr_logger::TraceLoggerPtr& logger)
+             const LoggerPtr& logger)
     : metrics_(metrics), checker_(checker), sampler_(sampler), logger_(logger)
   {
     init(metrics, checker, sampler, logger);
@@ -267,11 +265,11 @@ public:
    * @return True if correctly initialised, False if already initialised.
    */
   virtual bool init(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
-                    const GoalCostFunctionPtr& goal_cost_fcn, const cnr_logger::TraceLoggerPtr& logger)
+                    const GoalCostFunctionPtr& goal_cost_fcn, const LoggerPtr& logger)
   {
     if (initialized_)
     {
-      CNR_WARN(logger_, "Solver already initialised!");
+      GC_WARN(logger_, "Solver already initialised!");
       return false;
     }
 
@@ -291,7 +289,7 @@ public:
   }
 
   virtual bool init(const MetricsPtr& metrics, const CollisionCheckerPtr& checker, const SamplerPtr& sampler,
-                    const cnr_logger::TraceLoggerPtr& logger)
+                    const LoggerPtr& logger)
   {
     GoalCostFunctionPtr goal_cost_fcn = std::make_shared<GoalCostFunctionBase>();
     return init(metrics, checker, sampler, goal_cost_fcn, logger);
@@ -300,13 +298,14 @@ public:
   /**
    * @brief Configure the solver with parameters.
    *
-   * This function reads parameters using cnr_param and configures the solver
-   * accordingly.
+   * This function reads the parameters (max_distance, use_kdtree, extend,
+   * utopia_tolerance and the solver-specific ones) and configures the solver
+   * accordingly. Missing parameters take their default value.
    *
-   * @param param_ns The namespace under which the parameters are searched for.
+   * @param params The parameters of the solver.
    * @return true if configuration is successful, false otherwise.
    */
-  virtual bool config(const std::string& param_ns);
+  virtual bool config(const ParamMap& params);
 
   /**
    * @brief getInitialized tells if the object has been initialised.
@@ -399,19 +398,17 @@ public:
    *
    * @param start_conf The start configuration.
    * @param goal_conf The goal configuration.
-   * @param param_ns The namespace under which the parameters should be searched
-   * for.
+   * @param params The parameters of the solver (see config()).
    * @param solution The output solution path.
    * @param max_time The maximum allowed time for solving.
    * @param max_iter The maximum number of iterations.
    * @return true if a solution is found, false otherwise.
    */
-  virtual bool computePath(const NodePtr& start_node, const NodePtr& goal_node, const std::string& param_ns,
+  virtual bool computePath(const NodePtr& start_node, const NodePtr& goal_node, const ParamMap& params,
                            PathPtr& solution, const double& max_time = std::numeric_limits<double>::infinity(),
                            const unsigned int& max_iter = 10000);
-  virtual bool computePath(const Eigen::VectorXd& start_conf, const Eigen::VectorXd& goal_conf,
-                           const std::string& param_ns, PathPtr& solution,
-                           const double& max_time = std::numeric_limits<double>::infinity(),
+  virtual bool computePath(const Eigen::VectorXd& start_conf, const Eigen::VectorXd& goal_conf, const ParamMap& params,
+                           PathPtr& solution, const double& max_time = std::numeric_limits<double>::infinity(),
                            const unsigned int& max_iter = 10000);
 
   /**
@@ -751,8 +748,8 @@ public:
    * @brief Performs the last operations before solving the planning problem.
    * It must be called after setProblem() and before solve() (see computePath()
    * as an example). By default it does nothing, but in general it can be used
-   * to read additional parameters specified by param_ns. Parameters are read
-   * under the namespace param_ns_ set with the function config().
+   * to read additional parameters from params_, set with the function
+   * config().
    * @return true if successfull.
    */
   virtual bool finalizeProblem()

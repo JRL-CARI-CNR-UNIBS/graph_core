@@ -32,18 +32,18 @@ namespace graph
 namespace core
 {
 PathLocalOptimizer::PathLocalOptimizer(const CollisionCheckerPtr& checker, const MetricsPtr& metrics,
-                                       const cnr_logger::TraceLoggerPtr& logger)
+                                       const LoggerPtr& logger)
   : PathOptimizerBase(checker, metrics, logger)
 {
 }
 
-void PathLocalOptimizer::config(const std::string& param_ns)
+void PathLocalOptimizer::config(const ParamMap& params)
 {
-  PathOptimizerBase::config(param_ns);
+  PathOptimizerBase::config(params);
 
-  get_param(logger_, param_ns_, "simplify_max_conn_length", simplify_max_conn_length_, 0.1);
-  get_param(logger_, param_ns_, "warp_min_conn_length", warp_min_conn_length_, 0.01);
-  get_param(logger_, param_ns_, "warp_min_step_size", warp_min_step_size_, 0.01);
+  get_param(logger_, params_, "simplify_max_conn_length", simplify_max_conn_length_, 0.1);
+  get_param(logger_, params_, "warp_min_conn_length", warp_min_conn_length_, 0.01);
+  get_param(logger_, params_, "warp_min_step_size", warp_min_step_size_, 0.01);
 }
 
 void PathLocalOptimizer::setPath(const PathPtr& path)

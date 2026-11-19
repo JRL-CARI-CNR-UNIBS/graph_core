@@ -71,14 +71,12 @@ protected:
   bool initialized_;
 
   /**
-   * @brief Pointer to a TraceLogger instance for logging.
+   * @brief Pointer to the logger for logging.
    *
-   * This member variable represents a pointer to a TraceLogger instance,
-   * allowing to perform logging operations. TraceLogger is a part of the
-   * cnr_logger library. Ensure that the logger is properly configured and
-   * available for use.
+   * Logger used for messages (see graph_core/logger.h). It can be null:
+   * in that case nothing is logged.
    */
-  cnr_logger::TraceLoggerPtr logger_;
+  LoggerPtr logger_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -95,11 +93,11 @@ public:
 
   /**
    * @brief Constructor for CollisionCheckerBase.
-   * @param logger Pointer to a TraceLogger for logging.
+   * @param logger Pointer to a Logger for logging.
    * @param min_distance Distance between configurations checked for collisions
    * along a connection.
    */
-  CollisionCheckerBase(const cnr_logger::TraceLoggerPtr& logger, const double& min_distance = 0.01)
+  CollisionCheckerBase(const LoggerPtr& logger, const double& min_distance = 0.01)
     : min_distance_(min_distance), logger_(logger)
   {
     initialized_ = true;
@@ -110,16 +108,16 @@ public:
    * @brief init Initialise the object, defining its main attributes. At the end
    * of the function, the flag 'initialized_' is set to true and the object can
    * execute its main functions.
-   * @param logger Pointer to a TraceLogger for logging.
+   * @param logger Pointer to a Logger for logging.
    * @param min_distance Distance between configurations checked for collisions
    * along a connection.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const cnr_logger::TraceLoggerPtr& logger, const double& min_distance = 0.01)
+  virtual bool init(const LoggerPtr& logger, const double& min_distance = 0.01)
   {
     if (initialized_)
     {
-      CNR_WARN(logger_, "Collision checker already initialised!");
+      GC_WARN(logger_, "Collision checker already initialised!");
       return false;
     }
 
@@ -272,7 +270,7 @@ public:
 
     if ((dist - dist_child - dist_parent) > 1e-04)
     {
-      CNR_ERROR(logger_, "The conf is not on the connection between parent and child");
+      GC_ERROR(logger_, "The conf is not on the connection between parent and child");
       throw std::invalid_argument("The conf is not on the connection between parent and child");
     }
 

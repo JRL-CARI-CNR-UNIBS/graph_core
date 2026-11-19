@@ -82,11 +82,11 @@ public:
    * @param ball_center Center of the ball.
    * @param lower_bound Lower bounds for each dimension.
    * @param upper_bound Upper bounds for each dimension.
-   * @param logger TraceLogger for logging.
+   * @param logger Logger for logging.
    * @param radius radius of the ball (default: infinity).
    */
   BallSampler(const Eigen::VectorXd& ball_center, const Eigen::VectorXd& lower_bound,
-              const Eigen::VectorXd& upper_bound, const cnr_logger::TraceLoggerPtr& logger, const double& radius)
+              const Eigen::VectorXd& upper_bound, const LoggerPtr& logger, const double& radius)
     : SamplerBase(lower_bound, upper_bound, logger,
                   radius)
     ,  // set initialized_ true
@@ -102,12 +102,12 @@ public:
    * @param ball_center Center of the ball.
    * @param lower_bound Lower bounds for configuration sampling.
    * @param upper_bound Upper bounds for configuration sampling.
-   * @param logger Pointer to a TraceLogger instance for logging.
+   * @param logger Pointer to the logger for logging.
    * @param radius radius of the ball (default: infinity).
    * @return True if correctly initialised, False if already initialised.
    */
   virtual bool init(const Eigen::VectorXd& ball_center, const Eigen::VectorXd& lower_bound,
-                    const Eigen::VectorXd& upper_bound, const cnr_logger::TraceLoggerPtr& logger,
+                    const Eigen::VectorXd& upper_bound, const LoggerPtr& logger,
                     const double& radius = std::numeric_limits<double>::infinity())
   {
     if (not SamplerBase::init(lower_bound, upper_bound, logger, radius))

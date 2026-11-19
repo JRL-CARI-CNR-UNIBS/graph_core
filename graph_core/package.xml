@@ -1,4 +1,4 @@
-<?xml version="2.0"?>
+<?xml version="1.0"?>
 <package format="3">
   <name>graph_core</name>
   <version>0.0.0</version>
@@ -16,9 +16,10 @@
   <buildtool_depend condition="$ROS_VERSION != 1">cmake</buildtool_depend>
 
   <depend>eigen</depend>
-  <depend>cnr_param</depend>
-  <depend>cnr_logger</depend>
+  <depend>yaml-cpp</depend>
   <depend>cnr_class_loader</depend>
+
+  <test_depend>gtest</test_depend>
 
   <export>
     <build_type condition="$ROS_VERSION == 1">catkin</build_type>

@@ -56,8 +56,7 @@ public:
 
   /**
    * @brief init Initialise the object, defining its main attributes.
-   * @param param_ns defines the namespace under which parameter are searched
-   * for using cnr_param library.
+   * @param params parameters of the object (see graph_core/params.h).
    * @param metrics The metrics used to evaluate paths.
    * @param checker The collision checker for checking collisions.
    * @param sampler The sampler for generating random configurations.
@@ -67,9 +66,9 @@ public:
    * @param logger The logger for logging messages.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const std::string& param_ns, const graph::core::MetricsPtr& metrics,
+  virtual bool init(const ParamMap& params, const graph::core::MetricsPtr& metrics,
                     const graph::core::CollisionCheckerPtr& checker, const graph::core::SamplerPtr& sampler,
-                    const graph::core::GoalCostFunctionPtr& goal_cost_fcn, const cnr_logger::TraceLoggerPtr& logger)
+                    const graph::core::GoalCostFunctionPtr& goal_cost_fcn, const LoggerPtr& logger)
   {
     solver_ = std::make_shared<graph::core::RRTStar>(metrics, checker, sampler, goal_cost_fcn, logger);
     return true;

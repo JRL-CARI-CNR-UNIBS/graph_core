@@ -104,14 +104,12 @@ protected:
   std::vector<bool> flags_;
 
   /**
-   * @brief Pointer to a TraceLogger instance for logging.
+   * @brief Pointer to the logger for logging.
    *
-   * This member variable represents a pointer to a TraceLogger instance,
-   * allowing to perform logging operations. TraceLogger is a part of the
-   * cnr_logger library. Ensure that the logger is properly configured and
-   * available for use.
+   * Logger used for messages (see graph_core/logger.h). It can be null:
+   * in that case nothing is logged.
    */
-  cnr_logger::TraceLoggerPtr logger_;
+  LoggerPtr logger_;
 
   /**
    * @brief Adds a parent connection to the node.
@@ -239,7 +237,7 @@ public:
    */
 
   Node(const Eigen::VectorXd& configuration);
-  Node(const Eigen::VectorXd& configuration, const cnr_logger::TraceLoggerPtr& logger);
+  Node(const Eigen::VectorXd& configuration, const LoggerPtr& logger);
 
   /**
    * @brief Retrieves a shared pointer to the Node.
@@ -321,23 +319,23 @@ public:
   bool getFlag(const size_t& idx, const bool default_value);
 
   /**
-   * @brief Retrieves a pointer to the TraceLogger associated with the node.
+   * @brief Retrieves a pointer to the Logger associated with the node.
    *
-   * This member function provides read-only access to the TraceLogger instance
+   * This member function provides read-only access to the Logger instance
    * associated with the node, allowing external components to access and
    * utilize the logging capabilities.
    *
-   * @return A constant reference to the TraceLogger pointer.
+   * @return A constant reference to the Logger pointer.
    */
-  const cnr_logger::TraceLoggerPtr& getLogger() const
+  const LoggerPtr& getLogger() const
   {
     return logger_;
   }
 
   /**
-   * @brief Sets the TraceLogger associated with the node.
+   * @brief Sets the Logger associated with the node.
    */
-  void setLogger(const cnr_logger::TraceLoggerPtr& logger)
+  void setLogger(const LoggerPtr& logger)
   {
     logger_ = logger;
   }
@@ -630,12 +628,12 @@ public:
    * values and constructs a Node with the specified configuration.
    *
    * @param yaml The YAML::Node containing the sequence of configuration values.
-   * @param logger The TraceLoggerPtr for logging error messages.
+   * @param logger The LoggerPtr for logging error messages.
    * @return A shared pointer to the constructed Node.
    *  If the YAML::Node is not a sequence or if an error occurs during
    * construction, returns nullptr.
    */
-  static NodePtr fromYAML(const YAML::Node& yaml, const cnr_logger::TraceLoggerPtr& logger);
+  static NodePtr fromYAML(const YAML::Node& yaml, const LoggerPtr& logger);
   static NodePtr fromYAML(const YAML::Node& yaml, std::string& what);
 
   friend std::ostream& operator<<(std::ostream& os, const Node& node);
@@ -652,33 +650,6 @@ public:
  * @return Returns the modified output stream.
  */
 std::ostream& operator<<(std::ostream& os, const Node& node);
-
-/**
- * @brief Template function to get a graph::core::Node from the parameter
- * server.
- *
- * This function attempts to retrieve a parameter named `param_name` from the
- * parameter namespace `param_ns`, and assigns its value to the pointer `param`.
- * If the parameter is found, it is set to the pointer and the function returns
- * true. If the parameter is not found, a warning is logged and the function
- * returns false. If an error occurs while retrieving the parameter, an error is
- * logged and an invalid_argument exception is thrown.
- *
- * @tparam NodePtr The pointer type to which the parameter value will be
- * assigned.
- * @param logger A pointer to a TraceLogger object used for logging messages.
- * @param param_ns The namespace of the parameter on the parameter server.
- * @param param_name The name of the parameter to retrieve.
- * @param param Reference to the pointer where the parameter value will be
- * assigned.
- * @return True if the parameter is successfully retrieved and assigned, false
- * otherwise.
- * @throws std::invalid_argument if an error occurs while retrieving the
- * parameter.
- */
-template <>
-inline bool get_param<NodePtr>(const cnr_logger::TraceLoggerPtr& logger, const std::string& param_ns,
-                               const std::string& param_name, NodePtr& param);
 
 }  // end namespace core
 }  // end namespace graph

@@ -27,12 +27,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <graph_core/graph/tree.h>
 
+#include <unordered_map>
+
 namespace graph
 {
 namespace core
 {
 Tree::Tree(const NodePtr& root, const double& max_distance, const CollisionCheckerPtr& checker,
-           const MetricsPtr& metrics, const cnr_logger::TraceLoggerPtr& logger, const bool& use_kdtree)
+           const MetricsPtr& metrics, const LoggerPtr& logger, const bool& use_kdtree)
   : root_(root)
   , use_kdtree_(use_kdtree)
   , max_distance_(max_distance)
@@ -245,7 +247,7 @@ bool Tree::informedExtend(const Eigen::VectorXd& configuration, NodePtr& new_nod
   std::multimap<double, NodePtr> closest_nodes_map = nearK(configuration);
   if (closest_nodes_map.size() == 0)
   {
-    CNR_FATAL(logger_, "closest nodes map is empty");
+    GC_FATAL(logger_, "closest nodes map is empty");
     throw std::runtime_error("closest nodes map is empty");
   }
 
@@ -382,7 +384,7 @@ bool Tree::rewireOnly(NodePtr& node, double r_rewire, const std::vector<NodePtr>
 {
   if (what_rewire > 2 || what_rewire < 0)
   {
-    CNR_ERROR(logger_, "what_rewire parameter should be 0,1 or 2");
+    GC_ERROR(logger_, "what_rewire parameter should be 0,1 or 2");
     return false;
   }
 
@@ -524,7 +526,7 @@ bool Tree::rewireOnlyWithPathCheck(NodePtr& node, std::vector<ConnectionPtr>& ch
 {
   if (what_rewire > 2 || what_rewire < 0)
   {
-    CNR_ERROR(logger_, "what_rewire parameter should be 0,1 or 2");
+    GC_ERROR(logger_, "what_rewire parameter should be 0,1 or 2");
     assert(0);
     return false;
   }
@@ -766,24 +768,30 @@ std::multimap<double, NodePtr> Tree::nearK(const Eigen::VectorXd& conf)
 
 double Tree::costToNode(NodePtr node)
 {
+  // Hot path (called for every near node during the rewiring): walk up with raw pointers, locking the
+  // parent connection once per step. The nodes stay alive because the tree owns them.
   double cost = 0;
-  while (node != root_)
+  const Node* n = node.get();
+  const Node* root = root_.get();
+  while (n != root)
   {
-    if (node->getParentConnectionsSize() != 1)
+    if (n->getParentConnectionsSize() != 1)
     {
-      CNR_ERROR(logger_, "a tree node should have exactly a parent!\n " << *node);
+      GC_ERROR(logger_, "a tree node should have exactly a parent!\n " << *n);
       return std::numeric_limits<double>::infinity();
     }
 
-    if (node->parentConnection(0)->getParent() == node)
+    const ConnectionPtr conn = n->parentConnection(0);
+    const Node* parent = conn->getParent().get();
+    if (parent == n)
     {
-      CNR_FATAL(logger_, "node " << node.get() << "=\n" << *node);
-      CNR_FATAL(logger_, "to parent\n" << *(node->parentConnection(0)));
-      CNR_FATAL(logger_, "connection between the same node!");
+      GC_FATAL(logger_, "node " << n << "=\n" << *n);
+      GC_FATAL(logger_, "to parent\n" << *conn);
+      GC_FATAL(logger_, "connection between the same node!");
       throw std::runtime_error("connection between the same node!");
     }
-    cost += node->parentConnection(0)->getCost();
-    node = node->parentConnection(0)->getParent();
+    cost += conn->getCost();
+    n = parent;
   }
   return cost;
 }
@@ -797,10 +805,10 @@ std::vector<ConnectionPtr> Tree::getConnectionToNode(const NodePtr& node)
   {
     if (node->getParentConnectionsSize() != 1)
     {
-      CNR_ERROR(logger_, "a tree node should have only a parent");
-      CNR_ERROR(logger_, "node \n" << *node);
-      CNR_INFO(logger_, "current root " << root_);
-      CNR_INFO(logger_, "node " << node);
+      GC_ERROR(logger_, "a tree node should have only a parent");
+      GC_ERROR(logger_, "node \n" << *node);
+      GC_INFO(logger_, "current root " << root_);
+      GC_INFO(logger_, "node " << node);
 
       throw std::runtime_error("a tree node should have only a parent");
     }
@@ -835,7 +843,7 @@ bool Tree::keepOnlyThisBranch(const std::vector<ConnectionPtr>& connections)
   {
     if (conn->getParent() != branch_nodes.back())
     {
-      CNR_FATAL(logger_, "the branch should consist of contiguous connections");
+      GC_FATAL(logger_, "the branch should consist of contiguous connections");
       throw std::runtime_error("the branch should consist of contiguous connections");
     }
 
@@ -860,7 +868,7 @@ bool Tree::addBranch(const std::vector<ConnectionPtr>& connections)
   NodePtr start_node = connections.at(0)->getParent();
   if (!isInTree(start_node))
   {
-    CNR_ERROR(logger_, "start node of the branch is not part of the tree");
+    GC_ERROR(logger_, "start node of the branch is not part of the tree");
     return false;
   }
 
@@ -1029,7 +1037,7 @@ bool Tree::purgeFromHere(NodePtr& node, const std::vector<NodePtr>& white_list, 
 {
   if (std::find(white_list.begin(), white_list.end(), node) != white_list.end())
   {
-    CNR_INFO(logger_, "Node in white list: " << *node);
+    GC_INFO(logger_, "Node in white list: " << *node);
     return false;
   }
   assert(node);
@@ -1100,7 +1108,7 @@ void Tree::populateTreeFromNode(const NodePtr& node, const Eigen::VectorXd& focu
 {
   if (not nodes_->findNode(node))
   {
-    CNR_FATAL(logger_, "node is not member of tree");
+    GC_FATAL(logger_, "node is not member of tree");
     throw std::invalid_argument("node is not member of tree");
   }
 
@@ -1135,7 +1143,7 @@ void Tree::populateTreeFromNodeConsideringCost(const NodePtr& node, const Eigen:
 {
   if (not nodes_->findNode(node))
   {
-    CNR_INFO(logger_, "node is not member of tree");
+    GC_INFO(logger_, "node is not member of tree");
     throw std::invalid_argument("node is not member of tree");
   }
 
@@ -1192,29 +1200,32 @@ YAML::Node Tree::toYAML() const
   YAML::Node connections;
 
   std::vector<NodePtr> nodes_vector = nodes_->getNodes();
+
+  // Index of each node in nodes_vector: finding a child's index is O(1) instead of a linear search,
+  // so saving the tree is O(n) instead of O(n^2).
+  std::unordered_map<const Node*, std::size_t> node_index;
+  node_index.reserve(nodes_vector.size());
+  for (std::size_t inode = 0; inode < nodes_vector.size(); ++inode)
+    node_index.emplace(nodes_vector[inode].get(), inode);
+
   for (std::size_t inode = 0; inode < nodes_vector.size(); ++inode)
   {
-    const NodePtr& n = nodes_vector.at(inode);
+    const NodePtr& n = nodes_vector[inode];
     nodes.push_back(n->toYAML());
 
-    std::vector<NodePtr> children = n->getChildren();
-
-    for (std::size_t ichild = 0; ichild < children.size(); ++ichild)
+    for (const NodePtr& child : n->getChildren())
     {
-      for (std::size_t inodes = 0; inodes < nodes_vector.size(); ++inodes)
-      {
-        if (nodes_vector.at(inodes) == children.at(ichild))
-        {
-          YAML::Node connection;
-          connection.SetStyle(YAML::EmitterStyle::Flow);  // Set the style to flow style for a
-                                                          // more compact representation
+      auto it = node_index.find(child.get());
+      if (it == node_index.end())
+        continue;
 
-          connection.push_back(static_cast<int>(inode));
-          connection.push_back(static_cast<int>(inodes));
-          connections.push_back(connection);
-          break;
-        }
-      }
+      YAML::Node connection;
+      connection.SetStyle(YAML::EmitterStyle::Flow);  // Set the style to flow style for a
+                                                      // more compact representation
+
+      connection.push_back(static_cast<int>(inode));
+      connection.push_back(static_cast<int>(it->second));
+      connections.push_back(connection);
     }
   }
 
@@ -1237,7 +1248,7 @@ void Tree::toYAML(const std::string& file_name) const
   else
   {
     // Handle error opening the file
-    CNR_ERROR(logger_, "Error opening file: " << file_name);
+    GC_ERROR(logger_, "Error opening file: " << file_name);
   }
 }
 
@@ -1270,23 +1281,23 @@ std::ostream& operator<<(std::ostream& os, const Tree& tree)
 }
 
 TreePtr Tree::fromYAML(const YAML::Node& yaml, const MetricsPtr& metrics, const CollisionCheckerPtr& checker,
-                       const cnr_logger::TraceLoggerPtr& logger)
+                       const LoggerPtr& logger)
 {
   if (!yaml["nodes"])
   {
-    CNR_ERROR(logger, "Cannot load a tree from a YAML without 'nodes' field");
+    GC_ERROR(logger, "Cannot load a tree from a YAML without 'nodes' field");
     return nullptr;
   }
 
   if (!yaml["connections"])
   {
-    CNR_ERROR(logger, "Cannot load a tree from a YAML without 'connections' field");
+    GC_ERROR(logger, "Cannot load a tree from a YAML without 'connections' field");
     return nullptr;
   }
 
   bool use_kdtree = true;
   if (!yaml["use_kdtree"])
-    CNR_WARN(logger, "No field 'use_kdtree' field found in YAML, set to true");
+    GC_WARN(logger, "No field 'use_kdtree' field found in YAML, set to true");
   else
     use_kdtree = yaml["use_kdtree"].as<bool>();
 
@@ -1294,7 +1305,7 @@ TreePtr Tree::fromYAML(const YAML::Node& yaml, const MetricsPtr& metrics, const 
   bool compute_max_distance = false;
   if (!yaml["max_distance"])
   {
-    CNR_WARN(logger, "No field 'max_distance' field found in YAML, computed from the tree");
+    GC_WARN(logger, "No field 'max_distance' field found in YAML, computed from the tree");
     compute_max_distance = true;
   }
   else
@@ -1305,15 +1316,15 @@ TreePtr Tree::fromYAML(const YAML::Node& yaml, const MetricsPtr& metrics, const 
 
   if (!nodes.IsSequence())
   {
-    CNR_ERROR(logger, "Cannot load a tree from YAML::Node where 'nodes' is not a sequence");
+    GC_ERROR(logger, "Cannot load a tree from YAML::Node where 'nodes' is not a sequence");
     return nullptr;
   }
 
   if (!connections.IsSequence())
   {
-    CNR_ERROR(logger,
-              "Cannot load a tree from YAML::Node where 'connections' "
-              "is not a sequence");
+    GC_ERROR(logger,
+             "Cannot load a tree from YAML::Node where 'connections' "
+             "is not a sequence");
     return nullptr;
   }
 
@@ -1327,7 +1338,7 @@ TreePtr Tree::fromYAML(const YAML::Node& yaml, const MetricsPtr& metrics, const 
     if (!node)
     {
       // Error creating a Node from YAML
-      CNR_ERROR(logger, "Error creating a Node from YAML");
+      GC_ERROR(logger, "Error creating a Node from YAML");
       return nullptr;
     }
 
@@ -1344,9 +1355,9 @@ TreePtr Tree::fromYAML(const YAML::Node& yaml, const MetricsPtr& metrics, const 
     connection = connections[ic];
     if (!connection.IsSequence())
     {
-      CNR_ERROR(logger,
-                "Cannot load connections from YAML::Node if the field "
-                "connections is not a sequence of sequence");
+      GC_ERROR(logger,
+               "Cannot load connections from YAML::Node if the field "
+               "connections is not a sequence of sequence");
       return nullptr;
     }
 
@@ -1424,29 +1435,6 @@ bool Tree::recheckCollisionFromNode(NodePtr& n)
     }
     if (not recheckCollisionFromNode(child))
       return false;
-  }
-  return true;
-}
-
-bool get_param(const cnr_logger::TraceLoggerPtr& logger, const std::string& param_ns, const std::string& param_name,
-               TreePtr& param, const MetricsPtr& metrics, const CollisionCheckerPtr& checker)
-{
-  std::string what, full_param_name = param_ns + "/" + param_name;
-  if (cnr::param::has(full_param_name, what))
-  {
-    YAML::Node yaml_node;
-    if (not cnr::param::get(full_param_name, yaml_node, what))
-    {
-      CNR_ERROR(logger, "Cannot load " << full_param_name + " parameter.\n" << what);
-      throw std::invalid_argument("Cannot load " + full_param_name + " parameter.");
-    }
-    else
-      param = graph::core::Tree::fromYAML(yaml_node, metrics, checker, logger);
-  }
-  else
-  {
-    CNR_WARN(logger, full_param_name + " parameter not available.\n" << what);
-    return false;
   }
   return true;
 }

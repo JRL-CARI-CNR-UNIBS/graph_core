@@ -38,18 +38,18 @@ bool RRTStar::addStartTree(const TreePtr& start_tree, const double& max_time)
   return setProblem(max_time);
 }
 
-bool RRTStar::config(const std::string& param_ns)
+bool RRTStar::config(const ParamMap& params)
 {
-  RRT::config(param_ns);
+  RRT::config(params);
 
   solved_ = false;
-  get_param(logger_, param_ns_, "rewire_factor", rewire_factor_, 1.1);
+  get_param(logger_, params_, "rewire_factor", rewire_factor_, 1.1);
   return true;
 }
 
 bool RRTStar::importFromSolver(const RRTStarPtr& solver)
 {
-  CNR_DEBUG(logger_, "Import from RRTStar solver");
+  GC_DEBUG(logger_, "Import from RRTStar solver");
 
   if (this == solver.get())  // Avoid self-assignment
     return true;
@@ -62,7 +62,7 @@ bool RRTStar::importFromSolver(const RRTStarPtr& solver)
   }
   else
   {
-    CNR_ERROR(logger_, "Import from solver failed");
+    GC_ERROR(logger_, "Import from solver failed");
     return false;
   }
 }
@@ -81,24 +81,24 @@ bool RRTStar::importFromSolver(const TreeSolverPtr& solver)
 
 bool RRTStar::update(PathPtr& solution)
 {
-  CNR_TRACE(logger_, "RRT*::update");
+  GC_TRACE(logger_, "RRT*::update");
 
   return update(sampler_->sample(), solution);
 }
 
 bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 {
-  CNR_TRACE(logger_, "RRT*::update");
+  GC_TRACE(logger_, "RRT*::update");
 
   if (!problem_set_)
   {
-    CNR_TRACE(logger_, "RRT* -> not init");
+    GC_TRACE(logger_, "RRT* -> not init");
 
     return false;
   }
   if (cost_ <= utopia_tolerance_ * best_utopia_)
   {
-    CNR_TRACE(logger_, "RRT*:: Solution already optimal");
+    GC_TRACE(logger_, "RRT*:: Solution already optimal");
 
     solution = solution_;
     can_improve_ = false;
@@ -109,7 +109,7 @@ bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 
   if (not solved_)
   {
-    CNR_TRACE(logger_, "RRT* -> solving");
+    GC_TRACE(logger_, "RRT* -> solving");
 
     NodePtr new_node;
     if (start_tree_->rewire(configuration, r_rewire_, new_node))
@@ -142,7 +142,7 @@ bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
   }
   else
   {
-    CNR_TRACE(logger_, "RRT* -> improving");
+    GC_TRACE(logger_, "RRT* -> improving");
 
     bool improved = start_tree_->rewire(configuration, r_rewire_);
     if (improved)
@@ -164,17 +164,17 @@ bool RRTStar::update(const Eigen::VectorXd& configuration, PathPtr& solution)
 
 bool RRTStar::update(const NodePtr& n, PathPtr& solution)
 {
-  CNR_TRACE(logger_, "RRT*::update");
+  GC_TRACE(logger_, "RRT*::update");
 
   if (!problem_set_)
   {
-    CNR_TRACE(logger_, "RRT* -> not init");
+    GC_TRACE(logger_, "RRT* -> not init");
 
     return false;
   }
   if (cost_ <= utopia_tolerance_ * best_utopia_)
   {
-    CNR_TRACE(logger_, "RRT*:: Solution already optimal");
+    GC_TRACE(logger_, "RRT*:: Solution already optimal");
 
     solution = solution_;
     can_improve_ = false;
@@ -185,7 +185,7 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
 
   if (not solved_)
   {
-    CNR_TRACE(logger_, "RRT* -> solving");
+    GC_TRACE(logger_, "RRT* -> solving");
     NodePtr new_node;
     if (start_tree_->rewireToNode(n, r_rewire_, new_node))
     {
@@ -217,7 +217,7 @@ bool RRTStar::update(const NodePtr& n, PathPtr& solution)
   }
   else
   {
-    CNR_TRACE(logger_, "RRT* -> improving");
+    GC_TRACE(logger_, "RRT* -> improving");
 
     bool improved = start_tree_->rewireToNode(n, r_rewire_);
 
@@ -251,7 +251,7 @@ bool RRTStar::solve(PathPtr& solution, const unsigned int& max_iter, const doubl
     n_iter++;
     if (update(solution))
     {
-      CNR_TRACE(logger_, "Improved or solved in %u iterations", n_iter);
+      GC_TRACE(logger_, "Improved or solved in " << n_iter << " iterations");
       solved_ = true;
       solved = true;
 
@@ -264,8 +264,8 @@ bool RRTStar::solve(PathPtr& solution, const unsigned int& max_iter, const doubl
       break;
   }
 
-  CNR_DEBUG(logger_, "Solved: %d. can improve? %d. Cost: %f. Utopia: %f", solved_, can_improve_, cost_,
-            best_utopia_ * utopia_tolerance_);
+  GC_DEBUG(logger_, "Solved: " << solved_ << ". can improve? " << can_improve_ << ". Cost: " << cost_
+                               << ". Utopia: " << best_utopia_ * utopia_tolerance_);
 
   return solved;
 }

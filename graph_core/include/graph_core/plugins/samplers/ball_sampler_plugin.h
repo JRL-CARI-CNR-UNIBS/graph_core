@@ -56,23 +56,22 @@ public:
   /**
    * @brief init Initialise the object graph::core::BallSampler, defining its
    * main attributes.
-   * @param param_ns defines the namespace under which parameter are searched
-   * for using cnr_param library.
+   * @param params parameters of the object (see graph_core/params.h).
    * @param focus_1 is considered as the center of the ball.
    * @param focus_2 discarded, it just has no effects.
    * @param lower_bound Lower bounds for each dimension.
    * @param upper_bound Upper bounds for each dimension.
    * @param scale Scaling factors for each dimension, no effects for this class.
-   * @param logger TraceLogger for logging.
+   * @param logger Logger for logging.
    * @param cost Radius of the ball (default: infinity).
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const std::string& param_ns, const Eigen::VectorXd& focus_1, const Eigen::VectorXd& focus_2,
+  virtual bool init(const ParamMap& params, const Eigen::VectorXd& focus_1, const Eigen::VectorXd& focus_2,
                     const Eigen::VectorXd& lower_bound, const Eigen::VectorXd& upper_bound,
-                    const Eigen::VectorXd& scale, const cnr_logger::TraceLoggerPtr& logger,
+                    const Eigen::VectorXd& scale, const LoggerPtr& logger,
                     const double& cost = std::numeric_limits<double>::infinity()) override
   {
-    (void)param_ns;
+    (void)params;
     (void)focus_2;
     (void)scale;
     sampler_ = std::make_shared<BallSampler>(focus_1, lower_bound, upper_bound, logger, cost);

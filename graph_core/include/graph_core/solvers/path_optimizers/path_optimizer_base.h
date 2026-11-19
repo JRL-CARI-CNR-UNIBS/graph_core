@@ -88,19 +88,17 @@ protected:
   bool solved_;
 
   /**
-   * @brief The namespace under which the parameters are searched for.
+   * @brief The parameters set with config().
    */
-  std::string param_ns_;
+  ParamMap params_;
 
   /**
-   * @brief Pointer to a TraceLogger instance for logging.
+   * @brief Pointer to the logger for logging.
    *
-   * This member variable represents a pointer to a TraceLogger instance,
-   * allowing to perform logging operations. TraceLogger is a part of the
-   * cnr_logger library. Ensure that the logger is properly configured and
-   * available for use.
+   * Logger used for messages (see graph_core/logger.h). It can be null:
+   * in that case nothing is logged.
    */
-  cnr_logger::TraceLoggerPtr logger_;
+  LoggerPtr logger_;
 
   /**
    * @brief Perform one optimization step. Derived classes must implement this
@@ -118,8 +116,7 @@ public:
    * @param metrics Metrics used to evaluate the quality of the path.
    * @param logger Logger for debugging and logging.
    */
-  PathOptimizerBase(const CollisionCheckerPtr& checker, const MetricsPtr& metrics,
-                    const cnr_logger::TraceLoggerPtr& logger);
+  PathOptimizerBase(const CollisionCheckerPtr& checker, const MetricsPtr& metrics, const LoggerPtr& logger);
 
   /**
    * @brief Set the input path for optimization and reset the flags 'solved_'
@@ -135,9 +132,9 @@ public:
   virtual PathPtr getPath();
 
   /**
-   * @brief Configure the optimizer reading parameters with cnr_param library.
+   * @brief Configure the optimizer reading its parameters from a ParamMap.
    */
-  virtual void config(const std::string& param_ns);
+  virtual void config(const ParamMap& params);
 
   /**
    * @brief Solve the optimization problem. Use 'getPath' to get the processed

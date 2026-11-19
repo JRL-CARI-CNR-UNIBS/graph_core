@@ -70,10 +70,10 @@ public:
 
   /**
    * @brief init Initialise the object, defining its main attributes.
-   * @param logger Pointer to a TraceLogger for logging.
+   * @param logger Pointer to a Logger for logging.
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const cnr_logger::TraceLoggerPtr& logger)
+  virtual bool init(const LoggerPtr& logger)
   {
     return MetricsBase::init(logger);
   }

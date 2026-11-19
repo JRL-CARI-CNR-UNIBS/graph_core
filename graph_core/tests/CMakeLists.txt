@@ -42,6 +42,3 @@ add_executable(run_all_tests src/run_all_tests.cpp)
 target_link_libraries(run_all_tests PRIVATE ${GTEST_LIBRARIES} pthread graph_core::graph_core)
 install(TARGETS run_all_tests RUNTIME DESTINATION "bin/graph_core/tests/src")
 
-# Install files
-install(FILES logger_param.yaml logger_param_gtest.yaml
-    DESTINATION "bin/graph_core/tests")

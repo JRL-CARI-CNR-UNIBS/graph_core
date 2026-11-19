@@ -57,14 +57,12 @@ protected:
   Eigen::VectorXd upper_bound_;
 
   /**
-   * @brief Pointer to a TraceLogger instance for logging.
+   * @brief Pointer to the logger for logging.
    *
-   * This member variable represents a pointer to a TraceLogger instance,
-   * allowing to perform logging operations. TraceLogger is a part of the
-   * cnr_logger library. Ensure that the logger is properly configured and
-   * available for use.
+   * Logger used for messages (see graph_core/logger.h). It can be null:
+   * in that case nothing is logged.
    */
-  cnr_logger::TraceLoggerPtr logger_;
+  LoggerPtr logger_;
 
   /**
    * @brief cost_ Cost associated with the sampler. The base implementation of
@@ -129,11 +127,11 @@ public:
    *
    * @param lower_bound Lower bounds for configuration sampling.
    * @param upper_bound Upper bounds for configuration sampling.
-   * @param logger Pointer to a TraceLogger instance for logging.
+   * @param logger Pointer to the logger for logging.
    * @param cost Cost associated with the sampler (default: infinity).
    */
-  SamplerBase(const Eigen::VectorXd& lower_bound, const Eigen::VectorXd& upper_bound,
-              const cnr_logger::TraceLoggerPtr& logger, const double& cost = std::numeric_limits<double>::infinity())
+  SamplerBase(const Eigen::VectorXd& lower_bound, const Eigen::VectorXd& upper_bound, const LoggerPtr& logger,
+              const double& cost = std::numeric_limits<double>::infinity())
     : lower_bound_(lower_bound), upper_bound_(upper_bound), logger_(logger), cost_(cost), gen_{ rd_() }
   {
     srand((unsigned int)time(NULL));  // randomize seed
@@ -157,17 +155,16 @@ public:
    * execute its main functions.
    * @param lower_bound Lower bounds for configuration sampling.
    * @param upper_bound Upper bounds for configuration sampling.
-   * @param logger Pointer to a TraceLogger instance for logging.
+   * @param logger Pointer to the logger for logging.
    * @param cost Cost associated with the sampler (default: infinity).
    * @return True if correctly initialised, False if already initialised.
    */
-  virtual bool init(const Eigen::VectorXd& lower_bound, const Eigen::VectorXd& upper_bound,
-                    const cnr_logger::TraceLoggerPtr& logger,
+  virtual bool init(const Eigen::VectorXd& lower_bound, const Eigen::VectorXd& upper_bound, const LoggerPtr& logger,
                     const double& cost = std::numeric_limits<double>::infinity())
   {
     if (initialized_)
     {
-      CNR_WARN(logger_, "Sampler already initialised!");
+      GC_WARN(logger_, "Sampler already initialised!");
       return false;
     }
 
@@ -292,9 +289,9 @@ public:
 
   /**
    * @brief Get the logger associated with the sampler.
-   * @return Pointer to the TraceLogger instance.
+   * @return Pointer to the Logger instance.
    */
-  const cnr_logger::TraceLoggerPtr& getLogger()
+  const LoggerPtr& getLogger()
   {
     return logger_;
   }
